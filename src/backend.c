@@ -151,6 +151,7 @@ int register_backend_function(struct vaccel_backend *backend, uint8_t op_type,
 	new_op->type = op_type;
 	new_op->func = func;
 	new_op->owner = backend;
+
 	list_add_tail(&backend->ops, &new_op->backend_entry);
 	list_add_tail(&backend_state.ops[op_type], &new_op->func_entry);
 
@@ -167,7 +168,7 @@ void *get_backend_op(uint8_t op_type)
 
 	/* At the moment, just return the first implementation we find */
 	struct vaccel_op *op =
-		get_container(&backend_state.ops[op_type].next,
+		get_container(backend_state.ops[op_type].next,
 				struct vaccel_op, func_entry);
 
 	return op->func;
