@@ -5,7 +5,8 @@
 
 static int noop(struct vaccel_session *session)
 {
-	fprintf(stdout, "Calling no-op for session %lu", session->session_id);
+	fprintf(stdout, "Calling no-op for session %u", session->session_id);
+	return VACCEL_OK;
 }
 
 int vaccel_backend_init(struct vaccel_backend *backend)
