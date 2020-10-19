@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+#include <dlfcn.h>
 
 #include "backend.h"
 #include "common.h"
@@ -129,6 +130,8 @@ int cleanup_backends(void)
 	for_each_container_safe(backend, tmp, &backend_state.backends, struct vaccel_backend, entry) {
 		unregister_backend(backend);
 		list_unlink_entry(&backend->entry);
+		backend->fini(backend);
+		dlclose(backend->dl);
 		free(backend);
 	}
 
