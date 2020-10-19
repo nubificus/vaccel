@@ -89,7 +89,7 @@ int load_backend_plugins(char *plugins)
 		if (ret != VACCEL_OK)
 			return ret;
 
-		plugin = strtok(plugins, "NULL");
+		plugin = strtok(NULL, ";");
 	}
 
 	return VACCEL_OK;
