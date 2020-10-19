@@ -128,8 +128,10 @@ int cleanup_backends(void)
 {
 	struct vaccel_backend *backend, *tmp;
 	for_each_container_safe(backend, tmp, &backend_state.backends, struct vaccel_backend, entry) {
+		/* Unregister backend from runtime */
 		unregister_backend(backend);
-		list_unlink_entry(&backend->entry);
+
+		/* Clean-up plugin's resources */
 		backend->fini(backend);
 		dlclose(backend->dl);
 		free(backend);
