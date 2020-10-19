@@ -9,20 +9,20 @@ static int noop(struct vaccel_session *session)
 	return VACCEL_OK;
 }
 
-int vaccel_backend_init(struct vaccel_backend *backend)
+int vaccel_backend_initialize(struct vaccel_backend *backend)
 {
 	int ret;
 
 	ret = initialize_backend(backend, "noop_debug");
-	if (!ret)
+	if (ret)
 		return ret;
 
 	ret = register_backend(backend);
-	if (!ret)
+	if (ret)
 		goto cleanup;
 
 	ret = register_backend_function(backend, VACCEL_NO_OP, noop);
-	if (!ret)
+	if (ret)
 		goto unregister;
 
 	return VACCEL_OK;
@@ -34,7 +34,7 @@ cleanup:
 	return ret;
 }
 
-int vaccel_backend_fini(struct vaccel_backend *backend)
+int vaccel_backend_finalize(struct vaccel_backend *backend)
 {
 	return VACCEL_OK;
 }
