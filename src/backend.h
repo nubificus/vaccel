@@ -30,6 +30,7 @@ int initialize_backend(struct vaccel_backend *backend, const char *name);
 int cleanup_backend(struct vaccel_backend *backend);
 int register_backend(struct vaccel_backend *backend);
 int unregister_backend(struct vaccel_backend *backend);
+int cleanup_backends(void);
 int register_backend_function(struct vaccel_backend *backend, uint8_t op_type,
 		void *func);
 void *get_backend_op(uint8_t op_type);

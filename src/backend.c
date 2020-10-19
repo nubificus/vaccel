@@ -123,6 +123,18 @@ int unregister_backend(struct vaccel_backend *backend)
 	return VACCEL_OK;
 }
 
+int cleanup_backends(void)
+{
+	struct vaccel_backend *backend, *tmp;
+	for_each_container_safe(backend, tmp, &backend_state.backends, struct vaccel_backend, entry) {
+		unregister_backend(backend);
+		list_unlink_entry(&backend->entry);
+		free(backend);
+	}
+
+	return VACCEL_OK;
+}
+
 int register_backend_function(struct vaccel_backend *backend, uint8_t op_type,
 		void *func)
 {

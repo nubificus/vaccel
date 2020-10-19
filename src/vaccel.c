@@ -92,4 +92,5 @@ static void vaccel_init(void)
 __attribute__((destructor))
 static void vaccel_fini(void)
 {
+	cleanup_backends();
 }
