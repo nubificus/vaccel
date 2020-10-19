@@ -15,6 +15,14 @@ struct vaccel_backend {
 
 	/* List of functions supported by this backend */
 	list_t ops;
+
+	/* handle for the dynamic library of the backend */
+	void *dl;
+
+	/* function to call for cleaning up resources allocated
+	 * by the backend
+	 */
+	int (*fini)(struct vaccel_backend *);
 };
 
 int backends_bootstrap();

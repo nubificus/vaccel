@@ -10,5 +10,6 @@
 #define VACCEL_EBUSY       5
 #define VACCEL_EEXISTS     6
 #define VACCEL_ENOENT      7
+#define VACCEL_ELIBBAD     8
 
 #endif /* __VACCEL_COMMON_H__ */
