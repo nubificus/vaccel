@@ -14,3 +14,4 @@ IF(EXISTS "${CMAKE_CURRENT_BINARY_DIR}/compile_commands.json")
 ENDIF()
 
 add_subdirectory(src)
+add_subdirectory(examples)

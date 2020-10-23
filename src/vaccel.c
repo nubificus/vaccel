@@ -27,7 +27,7 @@ int vaccel_noop(struct vaccel_session *sess)
 }
 
 int vaccel_image_classification(struct vaccel_session *sess, void *img,
-		unsigned char *out_text, unsigned char *out_imgname,
+		char *out_text, char *out_imgname,
 		size_t len_img, size_t len_out_text, size_t len_out_imgname)
 {
 	if (!sess)
