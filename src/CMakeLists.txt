@@ -1,5 +1,5 @@
 # Core runtime sources
-set(runtime_src backend.c vaccel.c session.c)
+set(runtime_src backend.c vaccel.c vaccel_ops.c  session.c)
 
 # core runtime headers
 set(headers backend.h vaccel.h vaccel_ops.h)
