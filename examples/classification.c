@@ -83,19 +83,18 @@ int main(int argc, char *argv[])
 	if (ret)
 		goto close_session;
 
-	while (1)
-		ret = vaccel_image_classification(&sess, image, out_text, out_imagename,
-				image_size, sizeof(out_text), sizeof(out_imagename));
+	ret = vaccel_image_classification(&sess, image, out_text, out_imagename,
+			image_size, sizeof(out_text), sizeof(out_imagename));
 
-	free(image);
+free(image);
 
 close_session:
-	/*
-	ret = vaccel_sess_free(&sess);
-	if (ret != VACCEL_OK) {
-		fprintf(stderr, "Could not clear session\n");
-		return 1;
-	}
-	*/
-	return ret;
+/*
+ret = vaccel_sess_free(&sess);
+if (ret != VACCEL_OK) {
+	fprintf(stderr, "Could not clear session\n");
+	return 1;
+}
+*/
+return ret;
 }
