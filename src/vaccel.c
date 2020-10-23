@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <dlfcn.h>
+#include <stdio.h>
 
 /* export supported function as types for the rest of the runtime */
 typedef typeof(vaccel_noop) noop_t;
@@ -50,12 +51,17 @@ int load_backend_plugin(const char *path)
 		return VACCEL_ENOENT;
 
 	int (*init)(struct vaccel_backend *) = dlsym(dl, "vaccel_backend_initialize");
-	if (!init)
-		return VACCEL_ELIBBAD;
+	if (!init) {
+		fprintf(stderr, "Error loading init function: %s\n", dlerror());
+		ret = VACCEL_ELIBBAD;
+		goto close_dl;
+	}
 
 	int (*fini)(struct vaccel_backend *) = dlsym(dl, "vaccel_backend_finalize");
-	if (!fini)
-		return VACCEL_ELIBBAD;
+	if (!fini) {
+		ret = VACCEL_ELIBBAD;
+		goto close_dl;
+	}
 
 	struct vaccel_backend *new = malloc(sizeof(*new));
 	if (!new) {

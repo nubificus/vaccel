@@ -6,6 +6,10 @@
 #include "vaccel_ops.h"
 #include "list.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct vaccel_backend {
 	/* Name of the backend */
 	char *name;
@@ -34,5 +38,9 @@ int cleanup_backends(void);
 int register_backend_function(struct vaccel_backend *backend, uint8_t op_type,
 		void *func);
 void *get_backend_op(uint8_t op_type);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __VACCEL_BACKEND_H__ */
