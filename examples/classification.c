@@ -62,22 +62,18 @@ int main(int argc, char *argv[])
 	char *image;
        	size_t image_size;
 	char out_text[512], out_imagename[512];
+	struct vaccel_session sess;
 
 	if (argc != 2) {
 		fprintf(stderr, "Usage: %s filename\n", argv[0]);
 		return 0;
 	}
 
-	struct vaccel_session sess;
-	sess.session_id = 0;
-
-	/*
 	ret = vaccel_sess_init(&sess, 0);
 	if (ret != VACCEL_OK) {
 		fprintf(stderr, "Could not initialize session\n");
 		return 1;
 	}
-	*/
 
 	ret = read_file(argv[1], &image, &image_size);
 	if (ret)
@@ -86,15 +82,13 @@ int main(int argc, char *argv[])
 	ret = vaccel_image_classification(&sess, image, out_text, out_imagename,
 			image_size, sizeof(out_text), sizeof(out_imagename));
 
-free(image);
+	free(image);
 
 close_session:
-/*
-ret = vaccel_sess_free(&sess);
-if (ret != VACCEL_OK) {
-	fprintf(stderr, "Could not clear session\n");
-	return 1;
-}
-*/
+	ret = vaccel_sess_free(&sess);
+	if (ret != VACCEL_OK) {
+		fprintf(stderr, "Could not clear session\n");
+		return 1;
+	}
 return ret;
 }
