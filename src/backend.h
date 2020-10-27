@@ -23,6 +23,12 @@ struct vaccel_backend {
 	/* handle for the dynamic library of the backend */
 	void *dl;
 
+	/* backend session init function */
+	int (*vaccel_sess_init)(struct vaccel_session *sess, uint32_t flags);
+
+	/* backend session fini function */
+	int (*vaccel_sess_free)(struct vaccel_session *sess);
+
 	/* function to call for cleaning up resources allocated
 	 * by the backend
 	 */
@@ -35,9 +41,12 @@ int cleanup_backend(struct vaccel_backend *backend);
 int register_backend(struct vaccel_backend *backend);
 int unregister_backend(struct vaccel_backend *backend);
 int cleanup_backends(void);
+int register_virtio_backend(struct vaccel_backend *backend);
+int unregister_virtio_backend(struct vaccel_backend *backend);
 int register_backend_function(struct vaccel_backend *backend, uint8_t op_type,
 		void *func);
 void *get_backend_op(uint8_t op_type);
+struct vaccel_backend *get_virtio_backend(void);
 
 #ifdef __cplusplus
 }

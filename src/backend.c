@@ -30,6 +30,9 @@ static struct {
 	/* list holding backend descriptors */
 	list_t backends;
 
+	/* virtio backend */
+	struct vaccel_backend *virtio;
+
 	/* array of available implementations for every supported
 	 * function
 	 */
@@ -137,6 +140,47 @@ int cleanup_backends(void)
 		free(backend);
 	}
 
+	if (backend_state.virtio)
+		backend_state.virtio = NULL;
+
+	return VACCEL_OK;
+}
+
+int register_virtio_backend(struct vaccel_backend *backend)
+{
+	if (!backend)
+		return VACCEL_EINVAL;
+
+	if (!backend->vaccel_sess_init || !backend->vaccel_sess_free)
+		return VACCEL_EINVAL;
+
+	if (backend_state.virtio)
+		return VACCEL_EEXISTS;
+
+	int ret = register_backend(backend);
+	if (ret)
+		return ret;
+
+	backend_state.virtio = backend;
+	return VACCEL_OK;
+}
+
+int unregister_virtio_backend(struct vaccel_backend *backend)
+{
+	if (!backend)
+		return VACCEL_EINVAL;
+
+	if (!backend_state.virtio)
+		return VACCEL_ENOENT;
+
+	if (backend_state.virtio != backend)
+		return VACCEL_EINVAL;
+
+	int ret = unregister_backend(backend);
+	if (ret)
+		return ret;
+
+	backend_state.virtio = NULL;
 	return VACCEL_OK;
 }
 
@@ -174,4 +218,9 @@ void *get_backend_op(uint8_t op_type)
 				struct vaccel_op, func_entry);
 
 	return op->func;
+}
+
+struct vaccel_backend *get_virtio_backend(void)
+{
+	return backend_state.virtio;
 }
