@@ -11,5 +11,7 @@
 #define VACCEL_EEXISTS     6
 #define VACCEL_ENOENT      7
 #define VACCEL_ELIBBAD     8
+#define VACCEL_ENODEV      9
+#define VACCEL_EIO         10
 
 #endif /* __VACCEL_COMMON_H__ */
