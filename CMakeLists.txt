@@ -23,3 +23,6 @@ add_subdirectory(examples)
 # Create the pkg-config file
 set(DEST_DIR "${CMAKE_INSTALL_PREFIX}")
 CONFIGURE_FILE("vaccel.pc.in" "vaccel.pc" @ONLY)
+
+# Install the vaccel.pc file
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/vaccel.pc DESTINATION "${CMAKE_INSTALL_PREFIX}/share")
