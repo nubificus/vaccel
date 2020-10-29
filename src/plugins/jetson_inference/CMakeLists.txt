@@ -25,3 +25,6 @@ set(SOURCES
 add_library(vaccel-jetson SHARED ${SOURCES})
 target_include_directories(vaccel-jetson PRIVATE ${include_dirs} ${JETSON_INCLUDE} ${CUDA_INCLUDE} ${STB_DIR})
 target_link_libraries(vaccel-jetson PRIVATE jetson-inference jetson-utils cudart)
+
+# Setup make install
+install(TARGETS vaccel-jetson DESTINATION "${lib_path}")
