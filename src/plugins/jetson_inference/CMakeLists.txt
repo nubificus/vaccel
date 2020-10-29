@@ -22,6 +22,9 @@ set(SOURCES
     ${include_dirs}/vaccel.h
     ${include_dirs}/backend.h)
 
+# expose rpath for libraries when installing
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+
 add_library(vaccel-jetson SHARED ${SOURCES})
 target_include_directories(vaccel-jetson PRIVATE ${include_dirs} ${JETSON_INCLUDE} ${CUDA_INCLUDE} ${STB_DIR})
 target_link_libraries(vaccel-jetson PRIVATE jetson-inference jetson-utils cudart)
