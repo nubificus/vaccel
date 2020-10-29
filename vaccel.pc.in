@@ -1,0 +1,11 @@
+prefix=@DEST_DIR@
+exec_prefix=${prefix}
+libdir=${prefix}/lib
+includedir=${prefix}/include
+
+Name: libvaccel
+Description: Transparent acceleration for edge and cloud computing.
+Version: 0.1
+
+Libs: -L${libdir} -lvaccel
+Cflags: -I${includedir}

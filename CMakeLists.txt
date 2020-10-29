@@ -15,3 +15,7 @@ ENDIF()
 
 add_subdirectory(src)
 add_subdirectory(examples)
+
+# Create the pkg-config file
+set(DEST_DIR "${CMAKE_INSTALL_PREFIX}")
+CONFIGURE_FILE("vaccel.pc.in" "vaccel.pc" @ONLY)
