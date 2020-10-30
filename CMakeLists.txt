@@ -18,6 +18,7 @@ set(lib_path "${CMAKE_INSTALL_PREFIX}/lib")
 set(include_path "${CMAKE_INSTALL_PREFIX}/include")
 
 add_subdirectory(src)
+add_subdirectory(src/plugins)
 add_subdirectory(examples)
 
 # Create the pkg-config file
