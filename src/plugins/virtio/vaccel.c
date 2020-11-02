@@ -2,10 +2,33 @@
 #include <backend.h>
 
 #include "session.h"
+#include "operations.h"
 
 int register_functions(struct vaccel_backend *backend)
 {
-	return VACCEL_OK;
+	int ret;
+
+	ret = register_backend_function(backend, VACCEL_NO_OP, virtio_noop);
+	if (ret)
+		return ret;
+
+	ret = register_backend_function(backend, VACCEL_BLAS_SGEMM,
+			virtio_sgemm);
+	if (ret)
+		return ret;
+
+	ret = register_backend_function(backend, VACCEL_IMG_CLASS,
+			virtio_image_classification);
+	if (ret)
+		return ret;
+
+	ret = register_backend_function(backend, VACCEL_IMG_DETEC,
+			virtio_image_detection);
+	if (ret)
+		return ret;
+
+	return register_backend_function(backend, VACCEL_IMG_SEGME,
+			virtio_image_segmentation);
 }
 
 int vaccel_backend_initialize(struct vaccel_backend *backend)
