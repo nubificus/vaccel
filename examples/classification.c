@@ -64,8 +64,8 @@ int main(int argc, char *argv[])
 	char out_text[512], out_imagename[512];
 	struct vaccel_session sess;
 
-	if (argc != 2) {
-		fprintf(stderr, "Usage: %s filename\n", argv[0]);
+	if (argc != 3) {
+		fprintf(stderr, "Usage: %s filename #iterations\n", argv[0]);
 		return 0;
 	}
 
@@ -79,8 +79,14 @@ int main(int argc, char *argv[])
 	if (ret)
 		goto close_session;
 
-	ret = vaccel_image_classification(&sess, image, out_text, out_imagename,
-			image_size, sizeof(out_text), sizeof(out_imagename));
+	for (int i = 0; i < atoi(argv[2]); ++i) {
+		ret = vaccel_image_classification(&sess, image, out_text, out_imagename,
+				image_size, sizeof(out_text), sizeof(out_imagename));
+		if (ret) {
+			fprintf(stderr, "Could not run op\n");
+			break;
+		}
+	}
 
 	free(image);
 
@@ -90,5 +96,6 @@ close_session:
 		fprintf(stderr, "Could not clear session\n");
 		return 1;
 	}
-return ret;
+
+	return 0;
 }
