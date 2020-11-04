@@ -27,6 +27,9 @@ struct vaccel_op {
 };
 
 static struct {
+	/* true if sub-system is initialized */
+	bool initialized;
+
 	/* list holding backend descriptors */
 	list_t backends;
 
@@ -46,11 +49,19 @@ int backends_bootstrap()
 	for (size_t i = 0; i < VACCEL_FUNCTIONS_NR; ++i)
 		list_init(&backend_state.ops[i]);
 
+	backend_state.initialized = true;
+
 	return VACCEL_OK;
 }
 
 int initialize_backend(struct vaccel_backend *backend, const char *name)
 {
+	if (!backend)
+		return VACCEL_EINVAL;
+
+	if (!backend_state.initialized)
+		return VACCEL_EBACKEND;
+
 	backend->name = strdup(name);
 	if (!backend->name)
 		return VACCEL_ENOMEM;
@@ -63,6 +74,12 @@ int initialize_backend(struct vaccel_backend *backend, const char *name)
 
 int cleanup_backend(struct vaccel_backend *backend)
 {
+	if (!backend)
+		return VACCEL_EINVAL;
+
+	if (!backend_state.initialized)
+		return VACCEL_EBACKEND;
+
 	/* name should always be non-NULL */
 	if (backend->name) {
 		assert(0 && "Backend name not set");
@@ -89,6 +106,12 @@ int register_backend(struct vaccel_backend *backend)
 	if (!backend)
 		return VACCEL_EINVAL;
 
+	if (!backend_state.initialized)
+		return VACCEL_EBACKEND;
+
+	if (!backend)
+		return VACCEL_EINVAL;
+
 	if (entry_linked(&backend->entry)) {
 		assert(0 && "Backend already registered");
 		return VACCEL_EEXISTS;
@@ -106,6 +129,12 @@ int register_backend(struct vaccel_backend *backend)
 
 int unregister_backend(struct vaccel_backend *backend)
 {
+	if (!backend)
+		return VACCEL_EINVAL;
+
+	if (!backend_state.initialized)
+		return VACCEL_EBACKEND;
+
 	if (!backend)
 		return VACCEL_EINVAL;
 
@@ -129,6 +158,9 @@ int unregister_backend(struct vaccel_backend *backend)
 
 int cleanup_backends(void)
 {
+	if (!backend_state.initialized)
+		return VACCEL_OK;
+
 	struct vaccel_backend *backend, *tmp;
 	for_each_container_safe(backend, tmp, &backend_state.backends, struct vaccel_backend, entry) {
 		/* Unregister backend from runtime */

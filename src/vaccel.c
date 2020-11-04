@@ -1,5 +1,6 @@
 #include "vaccel.h"
 #include "backend.h"
+#include "session.h"
 
 #include <stdbool.h>
 #include <string.h>
@@ -68,6 +69,10 @@ static int load_backend_plugins(char *plugins)
 __attribute__((constructor))
 static void vaccel_init(void)
 {
+	int ret = sessions_bootstrap();
+	if (ret)
+		return;
+
 	/* initialize the backends system */
 	backends_bootstrap();
 

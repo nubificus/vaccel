@@ -13,4 +13,4 @@ _deps
 **/*.so
 .clangd
 cscope.out
-build
+build*
