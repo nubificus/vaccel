@@ -88,6 +88,9 @@ int main(int argc, char *argv[])
 			fprintf(stderr, "Could not run op\n");
 			break;
 		}
+
+		if (i == 0)
+			printf("classification tags: %s\n", out_text);
 	}
 
 	free(image);
