@@ -75,6 +75,8 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
+	printf("Initialized session with id: %u\n", sess.session_id);
+
 	ret = read_file(argv[1], &image, &image_size);
 	if (ret)
 		goto close_session;
