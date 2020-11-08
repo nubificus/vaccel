@@ -11,7 +11,7 @@ int virtio_sess_init(struct vaccel_session *sess, uint32_t flags)
 	struct accel_session session;
 
 	memset(&session, 0, sizeof(session));
-	int ret = dev_write(ACCIOC_GEN_SESS_CREATE, &session);
+	int ret = dev_write(VACCEL_SESS_CREATE, &session);
 	if (ret)
 		return ret;
 
@@ -27,5 +27,5 @@ int virtio_sess_free(struct vaccel_session *sess)
 
 	memset(&session, 0, sizeof(session));
 	session.id = sess->session_id;
-	return dev_write(ACCIOC_GEN_SESS_DESTROY, &session);
+	return dev_write(VACCEL_SESS_DESTROY, &session);
 }
