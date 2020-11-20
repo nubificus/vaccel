@@ -59,6 +59,9 @@ int initialize_backend(struct vaccel_backend *backend, const char *name)
 	if (!backend)
 		return VACCEL_EINVAL;
 
+	if (!name)
+		return VACCEL_EINVAL;
+
 	if (!backend_state.initialized)
 		return VACCEL_EBACKEND;
 
@@ -109,18 +112,11 @@ int register_backend(struct vaccel_backend *backend)
 	if (!backend_state.initialized)
 		return VACCEL_EBACKEND;
 
-	if (!backend)
-		return VACCEL_EINVAL;
-
-	if (entry_linked(&backend->entry)) {
-		assert(0 && "Backend already registered");
+	if (entry_linked(&backend->entry))
 		return VACCEL_EEXISTS;
-	}
 
-	if (!list_empty(&backend->ops)) {
-		assert(0 && "Unregistered backend with registered functions");
+	if (!list_empty(&backend->ops))
 		return VACCEL_EINVAL;
-	}
 
 	list_add_tail(&backend_state.backends, &backend->entry);
 
@@ -174,6 +170,8 @@ int cleanup_backends(void)
 
 	if (backend_state.virtio)
 		backend_state.virtio = NULL;
+
+	backend_state.initialized = false;
 
 	return VACCEL_OK;
 }
