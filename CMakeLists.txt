@@ -11,6 +11,27 @@ option(BUILD_PLUGIN_JETSON "Build the Jetson plugin" OFF)
 option(BUILD_PLUGIN_NOOP "Build the no-op debugging plugin" OFF)
 option(BUILD_EXAMPLES "Build the examples" OFF)
 
+## Download GoogleTest framework
+configure_file(
+	CMakeLists.txt.in
+	googletest-download/CMakeLists.txt
+)
+execute_process(
+	COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
+	WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/googletest-download
+)
+execute_process(
+	COMMAND ${CMAKE_COMMAND} --build .
+	WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/googletest-download
+)
+
+# Add GTest directly to our build. This adds the targets:
+# gtest, gtest_main, gmock, and gmock_main
+add_subdirectory(
+	${CMAKE_BINARY_DIR}/googletest-src
+	${CMAKE_BINARY_DIR}/googletest-build
+)
+
 SET(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 IF(EXISTS "${CMAKE_CURRENT_BINARY_DIR}/compile_commands.json")
   EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E copy_if_different
@@ -29,3 +50,7 @@ add_subdirectory(plugins)
 if (BUILD_EXAMPLES)
 	add_subdirectory(examples)
 endif (BUILD_EXAMPLES)
+
+# tests
+enable_testing()
+add_subdirectory(test)
