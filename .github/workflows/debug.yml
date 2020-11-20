@@ -1,0 +1,38 @@
+name: Build & Test
+
+on: [push]
+
+jobs:
+  build:
+    # The CMake configure and build commands are platform agnostic and should work equally
+    # well on Windows or Mac.  You can convert this to a matrix build if you need
+    # cross-platform coverage.
+    # See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
+    runs-on: ubuntu-latest
+    container:
+            image: nubificus/jetson-inference:latest
+            volumes:
+              - /tmp/vaccel:/vaccel
+
+    strategy:
+      matrix:
+        build_type: [Debug, Release]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Create Build Environment
+      run: cmake -E make_directory /vaccel/build_${{ matrix.build_type }}
+
+    - name: Configure CMake
+      working-directory: /vaccel/build_${{ matrix.build_type }}
+      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DBUILD_PLUGIN_JETSON=ON -DSTB_DIR=/jetson-inference/utils/image
+
+    - name: Build runtime
+      working-directory: /vaccel/build_${{ matrix.build_type }}
+      run: cmake --build . --config ${{ matrix.build_type }}
+
+    - name: Test
+      working-directory: /vaccel/build_${{ matrix.build_type }}
+      run: make test
