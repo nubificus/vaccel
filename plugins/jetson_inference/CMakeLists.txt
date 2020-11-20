@@ -1,13 +1,13 @@
-if (NOT DEFINED CUDA_DIR)
-	set(CUDA_DIR /usr/local/cuda-11.1)
-endif()
-set(CUDA_INCLUDE ${CUDA_DIR}/targets/x86_64-linux/include)
-message("Using CUDA_DIR ${CUDA_DIR}")
+# CUDA installation paths
+set(CUDA_DIR "/usr/local/cuda-11.1/targets/x86_64-linux" CACHE STRING "Path to CUDA installation")
+set(CUDA_INCLUDE ${CUDA_DIR}/include)
 
-if (DEFINED JETSON_DIR)
-	message("Using jetson ${JETSON_DIR}")
-	set(JETSON_INCLUDE ${JETSON_DIR}/include)
-endif()
+# Jetson inference installation paths
+set(JETSON_DIR "/usr/local" CACHE STRING "Path to Jetson Inference installation")
+set(JETSON_INCLUDE ${JETSON_DIR}/include)
+
+# STB library path
+set(STB_DIR "/usr/local" CACHE STRING "Path to STB installation")
 
 link_directories(${CUDA_DIR}/targets/x86_64-linux/lib)
 link_directories(${JETSON_DIR}/lib)
