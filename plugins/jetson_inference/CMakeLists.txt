@@ -1,16 +1,18 @@
 # CUDA installation paths
 set(CUDA_DIR "/usr/local/cuda/targets/x86_64-linux" CACHE STRING "Path to CUDA installation")
 set(CUDA_INCLUDE ${CUDA_DIR}/include)
+set(CUDA_LIB ${CUDA_DIR}/lib)
 
 # Jetson inference installation paths
 set(JETSON_DIR "/usr/local" CACHE STRING "Path to Jetson Inference installation")
 set(JETSON_INCLUDE ${JETSON_DIR}/include)
+set(JETSON_LIB ${JETSON_DIR}/lib)
 
 # STB library path
 set(STB_DIR "/usr/local" CACHE STRING "Path to STB installation")
 
-link_directories(${CUDA_DIR}/targets/x86_64-linux/lib)
-link_directories(${JETSON_DIR}/lib)
+link_directories(${CUDA_LIB})
+link_directories(${JETSON_LIB})
 
 set(include_dirs ${CMAKE_SOURCE_DIR}/src)
 message("Include directories: ${include_dirs}")
