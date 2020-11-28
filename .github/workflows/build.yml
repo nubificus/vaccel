@@ -27,7 +27,11 @@ jobs:
 
     - name: Configure CMake
       working-directory: /vaccel/build_${{ matrix.build_type }}
-      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DBUILD_PLUGIN_JETSON=ON -DSTB_DIR=/jetson-inference/utils/image
+      run: |
+              cmake $GITHUB_WORKSPACE \
+                -DCMAKE_INSTALL_PREFIX=/vaccel/artifacts/${{ matrix.build_type }}/opt \
+                -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+                -DBUILD_PLUGIN_JETSON=ON
 
     - name: Build runtime
       working-directory: /vaccel/build_${{ matrix.build_type }}
@@ -36,3 +40,18 @@ jobs:
     - name: Test
       working-directory: /vaccel/build_${{ matrix.build_type }}
       run: make test
+
+    - name: Install libraries
+      working-directory: /vaccel/build_${{ matrix.build_type }}
+      run: cmake --build . --config ${{ matrix.build_type }} -- install
+      
+    - name: Pack vaccelRT
+      working-directory: /vaccel/artifacts/${{ matrix.build_type }}
+      run: tar -cjf vaccel_${{ matrix.build_type }}.tar opt
+
+    - name: Create artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: vaccelrt
+        path: /vaccel/artifacts/${{ matrix.build_type }}/vaccel_${{ matrix.build_type }}.tar
+        if-no-files-found: error
