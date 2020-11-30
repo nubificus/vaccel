@@ -37,14 +37,13 @@ jobs:
       working-directory: /vaccel/build_${{ matrix.build_type }}
       run: cmake --build . --config ${{ matrix.build_type }}
 
-    - name: Test
+    - name: Test & Install
       working-directory: /vaccel/build_${{ matrix.build_type }}
-      run: make test
+      run: |
+              make test
+              make install -C src
+              make install -C plugins
 
-    - name: Install libraries
-      working-directory: /vaccel/build_${{ matrix.build_type }}
-      run: cmake --build . --config ${{ matrix.build_type }} -- install
-      
     - name: Pack vaccelRT
       working-directory: /vaccel/artifacts/${{ matrix.build_type }}
       run: tar -cjf vaccel_${{ matrix.build_type }}.tar opt
