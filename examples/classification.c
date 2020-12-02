@@ -82,7 +82,7 @@ int main(int argc, char *argv[])
 		goto close_session;
 
 	for (int i = 0; i < atoi(argv[2]); ++i) {
-		ret = vaccel_image_classification(&sess, image, out_text, out_imagename,
+		ret = vaccel_image_classification(&sess, image, (unsigned char*)out_text, (unsigned char*)out_imagename,
 				image_size, sizeof(out_text), sizeof(out_imagename));
 		if (ret) {
 			fprintf(stderr, "Could not run op\n");
