@@ -1,18 +1,15 @@
-name: Build & Test
+name: Test Pull Request
 
-on: [push]
+on: [pull_request]
 
 jobs:
   build:
-    # The CMake configure and build commands are platform agnostic and should work equally
-    # well on Windows or Mac.  You can convert this to a matrix build if you need
-    # cross-platform coverage.
-    # See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
     runs-on: ubuntu-latest
+
     container:
-            image: nubificus/vaccel-deps:latest
-            volumes:
-              - /tmp/vaccel:/vaccel
+      image: nubificus/vaccel-deps:latest
+      volumes:
+        - /tmp/vaccel:/vaccel
 
     strategy:
       matrix:
@@ -39,20 +36,15 @@ jobs:
       working-directory: /vaccel/build_${{ matrix.build_type }}
       run: cmake --build . --config ${{ matrix.build_type }}
 
-    - name: Test & Install
+    - name: Test
       working-directory: /vaccel/build_${{ matrix.build_type }}
       run: |
-              make test
-              make install -C src
-              make install -C plugins
+        make test
+        make install -C src
+        make install -C plugins
 
-    - name: Pack vaccelRT
-      working-directory: /vaccel/artifacts/${{ matrix.build_type }}
-      run: tar -cjf vaccel_${{ matrix.build_type }}.tar opt
-
-    - name: Create artifact
+    - name: Create Artifact
       uses: actions/upload-artifact@v2
       with:
-        name: vaccelrt
-        path: /vaccel/artifacts/${{ matrix.build_type }}/vaccel_${{ matrix.build_type }}.tar
-        if-no-files-found: error
+        name: vaccelrt-${{ github.head_ref }}-${{ matrix.build_type }} 
+        path: /vaccel/artifacts/${{ matrix.build_type }}/*
