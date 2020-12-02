@@ -10,7 +10,7 @@ jobs:
     # See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
     runs-on: ubuntu-latest
     container:
-            image: nubificus/jetson-inference:latest
+            image: nubificus/vaccel-deps:latest
             volumes:
               - /tmp/vaccel:/vaccel
 
@@ -28,10 +28,12 @@ jobs:
     - name: Configure CMake
       working-directory: /vaccel/build_${{ matrix.build_type }}
       run: |
-              cmake $GITHUB_WORKSPACE \
+         cmake $GITHUB_WORKSPACE \
                 -DCMAKE_INSTALL_PREFIX=/vaccel/artifacts/${{ matrix.build_type }}/opt \
                 -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
-                -DBUILD_PLUGIN_JETSON=ON
+                -DBUILD_PLUGIN_JETSON=ON \
+                -DBUILD_PLUGIN_VIRTIO=ON
+                
 
     - name: Build runtime
       working-directory: /vaccel/build_${{ matrix.build_type }}
