@@ -20,17 +20,19 @@ jobs:
       uses: actions/checkout@v2
 
     - name: Create Build Environment
-      run: cmake -E make_directory /vaccel/build_${{ matrix.build_type }}
+      run: |
+        cmake -E make_directory /vaccel/build_${{ matrix.build_type }}
 
     - name: Configure CMake
       working-directory: /vaccel/build_${{ matrix.build_type }}
       run: |
-         cmake $GITHUB_WORKSPACE \
+        cmake $GITHUB_WORKSPACE \
                 -DCMAKE_INSTALL_PREFIX=/vaccel/artifacts/${{ matrix.build_type }}/opt \
                 -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
                 -DBUILD_PLUGIN_JETSON=ON \
-                -DBUILD_PLUGIN_VIRTIO=ON
-                
+                -DBUILD_PLUGIN_VIRTIO=ON \
+                -DBUILD_EXAMPLES=ON
+
 
     - name: Build runtime
       working-directory: /vaccel/build_${{ matrix.build_type }}
@@ -40,11 +42,38 @@ jobs:
       working-directory: /vaccel/build_${{ matrix.build_type }}
       run: |
         make test
+        # Need to install per directory to avoid installing GoogleTest
+        # artifacts.
         make install -C src
         make install -C plugins
+        make install -C examples
 
-    - name: Create Artifact
+    - name: Upload artifact
       uses: actions/upload-artifact@v2
       with:
-        name: vaccelrt-${{ github.head_ref }}-${{ matrix.build_type }} 
+        name: vaccelrt-${{ github.event.pull_request.head.sha }}-${{ matrix.build_type }}
         path: /vaccel/artifacts/${{ matrix.build_type }}/*
+
+  upload_artifact:
+    needs: build
+    runs-on: ubuntu-latest
+    container:
+      image: minio/mc
+      env:
+        NBFC_S3_ACCESS: ${{ secrets.AWS_ACCESS_KEY }}
+        NBFC_S3_SECRET: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+    strategy:
+      matrix:
+        build_type: [Debug, Release]
+
+    steps:
+    - name: Download artifact
+      uses: actions/download-artifact@v2
+      with:
+        name: vaccelrt-${{ github.event.pull_request.head.sha }}-${{ matrix.build_type }}
+
+    - name: Upload artifact to s3
+      run: |
+        mc alias set nbfc-rook https://s3.nubificus.co.uk $NBFC_S3_ACCESS $NBFC_S3_SECRET
+        mc cp -r opt nbfc-rook/nbfc-assets/github/vaccelrt/${{ github.event.pull_request.head.sha }}/${{ matrix.build_type }}
