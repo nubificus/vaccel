@@ -41,6 +41,7 @@ IF(EXISTS "${CMAKE_CURRENT_BINARY_DIR}/compile_commands.json")
 ENDIF()
 
 # installation paths
+set(bin_path "${CMAKE_INSTALL_PREFIX}/bin")
 set(lib_path "${CMAKE_INSTALL_PREFIX}/lib")
 set(include_path "${CMAKE_INSTALL_PREFIX}/include")
 
