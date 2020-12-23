@@ -85,22 +85,21 @@ int main(int argc, char *argv[])
 		ret = vaccel_image_classification(&sess, image, (unsigned char*)out_text, (unsigned char*)out_imagename,
 				image_size, sizeof(out_text), sizeof(out_imagename));
 		if (ret) {
-			fprintf(stderr, "Could not run op\n");
-			break;
+			fprintf(stderr, "Could not run op: %d\n", ret);
+			goto close_session;
 		}
 
 		if (i == 0)
 			printf("classification tags: %s\n", out_text);
 	}
 
-	free(image);
 
 close_session:
-	ret = vaccel_sess_free(&sess);
-	if (ret != VACCEL_OK) {
+	free(image);
+	if (vaccel_sess_free(&sess) != VACCEL_OK) {
 		fprintf(stderr, "Could not clear session\n");
 		return 1;
 	}
 
-	return 0;
+	return ret;
 }
