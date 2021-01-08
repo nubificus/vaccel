@@ -135,7 +135,7 @@ Finally, the classification application needs the imagent models in the current 
 ```
 $ ls 
 classify  images  networks
-$ ./classify images/banana_0.jpg 1
+$ VACCEL_IMAGENET_NETWORKS=$(pwd) ./classify images/banana_0.jpg 1
 Initialized session with id: 1
 Image size: 79281B
 classification tags: 99.902% banana

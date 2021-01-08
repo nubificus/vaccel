@@ -7,30 +7,63 @@
 
 #include <stddef.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 #include "vaccel.h"
 #include "util.h"
 
 using namespace std;
 
+#define IMAGENET_NETWORKS_DEFAULT_PATH "/usr/local/share/imagenet-models/networks"
+#define IMAGENET_NETWORKS_ENVVAR "VACCEL_IMAGENET_NETWORKS"
+
+/* Check if a path exists and is a directory */
+static bool directory_exists(const char *path)
+{
+	struct stat s;
+	return (!stat(path, &s) && (s.st_mode & S_IFDIR));
+}
+
+static const char *find_imagenet_models_path(void)
+{
+	/* Check first the environment variable */
+	char *networks = getenv(IMAGENET_NETWORKS_ENVVAR);
+	if (networks && directory_exists(networks))
+		return networks;
+
+	if (directory_exists(IMAGENET_NETWORKS_DEFAULT_PATH))
+		return IMAGENET_NETWORKS_DEFAULT_PATH;
+
+	return NULL;
+}
+
 int jetson_image_classification(struct vaccel_session *sess, void *img,
 		char *out_text, char *out_imgname,
 		size_t len_img, size_t len_out_text, size_t len_out_imgname)
 {
-	imageNet *net = NULL;
-	char *modelName = NULL; //network;
+	/* Check for networks directory */
+	const char *networks_dir = find_imagenet_models_path();
+	if (!networks_dir)
+		return VACCEL_ENOENT;
 
-	if (!modelName)
-		modelName = "googlenet";
+	/* 512 bytes should be enough, but this is dangerous for failing
+	 * spuriously */
+	char prototxt_path[512], model_path[512], class_path[512];
+	snprintf(prototxt_path, sizeof(prototxt_path), "%s/googlenet.prototxt",
+			networks_dir);
+	snprintf(model_path, sizeof(model_path), "%s/bvlc_googlenet.caffemodel",
+			networks_dir);
+	snprintf(class_path, sizeof(class_path), "%s/ilsvrc12_synset_words.txt",
+			networks_dir);
 
-	// parse the network type
-	const imageNet::NetworkType type =
-		imageNet::NetworkTypeFromStr(modelName);
-	net = imageNet::Create(type);
-	if (!net) {
-		fprintf(stderr, "Failed to initialize imageNet\n");
-		return VACCEL_ENOMEM;
-	}
+	imageNet *net =
+		imageNet::Create(prototxt_path, model_path, NULL, class_path,
+			IMAGENET_DEFAULT_INPUT, IMAGENET_DEFAULT_OUTPUT,
+			DEFAULT_MAX_BATCH_SIZE, TYPE_FASTEST, DEVICE_GPU,
+			true);
 
 	/*
 	 * load image from disk
