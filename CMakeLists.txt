@@ -45,6 +45,15 @@ set(bin_path "${CMAKE_INSTALL_PREFIX}/bin")
 set(lib_path "${CMAKE_INSTALL_PREFIX}/lib")
 set(include_path "${CMAKE_INSTALL_PREFIX}/include")
 
+# Add CMake third-party dependencies to be built
+add_subdirectory(third-party)
+
+# Add include directories from third-party libraries
+include_directories(
+	#slog
+	third-party/slog/src
+)
+
 add_subdirectory(src)
 add_subdirectory(plugins)
 

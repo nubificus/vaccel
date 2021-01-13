@@ -1,5 +1,5 @@
 # Core runtime sources
-set(runtime_src backend.c vaccel.c vaccel_ops.c  session.c)
+set(runtime_src backend.c vaccel.c vaccel_ops.c session.c log.c)
 
 # core runtime headers
 set(headers backend.h vaccel.h vaccel_ops.h)
@@ -7,6 +7,7 @@ set(headers backend.h vaccel.h vaccel_ops.h)
 add_library(vaccel SHARED ${headers} ${runtime_src})
 target_compile_options(vaccel PUBLIC -Wall -Wextra -Werror -pthread)
 set_property(TARGET vaccel PROPERTY LINK_FLAGS "-pthread")
+target_link_libraries(vaccel slog)
 
 # Setup make install
 install(TARGETS vaccel DESTINATION "${lib_path}")

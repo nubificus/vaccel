@@ -1,6 +1,7 @@
 #include "vaccel.h"
 #include "backend.h"
 #include "session.h"
+#include "log.h"
 
 #include <stdbool.h>
 #include <string.h>
@@ -72,6 +73,9 @@ static void vaccel_init(void)
 	int ret = sessions_bootstrap();
 	if (ret)
 		return;
+
+	/* Initialize logger */
+	vaccel_log_init();
 
 	/* initialize the backends system */
 	backends_bootstrap();
