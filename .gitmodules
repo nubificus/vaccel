@@ -1,0 +1,3 @@
+[submodule "third-party/slog"]
+	path = third-party/slog
+	url = https://github.com/kala13x/slog.git
