@@ -13,31 +13,41 @@ static int load_backend_plugin(const char *path)
 	int ret;
 
 	void *dl = dlopen(path, RTLD_LAZY);
-	if (!dl)
+	if (!dl) {
+		vaccel_error("Could not dlopen plugin %s", path);
 		return VACCEL_ENOENT;
+	}
 
 	int (*init)(struct vaccel_backend *) = dlsym(dl, "vaccel_backend_initialize");
 	if (!init) {
-		fprintf(stderr, "Error loading init function: %s\n", dlerror());
+		vaccel_error("Could not load init function for plugin %s: %s",
+				path, dlerror());
 		ret = VACCEL_ELIBBAD;
 		goto close_dl;
 	}
 
 	int (*fini)(struct vaccel_backend *) = dlsym(dl, "vaccel_backend_finalize");
 	if (!fini) {
+		vaccel_error("Could not load fini function for plugin %s: %s",
+				path, dlerror());
 		ret = VACCEL_ELIBBAD;
 		goto close_dl;
 	}
 
 	struct vaccel_backend *new = malloc(sizeof(*new));
 	if (!new) {
+		vaccel_error("Could not allocate memory");
 		ret = VACCEL_ENOMEM;
 		goto close_dl;
 	}
 
 	ret = init(new);
-	if (ret != VACCEL_OK)
+	if (ret != VACCEL_OK) {
+		vaccel_error("Plugin initialization failed");
 		goto free_backend;
+	}
+
+	vaccel_debug("Loaded plugin %s", path);
 
 	/* setup the info needed to clean-up the backend later */
 	new->dl = dl;
@@ -77,6 +87,8 @@ static void vaccel_init(void)
 	/* Initialize logger */
 	vaccel_log_init();
 
+	vaccel_debug("Initializing vAccel");
+
 	/* initialize the backends system */
 	backends_bootstrap();
 
@@ -91,5 +103,6 @@ static void vaccel_init(void)
 __attribute__((destructor))
 static void vaccel_fini(void)
 {
+	vaccel_debug("Shutting down vAccel");
 	cleanup_backends();
 }

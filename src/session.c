@@ -1,5 +1,6 @@
 #include "vaccel.h"
 #include "backend.h"
+#include "log.h"
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -30,7 +31,6 @@ static uint32_t get_sess_id(void)
 		id = 0;
 	else
 		id = sessions.ids[sessions.next_free++];
-	
 	pthread_spin_unlock(&sessions.lock);
 
 	return id;
@@ -79,6 +79,9 @@ int vaccel_sess_init(struct vaccel_session *sess, uint32_t flags)
 		return VACCEL_ESESS;
 
 	sess->session_id = sess_id;
+
+	vaccel_debug("session:%u New session", sess_id);
+
 	return VACCEL_OK;
 }
 
@@ -97,5 +100,8 @@ int vaccel_sess_free(struct vaccel_session *sess)
 		return virtio->vaccel_sess_free(sess);
 
 	put_sess_id(sess->session_id);
+
+	vaccel_debug("session:%u Free session", sess->session_id);
+
 	return VACCEL_OK;
 }

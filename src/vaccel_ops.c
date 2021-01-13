@@ -1,6 +1,8 @@
 #include "vaccel_ops.h"
 #include "backend.h"
 #include "common.h"
+#include "log.h"
+#include "vaccel.h"
 
 /* export supported function as types for the rest of the runtime */
 typedef typeof(vaccel_noop) noop_t;
@@ -13,6 +15,9 @@ int vaccel_noop(struct vaccel_session *sess)
 {
 	if (!sess)
 		return VACCEL_EINVAL;
+
+	vaccel_debug("session:%u Looking for plugin implementing noop",
+			sess->session_id);
 
 	//Get implementation
 	noop_t *backend_op = get_backend_op(VACCEL_NO_OP);
@@ -28,6 +33,9 @@ int vaccel_image_classification(struct vaccel_session *sess, void *img,
 {
 	if (!sess)
 		return VACCEL_EINVAL;
+
+	vaccel_debug("session:%u Looking for plugin implementing image classification",
+			sess->session_id);
 
 	//Get implementation
 	image_classification_t *backend_op = get_backend_op(VACCEL_IMG_CLASS);

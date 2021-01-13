@@ -11,6 +11,19 @@
 #define VACCEL_IMG_SEGME    4
 #define VACCEL_FUNCTIONS_NR 5
 
+static const char *vaccel_op_name[] = {
+	"noop",
+	"sgemm",
+	"image-classification",
+	"image-detection",
+	"image-segmentation",
+};
+
+inline static const char *vaccel_op_type_str(uint8_t op_type)
+{
+	return vaccel_op_name[op_type];
+}
+
 struct vaccel_session;
 
 /* vaccel supported operations */

@@ -17,5 +17,5 @@ target_include_directories(
 	${GTEST_INCLUDE} ${include_dirs}
 )
 target_compile_options(backend_tests PUBLIC -Wall -Wextra -Werror -g -ggdb)
-target_link_libraries("backend_tests" gtest_main dl)
+target_link_libraries("backend_tests" gtest_main dl slog)
 gtest_add_tests(TARGET backend_tests)

@@ -4,6 +4,8 @@
 #include <accel.h>
 
 #include "ioctl.h"
+#include "log.h"
+#include "session.h"
 
 int virtio_noop(struct vaccel_session *sess)
 {
@@ -14,6 +16,9 @@ int virtio_noop(struct vaccel_session *sess)
 	vsess.id = sess->session_id;
 	vsess.op.out_nr = 1;
 	vsess.op.out = &arg;
+
+	vaccel_debug("[virtio] session:%u Executing noop",
+			sess->session_id);
 
 	return dev_write(VACCEL_DO_OP, &vsess);
 }
@@ -40,6 +45,9 @@ int virtio_sgemm(struct vaccel_session *sess, uint32_t k, uint32_t m,
 	vsess.op.in_nr = 1;
 	vsess.op.in = &args[6];
 
+	vaccel_debug("[virtio] session:%u Executing sgemm",
+			sess->session_id);
+
 	return dev_write(VACCEL_DO_OP, &vsess);
 }
 
@@ -62,6 +70,9 @@ int virtio_image_classification(struct vaccel_session *sess, void *img,
 	vsess.op.in_nr = 2;
 	vsess.op.in = &args[2];
 
+	vaccel_debug("[virtio] session:%u Executing image classification",
+			sess->session_id);
+
 	return dev_write(VACCEL_DO_OP, &vsess);
 }
 
@@ -82,6 +93,9 @@ int virtio_image_detection(struct vaccel_session *sess, void *img,
 	vsess.op.in_nr = 1;
 	vsess.op.in = &args[2];
 
+	vaccel_debug("[virtio] session:%u Executing image detection",
+			sess->session_id);
+
 	return dev_write(VACCEL_DO_OP, &vsess);
 }
 
@@ -101,6 +115,9 @@ int virtio_image_segmentation(struct vaccel_session *sess, void *img,
 	vsess.op.out = &args[0];
 	vsess.op.in_nr = 1;
 	vsess.op.in = &args[2];
+
+	vaccel_debug("[virtio] session:%u Executing image segmentation",
+			sess->session_id);
 
 	return dev_write(VACCEL_DO_OP, &vsess);
 }

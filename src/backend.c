@@ -8,6 +8,7 @@
 #include "common.h"
 #include "list.h"
 #include "vaccel_ops.h"
+#include "log.h"
 
 struct vaccel_op {
 	/* operation type */
@@ -56,69 +57,93 @@ int backends_bootstrap()
 
 int initialize_backend(struct vaccel_backend *backend, const char *name)
 {
-	if (!backend)
+	if (!backend) {
+		vaccel_fatal("BUG! Invalid plugin struct");
 		return VACCEL_EINVAL;
+	}
 
-	if (!name)
+	if (!name) {
+		vaccel_fatal("BUG! Invalid plugin name");
 		return VACCEL_EINVAL;
+	}
 
-	if (!backend_state.initialized)
+	if (!backend_state.initialized) {
+		vaccel_fatal("BUG! Trying to re-initialize plugin %s", name);
 		return VACCEL_EBACKEND;
+	}
 
 	backend->name = strdup(name);
-	if (!backend->name)
+	if (!backend->name) {
+		vaccel_error("Out of memory");
 		return VACCEL_ENOMEM;
+	}
 
 	list_init_entry(&backend->entry);
 	list_init(&backend->ops);
+
+	vaccel_debug("Initialized plugin %s", name);
 
 	return VACCEL_OK;
 }
 
 int cleanup_backend(struct vaccel_backend *backend)
 {
-	if (!backend)
+	if (!backend) {
+		vaccel_fatal("BUG! Invalid plugin struct");
 		return VACCEL_EINVAL;
+	}
 
-	if (!backend_state.initialized)
+	if (!backend_state.initialized) {
+		vaccel_fatal("BUG! Plugin system not initialized");
 		return VACCEL_EBACKEND;
-
-	/* name should always be non-NULL */
-	if (backend->name) {
-		assert(0 && "Backend name not set");
-		free(backend->name);
 	}
 
 	/* Throw an error if the backend is still registered
 	 * or it still has functions registered with it */
 	if (entry_linked(&backend->entry)) {
-		assert(0 && "Trying to cleanup a registered backend");
+		vaccel_fatal("Trying to cleanup register plugin %s",
+				backend->name);
 		return VACCEL_EBUSY;
 	}
 
 	if (!list_empty(&backend->ops)) {
-		assert(0 && "Backend has registered functions during cleanup");
+		vaccel_fatal("Plugin %s has registered functions during cleanup",
+				backend->name);
 		return VACCEL_EBUSY;
 	}
+
+	vaccel_debug("Cleaned up plugin %s", backend->name);
+
+	/* name should always be non-NULL */
+	if (backend->name)
+		free(backend->name);
 
 	return VACCEL_OK;
 }
 
 int register_backend(struct vaccel_backend *backend)
 {
-	if (!backend)
+	if (!backend) {
+		vaccel_fatal("BUG! Invalid plugin struct");
 		return VACCEL_EINVAL;
+	}
 
-	if (!backend_state.initialized)
+	if (!backend_state.initialized) {
+		vaccel_fatal("BUG! Plugin system not initialized");
 		return VACCEL_EBACKEND;
+	}
 
-	if (entry_linked(&backend->entry))
+	if (entry_linked(&backend->entry)) {
+		vaccel_error("Plugin already registered");
 		return VACCEL_EEXISTS;
+	}
 
 	if (!list_empty(&backend->ops))
 		return VACCEL_EINVAL;
 
 	list_add_tail(&backend_state.backends, &backend->entry);
+
+	vaccel_debug("Registered plugin %s", backend->name);
 
 	return VACCEL_OK;
 }
@@ -149,6 +174,8 @@ int unregister_backend(struct vaccel_backend *backend)
 
 	list_unlink_entry(&backend->entry);
 
+	vaccel_debug("Unregistered plugin %s", backend->name);
+
 	return VACCEL_OK;
 }
 
@@ -156,6 +183,8 @@ int cleanup_backends(void)
 {
 	if (!backend_state.initialized)
 		return VACCEL_OK;
+
+	vaccel_debug("Cleaning up plugins");
 
 	struct vaccel_backend *backend, *tmp;
 	for_each_container_safe(backend, tmp, &backend_state.backends, struct vaccel_backend, entry) {
@@ -192,6 +221,9 @@ int register_virtio_backend(struct vaccel_backend *backend)
 		return ret;
 
 	backend_state.virtio = backend;
+
+	vaccel_debug("Registered VirtIO plugin");
+
 	return VACCEL_OK;
 }
 
@@ -211,6 +243,9 @@ int unregister_virtio_backend(struct vaccel_backend *backend)
 		return ret;
 
 	backend_state.virtio = NULL;
+
+	vaccel_debug("Unregistered VirtIO plugin");
+
 	return VACCEL_OK;
 }
 
@@ -231,21 +266,32 @@ int register_backend_function(struct vaccel_backend *backend, uint8_t op_type,
 	list_add_tail(&backend->ops, &new_op->backend_entry);
 	list_add_tail(&backend_state.ops[op_type], &new_op->func_entry);
 
+	vaccel_debug("Registered function %s from plugin %s",
+			vaccel_op_type_str(op_type),
+			backend->name);
+
 	return VACCEL_OK;
 }
 
 void *get_backend_op(uint8_t op_type)
 {
-	if (op_type >= VACCEL_FUNCTIONS_NR)
+	if (op_type >= VACCEL_FUNCTIONS_NR) {
+		vaccel_error("Trying to execute unknown function");
 		return NULL;
+	}
 
-	if (list_empty(&backend_state.ops[op_type]))
+	if (list_empty(&backend_state.ops[op_type])) {
+		vaccel_warn("None of the loaded plugins implement %s",
+				vaccel_op_type_str(op_type));
 		return NULL;
+	}
 
 	/* At the moment, just return the first implementation we find */
 	struct vaccel_op *op =
 		get_container(backend_state.ops[op_type].next,
 				struct vaccel_op, func_entry);
+
+	vaccel_debug("Found implementation in %s plugin", op->owner->name);
 
 	return op->func;
 }
