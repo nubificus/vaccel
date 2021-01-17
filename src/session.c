@@ -1,5 +1,5 @@
 #include "vaccel.h"
-#include "backend.h"
+#include "plugin.h"
 #include "log.h"
 
 #include <stdbool.h>
@@ -68,11 +68,11 @@ int vaccel_sess_init(struct vaccel_session *sess, uint32_t flags)
 	if (!sessions.initialized)
 		return VACCEL_ESESS;
 
-	/* if we're using virtio as a backend offload the session initialization
+	/* if we're using virtio as a plugin offload the session initialization
 	 * to the host */
-	struct vaccel_backend *virtio = get_virtio_backend();
+	struct vaccel_plugin *virtio = get_virtio_plugin();
 	if (virtio)
-		return virtio->vaccel_sess_init(sess, flags);
+		return virtio->info->sess_init(sess, flags);
 
 	uint32_t sess_id = get_sess_id();
 	if (!sess_id)
@@ -93,11 +93,11 @@ int vaccel_sess_free(struct vaccel_session *sess)
 	if (!sessions.initialized)
 		return VACCEL_ESESS;
 
-	/* if we're using virtio as a backend offload the session cleanup to the
+	/* if we're using virtio as a plugin offload the session cleanup to the
 	 * host */
-	struct vaccel_backend *virtio = get_virtio_backend();
+	struct vaccel_plugin *virtio = get_virtio_plugin();
 	if (virtio)
-		return virtio->vaccel_sess_free(sess);
+		return virtio->info->sess_free(sess);
 
 	put_sess_id(sess->session_id);
 

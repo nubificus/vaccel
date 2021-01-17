@@ -1,8 +1,8 @@
 # Core runtime sources
-set(runtime_src backend.c vaccel.c vaccel_ops.c session.c log.c)
+set(runtime_src plugin.c vaccel.c vaccel_ops.c session.c log.c)
 
 # core runtime headers
-set(headers backend.h vaccel.h vaccel_ops.h)
+set(headers plugin.h vaccel.h vaccel_ops.h)
 
 add_library(vaccel SHARED ${headers} ${runtime_src})
 target_compile_options(vaccel PUBLIC -Wall -Wextra -Werror -pthread)

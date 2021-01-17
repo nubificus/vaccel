@@ -5,6 +5,8 @@
 #include <stdbool.h>
 #include <stddef.h>
 
+#define LIST_ENTRY_INIT(name) { &(name), &(name) }
+
 typedef struct list_entry {
 	struct list_entry *next;
 	struct list_entry *prev;

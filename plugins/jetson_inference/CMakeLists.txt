@@ -22,7 +22,7 @@ set(SOURCES
     util.cpp
     util.h
     ${include_dirs}/vaccel.h
-    ${include_dirs}/backend.h)
+    ${include_dirs}/plugin.h)
 
 # expose rpath for libraries when installing
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)

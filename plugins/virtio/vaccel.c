@@ -1,64 +1,36 @@
 #include <vaccel.h>
-#include <backend.h>
+#include <plugin.h>
 
 #include "session.h"
 #include "operations.h"
 
-int register_functions(struct vaccel_backend *backend)
+struct vaccel_op ops[] = {
+	VACCEL_OP_INIT(ops[0], VACCEL_NO_OP, virtio_noop),
+	VACCEL_OP_INIT(ops[1], VACCEL_BLAS_SGEMM, virtio_sgemm),
+	VACCEL_OP_INIT(ops[2], VACCEL_IMG_CLASS, virtio_image_classification),
+	VACCEL_OP_INIT(ops[3], VACCEL_IMG_DETEC, virtio_image_detection),
+	VACCEL_OP_INIT(ops[4], VACCEL_IMG_SEGME, virtio_image_segmentation),
+};
+
+int virtio_init(void)
 {
-	int ret;
-
-	ret = register_backend_function(backend, VACCEL_NO_OP, virtio_noop);
-	if (ret)
+	int ret = register_plugin_functions(ops, sizeof(ops) / sizeof(ops[0]));
+	if (!ret)
 		return ret;
-
-	ret = register_backend_function(backend, VACCEL_BLAS_SGEMM,
-			virtio_sgemm);
-	if (ret)
-		return ret;
-
-	ret = register_backend_function(backend, VACCEL_IMG_CLASS,
-			virtio_image_classification);
-	if (ret)
-		return ret;
-
-	ret = register_backend_function(backend, VACCEL_IMG_DETEC,
-			virtio_image_detection);
-	if (ret)
-		return ret;
-
-	return register_backend_function(backend, VACCEL_IMG_SEGME,
-			virtio_image_segmentation);
-}
-
-int vaccel_backend_initialize(struct vaccel_backend *backend)
-{
-	int ret;
-
-	ret = initialize_backend(backend, "virtio-accel");
-	if (ret)
-		return ret;
-
-	/* We need to set these before registering the backend */
-	backend->vaccel_sess_init = virtio_sess_init;
-	backend->vaccel_sess_free = virtio_sess_free;
-
-	ret = register_virtio_backend(backend);
-	if (ret)
-		goto cleanup;
-
-	ret = register_functions(backend);
-	if (ret)
-		goto cleanup;
 
 	return VACCEL_OK;
-
-cleanup:
-	cleanup_backend(backend);
-	return ret;
 }
 
-int vaccel_backend_finalize(struct vaccel_backend *backend)
+int virtio_finalize(void)
 {
 	return VACCEL_OK;
 }
+
+VACCEL_MODULE(
+	.name = "virtio",
+	.version = "0.1",
+	.init = virtio_init,
+	.fini = virtio_finalize,
+	.sess_init = virtio_sess_init,
+	.sess_free = virtio_sess_free,
+)

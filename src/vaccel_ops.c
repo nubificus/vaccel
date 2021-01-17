@@ -1,5 +1,5 @@
 #include "vaccel_ops.h"
-#include "backend.h"
+#include "plugin.h"
 #include "common.h"
 #include "log.h"
 #include "vaccel.h"
@@ -20,11 +20,11 @@ int vaccel_noop(struct vaccel_session *sess)
 			sess->session_id);
 
 	//Get implementation
-	noop_t *backend_op = get_backend_op(VACCEL_NO_OP);
-	if (!backend_op)
+	noop_t *plugin_op = get_plugin_op(VACCEL_NO_OP);
+	if (!plugin_op)
 		return VACCEL_ENOTSUP;
 
-	return backend_op(sess);
+	return plugin_op(sess);
 }
 
 int vaccel_image_classification(struct vaccel_session *sess, void *img,
@@ -38,10 +38,10 @@ int vaccel_image_classification(struct vaccel_session *sess, void *img,
 			sess->session_id);
 
 	//Get implementation
-	image_classification_t *backend_op = get_backend_op(VACCEL_IMG_CLASS);
-	if (!backend_op)
+	image_classification_t *plugin_op = get_plugin_op(VACCEL_IMG_CLASS);
+	if (!plugin_op)
 		return VACCEL_ENOTSUP;
 
-	return backend_op(sess, img, out_text, out_imgname, len_img,
+	return plugin_op(sess, img, out_text, out_imgname, len_img,
 			len_out_text, len_out_imgname);
 }

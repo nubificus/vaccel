@@ -1,43 +1,31 @@
 #include <vaccel.h>
-#include <backend.h>
+#include <plugin.h>
 #include <vaccel_ops.h>
 #include "operations.h"
 
-extern "C" int vaccel_backend_initialize(struct vaccel_backend *backend)
+struct vaccel_op ops[] = {
+	VACCEL_OP_INIT(ops[0], VACCEL_IMG_CLASS, (void *)jetson_image_classification),
+	VACCEL_OP_INIT(ops[1], VACCEL_IMG_DETEC, (void *)jetson_image_detect),
+	VACCEL_OP_INIT(ops[2], VACCEL_IMG_SEGME, (void *)jetson_image_segment),
+};
+
+int jetson_init(void)
 {
-	int ret;
-
-	ret = initialize_backend(backend, "jetson_inference");
-	if (ret)
+	int ret = register_plugin_functions(ops, sizeof(ops) / sizeof(ops[0]));
+	if (!ret)
 		return ret;
-
-	ret = register_backend(backend);
-	if (ret)
-		return ret;
-
-	ret = register_backend_function(backend, VACCEL_IMG_CLASS,
-			(void *)jetson_image_classification);
-	if (ret)
-		goto unregister;
-
-	ret = register_backend_function(backend, VACCEL_IMG_DETEC,
-			(void *)jetson_image_detect);
-	if (ret)
-		goto unregister;
-
-	ret = register_backend_function(backend, VACCEL_IMG_SEGME,
-			(void *)jetson_image_segment);
-	if (ret)
-		goto unregister;
 
 	return VACCEL_OK;
-
-unregister:
-	cleanup_backend(backend);
-	return ret;
 }
 
-extern "C" int vaccel_backend_finalize(struct vaccel_backend *backend)
+int jetson_finalize(void)
 {
 	return VACCEL_OK;
 }
+
+VACCEL_MODULE(
+	.name = "jetson-inference",
+	.version = "0.1",
+	.init = jetson_init,
+	.fini = jetson_finalize,
+)

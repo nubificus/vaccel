@@ -1,7 +1,7 @@
-#include "vaccel.h"
-#include "backend.h"
+#include "plugin.h"
 #include "session.h"
 #include "log.h"
+#include "vaccel.h"
 
 #include <stdbool.h>
 #include <string.h>
@@ -11,6 +11,7 @@
 static int load_backend_plugin(const char *path)
 {
 	int ret;
+	struct vaccel_plugin *plugin, **plugin_p;
 
 	void *dl = dlopen(path, RTLD_LAZY);
 	if (!dl) {
@@ -18,45 +19,29 @@ static int load_backend_plugin(const char *path)
 		return VACCEL_ENOENT;
 	}
 
-	int (*init)(struct vaccel_backend *) = dlsym(dl, "vaccel_backend_initialize");
-	if (!init) {
-		vaccel_error("Could not load init function for plugin %s: %s",
-				path, dlerror());
+	plugin_p = dlsym(dl, "vaccel_plugin");
+	if (!plugin_p) {
+		vaccel_error("Not a vaccel plugin: %s", path);
 		ret = VACCEL_ELIBBAD;
 		goto close_dl;
 	}
 
-	int (*fini)(struct vaccel_backend *) = dlsym(dl, "vaccel_backend_finalize");
-	if (!fini) {
-		vaccel_error("Could not load fini function for plugin %s: %s",
-				path, dlerror());
-		ret = VACCEL_ELIBBAD;
+	plugin = *plugin_p;
+	ret = register_plugin(plugin);
+	if (ret != VACCEL_OK)
 		goto close_dl;
-	}
 
-	struct vaccel_backend *new = malloc(sizeof(*new));
-	if (!new) {
-		vaccel_error("Could not allocate memory");
-		ret = VACCEL_ENOMEM;
+	/* Initialize the plugin */
+	ret = plugin->info->init();
+	if (ret != VACCEL_OK)
 		goto close_dl;
-	}
 
-	ret = init(new);
-	if (ret != VACCEL_OK) {
-		vaccel_error("Plugin initialization failed");
-		goto free_backend;
-	}
+	/* Keep dl handle so we can later close the library */
+	plugin->dl_handle = dl;
 
-	vaccel_debug("Loaded plugin %s", path);
-
-	/* setup the info needed to clean-up the backend later */
-	new->dl = dl;
-	new->fini = fini;
+	vaccel_debug("Loaded plugin %s from %s", plugin->info->name, path);
 
 	return VACCEL_OK;
-
-free_backend:
-	free(new);
 
 close_dl:
 	dlclose(dl);
@@ -90,7 +75,7 @@ static void vaccel_init(void)
 	vaccel_debug("Initializing vAccel");
 
 	/* initialize the backends system */
-	backends_bootstrap();
+	plugins_bootstrap();
 
 	/* find backend implementations and set them up */
 	char *plugins = getenv("VACCEL_BACKENDS");
@@ -104,5 +89,5 @@ __attribute__((destructor))
 static void vaccel_fini(void)
 {
 	vaccel_debug("Shutting down vAccel");
-	cleanup_backends();
+	plugins_shutdown();
 }

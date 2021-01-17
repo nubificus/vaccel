@@ -1,7 +1,5 @@
 #include <stdio.h>
-
-#include <vaccel.h>
-#include "backend.h"
+#include <plugin.h>
 
 static int noop(struct vaccel_session *session)
 {
@@ -9,32 +7,21 @@ static int noop(struct vaccel_session *session)
 	return VACCEL_OK;
 }
 
-int vaccel_backend_initialize(struct vaccel_backend *backend)
+struct vaccel_op op = VACCEL_OP_INIT(op, VACCEL_NO_OP, noop);
+
+static int init(void)
 {
-	int ret;
-
-	ret = initialize_backend(backend, "noop_debug");
-	if (ret)
-		return ret;
-
-	ret = register_backend(backend);
-	if (ret)
-		goto cleanup;
-
-	ret = register_backend_function(backend, VACCEL_NO_OP, noop);
-	if (ret)
-		goto unregister;
-
-	return VACCEL_OK;
-
-unregister:
-	unregister_backend(backend);
-cleanup:
-	cleanup_backend(backend);
-	return ret;
+	return register_plugin_function(&op);
 }
 
-int vaccel_backend_finalize(struct vaccel_backend *backend)
+static int fini(void)
 {
 	return VACCEL_OK;
 }
+
+VACCEL_MODULE(
+	.name = "noop",
+	.version = "0.1",
+	.init = init,
+	.fini = fini
+)
