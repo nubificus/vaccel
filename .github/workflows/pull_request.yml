@@ -19,7 +19,7 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v2
       with:
-        submodules: true
+        submodules: recursive
 
     - name: Create Build Environment
       run: |
@@ -50,32 +50,11 @@ jobs:
         make install -C plugins
         make install -C examples
 
-    - name: Upload artifact
-      uses: actions/upload-artifact@v2
-      with:
-        name: vaccelrt-${{ github.event.pull_request.head.sha }}-${{ matrix.build_type }}
-        path: /vaccel/artifacts/${{ matrix.build_type }}/*
-
-  upload_artifact:
-    needs: build
-    runs-on: ubuntu-latest
-    container:
-      image: minio/mc
-      env:
-        NBFC_S3_ACCESS: ${{ secrets.AWS_ACCESS_KEY }}
-        NBFC_S3_SECRET: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-
-    strategy:
-      matrix:
-        build_type: [Debug, Release]
-
-    steps:
-    - name: Download artifact
-      uses: actions/download-artifact@v2
-      with:
-        name: vaccelrt-${{ github.event.pull_request.head.sha }}-${{ matrix.build_type }}
-
     - name: Upload artifact to s3
-      run: |
-        mc alias set nbfc-rook https://s3.nubificus.co.uk $NBFC_S3_ACCESS $NBFC_S3_SECRET
-        mc cp -r opt nbfc-rook/nbfc-assets/github/vaccelrt/${{ github.event.pull_request.head.sha }}/${{ matrix.build_type }}
+      uses: cloudkernels/minio-upload@master
+      with:
+        url: https://s3.nubificus.co.uk
+        access-key: ${{ env.NBFC_S3_ACCESS }}
+        secret-key: ${{ env.NBFC_S3_SECRET }}
+        local-path: /vaccel/artifacts/${{ matrix.build_type }}/opt
+        remote-path: nbfc-assets/github/vaccelrt/${{ github.event.pull_request.head.sha }}/${{ matrix.build_type }}/
