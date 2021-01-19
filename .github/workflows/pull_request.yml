@@ -6,11 +6,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    container:
-      image: nubificus/vaccel-deps:latest
-      volumes:
-        - /tmp/vaccel:/vaccel
-
     strategy:
       matrix:
         build_type: [Debug, Release]
@@ -21,40 +16,31 @@ jobs:
       with:
         submodules: recursive
 
-    - name: Create Build Environment
-      run: |
-        cmake -E make_directory /vaccel/build_${{ matrix.build_type }}
-
-    - name: Configure CMake
-      working-directory: /vaccel/build_${{ matrix.build_type }}
-      run: |
-        cmake $GITHUB_WORKSPACE \
+    - name: Build project
+      uses: addnab/docker-run-action@v1
+      with:
+        image: nubificus/vaccel-deps
+        options: -v ${{github.workspace}}:/vaccel
+        run: |
+          cmake -E make_directory /vaccel/build_${{ matrix.build_type }}
+          cd /vaccel/build_${{ matrix.build_type }}
+          cmake /vaccel \
                 -DCMAKE_INSTALL_PREFIX=/vaccel/artifacts/${{ matrix.build_type }}/opt \
                 -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
                 -DBUILD_PLUGIN_JETSON=ON \
                 -DBUILD_PLUGIN_VIRTIO=ON \
                 -DBUILD_EXAMPLES=ON
-
-
-    - name: Build runtime
-      working-directory: /vaccel/build_${{ matrix.build_type }}
-      run: cmake --build . --config ${{ matrix.build_type }}
-
-    - name: Test
-      working-directory: /vaccel/build_${{ matrix.build_type }}
-      run: |
-        make test
-        # Need to install per directory to avoid installing GoogleTest
-        # artifacts.
-        make install -C src
-        make install -C plugins
-        make install -C examples
+          cmake --build . --config ${{ matrix.build_type }}
+          make test
+          make install -C src
+          make install -C plugins
+          make install -C examples
 
     - name: Upload artifact to s3
       uses: cloudkernels/minio-upload@master
       with:
         url: https://s3.nubificus.co.uk
-        access-key: ${{ env.NBFC_S3_ACCESS }}
-        secret-key: ${{ env.NBFC_S3_SECRET }}
-        local-path: /vaccel/artifacts/${{ matrix.build_type }}/opt
+        access-key: ${{ secrets.AWS_ACCESS_KEY }}
+        secret-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        local-path: artifacts/${{ matrix.build_type }}/opt
         remote-path: nbfc-assets/github/vaccelrt/${{ github.event.pull_request.head.sha }}/${{ matrix.build_type }}/
