@@ -6,6 +6,10 @@ if (BUILD_PLUGIN_JETSON)
 	add_subdirectory(jetson_inference)
 endif(BUILD_PLUGIN_JETSON)
 
+if (BUILD_PLUGIN_CORAL)
+	add_subdirectory(google_coral)
+endif(BUILD_PLUGIN_CORAL)
+
 if (BUILD_PLUGIN_VIRTIO)
 	add_subdirectory(virtio)
 endif(BUILD_PLUGIN_VIRTIO)
