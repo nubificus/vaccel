@@ -1,0 +1,27 @@
+[package]
+name = "vsock"
+version = "0.1.0"
+authors = ["Babis Chalios <mail@bchalios.io>"]
+edition = "2018"
+build = "build.rs"
+
+[lib]
+name = "vaccel_vsock"
+path = "src/lib.rs"
+crate-type = ["staticlib"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[build-dependencies]
+bindgen = "0.53.1"
+libc = ">=0.2.39"
+cc = { version = "1.0", features = ["parallel"] }
+
+[dependencies]
+protocols = { git = "https://github.com/cloudkernels/vaccel-grpc.git", branch = "master" }
+vm-memory = { version = ">=0.2.2" }
+
+protobuf = "2.14.0"
+ttrpc = { git = "https://github.com/cloudkernels/ttrpc-rust.git", branch = "feat_non_abstract_socket" }
+anyhow = "1.0.31"
+nix = "0.17.0"
+libc = "0.2.69"

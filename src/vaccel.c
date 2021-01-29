@@ -15,7 +15,7 @@ static int load_backend_plugin(const char *path)
 
 	void *dl = dlopen(path, RTLD_LAZY);
 	if (!dl) {
-		vaccel_error("Could not dlopen plugin %s", path);
+		vaccel_error("Could not dlopen plugin %s: %s", path, dlerror());
 		return VACCEL_ENOENT;
 	}
 

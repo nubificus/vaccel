@@ -26,7 +26,7 @@ static struct {
 	list_t ops[VACCEL_FUNCTIONS_NR];
 } plugin_state = {0};
 
-static int check_plugin_info(struct vaccel_plugin_info *pinfo)
+static int check_plugin_info(const struct vaccel_plugin_info *pinfo)
 {
 	if (!pinfo->name) {
 		vaccel_error("Plugin needs to have a name");
@@ -41,7 +41,7 @@ static int check_plugin_info(struct vaccel_plugin_info *pinfo)
 	return VACCEL_OK;
 }
 
-static int is_virtio_plugin(struct vaccel_plugin_info *pinfo)
+static int is_virtio_plugin(const struct vaccel_plugin_info *pinfo)
 {
 	return pinfo->sess_init && pinfo->sess_free;
 }
@@ -69,7 +69,7 @@ int register_plugin(struct vaccel_plugin *plugin)
 	if (check_plugin_info(plugin->info))
 		return VACCEL_EINVAL;
 
-	struct vaccel_plugin_info *info = plugin->info;
+	const struct vaccel_plugin_info *info = plugin->info;
 
 	list_add_tail(&plugin_state.plugins, &plugin->entry);
 
@@ -127,7 +127,7 @@ int register_plugin_function(struct vaccel_op *plugin_op)
 		vaccel_error("Invalid vaccel function");
 		return VACCEL_EINVAL;
 	}
-		
+
 	if (plugin_op->type >= VACCEL_FUNCTIONS_NR) {
 		vaccel_error("Unknown function type");
 		return VACCEL_EINVAL;
@@ -210,7 +210,7 @@ int plugins_shutdown(void)
 
 	struct vaccel_plugin *plugin, *tmp;
 	for_each_container_safe(plugin, tmp, &plugin_state.plugins, struct vaccel_plugin, entry) {
-		struct vaccel_plugin_info *info = plugin->info;
+		const struct vaccel_plugin_info *info = plugin->info;
 
 		/* Unregister plugin from runtime */
 		unregister_plugin(plugin);

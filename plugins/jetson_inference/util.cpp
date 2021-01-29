@@ -3,7 +3,7 @@
 #include <jetson-utils/cudaMappedMemory.h>
 #include <jetson-utils/filesystem.h>
 
-bool loadImageBufRGBA(void *buffer, int buf_len, float4 **cpu, float4 **gpu,
+bool loadImageBufRGBA(const void *buffer, int buf_len, float4 **cpu, float4 **gpu,
 		int *width, int *height, const float4& mean)
 {
 	// validate parameters
@@ -17,7 +17,7 @@ bool loadImageBufRGBA(void *buffer, int buf_len, float4 **cpu, float4 **gpu,
 	int imgHeight = 0;
 	int imgChannels = 0;
 
-	unsigned char* img = stbi_load_from_memory((unsigned char *)buffer,
+	unsigned char* img = stbi_load_from_memory((const unsigned char *)buffer,
 			buf_len, &imgWidth, &imgHeight, &imgChannels, 0);
 	if (!img) {
 		fprintf(stderr, "Failed to load img from memory\n");

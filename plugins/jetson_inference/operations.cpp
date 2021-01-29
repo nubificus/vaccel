@@ -40,7 +40,7 @@ static const char *find_imagenet_models_path(void)
 	return NULL;
 }
 
-int jetson_image_classification(struct vaccel_session *sess, void *img,
+int jetson_image_classification(struct vaccel_session *sess, const void *img,
 		char *out_text, char *out_imgname,
 		size_t len_img, size_t len_out_text, size_t len_out_imgname)
 {
@@ -140,7 +140,7 @@ int jetson_image_detect(struct vaccel_session *sess, void *img,
 		size_t len_img, size_t len_out_text, size_t len_out_imgname)
 {
 	detectNet *net = NULL;
-	char *modelName = NULL; //network;
+	const char *modelName = NULL; //network;
 	float threshold = 0.0f;
 	int maxBatchSize = 0;
 
@@ -259,7 +259,7 @@ int jetson_image_segment(struct vaccel_session *sess, void *img,
 		size_t len_img, size_t len_out_text, size_t len_out_imgname)
 {
 	segNet *net = NULL;
-	char *modelName = NULL; //network;
+	const char *modelName = NULL; //network;
 
 	if (!modelName)
 		modelName = "fcn-resnet18-voc-320x320";

@@ -18,7 +18,7 @@ struct ImageData
 ImageData ReadImageFile (char* name);
 void WriteImageFile (char* name, ImageData img);
 
-bool loadImageBufRGBA(void *buffer, int buf_len, float4 **cpu, float4 **gpu,
+bool loadImageBufRGBA(const void *buffer, int buf_len, float4 **cpu, float4 **gpu,
 		int *width, int *height, const float4& mean);
 bool saveImageFileRGBA(const char *filename, float4 *cpu, int width, int height,
 		float max_pixel, int quality);

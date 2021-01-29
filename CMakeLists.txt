@@ -8,6 +8,7 @@ project(vaccelrt
 # Configuration time options
 option(BUILD_PLUGIN_VIRTIO "Build the VirtIO plugin" OFF)
 option(BUILD_PLUGIN_JETSON "Build the Jetson plugin" OFF)
+option(BUILD_PLUGIN_VSOCK "Build thev vsock plugin" OFF)
 option(BUILD_PLUGIN_NOOP "Build the no-op debugging plugin" OFF)
 option(BUILD_EXAMPLES "Build the examples" OFF)
 

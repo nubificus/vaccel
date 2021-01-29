@@ -9,37 +9,47 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     strategy:
       matrix:
         build_type: [Debug, Release]
 
     steps:
+    - name: Cleanup pervious jobs
+      run: |
+        echo "Cleaning up previous runs"
+        sudo rm -rf "${{ github.workspace }}/*"
+
     - name: Checkout code
       uses: actions/checkout@v2
       with:
         submodules: recursive
 
+    - name: Install deps
+      run: |
+        sudo apt update
+        sudo apt install -y cmake
+
     - name: Build project
-      uses: addnab/docker-run-action@v1
-      with:
-        image: nubificus/vaccel-deps
-        options: -v ${{github.workspace}}:/vaccel
-        run: |
-          cmake -E make_directory /vaccel/build_${{ matrix.build_type }}
-          cd /vaccel/build_${{ matrix.build_type }}
-          cmake /vaccel \
-                -DCMAKE_INSTALL_PREFIX=/vaccel/artifacts/${{ matrix.build_type }}/opt \
-                -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
-                -DBUILD_PLUGIN_JETSON=ON \
-                -DBUILD_PLUGIN_VIRTIO=ON \
-                -DBUILD_EXAMPLES=ON
-          cmake --build . --config ${{ matrix.build_type }}
-          make test
-          make install -C src
-          make install -C plugins
-          make install -C examples
+      id: build_vaccelrt
+      run: |
+        cargo --version
+        rustc --version
+        mkdir -p ${{ github.workspace }}/build_${{ matrix.build_type }}
+        cd build_${{ matrix.build_type }}
+        cmake ${{ github.workspace }} \
+              -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/artifacts/${{ matrix.build_type }}/opt \
+              -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+              -DBUILD_PLUGIN_JETSON=ON \
+              -DBUILD_PLUGIN_VIRTIO=ON \
+              -DBUILD_PLUGIN_VSOCK=ON \
+              -DBUILD_EXAMPLES=ON && \
+        cmake --build . --config ${{ matrix.build_type }} && \
+        make test && \
+        make install -C src && \
+        make install -C plugins && \
+        make install -C examples
 
     - name: Upload artifact to s3
       uses: cloudkernels/minio-upload@master

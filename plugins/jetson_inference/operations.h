@@ -3,7 +3,7 @@
 
 #include <stddef.h>
 
-int jetson_image_classification(struct vaccel_session *sess, void *img,
+int jetson_image_classification(struct vaccel_session *sess, const void *img,
 		char *out_text, char *out_imgname,
 		size_t len_img, size_t len_out_text, size_t len_out_imgname);
 int jetson_image_detect(struct vaccel_session *sess, void *img,
