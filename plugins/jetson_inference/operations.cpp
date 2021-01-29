@@ -46,8 +46,11 @@ int jetson_image_classification(struct vaccel_session *sess, const void *img,
 {
 	/* Check for networks directory */
 	const char *networks_dir = find_imagenet_models_path();
-	if (!networks_dir)
-		return VACCEL_ENOENT;
+	int ret = VACCEL_OK;
+	if (!networks_dir) {
+		ret = VACCEL_ENOENT;
+		goto out;
+	}
 
 	/* 512 bytes should be enough, but this is dangerous for failing
 	 * spuriously */
@@ -75,7 +78,8 @@ int jetson_image_classification(struct vaccel_session *sess, const void *img,
 
 	if (!loadImageBufRGBA(img, len_img, (float4**)&imgCPU, (float4**)&imgCUDA, &imgWidth, &imgHeight, make_float4(0,0,0,0))) {
 		fprintf(stderr, "Failed to load image\n");
-		return VACCEL_ENOENT;
+		ret = VACCEL_ENOENT;
+		goto close:
 	}
 
 	/*
@@ -128,11 +132,13 @@ int jetson_image_classification(struct vaccel_session *sess, const void *img,
 	 */
 	printf("imagenet: shutting down...\n");
 
+close:
 	CUDA(cudaFreeHost(imgCPU));
 	SAFE_DELETE(net);
 	CUDA(cudaDeviceReset());
 
-	return VACCEL_OK;
+out:
+	return ret;
 }
 
 int jetson_image_detect(struct vaccel_session *sess, void *img,
