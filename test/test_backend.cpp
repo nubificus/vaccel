@@ -15,7 +15,7 @@ class PluginTests : public ::testing::Test {
 	static int fini(void)
 	{
 		return VACCEL_OK;
-	} 
+	}
 	static int init(void)
 	{
 		return VACCEL_OK;
@@ -24,7 +24,7 @@ class PluginTests : public ::testing::Test {
 protected:
 	struct vaccel_plugin plugin;
 	struct vaccel_plugin_info pinfo;
-	
+
 	void SetUp() override
 	{
 		plugin.info = &this->pinfo;

@@ -1,5 +1,5 @@
 # Core runtime sources
-set(runtime_src plugin.c vaccel.c vaccel_ops.c session.c log.c)
+set(runtime_src plugin.c vaccel.c vaccel_ops.c session.c log.c id_pool.c)
 
 # core runtime headers
 set(headers plugin.h vaccel.h vaccel_ops.h)

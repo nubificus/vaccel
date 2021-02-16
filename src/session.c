@@ -1,6 +1,7 @@
 #include "vaccel.h"
 #include "plugin.h"
 #include "log.h"
+#include "id_pool.h"
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -12,50 +13,27 @@ struct {
 	/* true if the sessions subsystem has been initialized */
 	bool initialized;
 
-	/* Available session ids */
-	uint32_t ids[MAX_VACCEL_SESSIONS];
-
-	/* Next free session id position */
-	size_t next_free;
-
-	/* Lock to access the session ids array */
-	pthread_spinlock_t lock;
+	/* Id pool for sessions */
+	id_pool_t *ids;
 } sessions;
 
 static uint32_t get_sess_id(void)
 {
-	uint32_t id;
-
-	pthread_spin_lock(&sessions.lock);
-	if (sessions.next_free == MAX_VACCEL_SESSIONS)
-		id = 0;
-	else
-		id = sessions.ids[sessions.next_free++];
-	pthread_spin_unlock(&sessions.lock);
-
-	return id;
+	return get_new_id(sessions.ids);
 }
 
 static void put_sess_id(uint32_t id)
 {
-	pthread_spin_lock(&sessions.lock);
-	sessions.ids[--sessions.next_free] = id;
-	pthread_spin_unlock(&sessions.lock);
+	release_id(sessions.ids, id);
 }
 
 int sessions_bootstrap(void)
 {
-	int ret = pthread_spin_init(&sessions.lock, PTHREAD_PROCESS_PRIVATE);
-	if (ret) {
-		sessions.initialized = false;
-		return VACCEL_ESESS;
-	}
-
-	for (size_t i = 0; i < MAX_VACCEL_SESSIONS; ++i)
-		sessions.ids[i] = i + 1;
+	sessions.ids = id_pool_new(MAX_VACCEL_SESSIONS);
+	if (!sessions.ids)
+		return VACCEL_ENOMEM;
 
 	sessions.initialized = true;
-	sessions.next_free = 0;
 
 	return VACCEL_OK;
 }
@@ -79,6 +57,7 @@ int vaccel_sess_init(struct vaccel_session *sess, uint32_t flags)
 		return VACCEL_ESESS;
 
 	sess->session_id = sess_id;
+	list_init(&sess->resources);
 
 	vaccel_debug("session:%u New session", sess_id);
 

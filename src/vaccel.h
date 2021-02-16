@@ -6,6 +6,7 @@
 
 #include "common.h"
 #include "vaccel_ops.h"
+#include "list.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -15,8 +16,10 @@ struct vaccel_session {
 	/* id of the session */
 	uint32_t session_id;
 
-	/* backend private data */
-	void *priv;
+	/* List of resources registered with the
+	 * session. This will do for now, but potentially
+	 * we need a more clever data structure here */
+	list_t resources;
 };
 
 /* Initialize a new session with the runtime */
