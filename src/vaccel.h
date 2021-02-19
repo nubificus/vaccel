@@ -12,7 +12,16 @@
 extern "C" {
 #endif
 
-struct vaccel_session;
+struct vaccel_session {
+	/* id of the session */
+	uint32_t session_id;
+
+	/* List of resources registered with the
+	 * session. This will do for now, but potentially
+	 * we need a more clever data structure here */
+	list_t resources;
+};
+
 
 /* Initialize a new session with the runtime */
 int vaccel_sess_init(struct vaccel_session *sess, uint32_t flags);

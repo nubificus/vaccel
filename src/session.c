@@ -3,6 +3,7 @@
 #include "plugin.h"
 #include "log.h"
 #include "id_pool.h"
+#include "resources.h"
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -84,4 +85,40 @@ int vaccel_sess_free(struct vaccel_session *sess)
 	vaccel_debug("session:%u Free session", sess->session_id);
 
 	return VACCEL_OK;
+}
+
+int session_register_resource(struct vaccel_session *session,
+		struct vaccel_resource *resource)
+{
+	list_add_tail(&session->resources, &resource->entry);
+
+	return VACCEL_OK;
+}
+
+int session_unregister_resource(struct vaccel_session *session,
+		struct vaccel_resource *resource)
+{
+	if (!session_has_resource(session, resource)) {
+		vaccel_warn("Resource %u not registered with session %u",
+				resource->id, session->session_id);
+		return VACCEL_EINVAL;
+	}
+
+	list_unlink_entry(&resource->entry);
+
+	return VACCEL_OK;
+}
+
+bool session_has_resource(struct vaccel_session *session,
+		struct vaccel_resource *resource)
+{
+	struct vaccel_resource *it;
+
+	for_each_container(it, &session->resources, struct vaccel_resource,
+			entry) {
+		if (it->id == resource->id)
+			return true;
+	}
+
+	return false;
 }
