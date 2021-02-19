@@ -1,3 +1,4 @@
+#include "session.h"
 #include "vaccel.h"
 #include "plugin.h"
 #include "log.h"

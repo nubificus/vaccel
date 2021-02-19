@@ -2,7 +2,7 @@
 #include "plugin.h"
 #include "common.h"
 #include "log.h"
-#include "vaccel.h"
+#include "session.h"
 
 /* export supported function as types for the rest of the runtime */
 typedef typeof(vaccel_noop) noop_t;

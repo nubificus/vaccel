@@ -1,11 +1,13 @@
 # Core runtime sources
-set(runtime_src plugin.c vaccel.c vaccel_ops.c session.c log.c id_pool.c)
+set(runtime_src plugin.c vaccel.c vaccel_ops.c session.c log.c id_pool.c
+	resources.c ml/model.c)
 
 # core runtime headers
-set(headers plugin.h vaccel.h vaccel_ops.h)
+set(headers plugin.h vaccel.h vaccel_ops.h ml/model.h)
 
 add_library(vaccel SHARED ${headers} ${runtime_src})
 target_compile_options(vaccel PUBLIC -Wall -Wextra -Werror -pthread)
+target_include_directories(vaccel PUBLIC ${PROJECT_SOURCE_DIR}/src)
 set_property(TARGET vaccel PROPERTY LINK_FLAGS "-pthread")
 target_link_libraries(vaccel slog)
 

@@ -7,6 +7,7 @@
 
 enum vaccel_resource_type {
 	VACCEL_ML_MODEL = 0,
+	VACCEL_RESOURCE_TYPE_MAX,
 };
 
 struct vaccel_resource {
@@ -23,5 +24,10 @@ struct vaccel_resource {
 	/* Owner of the resource */
 	void *owner;
 };
+
+int vaccel_resources_bootstrap(void);
+int vaccel_resource_new(struct vaccel_resource *resource,
+		enum vaccel_resource_type type, void *owner);
+void vaccel_resource_destroy(struct vaccel_resource *resource);
 
 #endif /* __VACCEL_RESOURCES_H__ */

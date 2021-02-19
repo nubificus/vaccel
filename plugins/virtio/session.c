@@ -1,4 +1,5 @@
 #include <vaccel.h>
+#include <session.h>
 #include <stdint.h>
 #include <sys/ioctl.h>
 #include <accel.h>

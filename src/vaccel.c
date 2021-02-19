@@ -2,6 +2,7 @@
 #include "session.h"
 #include "log.h"
 #include "vaccel.h"
+#include "resources.h"
 
 #include <stdbool.h>
 #include <string.h>
@@ -76,6 +77,11 @@ static void vaccel_init(void)
 
 	/* initialize the backends system */
 	plugins_bootstrap();
+
+	/* resources system bootstrap */
+	ret = vaccel_resources_bootstrap();
+	if (ret)
+		return;
 
 	/* find backend implementations and set them up */
 	char *plugins = getenv("VACCEL_BACKENDS");
