@@ -3,12 +3,26 @@
 
 #include <stdint.h>
 
-struct vaccel_ml_model;
+#include "resources.h"
+
 struct vaccel_session;
 
-int vaccel_ml_register_model(struct vaccel_ml_model *model,
-		struct vaccel_session *session, const char *path,
-		uint32_t flags);
-int vaccel_ml_unregister_model(struct vaccel_ml_model *model);
+struct vaccel_ml_model {
+	/* vAccel resource descriptor */
+	struct vaccel_resource resource;
+
+	/* vAccelRT-related flags */
+	uint32_t flags;
+};
+
+struct vaccel_ml_model_ops {
+	/* Register model */
+	int (*register_model)(struct vaccel_ml_model *model, struct vaccel_session *session);
+
+	/* Unregister model */
+	int (*unregister_model)(struct vaccel_ml_model *model);
+};
+
+int vaccel_ml_model_init(struct vaccel_ml_model *model, uint32_t flags);
 
 #endif /* __VACCEL_ML_MODEL_H__ */

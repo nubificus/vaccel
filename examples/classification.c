@@ -6,7 +6,6 @@
 #include <unistd.h>
 
 #include <vaccel.h>
-#include <vaccel_ops.h>
 
 int read_file(const char *filename, char **img, size_t *img_size)
 {
@@ -61,11 +60,12 @@ int main(int argc, char *argv[])
 	int ret;
 	char *image;
        	size_t image_size;
-	char out_text[512], out_imagename[512];
+	char out_text[512];
 	struct vaccel_session sess;
+	struct vaccel_ml_caffe_model model;
 
-	if (argc != 3) {
-		fprintf(stderr, "Usage: %s filename #iterations\n", argv[0]);
+	if (argc != 6) {
+		fprintf(stderr, "Usage: %s image model_prototxt model_bin classes #iterations\n", argv[0]);
 		return 0;
 	}
 
@@ -77,16 +77,31 @@ int main(int argc, char *argv[])
 
 	printf("Initialized session with id: %u\n", sess.session_id);
 
-	ret = read_file(argv[1], &image, &image_size);
-	if (ret)
+	ret = vaccel_ml_caffe_model_init(&model, 0, argv[2], argv[3], argv[4]);
+	if (ret != VACCEL_OK) {
+		fprintf(stderr, "could not initialize Caffe model\n");
 		goto close_session;
+	}
 
-	for (int i = 0; i < atoi(argv[2]); ++i) {
-		ret = vaccel_image_classification(&sess, image, (unsigned char*)out_text, (unsigned char*)out_imagename,
-				image_size, sizeof(out_text), sizeof(out_imagename));
+	ret = model.ops.register_model((struct vaccel_ml_model *)&model, &sess);
+	if (ret != VACCEL_OK) {
+		fprintf(stderr, "Could not register Caffe model with session %u\n", sess.session_id);
+		goto close_session;
+	}
+
+	ret = read_file(argv[1], &image, &image_size);
+	if (ret) {
+		fprintf(stderr, "Could not read image file");
+		goto close_session;
+	}
+
+	for (int i = 0; i < atoi(argv[5]); ++i) {
+		ret = vaccel_image_classification(&sess, &model, image,
+				image_size, (unsigned char*)out_text,
+				sizeof(out_text));
 		if (ret) {
 			fprintf(stderr, "Could not run op: %d\n", ret);
-			goto close_session;
+			goto free_image;
 		}
 
 		if (i == 0)
@@ -94,8 +109,9 @@ int main(int argc, char *argv[])
 	}
 
 
-close_session:
+free_image:
 	free(image);
+close_session:
 	if (vaccel_sess_free(&sess) != VACCEL_OK) {
 		fprintf(stderr, "Could not clear session\n");
 		return 1;

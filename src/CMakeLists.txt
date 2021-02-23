@@ -1,6 +1,6 @@
 # Core runtime sources
 set(runtime_src plugin.c vaccel.c vaccel_ops.c session.c log.c id_pool.c
-	resources.c ml/model.c)
+	resources.c ml/model.c ml/caffe.c ml/ml_ops.c)
 
 # core runtime headers
 set(headers plugin.h vaccel.h vaccel_ops.h ml/model.h)

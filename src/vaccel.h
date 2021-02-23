@@ -6,6 +6,7 @@
 
 #include "common.h"
 #include "vaccel_ops.h"
+#include "ml/caffe.h"
 #include "list.h"
 
 #ifdef __cplusplus

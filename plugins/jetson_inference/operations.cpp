@@ -40,17 +40,20 @@ static const char *find_imagenet_models_path(void)
 	return NULL;
 }
 
-int jetson_image_classification(struct vaccel_session *sess, const void *img,
-		char *out_text, char *out_imgname,
-		size_t len_img, size_t len_out_text, size_t len_out_imgname)
+int jetson_image_classification(struct vaccel_session *sess,
+		struct vaccel_ml_caffe_model *model, const void *img,
+		size_t img_len,	char *tags, size_t tags_len)
 {
 	/* Check for networks directory */
+	/*
 	const char *networks_dir = find_imagenet_models_path();
 	if (!networks_dir)
 		return VACCEL_ENOENT;
+	*/
 
 	/* 512 bytes should be enough, but this is dangerous for failing
 	 * spuriously */
+	/*
 	char prototxt_path[512], model_path[512], class_path[512];
 	snprintf(prototxt_path, sizeof(prototxt_path), "%s/googlenet.prototxt",
 			networks_dir);
@@ -58,12 +61,13 @@ int jetson_image_classification(struct vaccel_session *sess, const void *img,
 			networks_dir);
 	snprintf(class_path, sizeof(class_path), "%s/ilsvrc12_synset_words.txt",
 			networks_dir);
+	*/
 
 	imageNet *net =
-		imageNet::Create(prototxt_path, model_path, NULL, class_path,
-			IMAGENET_DEFAULT_INPUT, IMAGENET_DEFAULT_OUTPUT,
-			DEFAULT_MAX_BATCH_SIZE, TYPE_FASTEST, DEVICE_GPU,
-			true);
+		imageNet::Create(model->prototxt, model->bin_model, NULL,
+				model->labels, IMAGENET_DEFAULT_INPUT,
+				IMAGENET_DEFAULT_OUTPUT, DEFAULT_MAX_BATCH_SIZE,
+				TYPE_FASTEST, DEVICE_GPU, true);
 
 	/*
 	 * load image from disk
@@ -73,7 +77,7 @@ int jetson_image_classification(struct vaccel_session *sess, const void *img,
 	int imgWidth  = 0;
 	int imgHeight = 0;
 
-	if (!loadImageBufRGBA(img, len_img, (float4**)&imgCPU, (float4**)&imgCUDA, &imgWidth, &imgHeight, make_float4(0,0,0,0))) {
+	if (!loadImageBufRGBA(img, img_len, (float4**)&imgCPU, (float4**)&imgCUDA, &imgWidth, &imgHeight, make_float4(0,0,0,0))) {
 		fprintf(stderr, "Failed to load image\n");
 		return VACCEL_ENOENT;
 	}
@@ -88,6 +92,10 @@ int jetson_image_classification(struct vaccel_session *sess, const void *img,
 	if (img_class >= 0) {
 		printf("imagenet: %2.5f%% class #%i (%s)\n", confidence * 100.0f, img_class, net->GetClassDesc(img_class));
 
+		/* Write out tags */
+		snprintf(tags, tags_len, "%2.3f%% %s", confidence * 100.0f, net->GetClassDesc(img_class));
+
+		/*
 		const char *outputFilename = "processedImg.jpg";
 		snprintf(out_imgname, len_out_imgname, "%s", outputFilename);
 
@@ -95,14 +103,9 @@ int jetson_image_classification(struct vaccel_session *sess, const void *img,
 			// use font to draw the class description
 			cudaFont* font = cudaFont::Create(adaptFontSize(imgWidth));
 
-			if (font != NULL) {
-				char str[512];
-				sprintf(str, "%2.3f%% %s", confidence * 100.0f, net->GetClassDesc(img_class));
-				snprintf(out_text, len_out_text, "%s", str);
-
-				font->OverlayText((float4 *)imgCUDA, imgWidth, imgHeight, (const char *)str, 10, 10,
+			if (font != NULL)
+				font->OverlayText((float4 *)imgCUDA, imgWidth, imgHeight, (const char *)tags, 10, 10,
 							   make_float4(255, 255, 255, 255), make_float4(0, 0, 0, 100));
-			}
 
 			// wait for GPU to complete work
 			CUDA(cudaDeviceSynchronize());
@@ -118,6 +121,7 @@ int jetson_image_classification(struct vaccel_session *sess, const void *img,
 			else
 				printf("imagenet: completed saving\n");
 		}
+		*/
 	}
 	else {
 		fprintf(stderr, "imagenet: failed to classify image (result=%i)\n", img_class);

@@ -4,6 +4,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "ml/ml_ops.h"
+
 #define VACCEL_NO_OP        0
 #define VACCEL_BLAS_SGEMM   1
 #define VACCEL_IMG_CLASS    2
@@ -32,16 +34,5 @@ int vaccel_sgemm(struct vaccel_session *sess,
 		uint32_t k, uint32_t m, uint32_t n,
 		size_t len_a, size_t len_b, size_t len_c,
 		float *a, float *b, float *c);
-int vaccel_image_classification(struct vaccel_session *sess, const void *img,
-		unsigned char *out_text, unsigned char *out_imgname,
-		size_t len_img, size_t len_out_text, size_t len_out_imgname);
-
-int vaccel_image_detection(struct vaccel_session *sess, void *img,
-		unsigned char *out_imgname, size_t len_img,
-		size_t len_out_imgname);
-
-int vaccel_image_segmentation(struct vaccel_session *sess, void *img,
-		unsigned char *out_imgname, size_t len_img,
-		size_t len_out_imgname);
 
 #endif /* __VACCEL_OPS_H__ */
