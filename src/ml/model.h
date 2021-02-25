@@ -15,14 +15,12 @@ struct vaccel_ml_model {
 	uint32_t flags;
 };
 
-struct vaccel_ml_model_ops {
-	/* Register model */
-	int (*register_model)(struct vaccel_ml_model *model, struct vaccel_session *session);
-
-	/* Unregister model */
-	int (*unregister_model)(struct vaccel_ml_model *model);
-};
-
 int vaccel_ml_model_init(struct vaccel_ml_model *model, uint32_t flags);
+int vaccel_ml_model_register(
+	struct vaccel_session *session,
+	enum vaccel_resource_type type,
+	struct vaccel_ml_model *model
+);
+int vaccel_ml_model_unregister(struct vaccel_ml_model *model);
 
 #endif /* __VACCEL_ML_MODEL_H__ */

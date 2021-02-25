@@ -1,5 +1,6 @@
 #include "ml_ops.h"
 #include "plugin.h"
+#include "session.h"
 #include "log.h"
 
 typedef typeof(vaccel_image_classification) image_classification_t;
@@ -15,6 +16,11 @@ int vaccel_image_classification(struct vaccel_session *sess,
 
 	vaccel_debug("session:%u Looking for plugin implementing image classification",
 			sess->session_id);
+
+	if (!session_has_resource(sess, (struct vaccel_resource *)model)) {
+		vaccel_warn("Model is not registered with session");
+		return VACCEL_EINVAL;
+	}
 
 	//Get implementation
 	image_classification_t *plugin_op = get_plugin_op(VACCEL_IMG_CLASS);

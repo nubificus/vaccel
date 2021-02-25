@@ -5,6 +5,7 @@
 #include "vaccel.h"
 
 #include "list.h"
+#include "resources.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -27,6 +28,15 @@ struct vaccel_plugin_info {
 	 * session handling to the plugin itself */
 	int (*sess_init)(struct vaccel_session *sess, uint32_t flags);
 	int (*sess_free)(struct vaccel_session *sess);
+	int (*register_resource)(
+		struct vaccel_session *sess,
+		enum vaccel_resource_type type,
+		struct vaccel_resource *res
+	);
+	int (*unregister_resource)(
+		struct vaccel_session *sess,
+		struct vaccel_resource *res
+	);
 };
 
 struct vaccel_plugin {

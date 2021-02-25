@@ -6,13 +6,13 @@
 #include "list.h"
 
 enum vaccel_resource_type {
-	VACCEL_ML_MODEL = 0,
+	VACCEL_ML_CAFFE_MODEL = 0,
 	VACCEL_RESOURCE_TYPE_MAX,
 };
 
 struct vaccel_resource {
 	/* Unique identifier of the resource */
-	uint64_t id;
+	uint32_t id;
 
 	/* Type of resource */
 	enum vaccel_resource_type type;

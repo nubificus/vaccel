@@ -74,8 +74,8 @@ int vaccel_sess_free(struct vaccel_session *sess)
 	if (!sessions.initialized)
 		return VACCEL_ESESS;
 
-	/* if we're using virtio as a plugin offload the session cleanup to the
-	 * host */
+	/* if we're using virtio as a plugin offload the session
+	 * cleanup to the host */
 	struct vaccel_plugin *virtio = get_virtio_plugin();
 	if (virtio)
 		return virtio->info->sess_free(sess);

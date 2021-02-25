@@ -10,6 +10,7 @@ use std::slice;
 
 pub mod vaccel;
 pub mod session;
+pub mod resources;
 mod util;
 
 #[no_mangle]

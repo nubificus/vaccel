@@ -83,7 +83,7 @@ int main(int argc, char *argv[])
 		goto close_session;
 	}
 
-	ret = model.ops.register_model((struct vaccel_ml_model *)&model, &sess);
+	ret = vaccel_ml_model_register(&sess, VACCEL_ML_CAFFE_MODEL, (struct vaccel_ml_model *)&model);
 	if (ret != VACCEL_OK) {
 		fprintf(stderr, "Could not register Caffe model with session %u\n", sess.session_id);
 		goto close_session;
@@ -107,7 +107,6 @@ int main(int argc, char *argv[])
 		if (i == 0)
 			printf("classification tags: %s\n", out_text);
 	}
-
 
 free_image:
 	free(image);

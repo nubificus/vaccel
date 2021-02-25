@@ -10,8 +10,6 @@ struct vaccel_ml_caffe_model {
 	 * to this type */
 	struct vaccel_ml_model ml_model;
 
-	struct vaccel_ml_model_ops ops;
-
 	/* Path to prototxt file */
 	char *prototxt;
 

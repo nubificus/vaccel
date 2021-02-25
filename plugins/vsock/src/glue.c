@@ -3,8 +3,21 @@
 
 extern int sess_init(struct vaccel_session *, uint32_t);
 extern int sess_free(struct vaccel_session *);
-extern int image_classify(struct vaccel_session *, const unsigned char *img,
-		size_t img_len, unsigned char *tags, size_t tags_len);
+extern int image_classify(
+	struct vaccel_session *,
+	const unsigned char *img,
+	size_t img_len,
+	unsigned char *tags,
+	size_t tags_len
+);
+extern int register_caffe_model(
+	struct vaccel_session *,
+	struct vaccel_ml_caffe_model *
+);
+extern int unregister_resource(
+	struct vaccel_session *,
+	struct vaccel_resource *
+);
 
 int vsock_img_classify(struct vaccel_session *session, void *img,
 		char *out_text, char *out_imgname, size_t len_img,
@@ -19,6 +32,26 @@ int vsock_img_classify(struct vaccel_session *session, void *img,
 struct vaccel_op ops[] = {
 	VACCEL_OP_INIT(ops[0], VACCEL_IMG_CLASS, vsock_img_classify),
 };
+
+int register_resource(
+	struct vaccel_session *sess,
+	enum vaccel_resource_type type,
+	struct vaccel_resource *res
+) {
+	if (!sess)
+		return VACCEL_EINVAL;
+
+	if (!res)
+		return VACCEL_EINVAL;
+
+	switch (type) {
+		case VACCEL_ML_CAFFE_MODEL:
+			return register_caffe_model(sess,
+					(struct vaccel_ml_caffe_model *)res);
+		default:
+			return VACCEL_EINVAL;
+	}
+}
 
 int vsock_init(void)
 {
@@ -41,4 +74,6 @@ VACCEL_MODULE(
 	.fini = vsock_init,
 	.sess_init = sess_init,
 	.sess_free = sess_free,
+	.register_resource = register_resource,
+	.unregister_resource = unregister_resource,
 )
