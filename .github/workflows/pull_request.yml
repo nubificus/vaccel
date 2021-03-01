@@ -9,11 +9,13 @@ on:
 
 jobs:
   build:
-    runs-on: self-hosted
+    runs-on: [self-hosted, "${{ matrix.archconfig }}" ]
 
     strategy:
       matrix:
+        archconfig: [ x86_64, aarch64 ]
         build_type: [Debug, Release]
+      fail-fast: false
 
     steps:
     - name: Cleanup pervious jobs
@@ -27,29 +29,43 @@ jobs:
         submodules: recursive
 
     - name: Install deps
+      id: install-deps
       run: |
         sudo apt update
         sudo apt install -y cmake
+        tag="${{ matrix.archconfig }}"
+        if [[ "${{ matrix.archconfig }}" == "aarch64" ]]
+        then
+          tag="arm64"
+        fi
+        echo "::set-output name=tag::$tag"
+        sudo mkdir -p ${{ github.workspace }}/build_${{ matrix.build_type }}
 
     - name: Build project
       id: build_vaccelrt
-      run: |
-        cargo --version
-        rustc --version
-        mkdir -p ${{ github.workspace }}/build_${{ matrix.build_type }}
-        cd build_${{ matrix.build_type }}
-        cmake ${{ github.workspace }} \
-              -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/artifacts/${{ matrix.build_type }}/opt \
-              -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+      uses: addnab/docker-run-action@v2
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+        image: nubificus/vaccel-deps:${{ steps.install-deps.outputs.tag }}
+        options: -v ${{ github.workspace }}:/work -e BUILD_TYPE=${{ matrix.build_type }} -e ARCHCONFIG=${{ matrix.archconfig }}
+        run: |
+          cargo --version
+          rustc --version
+          mkdir -p /work/build_$BUILD_TYPE
+          cd /work/build_$BUILD_TYPE
+          cmake /work \
+              -DCMAKE_INSTALL_PREFIX=/work/artifacts/$ARCHCONFIG/$BUILD_TYPE/opt \
+              -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
               -DBUILD_PLUGIN_JETSON=ON \
               -DBUILD_PLUGIN_VIRTIO=ON \
               -DBUILD_PLUGIN_VSOCK=ON \
               -DBUILD_EXAMPLES=ON && \
-        cmake --build . --config ${{ matrix.build_type }} && \
-        make test && \
-        make install -C src && \
-        make install -C plugins && \
-        make install -C examples
+          cmake --build . --config $BUILD_TYPE && \
+          make test && \
+          make install -C src && \
+          make install -C plugins && \
+          make install -C examples
 
     - name: Upload artifact to s3
       uses: cloudkernels/minio-upload@master
@@ -57,8 +73,8 @@ jobs:
         url: https://s3.nubificus.co.uk
         access-key: ${{ secrets.AWS_ACCESS_KEY }}
         secret-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        local-path: artifacts/${{ matrix.build_type }}/opt
-        remote-path: nbfc-assets/github/vaccelrt/${{ github.event.pull_request.head.sha }}/${{ matrix.build_type }}/
+        local-path: artifacts/${{ matrix.archconfig }}/${{ matrix.build_type }}/opt
+        remote-path: nbfc-assets/github/vaccelrt/${{ github.event.pull_request.head.sha }}/${{ matrix.archconfig }}/${{ matrix.build_type }}/
 
     - name: Clean-up
       run: sudo rm -rf artifacts build_${{ matrix.build_type }}
