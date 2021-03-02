@@ -1,7 +1,7 @@
 # CUDA installation paths
-set(CUDA_DIR "/usr/local/cuda/targets/x86_64-linux" CACHE STRING "Path to CUDA installation")
+set(CUDA_DIR "/usr/local/cuda" CACHE STRING "Path to CUDA installation")
 set(CUDA_INCLUDE ${CUDA_DIR}/include)
-set(CUDA_LIB ${CUDA_DIR}/lib)
+set(CUDA_LIB ${CUDA_DIR}/lib64)
 
 # Jetson inference installation paths
 set(JETSON_DIR "/usr/local" CACHE STRING "Path to Jetson Inference installation")
