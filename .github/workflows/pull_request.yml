@@ -34,11 +34,14 @@ jobs:
         sudo apt update
         sudo apt install -y cmake
         tag="${{ matrix.archconfig }}"
+        docker_options=""
         if [[ "${{ matrix.archconfig }}" == "aarch64" ]]
         then
           tag="arm64"
+          docker_options="--runtime nvidia --gpus all"
         fi
         echo "::set-output name=tag::$tag"
+        echo "::set-output name=docker_options::$docker_options"
         sudo mkdir -p ${{ github.workspace }}/build_${{ matrix.build_type }}
 
     - name: Build project
@@ -48,7 +51,7 @@ jobs:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
         image: nubificus/vaccel-deps:${{ steps.install-deps.outputs.tag }}
-        options: -v ${{ github.workspace }}:/work -e BUILD_TYPE=${{ matrix.build_type }} -e ARCHCONFIG=${{ matrix.archconfig }}
+        options: -v ${{ github.workspace }}:/work -e BUILD_TYPE=${{ matrix.build_type }} -e ARCHCONFIG=${{ matrix.archconfig }} ${{ steps.install-deps.outputs.docker_options }}
         run: |
           cargo --version
           rustc --version
