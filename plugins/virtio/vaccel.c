@@ -6,10 +6,11 @@
 
 struct vaccel_op ops[] = {
 	VACCEL_OP_INIT(ops[0], VACCEL_NO_OP, virtio_noop),
-	VACCEL_OP_INIT(ops[1], VACCEL_BLAS_SGEMM, virtio_sgemm),
+	VACCEL_OP_INIT(ops[1], VACCEL_BLAS_SGEMM, virtio_noop),
 	VACCEL_OP_INIT(ops[2], VACCEL_IMG_CLASS, virtio_image_classification),
 	VACCEL_OP_INIT(ops[3], VACCEL_IMG_DETEC, virtio_image_detection),
 	VACCEL_OP_INIT(ops[4], VACCEL_IMG_SEGME, virtio_image_segmentation),
+	VACCEL_OP_INIT(ops[5], VACCEL_GEN_OP, virtio_genop),
 };
 
 int virtio_init(void)

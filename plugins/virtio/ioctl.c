@@ -6,6 +6,8 @@
 
 #include <vaccel.h>
 
+#include "log.h"
+
 int dev_write(unsigned long req, void *data)
 {
 	int fd = open("/dev/accel", O_RDWR, 0);

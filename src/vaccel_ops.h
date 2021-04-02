@@ -9,7 +9,8 @@
 #define VACCEL_IMG_CLASS    2
 #define VACCEL_IMG_DETEC    3
 #define VACCEL_IMG_SEGME    4
-#define VACCEL_FUNCTIONS_NR 5
+#define VACCEL_GEN_OP	    5
+#define VACCEL_FUNCTIONS_NR 6
 
 static const char *vaccel_op_name[] = {
 	"noop",
@@ -17,6 +18,7 @@ static const char *vaccel_op_name[] = {
 	"image-classification",
 	"image-detection",
 	"image-segmentation",
+	"gen-op",
 };
 
 inline static const char *vaccel_op_type_str(uint8_t op_type)
@@ -28,6 +30,9 @@ struct vaccel_session;
 
 /* vaccel supported operations */
 int vaccel_noop(struct vaccel_session *sess);
+int vaccel_genop(struct vaccel_session *sess,
+		void *out_args, void *in_args, 
+		size_t out_nargs, size_t in_nargs);
 int vaccel_sgemm(struct vaccel_session *sess,
 		uint32_t k, uint32_t m, uint32_t n,
 		size_t len_a, size_t len_b, size_t len_c,

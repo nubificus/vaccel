@@ -23,6 +23,29 @@ int virtio_noop(struct vaccel_session *sess)
 	return dev_write(VACCEL_DO_OP, &vsess);
 }
 
+int virtio_genop(struct vaccel_session *sess, void *out_args, 
+		void *in_args, size_t out_nargs, size_t in_nargs)
+{
+       unsigned int op_type = VACCEL_GEN_OP;
+       struct accel_session vsess = { 0 };
+       struct accel_arg args[4] = {
+               { sizeof(op_type), (char *)&op_type },
+               { in_nargs, (unsigned char *)in_args },
+               { out_nargs, (unsigned char *)out_args },
+       };
+
+       vsess.id = sess->session_id;
+       vsess.op.out_nr = 2;
+       vsess.op.out = &args[0];
+       vsess.op.in_nr = 1;
+       vsess.op.in = &args[2];
+
+       vaccel_debug("[virtio] session:%u Executing gen-op",
+                       sess->session_id);
+
+       return dev_write(VACCEL_DO_OP, &vsess);
+}
+
 int virtio_sgemm(struct vaccel_session *sess, uint32_t k, uint32_t m,
 		uint32_t n, size_t len_a, size_t len_b, size_t len_c,
 		float *a, float *b, float *c)
