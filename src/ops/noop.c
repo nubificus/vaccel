@@ -3,6 +3,7 @@
 #include "plugin.h"
 #include "log.h"
 #include "vaccel_ops.h"
+#include "genop.h"
 
 int vaccel_noop(struct vaccel_session *sess)
 {

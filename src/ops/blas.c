@@ -3,8 +3,9 @@
 #include "plugin.h"
 #include "log.h"
 #include "vaccel_ops.h"
+#include "genop.h"
 
-int virtio_sgemm(struct vaccel_session *sess, uint32_t k, uint32_t m,
+int vaccel_sgemm(struct vaccel_session *sess, uint32_t k, uint32_t m,
 		uint32_t n, size_t len_a, size_t len_b, size_t len_c,
 		float *a, float *b, float *c)
 {
@@ -22,7 +23,7 @@ int virtio_sgemm(struct vaccel_session *sess, uint32_t k, uint32_t m,
 	return plugin_op(sess, k, m, n, len_a, len_b, len_c, a, b, c);
 }
 
-int virtio_sgemm_unpack(struct vaccel_session *sess, struct vaccel_arg *read,
+int vaccel_sgemm_unpack(struct vaccel_session *sess, struct vaccel_arg *read,
 		int nr_read, struct vaccel_arg *write, int nr_write)
 {
 	if (nr_read != 5) {
@@ -48,5 +49,5 @@ int virtio_sgemm_unpack(struct vaccel_session *sess, struct vaccel_arg *read,
 	size_t len_c = (size_t)write[0].size;
 	float *c = (float *)write[0].buf;
 
-	return virtio_sgemm(sess, k, m, n, len_a, len_b, len_c, a, b, c);
+	return vaccel_sgemm(sess, k, m, n, len_a, len_b, len_c, a, b, c);
 }

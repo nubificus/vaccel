@@ -24,9 +24,4 @@ static inline const char *vaccel_op_type_str(uint8_t op_type)
 	return vaccel_op_name[op_type];
 }
 
-struct vaccel_arg {
-	uint32_t size;
-	void *buf;
-};
-
 #endif /* __VACCEL_OPS_H__ */
