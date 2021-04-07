@@ -6,7 +6,6 @@
 #include <unistd.h>
 
 #include <vaccel.h>
-#include <vaccel_ops.h>
 
 int read_file(const char *filename, char **img, size_t *img_size)
 {

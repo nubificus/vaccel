@@ -1,6 +1,6 @@
 #include <vaccel.h>
 #include <plugin.h>
-#include <vaccel_ops.h>
+#include <ops/vaccel_ops.h>
 #include "operations.h"
 
 struct vaccel_op ops[] = {

@@ -1,5 +1,6 @@
 #include "plugin.h"
 #include "vaccel.h"
+#include "ops/vaccel_ops.h"
 
 extern int sess_init(struct vaccel_session *, uint32_t);
 extern int sess_free(struct vaccel_session *);
