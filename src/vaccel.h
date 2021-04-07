@@ -5,7 +5,10 @@
 #include <stddef.h>
 
 #include "common.h"
-#include "vaccel_ops.h"
+
+#include "ops/image.h"
+#include "ops/noop.h"
+#include "ops/genop.h"
 
 #ifdef __cplusplus
 extern "C" {

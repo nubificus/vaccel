@@ -7,7 +7,7 @@
 #include "plugin.h"
 #include "common.h"
 #include "list.h"
-#include "vaccel_ops.h"
+#include "ops/vaccel_ops.h"
 #include "log.h"
 
 static struct {

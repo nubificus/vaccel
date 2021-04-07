@@ -1,4 +1,4 @@
-#include <vaccel.h>
+#include <ops/vaccel_ops.h>
 #include <plugin.h>
 
 #include "session.h"

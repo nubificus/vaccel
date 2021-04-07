@@ -80,9 +80,17 @@ int main(int argc, char *argv[])
 	if (ret)
 		goto close_session;
 
+	struct vaccel_arg read[2] = {
+		{ .size = sizeof(uint8_t), .buf = (void *)VACCEL_IMG_CLASS },
+		{ .size = image_size, .buf = image }
+	};
+	struct vaccel_arg write[2] = {
+		{ .size = sizeof(out_text), .buf = out_text },
+		{ .size = sizeof(out_imagename), .buf = out_imagename },
+	};
+
 	for (int i = 0; i < atoi(argv[2]); ++i) {
-		ret = vaccel_image_classification(&sess, image, (unsigned char*)out_text, (unsigned char*)out_imagename,
-				image_size, sizeof(out_text), sizeof(out_imagename));
+		ret = vaccel_genop(&sess, read, 2, write, 2);
 		if (ret) {
 			fprintf(stderr, "Could not run op: %d\n", ret);
 			goto close_session;
