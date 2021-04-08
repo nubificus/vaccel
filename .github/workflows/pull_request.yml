@@ -55,6 +55,12 @@ jobs:
         make install -C plugins && \
         make install -C examples
 
+    - name: Build vAccel bindings
+      run: |
+        cd build_${{matrix.build_type}}
+        cmake ${{github.workspace}} -DBUILD_BINDINGS=ON
+        make -C bindings
+
     - name: Upload artifact to s3
       uses: cloudkernels/minio-upload@master
       with:
