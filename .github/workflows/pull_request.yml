@@ -58,7 +58,9 @@ jobs:
     - name: Build vAccel bindings
       run: |
         cd build_${{matrix.build_type}}
-        cmake ${{github.workspace}} -DBUILD_BINDINGS=ON
+        cmake ${{github.workspace}} \
+          -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/artifacts/${{matrix.archconfig}}/${{matrix.build_type}}/opt \
+          -DBUILD_BINDINGS=ON
         make -C bindings
 
     - name: Upload artifact to s3
