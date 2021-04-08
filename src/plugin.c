@@ -161,7 +161,7 @@ int register_plugin_functions(struct vaccel_op *plugin_ops, size_t nr_ops)
 	return VACCEL_OK;
 }
 
-void *get_plugin_op(uint8_t op_type)
+void *get_plugin_op(enum vaccel_op_type op_type)
 {
 	if (op_type >= VACCEL_FUNCTIONS_NR) {
 		vaccel_error("Trying to execute unknown function");

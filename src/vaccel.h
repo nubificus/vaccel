@@ -6,6 +6,7 @@
 
 #include "common.h"
 
+#include "ops/exec.h"
 #include "ops/image.h"
 #include "ops/noop.h"
 #include "ops/genop.h"

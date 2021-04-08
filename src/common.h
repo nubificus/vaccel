@@ -15,5 +15,6 @@
 #define VACCEL_EIO         5   /* EIO: I/O error */
 #define VACCEL_ESESS       104 /* ECONNRESET: Connection reset by peer */
 #define VACCEL_EBACKEND    71  /* EPROTO: Protocol error */
+#define VACCEL_ENOEXEC	   8   /* ENOEXEC: Exec format error */
 
 #endif /* __VACCEL_COMMON_H__ */
