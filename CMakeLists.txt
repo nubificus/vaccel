@@ -11,6 +11,7 @@ option(BUILD_PLUGIN_JETSON "Build the Jetson plugin" OFF)
 option(BUILD_PLUGIN_VSOCK "Build thev vsock plugin" OFF)
 option(BUILD_PLUGIN_NOOP "Build the no-op debugging plugin" OFF)
 option(BUILD_EXAMPLES "Build the examples" OFF)
+option(BUILD_BINDINGS "Build vAccel bindings" OFF)
 
 ## Download GoogleTest framework
 configure_file(
@@ -57,7 +58,10 @@ include_directories(
 
 add_subdirectory(src)
 add_subdirectory(plugins)
+
+if (BUILD_BINDINGS)
 add_subdirectory(bindings)
+endif(BUILD_BINDINGS)
 
 if (BUILD_EXAMPLES)
 	add_subdirectory(examples)
