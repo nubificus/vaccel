@@ -9,6 +9,7 @@
 #include "ops/image.h"
 #include "ops/noop.h"
 #include "ops/genop.h"
+#include "ops/blas.h"
 
 #ifdef __cplusplus
 extern "C" {
