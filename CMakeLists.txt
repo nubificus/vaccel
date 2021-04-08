@@ -12,7 +12,35 @@ option(BUILD_PLUGIN_VSOCK "Build thev vsock plugin" OFF)
 option(BUILD_PLUGIN_NOOP "Build the no-op debugging plugin" OFF)
 option(BUILD_EXAMPLES "Build the examples" OFF)
 option(BUILD_BINDINGS "Build vAccel bindings" OFF)
+option(ENABLE_TESTS "Enable testing" OFF)
 
+# installation paths
+set(bin_path "${CMAKE_INSTALL_PREFIX}/bin")
+set(lib_path "${CMAKE_INSTALL_PREFIX}/lib")
+set(include_path "${CMAKE_INSTALL_PREFIX}/include")
+
+# Add CMake third-party dependencies to be built
+add_subdirectory(third-party)
+
+# Add include directories from third-party libraries
+include_directories(
+	#slog
+	third-party/slog/src
+)
+
+add_subdirectory(src)
+add_subdirectory(plugins)
+
+if (BUILD_BINDINGS)
+add_subdirectory(bindings)
+endif(BUILD_BINDINGS)
+
+if (BUILD_EXAMPLES)
+	add_subdirectory(examples)
+endif (BUILD_EXAMPLES)
+
+# tests
+if (ENABLE_TESTS)
 ## Download GoogleTest framework
 configure_file(
 	CMakeLists.txt.in
@@ -42,31 +70,6 @@ IF(EXISTS "${CMAKE_CURRENT_BINARY_DIR}/compile_commands.json")
   )
 ENDIF()
 
-# installation paths
-set(bin_path "${CMAKE_INSTALL_PREFIX}/bin")
-set(lib_path "${CMAKE_INSTALL_PREFIX}/lib")
-set(include_path "${CMAKE_INSTALL_PREFIX}/include")
-
-# Add CMake third-party dependencies to be built
-add_subdirectory(third-party)
-
-# Add include directories from third-party libraries
-include_directories(
-	#slog
-	third-party/slog/src
-)
-
-add_subdirectory(src)
-add_subdirectory(plugins)
-
-if (BUILD_BINDINGS)
-add_subdirectory(bindings)
-endif(BUILD_BINDINGS)
-
-if (BUILD_EXAMPLES)
-	add_subdirectory(examples)
-endif (BUILD_EXAMPLES)
-
-# tests
 enable_testing()
 add_subdirectory(test)
+endif (ENABLE_TESTS)
