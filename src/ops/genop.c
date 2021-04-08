@@ -2,6 +2,7 @@
 #include "vaccel_ops.h"
 
 #include "blas.h"
+#include "exec.h"
 #include "image.h"
 #include "noop.h"
 
@@ -23,6 +24,7 @@ unpack_func_t callbacks[VACCEL_FUNCTIONS_NR] = {
 	vaccel_image_classification_unpack,
 	vaccel_image_detection_unpack,
 	vaccel_image_segmentation_unpack,
+	vaccel_exec_unpack,
 };
 
 int vaccel_genop(struct vaccel_session *sess, struct vaccel_arg  *read,
@@ -33,7 +35,7 @@ int vaccel_genop(struct vaccel_session *sess, struct vaccel_arg  *read,
 		return VACCEL_EINVAL;
 	}
 
-	uint8_t op = (uint8_t)(uintptr_t)read[0].buf;
+	enum vaccel_op_type op = *(enum vaccel_op_type *)read[0].buf;
 	if (op >= VACCEL_FUNCTIONS_NR) {
 		vaccel_error("Invalid operation type: %u", op);
 		return VACCEL_EINVAL;

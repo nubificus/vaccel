@@ -88,7 +88,7 @@ int register_plugin(struct vaccel_plugin *plugin);
 int unregister_plugin(struct vaccel_plugin *plugin);
 int register_plugin_function(struct vaccel_op *plugin_op);
 int register_plugin_functions(struct vaccel_op *plugin_ops, size_t nr_ops);
-void *get_plugin_op(uint8_t op_type);
+void *get_plugin_op(enum vaccel_op_type op_type);
 struct vaccel_plugin *get_virtio_plugin(void);
 int plugins_bootstrap(void);
 int plugins_shutdown(void);

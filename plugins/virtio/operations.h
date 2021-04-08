@@ -21,5 +21,8 @@ int virtio_image_detection(struct vaccel_session *sess, void *img,
 int virtio_image_segmentation(struct vaccel_session *sess, void *img,
 		char *out_imgname, size_t len_img, size_t len_out_imgname);
 
+int virtio_exec(struct vaccel_session *sess, const char *library, const char
+		*fn_symbol, void *out_args, size_t out_nargs, void *in_args,
+		size_t in_nargs);
 
 #endif /* __VACCEL_VIRTIO_OPERATIONS_H__ */
