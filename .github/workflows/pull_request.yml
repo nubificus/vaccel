@@ -34,39 +34,26 @@ jobs:
       run: |
         sudo apt update
         sudo apt install -y cmake
-        docker_options=""
-        if [[ "${{ matrix.archconfig }}" == "aarch64" ]]
-        then
-          docker_options="--runtime nvidia --gpus all"
-        fi
-        echo "::set-output name=docker_options::$docker_options"
-        sudo mkdir -p ${{ github.workspace }}/build_${{ matrix.build_type }}
 
     - name: Build project
       id: build_vaccelrt
-      uses: addnab/docker-run-action@v2
-      with:
-        username: ${{ secrets.DOCKER_USERNAME }}
-        password: ${{ secrets.DOCKER_PASSWORD }}
-        image: nubificus/vaccel-deps:latest
-        options: -v ${{ github.workspace }}:/work -e BUILD_TYPE=${{ matrix.build_type }} -e ARCHCONFIG=${{ matrix.archconfig }} ${{ steps.install-deps.outputs.docker_options }}
-        run: |
-          cargo --version
-          rustc --version
-          mkdir -p /work/build_$BUILD_TYPE
-          cd /work/build_$BUILD_TYPE
-          cmake /work \
-              -DCMAKE_INSTALL_PREFIX=/work/artifacts/$ARCHCONFIG/$BUILD_TYPE/opt \
-              -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
-              -DBUILD_PLUGIN_JETSON=ON \
-              -DBUILD_PLUGIN_VIRTIO=ON \
-              -DBUILD_PLUGIN_VSOCK=ON \
-              -DBUILD_EXAMPLES=ON && \
-          cmake --build . --config $BUILD_TYPE && \
-          make test && \
-          make install -C src && \
-          make install -C plugins && \
-          make install -C examples
+      run: |
+        cargo --version
+        rustc --version
+        mkdir -p build_${{matrix.build_type}}
+        cd build_${{matrix.build_type}}
+        cmake ${{github.workspace}} \
+          -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/artifacts/${{matrix.archconfig}}/${{matrix.build_type}}/opt \
+          -DCMAKE_BUILD_TYPE=${{matrix.build_type}} \
+          -DBUILD_PLUGIN_JETSON=ON \
+          -DBUILD_PLUGIN_VIRTIO=ON \
+          -DBUILD_PLUGIN_VSOCK=ON \
+          -DBUILD_EXAMPLES=ON && \
+        cmake --build . --config ${{matrix.build_type}} && \
+        make test && \
+        make install -C src && \
+        make install -C plugins && \
+        make install -C examples
 
     - name: Upload artifact to s3
       uses: cloudkernels/minio-upload@master
