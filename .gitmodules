@@ -3,4 +3,4 @@
 	url = https://github.com/kala13x/slog.git
 [submodule "bindings/rust-vaccel"]
 	path = bindings/rust-vaccel
-	url = git@github.com:cloudkernels/vaccel-bindings
+	url = https://github.com/cloudkernels/vaccel-bindings.git
