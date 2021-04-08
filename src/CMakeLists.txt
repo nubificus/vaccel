@@ -15,7 +15,7 @@ target_link_libraries(vaccel slog)
 # Setup make install
 install(TARGETS vaccel DESTINATION "${lib_path}")
 install(FILES vaccel.h common.h DESTINATION "${include_path}")
-install(FILES ops/vaccel_ops.h DESTINATION "${include_path}/ops")
+install(FILES ${ops_headers} DESTINATION "${include_path}/ops")
 
 # Create the pkg-config file
 set(DEST_DIR "${CMAKE_INSTALL_PREFIX}")
