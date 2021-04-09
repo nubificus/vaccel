@@ -22,4 +22,4 @@ target_include_directories(noop PRIVATE ${include_dirs})
 target_link_libraries(noop PRIVATE vaccel dl)
 
 # Install the examples
-install(TARGETS classify classify_generic DESTINATION "${bin_path}")
+install(TARGETS classify classify_generic noop exec exec_generic DESTINATION "${bin_path}")
