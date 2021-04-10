@@ -80,8 +80,9 @@ int main(int argc, char *argv[])
 	if (ret)
 		goto close_session;
 
+	enum vaccel_op_type op_type = VACCEL_IMG_CLASS;
 	struct vaccel_arg read[2] = {
-		{ .size = sizeof(uint8_t), .buf = (void *)VACCEL_IMG_CLASS },
+		{ .size = sizeof(enum vaccel_op_type), .buf = &op_type},
 		{ .size = image_size, .buf = image }
 	};
 	struct vaccel_arg write[2] = {
