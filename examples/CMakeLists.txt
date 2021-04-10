@@ -21,5 +21,10 @@ add_executable(noop noop.c)
 target_include_directories(noop PRIVATE ${include_dirs})
 target_link_libraries(noop PRIVATE vaccel dl)
 
+add_library(mytestlib SHARED mytestlib.c)
+target_compile_options(mytestlib PUBLIC -Wall -Wextra )
+set_target_properties(mytestlib PROPERTIES ENABLE_EXPORTS on)
+
 # Install the examples
 install(TARGETS classify classify_generic noop exec exec_generic DESTINATION "${bin_path}")
+install(TARGETS mytestlib DESTINATION "${lib_path}")
