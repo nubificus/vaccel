@@ -57,7 +57,8 @@ jobs:
         cmake ${{github.workspace}} \
           -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/artifacts/${{matrix.archconfig}}/${{matrix.build_type}}/opt \
           -DCMAKE_BUILD_TYPE=${{matrix.build_type}} \
-          -DBUILD_PLUGIN_JETSON=ON \
+          -DBUILD_PLUGIN_JETSON=OFF \
+          -DBUILD_PLUGIN_NOOP=ON \
           -DBUILD_PLUGIN_VIRTIO=ON \
           -DBUILD_PLUGIN_VSOCK=ON \
           -DENABLE_TESTS=ON \
