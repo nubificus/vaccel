@@ -79,7 +79,7 @@ int jetson_image_classification(struct vaccel_session *sess, const void *img,
 	if (!loadImageBufRGBA(img, len_img, (float4**)&imgCPU, (float4**)&imgCUDA, &imgWidth, &imgHeight, make_float4(0,0,0,0))) {
 		fprintf(stderr, "Failed to load image\n");
 		ret = VACCEL_ENOENT;
-		goto close:
+		goto close;
 	}
 
 	/*
