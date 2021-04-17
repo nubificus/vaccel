@@ -59,7 +59,7 @@ jobs:
           -DCMAKE_BUILD_TYPE=${{matrix.build_type}} \
           -DBUILD_PLUGIN_JETSON=OFF \
           -DBUILD_PLUGIN_NOOP=ON \
-          -DBUILD_PLUGIN_VIRTIO=ON \
+          -DBUILD_PLUGIN_VIRTIO=OFF \
           -DBUILD_PLUGIN_VSOCK=ON \
           -DENABLE_TESTS=ON \
           -DBUILD_EXAMPLES=ON && \
