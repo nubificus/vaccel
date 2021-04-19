@@ -30,6 +30,7 @@ jobs:
                 -DCMAKE_INSTALL_PREFIX=/vaccel/artifacts/Release/opt \
                 -DCMAKE_BUILD_TYPE=Release \
                 -DBUILD_PLUGIN_JETSON=ON \
+                -DBUILD_PLUGIN_NOOP=ON \
                 -DBUILD_PLUGIN_VIRTIO=ON
                 
 
