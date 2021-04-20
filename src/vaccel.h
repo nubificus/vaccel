@@ -13,4 +13,6 @@
 #include "ops/noop.h"
 #include "ops/vaccel_ops.h"
 
+const char *vaccel_rundir(void);
+
 #endif /* __VACCEL_H__ */

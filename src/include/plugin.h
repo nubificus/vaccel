@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 #include "session.h"
+#include "resources.h"
 #include "list.h"
 
 #ifdef __cplusplus
@@ -23,10 +24,17 @@ struct vaccel_plugin_info {
 	/* Plugin cleaning-up function */
 	int (*fini)(void);
 
+	/* True if this is a VirtIO plugin */
+	bool is_virtio;
+
 	/* In some cases, like in the context of VirtIO we need to offload
 	 * session handling to the plugin itself */
 	int (*sess_init)(struct vaccel_session *sess, uint32_t flags);
 	int (*sess_free)(struct vaccel_session *sess);
+	int (*sess_register)(uint32_t sess_id, vaccel_id_t resource_id);
+	int (*sess_unregister)(uint32_t sess_id, vaccel_id_t resource_id);
+	int (*resource_new)(vaccel_resource_t, void *data, vaccel_id_t *id);
+	int (*resource_destroy)(vaccel_id_t id);
 };
 
 struct vaccel_plugin {

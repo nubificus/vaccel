@@ -8,6 +8,7 @@ add_library(vaccel SHARED ${headers} ${sources})
 target_compile_options(vaccel PUBLIC -Wall -Wextra -Werror -pthread)
 target_include_directories(vaccel PRIVATE ${CMAKE_SOURCE_DIR}/src)
 set_property(TARGET vaccel PROPERTY LINK_FLAGS "-pthread")
+set_property(TARGET vaccel PROPERTY C_STANDARD 11)
 target_link_libraries(vaccel slog)
 
 # Setup make install
