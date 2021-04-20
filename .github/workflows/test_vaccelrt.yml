@@ -12,7 +12,7 @@ on:
 
 jobs:
   build:
-    runs-on: [self-hosted, "${{ matrix.archconfig }}" ]
+    runs-on: [cloud, "${{ matrix.archconfig }}" ]
 
     strategy:
       matrix:
