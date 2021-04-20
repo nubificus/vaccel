@@ -1,9 +1,11 @@
 #include "image.h"
-#include "common.h"
+#include "error.h"
 #include "plugin.h"
 #include "log.h"
 #include "vaccel_ops.h"
 #include "genop.h"
+
+#include "session.h"
 
 int vaccel_image_classification(struct vaccel_session *sess, const void *img,
 		unsigned char *out_text, unsigned char *out_imgname,

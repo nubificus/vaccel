@@ -1,5 +1,5 @@
-#ifndef __VACCEL_COMMON_H__
-#define __VACCEL_COMMON_H__
+#ifndef __VACCEL_ERROR_H__
+#define __VACCEL_ERROR_H__
 
 /* vaccel return codes */
 #define VACCEL_OK          0   /* All Good :D */
@@ -17,4 +17,4 @@
 #define VACCEL_EBACKEND    71  /* EPROTO: Protocol error */
 #define VACCEL_ENOEXEC	   8   /* ENOEXEC: Exec format error */
 
-#endif /* __VACCEL_COMMON_H__ */
+#endif /* __VACCEL_ERROR_H__ */

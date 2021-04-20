@@ -1,4 +1,4 @@
-#include "common.h"
+#include "error.h"
 #include "log.h"
 
 #include <stdlib.h>

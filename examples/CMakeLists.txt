@@ -1,4 +1,4 @@
-set(include_dirs ${CMAKE_SOURCE_DIR}/src)
+set(include_dirs ${CMAKE_SOURCE_DIR}/src/include)
 
 add_executable(classify classification.c)
 
