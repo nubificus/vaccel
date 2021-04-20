@@ -16,3 +16,5 @@ cscope.out
 build*
 **target
 
+.cache
+.ccls-cache
