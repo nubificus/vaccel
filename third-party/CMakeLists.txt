@@ -3,3 +3,11 @@ add_compile_options(-fPIC)
 
 # Simple logger library
 add_subdirectory(slog)
+
+# Install slog header files
+install(
+	FILES
+	${CMAKE_SOURCE_DIR}/third-party/slog/src/slog.h
+	DESTINATION
+	${include_path}
+)
