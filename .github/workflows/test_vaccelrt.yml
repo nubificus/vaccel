@@ -70,6 +70,8 @@ jobs:
         make install -C examples
 
     - name: Build vAccel bindings
+      env:
+        PKG_CONFIG_PATH: ${{github.workspace}}/artifacts/${{matrix.archconfig}}/${{matrix.build_type}}/opt/share
       run: |
         cd build_${{matrix.build_type}}
         cmake ${{github.workspace}} \
