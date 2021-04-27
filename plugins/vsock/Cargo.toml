@@ -17,11 +17,11 @@ libc = ">=0.2.39"
 cc = { version = "1.0", features = ["parallel"] }
 
 [dependencies]
-protocols = { git = "https://github.com/cloudkernels/vaccel-grpc.git", branch = "master" }
+protocols = { git = "https://github.com/cloudkernels/vaccel-grpc.git", branch = "feat_resource_registration" }
 vm-memory = { version = ">=0.2.2" }
 
 protobuf = "2.14.0"
-ttrpc = { git = "https://github.com/cloudkernels/ttrpc-rust.git", branch = "feat_non_abstract_socket" }
+ttrpc = { git = "https://github.com/cloudkernels/ttrpc-rust.git", branch = "devel" }
 anyhow = "1.0.31"
 nix = "0.17.0"
 libc = "0.2.69"

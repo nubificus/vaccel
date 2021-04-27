@@ -1,31 +1,27 @@
+use crate::client::VsockClient;
 use crate::*;
+use protocols::session::{CreateSessionRequest, DestroySessionRequest};
 
-use protocols::agent::{CreateSessionRequest, DestroySessionRequest};
-use crate::util::vsock_client;
+impl VsockClient {
+    pub fn sess_init(&self, flags: u32) -> Result<u32, u32> {
+        let ctx = ttrpc::context::Context::default();
+        let mut req = CreateSessionRequest::default();
+        req.flags = flags;
 
-pub fn sess_init(sess: &mut vaccel_session, flags: u32) -> Result<u32, u32> {
-    let mut req = CreateSessionRequest::default();
-    req.flags = flags;
-
-    let client = vsock_client()?;
-
-    match client.create_session(&req, 0) {
-        Err(_) => Err(VACCEL_EIO),
-        Ok(resp) => {
-            sess.session_id = resp.session_id;
-            Ok(VACCEL_OK)
+        match self.ttrpc_client.create_session(ctx, &req) {
+            Err(_) => Err(VACCEL_EIO),
+            Ok(resp) => Ok(resp.session_id),
         }
     }
-}
 
-pub fn sess_free(sess: &vaccel_session) -> Result<u32, u32> {
-    let mut req = DestroySessionRequest::default();
-    req.session_id = sess.session_id;
+    pub fn sess_free(&self, sess_id: u32) -> Result<(), u32> {
+        let ctx = ttrpc::context::Context::default();
+        let mut req = DestroySessionRequest::default();
+        req.session_id = sess_id;
 
-    let client = vsock_client()?;
-
-    match client.destroy_session(&req, 0) {
-        Err(_) => Err(VACCEL_EIO),
-        Ok(_) => Ok(VACCEL_OK)
+        match self.ttrpc_client.destroy_session(ctx, &req) {
+            Err(_) => Err(VACCEL_EIO),
+            Ok(_) => Ok(()),
+        }
     }
 }
