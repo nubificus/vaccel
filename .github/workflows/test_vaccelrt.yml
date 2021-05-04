@@ -57,17 +57,24 @@ jobs:
         cmake ${{github.workspace}} \
           -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/artifacts/${{matrix.archconfig}}/${{matrix.build_type}}/opt \
           -DCMAKE_BUILD_TYPE=${{matrix.build_type}} \
-          -DBUILD_PLUGIN_JETSON=ON \
-          -DBUILD_PLUGIN_VIRTIO=ON \
-          -DBUILD_PLUGIN_NOOP=ON \
-          -DBUILD_PLUGIN_VSOCK=ON \
           -DENABLE_TESTS=ON \
           -DBUILD_EXAMPLES=ON && \
         cmake --build . --config ${{matrix.build_type}} && \
         make test && \
         make install -C src && \
-        make install -C plugins && \
         make install -C examples
+
+    - name: Build vAccel plugins
+      id: build_plugins
+      run: |
+        cd build_${{matrix.build_type}}
+        cmake ${{github.workspace}} \
+          -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/artifacts/${{matrix.archconfig}}/${{matrix.build_type}}/opt \
+          -DBUILD_PLUGIN_JETSON=ON \
+          -DBUILD_PLUGIN_VIRTIO=ON \
+          -DBUILD_PLUGIN_NOOP=ON \
+          -DBUILD_PLUGIN_VSOCK=ON && \
+        make -C plugins && make install -C plugins
 
     - name: Build vAccel bindings
       env:
