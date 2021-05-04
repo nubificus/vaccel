@@ -70,10 +70,7 @@ jobs:
         cd build_${{matrix.build_type}}
         cmake ${{github.workspace}} \
           -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/artifacts/${{matrix.archconfig}}/${{matrix.build_type}}/opt \
-          -DBUILD_PLUGIN_JETSON=ON \
-          -DBUILD_PLUGIN_VIRTIO=ON \
-          -DBUILD_PLUGIN_NOOP=ON \
-          -DBUILD_PLUGIN_VSOCK=ON && \
+          -DBUILD_PLUGIN_NOOP=ON && \
         make -C plugins && make install -C plugins
 
     - name: Build vAccel bindings
