@@ -62,6 +62,7 @@ jobs:
         cmake --build . --config ${{matrix.build_type}} && \
         make test && \
         make install -C src && \
+        make install -C third-party && \
         make install -C examples
 
     - name: Build vAccel plugins
