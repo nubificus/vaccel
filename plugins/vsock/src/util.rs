@@ -4,14 +4,12 @@
 
 include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 
-use std::os::unix::io::RawFd;
-use std::env;
 use nix::sys::socket::{connect, socket, AddressFamily, SockAddr, SockFlag, SockType};
+use std::env;
+use std::os::unix::io::RawFd;
 use ttrpc;
 
-use protocols::agent_ttrpc::*;
-
-fn client_create_vsock_fd(cid: libc::c_uint, port:u32) -> Result<RawFd, u32> {
+fn client_create_vsock_fd(cid: libc::c_uint, port: u32) -> Result<RawFd, u32> {
     let fd = socket(
         AddressFamily::Vsock,
         SockType::Stream,
@@ -22,8 +20,7 @@ fn client_create_vsock_fd(cid: libc::c_uint, port:u32) -> Result<RawFd, u32> {
 
     let sock_addr = SockAddr::new_vsock(cid, port);
 
-    connect(fd, &sock_addr)
-        .map_err(|_| VACCEL_EIO)?;
+    connect(fd, &sock_addr).map_err(|_| VACCEL_EIO)?;
 
     Ok(fd)
 }
@@ -63,21 +60,9 @@ pub fn create_ttrpc_client(server_address: &String) -> Result<ttrpc::Client, u32
             };
 
             client_create_vsock_fd(cid, port).map_err(|_| VACCEL_EINVAL)?
-        },
+        }
         _ => return Err(VACCEL_ENOTSUP),
     };
 
     Ok(ttrpc::client::Client::new(fd))
-}
-
-pub fn vsock_client() -> Result<VaccelAgentClient, u32> {
-    let server_address =
-        match env::var("VACCEL_VSOCK") {
-            Ok(addr) => addr,
-            Err(_) => "vsock://1:2048".to_string(),
-        };
-
-    let ttrpc_client = create_ttrpc_client(&server_address)?;
-
-    Ok(VaccelAgentClient::new(ttrpc_client))
 }

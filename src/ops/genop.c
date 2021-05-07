@@ -7,7 +7,7 @@
 #include "noop.h"
 
 #include <session.h>
-#include <common.h>
+#include <error.h>
 #include <log.h>
 
 typedef int (*unpack_func_t)(

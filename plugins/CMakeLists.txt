@@ -21,18 +21,22 @@ if (BUILD_PLUGIN_VSOCK)
 
 	set_directory_properties(PROPERTIES EP_PREFIX ${CMAKE_BINARY_DIR}/Rust)
 
+	if ("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
+		set(rust_build_type "--release")
+	endif()
+
 	ExternalProject_Add(
 		vsock_plugin
 		DOWNLOAD_COMMAND ""
 		CONFIGURE_COMMAND ""
-		BUILD_COMMAND cargo build COMMAND cargo build --release
+		BUILD_COMMAND bash -c "INCLUDE_PATH=${CMAKE_INSTALL_PREFIX}/include cargo build ${rust_build_type}"
 		BINARY_DIR "${VSOCK_DIR}"
 		INSTALL_COMMAND ""
 		LOG_BUILD ON)
 
 	add_library(vaccel-vsock SHARED ${VSOCK_DIR}/src/glue.c)
 	add_dependencies(vaccel-vsock vsock_plugin)
-	target_include_directories(vaccel-vsock PRIVATE ${CMAKE_SOURCE_DIR}/src)
+	target_include_directories(vaccel-vsock PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
 	target_link_libraries(
 		vaccel-vsock
 		debug "${VSOCK_DIR}/target/debug/libvaccel_vsock.a"

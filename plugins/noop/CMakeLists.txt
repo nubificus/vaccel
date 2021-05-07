@@ -1,4 +1,4 @@
-set(include_dirs ${CMAKE_SOURCE_DIR}/src)
+set(include_dirs ${CMAKE_SOURCE_DIR}/src/include)
 set(SOURCES vaccel.c ${include_dirs}/vaccel.h ${include_dirs}/plugin.h)
 
 add_library(vaccel-noop SHARED ${SOURCES})

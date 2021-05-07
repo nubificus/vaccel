@@ -16,6 +16,7 @@ option(BUILD_BINDINGS "Build vAccel bindings" OFF)
 option(ENABLE_TESTS "Enable testing" OFF)
 
 # installation paths
+include(GNUInstallDirs)
 set(bin_path "${CMAKE_INSTALL_PREFIX}/bin")
 set(lib_path "${CMAKE_INSTALL_PREFIX}/lib")
 set(include_path "${CMAKE_INSTALL_PREFIX}/include")

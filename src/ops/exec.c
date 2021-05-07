@@ -1,9 +1,11 @@
 #include "exec.h"
-#include "common.h"
+#include "error.h"
 #include "plugin.h"
 #include "log.h"
 #include "vaccel_ops.h"
 #include "genop.h"
+
+#include "session.h"
 
 int vaccel_exec(struct vaccel_session *sess, const char *library,
 		const char *fn_symbol, struct vaccel_arg *read,

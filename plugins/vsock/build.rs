@@ -4,14 +4,9 @@ use std::env;
 use std::path::PathBuf;
 
 fn main() {
-    let include_path =
-        match env::var("INCLUDE_PATH") {
-            Ok(val) => val,
-            Err(_) => String::from("../../src"),
-        };
+    let include_path = env::var("INCLUDE_PATH").unwrap_or("/usr/local/include".to_string());
 
     let clang_arg = String::from(format!("-I{}", include_path));
-
 
     cc::Build::new()
         .file("src/glue.c")

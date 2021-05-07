@@ -1,21 +1,19 @@
 # Core runtime sources
-set(runtime_src plugin.c vaccel.c session.c log.c)
-file(GLOB ops_src ops/*.c)
+file(GLOB_RECURSE sources *.c)
 
 # core runtime headers
-set(headers plugin.h vaccel.h)
-file(GLOB ops_headers ops/*.h)
+file(GLOB_RECURSE headers *.h)
 
-add_library(vaccel SHARED ${headers} ${ops_headers} ${runtime_src} ${ops_src})
+add_library(vaccel SHARED ${headers} ${sources})
 target_compile_options(vaccel PUBLIC -Wall -Wextra -Werror -pthread)
 target_include_directories(vaccel PRIVATE ${CMAKE_SOURCE_DIR}/src)
 set_property(TARGET vaccel PROPERTY LINK_FLAGS "-pthread")
+set_property(TARGET vaccel PROPERTY C_STANDARD 11)
 target_link_libraries(vaccel slog)
 
 # Setup make install
-install(TARGETS vaccel DESTINATION "${lib_path}")
-install(FILES vaccel.h common.h DESTINATION "${include_path}")
-install(FILES ${ops_headers} DESTINATION "${include_path}/ops")
+install(TARGETS vaccel DESTINATION ${CMAKE_INSTALL_LIBDIR})
+install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
 # Create the pkg-config file
 set(DEST_DIR "${CMAKE_INSTALL_PREFIX}")

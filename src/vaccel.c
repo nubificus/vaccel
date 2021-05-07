@@ -2,11 +2,21 @@
 #include "session.h"
 #include "log.h"
 #include "vaccel.h"
+#include "resources.h"
+#include "utils.h"
 
+#include <sys/stat.h>
+#include <unistd.h>
 #include <stdbool.h>
 #include <string.h>
 #include <dlfcn.h>
 #include <stdio.h>
+
+#define MAX_RUNDIR_PATH 1024
+
+/* Runtime directory for holding resources related with the
+ * runtime */
+static char rundir[MAX_RUNDIR_PATH];
 
 static int load_backend_plugin(const char *path)
 {
@@ -62,12 +72,79 @@ static int load_backend_plugins(char *plugins)
 	return VACCEL_OK;
 }
 
+static int create_vaccel_rundir(void)
+{
+	int ret = snprintf(rundir, MAX_RUNDIR_PATH, "/run/user/%u", getuid());
+	if (ret == MAX_RUNDIR_PATH) {
+		vaccel_fatal("rundir path '%s' too long", rundir);
+		return VACCEL_ENAMETOOLONG;	
+	}
+
+	if (!dir_exists(rundir)) {
+		vaccel_debug("User rundir does not exist. Will try to create it");
+		ret = mkdir(rundir, 0700);
+		if (ret) {
+			vaccel_fatal("Could not create user rundir: %s",
+					strerror(errno));
+			return VACCEL_ENOENT;
+		}
+
+		vaccel_debug("Created user rundir %s", rundir);
+	}
+
+	ret = snprintf(rundir, MAX_RUNDIR_PATH,
+			"/run/user/%u/vaccel.XXXXXX", getuid());
+	if (ret == MAX_RUNDIR_PATH) {
+		vaccel_error("rundir path '%s' too big", rundir);
+		return VACCEL_ENAMETOOLONG;
+	}
+
+	char *dir = mkdtemp(rundir);
+	if (!dir) {
+		vaccel_error("Could not initialize top-level rundir: %s", dir);
+		return errno;
+	}
+
+	vaccel_debug("Created top-level rundir: %s", rundir);
+	
+	return VACCEL_OK;
+}
+
+static int cleanup_vaccel_rundir(void)
+{
+	/* Try to cleanup the rundir. At the moment, we do not fail
+	 * if this fails, we just warn the user */
+	if (cleanup_rundir(rundir))
+		vaccel_warn("Could not cleanup rundir '%s'", rundir);
+
+	return VACCEL_OK;
+}
+
+const char *vaccel_rundir(void)
+{
+	return rundir;
+}
+
 __attribute__((constructor))
 static void vaccel_init(void)
 {
-	int ret = sessions_bootstrap();
-	if (ret)
-		return;
+	int ret = create_vaccel_rundir();
+	if (ret) {
+		vaccel_error("Could not create rundir for vAccel");
+		exit(ret);
+	}
+
+	ret = sessions_bootstrap();
+	if (ret) {
+		vaccel_error("Could not bootstrap sessions system");
+		exit(ret);
+	}
+
+	ret = resources_bootstrap();
+	if (ret) {
+		vaccel_error("Could not bootstrap resources system");
+		exit(ret);
+	}
 
 	/* Initialize logger */
 	vaccel_log_init();
@@ -90,4 +167,7 @@ static void vaccel_fini(void)
 {
 	vaccel_debug("Shutting down vAccel");
 	plugins_shutdown();
+	resources_cleanup();
+	sessions_cleanup();
+	cleanup_vaccel_rundir();
 }

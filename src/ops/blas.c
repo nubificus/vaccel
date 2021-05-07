@@ -1,9 +1,11 @@
 #include "blas.h"
-#include "common.h"
+#include "error.h"
 #include "plugin.h"
 #include "log.h"
 #include "vaccel_ops.h"
 #include "genop.h"
+
+#include "session.h"
 
 int vaccel_sgemm(struct vaccel_session *sess, uint32_t k, uint32_t m,
 		uint32_t n, size_t len_a, size_t len_b, size_t len_c,

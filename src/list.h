@@ -1,19 +1,7 @@
-#ifndef __VACCEL_LIST_H__
-#define __VACCEL_LIST_H__
+#ifndef __LIST_H__
+#define __LIST_H__
 
-#include <stdlib.h>
-#include <stdbool.h>
-#include <stddef.h>
-
-#define LIST_ENTRY_INIT(name) { &(name), &(name) }
-
-typedef struct list_entry {
-	struct list_entry *next;
-	struct list_entry *prev;
-} list_entry_t;
-
-/* Our list type is actually just a normal entry type */
-typedef list_entry_t list_t;
+#include "include/list.h"
 
 static inline bool list_empty(list_t *list)
 {
@@ -147,4 +135,5 @@ static inline list_entry_t *list_remove_tail(list_t *list)
 		iter = tmp_iter, \
 		tmp_iter = get_container(tmp_iter->member.next, type, member))
 
-#endif /* __VACCEL_LIST_H__ */
+
+#endif /* __LIST_H__ */

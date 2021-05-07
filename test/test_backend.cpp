@@ -2,7 +2,7 @@
 
 extern "C" {
 #include "plugin.h"
-#include "common.h"
+#include "error.h"
 #include "list.h"
 }
 

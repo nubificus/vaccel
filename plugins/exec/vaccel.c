@@ -1,9 +1,7 @@
 #include <stdio.h>
-#include <plugin.h>
+#include <vaccel.h>
 #include <byteswap.h>
 #include <dlfcn.h>
-
-#include "log.h"
 
 #if 0
 struct vector_arg {

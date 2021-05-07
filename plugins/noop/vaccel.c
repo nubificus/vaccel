@@ -2,6 +2,8 @@
 #include <string.h>
 
 #include <plugin.h>
+#include <error.h>
+#include <ops/vaccel_ops.h>
 
 static int noop_noop(struct vaccel_session *sess)
 {

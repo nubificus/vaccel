@@ -5,7 +5,7 @@
 #include <dlfcn.h>
 
 #include "plugin.h"
-#include "common.h"
+#include "error.h"
 #include "list.h"
 #include "ops/vaccel_ops.h"
 #include "log.h"
