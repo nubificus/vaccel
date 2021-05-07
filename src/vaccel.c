@@ -5,6 +5,7 @@
 #include "resources.h"
 #include "utils.h"
 
+#include <sys/stat.h>
 #include <unistd.h>
 #include <stdbool.h>
 #include <string.h>
@@ -73,12 +74,29 @@ static int load_backend_plugins(char *plugins)
 
 static int create_vaccel_rundir(void)
 {
-	int ret = snprintf(rundir, MAX_RUNDIR_PATH,
+	int ret = snprintf(rundir, MAX_RUNDIR_PATH, "/run/user/%u", getuid());
+	if (ret == MAX_RUNDIR_PATH) {
+		vaccel_fatal("rundir path '%s' too long", rundir);
+		return VACCEL_ENAMETOOLONG;	
+	}
+
+	if (!dir_exists(rundir)) {
+		vaccel_debug("User rundir does not exist. Will try to create it");
+		ret = mkdir(rundir, 0700);
+		if (ret) {
+			vaccel_fatal("Could not create user rundir: %s",
+					strerror(errno));
+			return VACCEL_ENOENT;
+		}
+
+		vaccel_debug("Created user rundir %s", rundir);
+	}
+
+	ret = snprintf(rundir, MAX_RUNDIR_PATH,
 			"/run/user/%u/vaccel.XXXXXX", getuid());
 	if (ret == MAX_RUNDIR_PATH) {
 		vaccel_error("rundir path '%s' too big", rundir);
-		ret = VACCEL_ENAMETOOLONG;
-		return ret;
+		return VACCEL_ENAMETOOLONG;
 	}
 
 	char *dir = mkdtemp(rundir);
