@@ -130,6 +130,13 @@ int vaccel_sess_unregister(struct vaccel_session *sess,
 	return VACCEL_OK;
 }
 
+bool vaccel_sess_has_resource(
+	struct vaccel_session *sess,
+	struct vaccel_resource *res
+) {
+	return find_registered_resource(sess, res) != NULL;
+}
+
 static int initialize_session_resources(struct vaccel_session *sess)
 {
 	if (!sess)

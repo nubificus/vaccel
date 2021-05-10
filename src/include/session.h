@@ -2,6 +2,7 @@
 #define __VACCEL_SESSION_H__
 
 #include <stdint.h>
+#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -35,6 +36,12 @@ int vaccel_sess_register(
 
 /* Unregister a resource from a session */
 int vaccel_sess_unregister(
+	struct vaccel_session *sess,
+	struct vaccel_resource *resource
+);
+
+/* Check if a resource is registered with a session */
+bool vaccel_sess_has_resource(
 	struct vaccel_session *sess,
 	struct vaccel_resource *resource
 );

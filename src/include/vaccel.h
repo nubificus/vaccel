@@ -13,5 +13,6 @@
 #include "ops/genop.h"
 #include "ops/image.h"
 #include "ops/noop.h"
+#include "ops/tf.h"
 
 #endif /* __VACCEL_H__ */

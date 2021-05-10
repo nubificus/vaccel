@@ -18,6 +18,9 @@ struct vaccel_tf_model {
 
 	/* The protobuf file of the model */
 	struct vaccel_file file;
+
+	/* Plugin specific data */
+	void *plugin_data;
 };
 
 int vaccel_tf_model_new(struct vaccel_tf_model *model, const char *path);

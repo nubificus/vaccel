@@ -19,6 +19,8 @@ enum vaccel_op_type {
 	VACCEL_TF_MODEL_DESTROY,    /* 7 */
 	VACCEL_TF_MODEL_REGISTER,   /* 8 */
 	VACCEL_TF_MODEL_UNREGISTER, /* 9 */
+	VACCEL_TF_MODEL_LOAD_GRAPH, /* 10 */
+	VACCEL_TF_MODEL_RUN_GRAPH,  /* 11 */
 	VACCEL_FUNCTIONS_NR
 };
 
@@ -33,6 +35,8 @@ static const char *vaccel_op_name[] = {
 	"TensorFlow model destroy",
 	"TensorFlow model register",
 	"TensorFlow model unregister",
+	"TensorFlow model load graph",
+	"TensorFlow model run graph",
 };
 
 static inline const char *vaccel_op_type_str(enum vaccel_op_type op_type)
