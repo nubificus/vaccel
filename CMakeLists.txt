@@ -9,7 +9,6 @@ project(vaccelrt
 option(BUILD_PLUGIN_EXEC "Build the exec plugin" OFF)
 option(BUILD_PLUGIN_NOOP "Build the no-op debugging plugin" OFF)
 option(BUILD_EXAMPLES "Build the examples" OFF)
-option(BUILD_BINDINGS "Build vAccel bindings" OFF)
 option(ENABLE_TESTS "Enable testing" OFF)
 
 # installation paths
@@ -26,10 +25,6 @@ include_directories(
 
 add_subdirectory(src)
 add_subdirectory(plugins)
-
-if (BUILD_BINDINGS)
-	add_subdirectory(bindings)
-endif(BUILD_BINDINGS)
 
 if (BUILD_EXAMPLES)
 	add_subdirectory(examples)

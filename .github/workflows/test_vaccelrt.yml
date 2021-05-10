@@ -74,16 +74,6 @@ jobs:
           -DBUILD_PLUGIN_NOOP=ON && \
         make -C plugins && make install -C plugins
 
-    - name: Build vAccel bindings
-      env:
-        PKG_CONFIG_PATH: ${{github.workspace}}/artifacts/${{matrix.archconfig}}/${{matrix.build_type}}/opt/share
-      run: |
-        cd build_${{matrix.build_type}}
-        cmake ${{github.workspace}} \
-          -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/artifacts/${{matrix.archconfig}}/${{matrix.build_type}}/opt \
-          -DBUILD_BINDINGS=ON
-        make -C bindings
-
     - name: Upload artifact to s3
       uses: cloudkernels/minio-upload@master
       with:

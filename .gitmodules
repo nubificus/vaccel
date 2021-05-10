@@ -1,6 +1,3 @@
 [submodule "third-party/slog"]
 	path = third-party/slog
 	url = https://github.com/kala13x/slog.git
-[submodule "bindings/rust-vaccel"]
-	path = bindings/rust-vaccel
-	url = https://github.com/cloudkernels/vaccel-bindings.git
