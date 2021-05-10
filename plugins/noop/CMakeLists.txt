@@ -5,4 +5,4 @@ add_library(vaccel-noop SHARED ${SOURCES})
 target_include_directories(vaccel-noop PRIVATE ${include_dirs})
 
 # Setup make install
-install(TARGETS vaccel-noop DESTINATION "${lib_path}")
+install(TARGETS vaccel-noop DESTINATION ${CMAKE_INSTALL_LIBDIR})

@@ -29,5 +29,5 @@ target_compile_options(mytestlib PUBLIC -Wall -Wextra )
 set_target_properties(mytestlib PROPERTIES ENABLE_EXPORTS on)
 
 # Install the examples
-install(TARGETS classify classify_generic noop exec exec_generic tf_model DESTINATION "${bin_path}")
-install(TARGETS mytestlib DESTINATION "${lib_path}")
+install(TARGETS classify classify_generic noop exec exec_generic tf_model DESTINATION ${CMAKE_INSTALL_BINDIR})
+install(TARGETS mytestlib DESTINATION ${CMAKE_INSTALL_LIBDIR})

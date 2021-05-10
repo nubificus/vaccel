@@ -5,4 +5,4 @@ add_library(vaccel-exec SHARED ${SOURCES})
 target_include_directories(vaccel-exec PRIVATE ${include_dirs})
 
 # Setup make install
-install(TARGETS vaccel-exec DESTINATION "${lib_path}")
+install(TARGETS vaccel-exec DESTINATION ${CMAKE_INSTALL_LIBDIR})

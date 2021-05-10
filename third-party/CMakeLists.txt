@@ -9,5 +9,5 @@ install(
 	FILES
 	${CMAKE_SOURCE_DIR}/third-party/slog/src/slog.h
 	DESTINATION
-	${include_path}
+	${CMAKE_INSTALL_INCLUDEDIR}
 )
