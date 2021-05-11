@@ -28,6 +28,17 @@ add_library(mytestlib SHARED mytestlib.c)
 target_compile_options(mytestlib PUBLIC -Wall -Wextra )
 set_target_properties(mytestlib PROPERTIES ENABLE_EXPORTS on)
 
+add_executable(tf_inference tf_inference.c)
+target_include_directories(tf_inference PRIVATE ${include_dirs})
+target_link_libraries(tf_inference PRIVATE vaccel dl)
+
 # Install the examples
-install(TARGETS classify classify_generic noop exec exec_generic tf_model DESTINATION ${CMAKE_INSTALL_BINDIR})
+install(TARGETS
+	classify
+	classify_generic
+	noop exec
+	exec_generic
+	tf_model
+	tf_inference
+	DESTINATION ${CMAKE_INSTALL_BINDIR})
 install(TARGETS mytestlib DESTINATION ${CMAKE_INSTALL_LIBDIR})
