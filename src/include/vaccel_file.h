@@ -30,15 +30,16 @@ int vaccel_file_from_buffer(
 	const uint8_t *buff,
 	size_t size,
 	const char *filename,
-	struct vaccel_resource *res,
-	bool persist
+	bool persist,
+	const char *dir
 );
 int vaccel_file_persist(
 	struct vaccel_file *file,
-	struct vaccel_resource *res,
+	const char *dir,
 	const char *filename
 );
 int vaccel_file_destroy(struct vaccel_file *file);
+bool vaccel_file_initialized(struct vaccel_file *file);
 
 #ifdef __cplusplus
 }

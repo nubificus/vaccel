@@ -2,6 +2,7 @@
 #include "file.h"
 #include "error.h"
 #include "log.h"
+#include "utils.h"
 
 #include <stdio.h>
 #include <unistd.h>
@@ -28,21 +29,21 @@ int vaccel_file_new(struct vaccel_file *file, const char *path)
 	return VACCEL_OK;
 }
 
-int vaccel_file_persist(struct vaccel_file *file, struct vaccel_resource *res,
+int vaccel_file_persist(struct vaccel_file *file, const char *dir,
 		const char *filename)
 {
 	int ret;
 
-	vaccel_debug("Persisting file to resource");
+	vaccel_debug("Persisting file");
 
 	if (!file || !file->data | !file->size) {
 		vaccel_error("Invalid file");
 		return VACCEL_EINVAL;
 	}
 
-	if (!res) {
-		vaccel_error("Invalid resource");
-		return VACCEL_EINVAL;
+	if (!dir_exists(dir)) {
+		vaccel_error("Invalid directory");
+		return VACCEL_ENOENT;
 	}
 
 	if (!filename) {
@@ -51,7 +52,7 @@ int vaccel_file_persist(struct vaccel_file *file, struct vaccel_resource *res,
 	}
 
 	/* +1 for '\0' */
-	int path_len = snprintf(NULL, 0, "%s/%s", res->rundir, filename) + 1;
+	int path_len = snprintf(NULL, 0, "%s/%s", dir, filename) + 1;
 
 	if (file->path) {
 		vaccel_error("Found path for vAccel file. Not overwriting");
@@ -63,7 +64,7 @@ int vaccel_file_persist(struct vaccel_file *file, struct vaccel_resource *res,
 		return VACCEL_ENOMEM;
 
 	/* No need to check that here, we know the length of the string */
-	snprintf(file->path, path_len, "%s/%s", res->rundir, filename);
+	snprintf(file->path, path_len, "%s/%s", dir, filename);
 	file->path_owned = true;
 
 	FILE *fp = fopen(file->path, "w+");
@@ -90,10 +91,12 @@ free_path:
 
 }
 
-int vaccel_file_from_buffer(struct vaccel_file *file, const uint8_t *buff,
-		size_t size, const char *filename, struct vaccel_resource *res,
-		bool persist)
-{
+int vaccel_file_from_buffer(
+	struct vaccel_file *file,
+	const uint8_t *buff, size_t size,
+	const char *filename,
+	bool persist, const char *dir
+) {
 	if (!file || !buff || !size)
 		return VACCEL_EINVAL;
 
@@ -102,7 +105,7 @@ int vaccel_file_from_buffer(struct vaccel_file *file, const uint8_t *buff,
 	file->size = size;
 
 	if (persist)
-		return vaccel_file_persist(file, res, filename);
+		return vaccel_file_persist(file, dir, filename);
 
 	return VACCEL_OK;
 }
@@ -122,4 +125,9 @@ int vaccel_file_destroy(struct vaccel_file *file)
 
 	free(file->path);
 	return VACCEL_OK;
+}
+
+bool vaccel_file_initialized(struct vaccel_file *file)
+{
+	return file && (file->path || (file->data && file->size));
 }

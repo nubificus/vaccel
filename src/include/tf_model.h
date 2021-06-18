@@ -3,8 +3,8 @@
 #include <stddef.h>
 #include <stdbool.h>
 
-#include "vaccel_id.h"
-#include "vaccel_file.h"
+#include <vaccel_id.h>
+#include <vaccel_file.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -23,11 +23,22 @@ struct vaccel_tf_model {
 	void *plugin_data;
 };
 
-int vaccel_tf_model_new(struct vaccel_tf_model *model, const char *path);
-int vaccel_tf_model_new_from_buffer(struct vaccel_tf_model *model,
-		const uint8_t *buff, size_t size);
+int vaccel_tf_model_new(
+	struct vaccel_tf_model *model,
+	const char *path
+);
+
+int vaccel_tf_model_new_from_buffer(
+	struct vaccel_tf_model *model,
+	const uint8_t *buff,
+	size_t size
+);
+
 int vaccel_tf_model_destroy(struct vaccel_tf_model *model);
-vaccel_id_t vaccel_tf_model_get_id(const struct vaccel_tf_model *model);
+
+vaccel_id_t vaccel_tf_model_get_id(
+	const struct vaccel_tf_model *model
+);
 
 #ifdef __cplusplus
 }
