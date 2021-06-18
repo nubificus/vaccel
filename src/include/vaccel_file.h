@@ -40,6 +40,9 @@ int vaccel_file_persist(
 );
 int vaccel_file_destroy(struct vaccel_file *file);
 bool vaccel_file_initialized(struct vaccel_file *file);
+int vaccel_file_read(struct vaccel_file *file);
+uint8_t *vaccel_file_data(struct vaccel_file *file, size_t *size);
+const char *vaccel_file_path(struct vaccel_file *file);
 
 #ifdef __cplusplus
 }

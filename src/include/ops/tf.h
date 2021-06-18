@@ -4,7 +4,7 @@
 #include <stddef.h>
 
 struct vaccel_session;
-struct vaccel_tf_model;
+struct vaccel_tf_saved_model;
 
 /* This is one-to-one mapping with tensorflow's
  * data types representation: see `tensorflow/tensorflow/c/tf_datatype.h'
@@ -77,13 +77,13 @@ struct vaccel_tf_status {
 
 int vaccel_tf_model_load_graph(
 	struct vaccel_session *session,
-	struct vaccel_tf_model *model,
+	struct vaccel_tf_saved_model *model,
 	struct vaccel_tf_status *status
 );
 
 int vaccel_tf_model_run(
 	struct vaccel_session *session,
-        const struct vaccel_tf_model *model, const struct vaccel_tf_buffer *run_options,
+        const struct vaccel_tf_saved_model *model, const struct vaccel_tf_buffer *run_options,
         const struct vaccel_tf_node *in_nodes, const struct vaccel_tf_tensor *in, int nr_inputs,
         const struct vaccel_tf_node *out_nodes, struct vaccel_tf_tensor *out, int nr_outputs,
         struct vaccel_tf_status *status

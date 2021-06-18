@@ -9,7 +9,12 @@
 #include <string.h>
 #include <stdio.h>
 #include <errno.h>
+#include <stdbool.h>
 
+/* Create a file resource from an existing file in the filesystem
+ *
+ * The path of the system will be copied
+ */
 int vaccel_file_new(struct vaccel_file *file, const char *path)
 {
 	if (!file || !path)
@@ -25,10 +30,21 @@ int vaccel_file_new(struct vaccel_file *file, const char *path)
 		return VACCEL_ENOMEM;
 
 	file->path_owned = false;
+	file->data = NULL;
+	file->size = 0;
 
 	return VACCEL_OK;
 }
 
+/* Persist a file in the filesystem
+ *
+ * For files that have been initialized from in-memory data, this
+ * will persist them in the filesystem under the requested directory
+ * using the provided filename.
+ *
+ * It will fail if the file has been initialized through an existing
+ * path in the filesystem.
+ */
 int vaccel_file_persist(struct vaccel_file *file, const char *dir,
 		const char *filename)
 {
@@ -81,6 +97,20 @@ int vaccel_file_persist(struct vaccel_file *file, const char *dir,
 	}
 
 	fclose(fp);
+
+	/* We deallocate the initial pointer and mmap a new one,
+	 * so that changes through the pointer are synced with the
+	 * file */
+	void *old_ptr = file->data;
+	size_t old_size = file->size;
+	ret = read_file(file->path, (void **)&file->data, &file->size);
+	if (ret) {
+		vaccel_debug("Could not re-map file");
+		file->data = old_ptr;
+		file->size = old_size;
+		goto close_file;
+	}
+	
 	return VACCEL_OK;
 
 close_file:
@@ -91,6 +121,14 @@ free_path:
 
 }
 
+/* Initialize a file from in-memory data.
+ *
+ * This will set the data of the file and it will persist
+ * them in the filesystem if requested to do so.
+ *
+ * It takes ownership of the data, and it will deallocate
+ * it when the file resource is destroyed.
+ */
 int vaccel_file_from_buffer(
 	struct vaccel_file *file,
 	const uint8_t *buff, size_t size,
@@ -110,24 +148,90 @@ int vaccel_file_from_buffer(
 	return VACCEL_OK;
 }
 
+/* Destroy a file
+ *
+ * Releases any resources reserved for the file, If the file
+ * has been persisted it will remove the file from the filesystem.
+ * If the data of the file have been read in memory the memory
+ * will be deallocated
+ */
 int vaccel_file_destroy(struct vaccel_file *file)
 {
 	if (!file)
 		return VACCEL_EINVAL;
 
-	vaccel_debug("Removing file %s", file->path);
-
-	if (file->path_owned) {
+	if (file->path && file->path_owned) {
+		vaccel_debug("Removing file %s", file->path);
 		if (remove(file->path))
 			vaccel_warn("Could not remove file from rundir: %s",
 					file->path);
+		free(file->path);
 	}
 
-	free(file->path);
+	if (file->data)
+		free(file->data);
+
 	return VACCEL_OK;
 }
 
+/* Check if the file has been initialized
+ *
+ * A file is initialized either if a path to the file
+ * has been set or data has been loaded from memory
+ */
 bool vaccel_file_initialized(struct vaccel_file *file)
 {
 	return file && (file->path || (file->data && file->size));
+}
+
+/* Read the file in-memory
+ *
+ * This reads the content of the file in memory, if it has not
+ * been read already.
+ */
+int vaccel_file_read(struct vaccel_file *file)
+{
+	if (!file)
+		return VACCEL_EINVAL;
+
+	if (file->data)
+		return VACCEL_OK;
+
+	if (!file->path)
+		return VACCEL_EINVAL;
+	
+	return read_file(file->path, (void **)&file->data, &file->size);
+}
+
+/* Get a pointer to the data of the file
+ *
+ * If the data have not been loaded to memory, this will
+ * do so, through a call to `vaccel_file_read`.
+ */
+uint8_t *vaccel_file_data(struct vaccel_file *file, size_t *size)
+{
+	if (!file)
+		return NULL;
+
+	/* Make sure the data has been read in memory */
+	if (!file->data || !file->size)
+		if (vaccel_file_read(file))
+			return NULL;
+
+	*size = file->size;
+	return file->data;
+}
+
+/* Get the path of the file
+ *
+ * If the file is owned this will be the path of the file that
+ * was created when persisted. Otherwise, it will be the path of
+ * the file from which the vaccel_file was created
+ */
+const char *vaccel_file_path(struct vaccel_file *file)
+{
+	if (!file)
+		return NULL;
+
+	return file->path;
 }

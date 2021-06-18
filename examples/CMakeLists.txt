@@ -32,6 +32,10 @@ add_executable(tf_inference tf_inference.c)
 target_include_directories(tf_inference PRIVATE ${include_dirs})
 target_link_libraries(tf_inference PRIVATE vaccel dl)
 
+add_executable(tf_saved_model tf_saved_model.c)
+target_include_directories(tf_saved_model PRIVATE ${include_dirs})
+target_link_libraries(tf_saved_model PRIVATE vaccel dl)
+
 # Install the examples
 install(TARGETS
 	classify
@@ -40,6 +44,7 @@ install(TARGETS
 	exec_generic
 	tf_model
 	tf_inference
+	tf_saved_model
 	DESTINATION ${CMAKE_INSTALL_BINDIR})
 install(TARGETS mytestlib DESTINATION ${CMAKE_INSTALL_LIBDIR})
 

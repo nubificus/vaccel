@@ -9,7 +9,7 @@
 int main(int argc, char *argv[])
 {
 	struct vaccel_session vsess;
-	struct vaccel_tf_model model;
+	struct vaccel_tf_saved_model model;
 
 	if (argc != 2) {
 		fprintf(stderr, "usage: %s model\n", argv[0]);
@@ -18,13 +18,19 @@ int main(int argc, char *argv[])
 
 	const char *model_path = argv[1];
 
-	int ret = vaccel_tf_model_new(&model, model_path);
+	int ret = vaccel_tf_saved_model_set_path(&model, model_path);
 	if (ret) {
-		fprintf(stderr, "Could not create TensorFlow model\n");
+		fprintf(stderr, "Could not set model path to TensorFlow model\n");
 		exit(1);
 	}
 
-	printf("Created new model %ld\n", vaccel_tf_model_get_id(&model));
+	ret = vaccel_tf_saved_model_register(&model);
+	if (ret) {
+		fprintf(stderr, "Could not register TensorFlow model resource\n");
+		exit(1);
+	}
+
+	printf("Created new model %ld\n", vaccel_tf_saved_model_id(&model));
 	
 	ret = vaccel_sess_init(&vsess, 0);
 	if (ret) {

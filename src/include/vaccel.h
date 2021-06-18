@@ -14,5 +14,6 @@
 #include "ops/image.h"
 #include "ops/noop.h"
 #include "ops/tf.h"
+#include "resources/tf_saved_model.h"
 
 #endif /* __VACCEL_H__ */

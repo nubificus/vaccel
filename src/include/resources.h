@@ -8,6 +8,7 @@ extern "C" {
 
 typedef enum {
 	VACCEL_RES_TF_MODEL = 0,
+	VACCEL_RES_TF_SAVED_MODEL,
 	VACCEL_RES_CAFFE_MODEL,
 	VACCEL_RES_MAX
 } vaccel_resource_t;

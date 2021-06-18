@@ -6,7 +6,7 @@
 #include <ops/vaccel_ops.h>
 #include <ops/genop.h>
 #include <ops/tf.h>
-#include <tf_model.h>
+#include <resources/tf_saved_model.h>
 
 #define noop_info(fmt, ...) \
 	fprintf(stdout, "[noop] " fmt, ##__VA_ARGS__)
@@ -95,7 +95,7 @@ static int noop_exec(struct vaccel_session *sess, const char *library,
 
 static int noop_tf_model_load_graph(
 	struct vaccel_session *session,
-	struct vaccel_tf_model *model,
+	struct vaccel_tf_saved_model *model,
 	struct vaccel_tf_status *status)
 {
 	if (!session) {
@@ -124,7 +124,7 @@ static int noop_tf_model_load_graph(
 
 static int noop_tf_model_run(
 	struct vaccel_session *session,
-        const struct vaccel_tf_model *model, const struct vaccel_tf_buffer *run_options,
+        const struct vaccel_tf_saved_model *model, const struct vaccel_tf_buffer *run_options,
         const struct vaccel_tf_node *in_nodes, const struct vaccel_tf_tensor *in, int nr_inputs,
         const struct vaccel_tf_node *out_nodes, struct vaccel_tf_tensor *out, int nr_outputs,
         struct vaccel_tf_status *status)
