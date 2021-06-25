@@ -56,42 +56,43 @@ int main(int argc, char *argv[])
 	struct vaccel_tf_buffer run_options = { NULL, 0 };
 
 	/* Input tensors & nodes */
-	struct vaccel_tf_node in_node = { "serving_default_input", 0 };
+	struct vaccel_tf_node in_node = { "serving_default_input_1", 0 };
 	
 	int64_t dims[] = {1, 30};
 	float data[30];
 	for (int i = 0; i < 30; ++i)
 		data[i] = 1.00;
-	struct vaccel_tf_tensor in = {
-		.data = data,
-		.size = sizeof(float) * 30,
-		.nr_dims = 2,
-		.dims = dims,
-		.data_type = VACCEL_TF_FLOAT
-	};
+
+	struct vaccel_tf_tensor *in = vaccel_tf_tensor_new(2, dims, VACCEL_TF_FLOAT);
+	if (!in) {
+		fprintf(stderr, "Could not allocate memory\n");
+		exit(1);
+	}
+
+	in->data = data;
+	in->size = sizeof(float) * 30;
 
 	/* Output tensors & nodes */
-	struct vaccel_tf_node out_node = { "Identity", 0 };
-	struct vaccel_tf_tensor out;
+	struct vaccel_tf_node out_node = { "StatefulPartitionedCall", 0 };
+	struct vaccel_tf_tensor *out;
 
 	ret = vaccel_tf_model_run(&vsess, &model, &run_options,
 			&in_node, &in, 1,
 			&out_node, &out, 1,
 			&status);
 	if (ret) {
-		fprintf(stderr, "Could not run model %s\n", status.message);
+		fprintf(stderr, "Could not run model: %d\n", ret);
 		goto unregister_resource;
 	}
 
 	printf("Success!\n");
-	printf("Output tensor => type:%u nr_dims:%u\n", out.data_type, out.nr_dims);
-	for (int i = 0; i < out.nr_dims; ++i)
-		printf("dim[%d]: %ld\n", i, out.dims[i]);
+	printf("Output tensor => type:%u nr_dims:%u\n", out->data_type, out->nr_dims);
+	for (int i = 0; i < out->nr_dims; ++i)
+		printf("dim[%d]: %ld\n", i, out->dims[i]);
 		
-
 	printf("Result Tensor :\n");
-	float *offsets = (float *)out.data;
-	for (unsigned int i = 0; i < min(10, out.size / sizeof(float)) ; ++i)
+	float *offsets = (float *)out->data;
+	for (unsigned int i = 0; i < min(10, out->size / sizeof(float)) ; ++i)
 		printf("%f\n", offsets[i]);
 
 unregister_resource:
