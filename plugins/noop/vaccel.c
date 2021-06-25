@@ -125,8 +125,8 @@ static int noop_tf_model_load_graph(
 static int noop_tf_model_run(
 	struct vaccel_session *session,
         const struct vaccel_tf_saved_model *model, const struct vaccel_tf_buffer *run_options,
-        const struct vaccel_tf_node *in_nodes, const struct vaccel_tf_tensor *in, int nr_inputs,
-        const struct vaccel_tf_node *out_nodes, struct vaccel_tf_tensor *out, int nr_outputs,
+        const struct vaccel_tf_node *in_nodes, struct vaccel_tf_tensor *const *in, int nr_inputs,
+        const struct vaccel_tf_node *out_nodes, struct vaccel_tf_tensor **out, int nr_outputs,
         struct vaccel_tf_status *status)
 {
 	if (!session) {
@@ -147,24 +147,25 @@ static int noop_tf_model_run(
 	for (int i = 0; i < nr_inputs; ++i) {
 		noop_info("\tNode %d: %s:%ld\n", i, in_nodes[i].name,
 				in_nodes[i].id);
-		noop_info("\t#dims: %d -> {", in[i].nr_dims);
-		for (int j = 0; j < in[i].nr_dims; ++j)
-			printf("%ld%s", in[i].dims[j],
-				(j == in[i].nr_dims - 1) ? "}\n" : " ");
+		noop_info("\t#dims: %d -> {", in[i]->nr_dims);
+		for (int j = 0; j < in[i]->nr_dims; ++j)
+			printf("%ld%s", in[i]->dims[j],
+				(j == in[i]->nr_dims - 1) ? "}\n" : " ");
 
-		noop_info("\tData type: %d\n", in[i].data_type);
-		noop_info("\tData -> %p, %lu\n", in[i].data, in[i].size);
+		noop_info("\tData type: %d\n", in[i]->data_type);
+		noop_info("\tData -> %p, %lu\n", in[i]->data, in[i]->size);
 	}
 
 	noop_info("Number of outputs: %d\n", nr_outputs);
 	for (int i = 0; i < nr_outputs; ++i) {
 		noop_info("\tNode %d: %s:%ld\n", i, out_nodes[i].name,
 				out_nodes[i].id);
-		out[i].nr_dims = 0;
-		out[i].dims = NULL;
-		out[i].data_type = 0;
-		out[i].data = NULL;
-		out[i].size = 0;
+		out[i] = malloc(sizeof(*out[i]));
+		out[i]->nr_dims = 0;
+		out[i]->dims = NULL;
+		out[i]->data_type = 0;
+		out[i]->data = NULL;
+		out[i]->size = 0;
 	}
 
 	if (status) {
