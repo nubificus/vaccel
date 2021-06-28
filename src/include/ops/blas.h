@@ -24,9 +24,16 @@ extern "C" {
 
 struct vaccel_session;
 
-int vaccel_sgemm(struct vaccel_session *sess, uint32_t k, uint32_t m,
-		uint32_t n, size_t len_a, size_t len_b, size_t len_c,
-		float *a, float *b, float *c);
+/* Matrix-Matrix multiplication for single-precision */
+int vaccel_sgemm(
+	struct vaccel_session *sess,
+	int64_t m, int64_t n, int64_t k,
+	float alpha,
+	float *a, int64_t lda,
+	float *b, int64_t ldb,
+	float beta,
+	float *c, int64_t ldc
+);
 
 #ifdef __cplusplus
 }
