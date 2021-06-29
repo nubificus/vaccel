@@ -38,6 +38,7 @@ enum vaccel_op_type {
 	VACCEL_TF_SESSION_LOAD,     /* 12 */
 	VACCEL_TF_SESSION_RUN,      /* 13 */
 	VACCEL_TF_SESSION_DELETE,   /* 14 */
+	VACCEL_MINMAX,              /* 15 */
 	VACCEL_FUNCTIONS_NR
 };
 
@@ -57,6 +58,7 @@ static const char *vaccel_op_name[] = {
 	"TensorFlow session load",
 	"TensorFlow session run",
 	"TensorFlow session delete",
+	"MinMax",
 };
 
 static inline const char *vaccel_op_type_str(enum vaccel_op_type op_type)
