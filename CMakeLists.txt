@@ -11,6 +11,15 @@ option(BUILD_PLUGIN_NOOP "Build the no-op debugging plugin" OFF)
 option(BUILD_EXAMPLES "Build the examples" OFF)
 option(ENABLE_TESTS "Enable testing" OFF)
 
+# Export json with compile commands
+SET(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+IF(EXISTS "${CMAKE_CURRENT_BINARY_DIR}/compile_commands.json")
+  EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    ${CMAKE_CURRENT_BINARY_DIR}/compile_commands.json
+    ${CMAKE_SOURCE_DIR}/compile_commands.json
+  )
+ENDIF()
+
 # installation paths
 include(GNUInstallDirs)
 
@@ -48,13 +57,6 @@ if (ENABLE_TESTS)
 	add_subdirectory(
 		${CMAKE_BINARY_DIR}/googletest-src
 		${CMAKE_BINARY_DIR}/googletest-build)
-
-	SET(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-	IF(EXISTS "${CMAKE_CURRENT_BINARY_DIR}/compile_commands.json")
-		EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E copy_if_different
-			${CMAKE_CURRENT_BINARY_DIR}/compile_commands.json
-			${CMAKE_SOURCE_DIR}/compile_commands.json)
-	ENDIF()
 
 	enable_testing()
 	add_subdirectory(test)
