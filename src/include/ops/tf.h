@@ -2,6 +2,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include <stdbool.h>
 
 struct vaccel_session;
 struct vaccel_tf_saved_model;
@@ -44,6 +45,14 @@ struct vaccel_tf_buffer {
 	size_t size;
 };
 
+struct vaccel_tf_buffer *vaccel_tf_buffer_new(void *data, size_t size);
+void vaccel_tf_buffer_destroy(struct vaccel_tf_buffer *buffer);
+void *vaccel_tf_buffer_take_data(struct vaccel_tf_buffer *buffer, size_t *size);
+void *vaccel_tf_buffer_get_data(
+	const struct vaccel_tf_buffer *buffer,
+	size_t *size
+);
+
 struct vaccel_tf_node {
 	/* Name of the node */
 	char *name;
@@ -52,12 +61,21 @@ struct vaccel_tf_node {
         int64_t id;
 };
 
+struct vaccel_tf_node *vaccel_tf_node_new(const char *name, int64_t id);
+void vaccel_tf_node_destroy(struct vaccel_tf_node *node);
+const char *vaccel_tf_node_get_name(struct vaccel_tf_node *node);
+int64_t vaccel_tf_node_get_id(struct vaccel_tf_node *node);
+
+
 struct vaccel_tf_tensor {
         /* Tensor's data */
         void *data;
 
         /* size of the data */
         size_t size;
+
+	/* Do we own the data */
+	bool owned;
 
         /* dimensions of the data */
         int nr_dims;
@@ -66,6 +84,30 @@ struct vaccel_tf_tensor {
         /* Data type */
         enum vaccel_tf_data_type data_type;
 };
+
+struct vaccel_tf_tensor *
+vaccel_tf_tensor_new(
+	int nr_dims,
+	int64_t *dims,
+	enum vaccel_tf_data_type type
+);
+
+struct vaccel_tf_tensor *
+vaccel_tf_tensor_allocate(
+	int nr_dims, int64_t *dims,
+	enum vaccel_tf_data_type type,
+	size_t total_size
+);
+
+int vaccel_tf_tensor_destroy(struct vaccel_tf_tensor *tensor);
+
+int vaccel_tf_tensor_set_data(
+		struct vaccel_tf_tensor *tensor,
+		void *data,
+		size_t size
+);
+
+void *vaccel_tf_tensor_get_data(struct vaccel_tf_tensor *tensor);
 
 struct vaccel_tf_status {
         /* TensorFlow error code */
