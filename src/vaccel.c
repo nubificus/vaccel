@@ -60,15 +60,23 @@ close_dl:
 
 static int load_backend_plugins(char *plugins)
 {
-	char *plugin = strtok(plugins, ";");
+	char *plugin;
+
+	char *plugins_tmp = strdup(plugins);
+	if (!plugins_tmp)
+		return VACCEL_ENOMEM;
+
+	char *p = plugins_tmp;
+	plugin = strtok(p, ":");
 	while (plugin) {
 		int ret = load_backend_plugin(plugin);
 		if (ret != VACCEL_OK)
 			return ret;
 
-		plugin = strtok(NULL, ";");
+		plugin = strtok(NULL, ":");
 	}
-
+	
+	free(plugins_tmp);
 	return VACCEL_OK;
 }
 
