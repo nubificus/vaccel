@@ -227,7 +227,11 @@ int vaccel_tf_model_load_graph(
 	}
 
 	// Get implementation
-	int (*plugin_op)() = get_plugin_op(VACCEL_TF_MODEL_LOAD_GRAPH);
+	int (*plugin_op)(
+		struct vaccel_session *,
+		struct vaccel_tf_saved_model *,
+		struct vaccel_tf_status *
+	) = get_plugin_op(VACCEL_TF_MODEL_LOAD_GRAPH);
 	if (!plugin_op)
 		return VACCEL_ENOTSUP;
 
@@ -249,7 +253,13 @@ int vaccel_tf_model_run(
 	}
 
 	// Get implementation
-	int (*plugin_op)() = get_plugin_op(VACCEL_TF_MODEL_RUN_GRAPH);
+	int (*plugin_op)(
+		struct vaccel_session *,
+		const struct vaccel_tf_saved_model *, const struct vaccel_tf_buffer *,
+		const struct vaccel_tf_node *, struct vaccel_tf_tensor *const *, int,
+		const struct vaccel_tf_node *, struct vaccel_tf_tensor **, int,
+		struct vaccel_tf_status *
+	) = get_plugin_op(VACCEL_TF_MODEL_RUN_GRAPH);
 	if (!plugin_op)
 		return VACCEL_ENOTSUP;
 
