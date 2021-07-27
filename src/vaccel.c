@@ -90,6 +90,15 @@ static int create_vaccel_rundir(void)
 
 	if (!dir_exists(rundir)) {
 		vaccel_debug("User rundir does not exist. Will try to create it");
+		if (!dir_exists("/run/user")) {
+			vaccel_debug("/run/user dir does not exist. Will try to create it first");
+			ret = mkdir("/run/user", 0700);
+			if (ret) {
+				vaccel_fatal("Could not create user rundir: %s",
+						strerror(errno));
+				return VACCEL_ENOENT;
+			}
+		}
 		ret = mkdir(rundir, 0700);
 		if (ret) {
 			vaccel_fatal("Could not create user rundir: %s",
