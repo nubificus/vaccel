@@ -50,7 +50,7 @@ const char *vaccel_tf_saved_model_get_path(struct vaccel_tf_saved_model *model);
 
 int vaccel_tf_saved_model_set_model(
 	struct vaccel_tf_saved_model *model,
-	uint8_t *ptr, size_t len
+	const uint8_t *ptr, size_t len
 );
 
 const uint8_t *vaccel_tf_saved_model_get_model(
@@ -60,7 +60,7 @@ const uint8_t *vaccel_tf_saved_model_get_model(
 
 int vaccel_tf_saved_model_set_checkpoint(
 	struct vaccel_tf_saved_model *model,
-	uint8_t *ptr, size_t len
+	const uint8_t *ptr, size_t len
 );
 
 const uint8_t *vaccel_tf_saved_model_get_checkpoint(
@@ -70,7 +70,7 @@ const uint8_t *vaccel_tf_saved_model_get_checkpoint(
 
 int vaccel_tf_saved_model_set_var_index(
 	struct vaccel_tf_saved_model *model,
-	uint8_t *ptr, size_t len
+	const uint8_t *ptr, size_t len
 );
 
 const uint8_t *vaccel_tf_saved_model_get_var_index(

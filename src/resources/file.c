@@ -110,9 +110,6 @@ int vaccel_file_persist(struct vaccel_file *file, const char *dir,
 		goto remove_file;
 	}
 
-	/* We do not need this any more */
-	free(old_ptr);
-
 	fclose(fp);
 	return VACCEL_OK;
 
@@ -131,8 +128,9 @@ free_path:
  * This will set the data of the file and it will persist
  * them in the filesystem if requested to do so.
  *
- * It takes ownership of the data, and it will deallocate
- * it when the file resource is destroyed.
+ * It does not take ownership of the data pointer, but the user is responsible
+ * of making sure that the memory it points to outlives the `vaccel_file`
+ * resource.
  */
 int vaccel_file_from_buffer(
 	struct vaccel_file *file,
@@ -165,14 +163,9 @@ int vaccel_file_destroy(struct vaccel_file *file)
 	if (!file)
 		return VACCEL_EINVAL;
 
-	/* Just a file with data we got from the user. Just free
-	 * the data */
-	if (!file->path) {
-		if (file->data)
-			free(file->data);
-
+	/* Just a file with data we got from the user. Nothing to do */
+	if (!file->path)
 		return VACCEL_OK;
-	}
 
 	/* There is a path in the disk representing the file,
 	 * which means that if we hold a pointer to the contents
