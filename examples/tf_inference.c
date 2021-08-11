@@ -35,7 +35,7 @@ int main(int argc, char *argv[])
 	ret = vaccel_sess_init(&vsess, 0);
 	if (ret) {
 		fprintf(stderr, "Could not initialize vAccel session\n");
-		exit(1);
+		goto destroy_resource;
 	}
 
 	printf("Initialized vAccel session %u\n", vsess.session_id);
@@ -101,5 +101,8 @@ unregister_resource:
 close_session:
 	vaccel_sess_free(&vsess);
 
-	return 0;
+destroy_resource:
+	vaccel_tf_saved_model_destroy(&model);
+
+	return ret;
 }

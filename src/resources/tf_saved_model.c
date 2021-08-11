@@ -10,6 +10,7 @@
 #include <regex.h>
 #include <dirent.h>
 #include <sys/stat.h>
+#include <unistd.h>
 
 #define MAX_PATH 1024
 
@@ -23,6 +24,19 @@ static int tf_model_destructor(void *data)
 	vaccel_file_destroy(&model->model);
 	vaccel_file_destroy(&model->checkpoint);
 	vaccel_file_destroy(&model->var_index);
+
+	struct vaccel_resource *res = model->resource;
+	if (!res || !res->rundir)
+		return VACCEL_OK;
+
+	char path[MAX_PATH];
+	if (snprintf(path, MAX_PATH, "%s/variables", res->rundir) >= MAX_PATH) {
+		vaccel_warn("Path too long");
+		return VACCEL_ENAMETOOLONG;
+	}
+
+	if (dir_exists(path))
+		rmdir(path);
 
 	return VACCEL_OK;
 }

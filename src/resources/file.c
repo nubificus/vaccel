@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdio.h>
+#include <sys/mman.h>
 #include <errno.h>
 #include <stdbool.h>
 
@@ -83,20 +84,18 @@ int vaccel_file_persist(struct vaccel_file *file, const char *dir,
 	snprintf(file->path, path_len, "%s/%s", dir, filename);
 	file->path_owned = true;
 
+	/* Create the new file */
 	FILE *fp = fopen(file->path, "w+");
 	if (!fp) {
 		ret = errno;
 		goto free_path;
 	}
 
-	size_t len = fwrite(file->data, sizeof(char), file->size, fp);
-	if (len != file->size) {
-		vaccel_error("Could not write to file %s", file->path);
+	if (fwrite(file->data, sizeof(char), file->size, fp) != file->size) {
+		vaccel_error("Could not persist file %s", file->path);
 		ret = VACCEL_EIO;
-		goto close_file;
+		goto remove_file;
 	}
-
-	fclose(fp);
 
 	/* We deallocate the initial pointer and mmap a new one,
 	 * so that changes through the pointer are synced with the
@@ -108,15 +107,21 @@ int vaccel_file_persist(struct vaccel_file *file, const char *dir,
 		vaccel_debug("Could not re-map file");
 		file->data = old_ptr;
 		file->size = old_size;
-		goto close_file;
+		goto remove_file;
 	}
-	
+
+	/* We do not need this any more */
+	free(old_ptr);
+
+	fclose(fp);
 	return VACCEL_OK;
 
-close_file:
+remove_file:
 	fclose(fp);
+	remove(file->path);
 free_path:
 	free(file->path);
+	file->path = NULL;
 	return ret;
 
 }
@@ -160,16 +165,31 @@ int vaccel_file_destroy(struct vaccel_file *file)
 	if (!file)
 		return VACCEL_EINVAL;
 
-	if (file->path && file->path_owned) {
+	/* Just a file with data we got from the user. Just free
+	 * the data */
+	if (!file->path) {
+		if (file->data)
+			free(file->data);
+
+		return VACCEL_OK;
+	}
+
+	/* There is a path in the disk representing the file,
+	 * which means that if we hold a pointer to the contents
+	 * of the file, this has been mmaped, so unmap it */
+	if (file->data)
+		munmap(file->data, file->size);
+
+	/* If we own the path to the file, just remove it from the
+	 * file system */
+	if (file->path_owned) {
 		vaccel_debug("Removing file %s", file->path);
 		if (remove(file->path))
 			vaccel_warn("Could not remove file from rundir: %s",
 					file->path);
-		free(file->path);
 	}
 
-	if (file->data)
-		free(file->data);
+	free(file->path);
 
 	return VACCEL_OK;
 }
