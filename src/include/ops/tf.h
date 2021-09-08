@@ -144,3 +144,10 @@ int vaccel_tf_session_run(
         const struct vaccel_tf_node *out_nodes, struct vaccel_tf_tensor **out, int nr_outputs,
         struct vaccel_tf_status *status
 );
+
+
+int vaccel_tf_session_delete(
+	struct vaccel_session *session,
+	struct vaccel_tf_saved_model *model,
+	struct vaccel_tf_status *status
+);

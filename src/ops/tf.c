@@ -280,3 +280,25 @@ int vaccel_tf_session_run(
 	return plugin_op(session, model, run_options, in_nodes, in, nr_inputs,
 			out_nodes, out, nr_outputs, status);
 }
+
+int vaccel_tf_session_delete(
+	struct vaccel_session *session,
+	struct vaccel_tf_saved_model *model,
+	struct vaccel_tf_status *status
+) {
+	vaccel_debug("TensorFlow: delete session");
+
+	if (!session) {
+		vaccel_debug("Invalid vAccel session");
+		return VACCEL_EINVAL;
+	}
+
+	int (*plugin_op)(
+		struct vaccel_session *, struct vaccel_tf_saved_model *,
+		struct vaccel_tf_status *
+	) = get_plugin_op(VACCEL_TF_SESSION_DELETE);
+	if (!plugin_op)
+		return VACCEL_ENOTSUP;
+
+	return plugin_op(session, model, status);
+}

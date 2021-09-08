@@ -35,6 +35,7 @@ enum vaccel_op_type {
 	VACCEL_TF_MODEL_UNREGISTER, /* 9 */
 	VACCEL_TF_SESSION_LOAD,     /* 10 */
 	VACCEL_TF_SESSION_RUN,      /* 11 */
+	VACCEL_TF_SESSION_DELETE,   /* 12 */
 	VACCEL_FUNCTIONS_NR
 };
 
@@ -51,6 +52,7 @@ static const char *vaccel_op_name[] = {
 	"TensorFlow model unregister",
 	"TensorFlow session load",
 	"TensorFlow session run",
+	"TensorFlow session delete",
 };
 
 static inline const char *vaccel_op_type_str(enum vaccel_op_type op_type)

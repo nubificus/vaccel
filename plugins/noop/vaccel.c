@@ -191,6 +191,30 @@ static int noop_tf_session_run(
 	return VACCEL_OK;
 }
 
+static int noop_tf_session_delete(
+	struct vaccel_session *session,
+        const struct vaccel_tf_saved_model *model,
+	struct vaccel_tf_status *status
+) {
+	if (!session) {
+		noop_error("Invalid session\n");
+		return VACCEL_EINVAL;
+	}
+
+	if (!model) {
+		noop_error("Invalid TensorFlow model\n");
+		return VACCEL_EINVAL;
+	}
+
+	if (status) {
+		status->message = strdup("Operation handled by noop plugin");
+		if (!status->message)
+			return VACCEL_ENOMEM;
+	}
+
+	return VACCEL_OK;
+}
+
 struct vaccel_op ops[] = {
 	VACCEL_OP_INIT(ops[0], VACCEL_NO_OP, noop_noop),
 	VACCEL_OP_INIT(ops[1], VACCEL_BLAS_SGEMM, noop_sgemm),
@@ -200,6 +224,7 @@ struct vaccel_op ops[] = {
 	VACCEL_OP_INIT(ops[5], VACCEL_EXEC, noop_exec),
 	VACCEL_OP_INIT(ops[6], VACCEL_TF_SESSION_LOAD, noop_tf_session_load),
 	VACCEL_OP_INIT(ops[7], VACCEL_TF_SESSION_RUN, noop_tf_session_run),
+	VACCEL_OP_INIT(ops[8], VACCEL_TF_SESSION_DELETE, noop_tf_session_delete),
 };
 
 static int init(void)

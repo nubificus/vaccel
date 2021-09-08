@@ -96,7 +96,7 @@ int main(int argc, char *argv[])
 			&status);
 	if (ret) {
 		fprintf(stderr, "Could not run model: %d\n", ret);
-		goto unregister_resource;
+		goto unload_session;
 	}
 
 	printf("Success!\n");
@@ -108,6 +108,9 @@ int main(int argc, char *argv[])
 	float *offsets = (float *)out->data;
 	for (unsigned int i = 0; i < min(10, out->size / sizeof(float)) ; ++i)
 		printf("%f\n", offsets[i]);
+
+unload_session:
+	vaccel_tf_session_delete(&vsess, &model, &status);
 
 unregister_resource:
 	vaccel_sess_unregister(&vsess, model.resource);
