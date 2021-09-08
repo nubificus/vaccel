@@ -61,7 +61,7 @@ int main(int argc, char *argv[])
 	}
 
 	struct vaccel_tf_status status;
-	ret = vaccel_tf_model_load_graph(&vsess, &model, &status);
+	ret = vaccel_tf_session_load(&vsess, &model, &status);
 	if (ret) {
 		fprintf(stderr, "Could not load graph from model\n");
 		goto unregister_resource;
@@ -90,7 +90,7 @@ int main(int argc, char *argv[])
 	struct vaccel_tf_node out_node = { "StatefulPartitionedCall", 0 };
 	struct vaccel_tf_tensor *out;
 
-	ret = vaccel_tf_model_run(&vsess, &model, &run_options,
+	ret = vaccel_tf_session_run(&vsess, &model, &run_options,
 			&in_node, &in, 1,
 			&out_node, &out, 1,
 			&status);

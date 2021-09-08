@@ -131,13 +131,13 @@ struct vaccel_tf_status {
         const char *message;
 };
 
-int vaccel_tf_model_load_graph(
+int vaccel_tf_session_load(
 	struct vaccel_session *session,
 	struct vaccel_tf_saved_model *model,
 	struct vaccel_tf_status *status
 );
 
-int vaccel_tf_model_run(
+int vaccel_tf_session_run(
 	struct vaccel_session *session,
         const struct vaccel_tf_saved_model *model, const struct vaccel_tf_buffer *run_options,
         const struct vaccel_tf_node *in_nodes, struct vaccel_tf_tensor *const *in, int nr_inputs,

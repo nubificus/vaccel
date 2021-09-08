@@ -107,7 +107,7 @@ static int noop_exec(struct vaccel_session *sess, const char *library,
 	return VACCEL_OK;
 }
 
-static int noop_tf_model_load_graph(
+static int noop_tf_session_load(
 	struct vaccel_session *session,
 	struct vaccel_tf_saved_model *model,
 	struct vaccel_tf_status *status)
@@ -136,7 +136,7 @@ static int noop_tf_model_load_graph(
 	return VACCEL_OK;
 }
 
-static int noop_tf_model_run(
+static int noop_tf_session_run(
 	struct vaccel_session *session,
         const struct vaccel_tf_saved_model *model, const struct vaccel_tf_buffer *run_options,
         const struct vaccel_tf_node *in_nodes, struct vaccel_tf_tensor *const *in, int nr_inputs,
@@ -198,8 +198,8 @@ struct vaccel_op ops[] = {
 	VACCEL_OP_INIT(ops[3], VACCEL_IMG_DETEC, noop_img_detect),
 	VACCEL_OP_INIT(ops[4], VACCEL_IMG_SEGME, noop_img_segme),
 	VACCEL_OP_INIT(ops[5], VACCEL_EXEC, noop_exec),
-	VACCEL_OP_INIT(ops[6], VACCEL_TF_MODEL_LOAD_GRAPH, noop_tf_model_load_graph),
-	VACCEL_OP_INIT(ops[7], VACCEL_TF_MODEL_RUN_GRAPH, noop_tf_model_run),
+	VACCEL_OP_INIT(ops[6], VACCEL_TF_SESSION_LOAD, noop_tf_session_load),
+	VACCEL_OP_INIT(ops[7], VACCEL_TF_SESSION_RUN, noop_tf_session_run),
 };
 
 static int init(void)
