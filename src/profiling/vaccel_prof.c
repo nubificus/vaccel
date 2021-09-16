@@ -19,6 +19,7 @@
 
 #include <malloc.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <stddef.h>
 #include <string.h>
 #include <time.h>
@@ -32,6 +33,13 @@ uint64_t get_tstamp_nsec(void)
 	clock_gettime(CLOCK_MONOTONIC_RAW, &tp);
 
 	return tp.tv_sec * 1e9 + tp.tv_nsec;
+}
+
+static bool prof_enabled(void)
+{
+	char *env = getenv("VACCEL_PROF_ENABLED");
+
+	return env && !strncmp(env, "enabled", 7);
 }
 
 struct prof_sample {
@@ -104,6 +112,9 @@ static struct prof_sample *get_next_sample(struct vaccel_prof_region *region)
 
 int vaccel_prof_region_start(struct vaccel_prof_region *region)
 {
+	if (!prof_enabled())
+		return VACCEL_OK;
+
 	if (!region) {
 		vaccel_error("[prof] start region: Invalid profiling region");
 		return VACCEL_EINVAL;
@@ -122,6 +133,9 @@ int vaccel_prof_region_start(struct vaccel_prof_region *region)
 
 int vaccel_prof_region_stop(const struct vaccel_prof_region *region)
 {
+	if (!prof_enabled())
+		return VACCEL_OK;
+
 	if (!region) {
 		vaccel_error("[prof] stop region: Invalid profiling region");
 		return VACCEL_EINVAL;
@@ -142,6 +156,9 @@ int vaccel_prof_region_init(
 	struct vaccel_prof_region *region,
 	const char *name
 ) {
+	if (!prof_enabled())
+		return VACCEL_OK;
+
 	if (!region) {
 		vaccel_error("[prof] init region: Invalid profiling region");
 		return VACCEL_EINVAL;
@@ -171,6 +188,9 @@ free_name:
 
 int vaccel_prof_region_destroy(struct vaccel_prof_region *region)
 {
+	if (!prof_enabled())
+		return VACCEL_OK;
+
 	if (!region) {
 		vaccel_error("[prof] destroy region: Invalid profiling region");
 		return VACCEL_EINVAL;
@@ -193,6 +213,9 @@ int vaccel_prof_region_destroy(struct vaccel_prof_region *region)
 
 int vaccel_prof_region_print(const struct vaccel_prof_region *region)
 {
+	if (!prof_enabled())
+		return VACCEL_OK;
+
 	if (!region) {
 		vaccel_error("[prof] print region: Invalid profiling region");
 		return VACCEL_EINVAL;
