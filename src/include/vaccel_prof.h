@@ -19,6 +19,10 @@
 
 #include "error.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct prof_sample;
 
 struct vaccel_prof_region {
@@ -57,3 +61,7 @@ int vaccel_prof_region_init(
 
 /* Destroy a profiling region */
 int vaccel_prof_region_destroy(struct vaccel_prof_region *region);
+
+#ifdef __cplusplus
+}
+#endif

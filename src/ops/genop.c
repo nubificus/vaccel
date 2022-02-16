@@ -38,6 +38,8 @@ unpack_func_t callbacks[VACCEL_FUNCTIONS_NR] = {
 	vaccel_image_classification_unpack,
 	vaccel_image_detection_unpack,
 	vaccel_image_segmentation_unpack,
+	vaccel_image_pose_unpack,
+	vaccel_image_depth_unpack,
 	vaccel_exec_unpack,
 };
 
