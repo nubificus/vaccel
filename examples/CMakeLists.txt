@@ -2,9 +2,13 @@ set(INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/src/include)
 set(BIN_EXAMPLES
 	classify
 	classify_generic
+	detect
 	detect_generic
+	segment
 	segment_generic
+	pose
 	pose_generic
+	depth
 	depth_generic
 	exec
 	exec_generic
