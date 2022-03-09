@@ -24,27 +24,31 @@ extern "C" {
 
 enum vaccel_op_type {
 	VACCEL_NO_OP = 0,
-	VACCEL_BLAS_SGEMM,   /* 1 */
-	VACCEL_IMG_CLASS,    /* 2 */
-	VACCEL_IMG_DETEC,    /* 3 */
-	VACCEL_IMG_SEGME,    /* 4 */
-	VACCEL_EXEC,         /* 5 */
-	VACCEL_TF_MODEL_NEW,        /* 6 */
-	VACCEL_TF_MODEL_DESTROY,    /* 7 */
-	VACCEL_TF_MODEL_REGISTER,   /* 8 */
-	VACCEL_TF_MODEL_UNREGISTER, /* 9 */
-	VACCEL_TF_SESSION_LOAD,     /* 10 */
-	VACCEL_TF_SESSION_RUN,      /* 11 */
-	VACCEL_TF_SESSION_DELETE,   /* 12 */
+	VACCEL_BLAS_SGEMM,          /* 1 */
+	VACCEL_IMG_CLASS,           /* 2 */
+	VACCEL_IMG_DETEC,           /* 3 */
+	VACCEL_IMG_SEGME,           /* 4 */
+	VACCEL_IMG_POSE,            /* 5 */
+	VACCEL_IMG_DEPTH,           /* 6 */
+	VACCEL_EXEC,                /* 7 */
+	VACCEL_TF_MODEL_NEW,        /* 8 */
+	VACCEL_TF_MODEL_DESTROY,    /* 9 */
+	VACCEL_TF_MODEL_REGISTER,   /* 10 */
+	VACCEL_TF_MODEL_UNREGISTER, /* 11 */
+	VACCEL_TF_SESSION_LOAD,     /* 12 */
+	VACCEL_TF_SESSION_RUN,      /* 13 */
+	VACCEL_TF_SESSION_DELETE,   /* 14 */
 	VACCEL_FUNCTIONS_NR
 };
 
 static const char *vaccel_op_name[] = {
 	"noop",
 	"sgemm",
-	"image-classification",
-	"image-detection",
-	"image-segmentation",
+	"image classification",
+	"image detection",
+	"image segmentation",
+	"image pose estimation",
+	"image depth estimation",
 	"exec",
 	"TensorFlow model create",
 	"TensorFlow model destroy",
