@@ -66,8 +66,8 @@ static void set_log_file(void)
 	slog_config_get(&cfg);
 	strncpy(cfg.sFileName, env, SLOG_NAME_MAX-1);
 
-	if (strncpy(cfg.sFileName, "/dev/stdout", SLOG_NAME_MAX-1)
-			&& strncpy(cfg.sFileName, "/dev/stderr", SLOG_NAME_MAX-1)) {
+	if (strncmp(cfg.sFileName, "/dev/stdout", SLOG_NAME_MAX-1)
+			&& strncmp(cfg.sFileName, "/dev/stderr", SLOG_NAME_MAX-1)) {
 		cfg.nToFile = 1;
 		cfg.nToScreen = 0;
 	}
