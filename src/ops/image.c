@@ -18,32 +18,45 @@
 #include "log.h"
 #include "vaccel_ops.h"
 #include "genop.h"
-
 #include "session.h"
+#include "vaccel_prof.h"
+
+struct vaccel_prof_region image_op_stats =
+	VACCEL_PROF_REGION_INIT("vaccel_image_op");
 
 int vaccel_image_op(enum vaccel_op_type op_type, struct vaccel_session *sess,
 		const void *img, unsigned char *out_text,
 		unsigned char *out_imgname, size_t len_img,
 		size_t len_out_text, size_t len_out_imgname)
 {
+	int ret;
+
 	if (!sess)
 		return VACCEL_EINVAL;
 
 	vaccel_debug("session:%u Looking for plugin implementing %s",
 			sess->session_id, vaccel_op_type_str(op_type));
 
+	vaccel_prof_region_start(&image_op_stats);
+
 	//Get implementation
 	int (*plugin_op)() = get_plugin_op(op_type);
-	if (!plugin_op)
-		return VACCEL_ENOTSUP;
+	if (!plugin_op) {
+		ret = VACCEL_ENOTSUP;
+		goto out;
+	}
 
 	if (out_text != NULL && len_out_text > 0) {
-		return plugin_op(sess, img, out_text, out_imgname, len_img,
+		ret = plugin_op(sess, img, out_text, out_imgname, len_img,
 				len_out_text, len_out_imgname);
 	} else {
-		return plugin_op(sess, img, out_imgname, len_img,
+		ret = plugin_op(sess, img, out_imgname, len_img,
 				len_out_imgname);
 	}
+
+out:
+	vaccel_prof_region_stop(&image_op_stats);
+	return ret;
 }
 
 #define vaccel_image_op_no_text(op_type, sess, img, out_imgname, len_img, \
@@ -169,4 +182,15 @@ int vaccel_image_depth_unpack(struct vaccel_session *sess,
 {
 	return vaccel_image_op_unpack(VACCEL_IMG_DEPTH, sess, read, nr_read, 1,
 			write, nr_write, 1);
+}
+
+__attribute__((constructor))
+static void vaccel_tf_ops_init(void)
+{
+}
+
+__attribute__((destructor))
+static void vaccel_tf_ops_fini(void)
+{
+	vaccel_prof_region_print(&image_op_stats);
 }
