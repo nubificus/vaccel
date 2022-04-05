@@ -46,7 +46,7 @@ static int exec(struct vaccel_session *session, const char *library, const char
 	vaccel_debug("Calling exec for session %u", session->session_id);
 
 	vaccel_debug("[exec] library: %s", library);
-	dl = dlopen(library, RTLD_NOW | RTLD_GLOBAL);
+	dl = dlopen(library, RTLD_NOW);
 	if (!dl) {
 		vaccel_error("%s", dlerror());
 		return VACCEL_EINVAL;
@@ -59,7 +59,6 @@ static int exec(struct vaccel_session *session, const char *library, const char
 		vaccel_error("%s", dlerror());
 		return VACCEL_EINVAL;
 	}
-
 
 	ret = (*fptr)(read, nr_read, write, nr_write);
 	if (ret)
