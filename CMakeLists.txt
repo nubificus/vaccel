@@ -8,6 +8,7 @@ project(vaccelrt
 # Configuration time options
 option(BUILD_PLUGIN_EXEC "Build the exec plugin" OFF)
 option(BUILD_PLUGIN_NOOP "Build the no-op debugging plugin" OFF)
+option(BUILD_PLUGIN_MBENCH "Build the microbenchmark plugin" OFF)
 option(BUILD_EXAMPLES "Build the examples" OFF)
 option(ENABLE_TESTS "Enable testing" OFF)
 if (ENABLE_TESTS)
