@@ -14,6 +14,7 @@ set(BIN_EXAMPLES
 	exec_with_res
 	exec_generic
 	noop
+	mbench
 	sgemm
 	sgemm_generic
 	minmax
