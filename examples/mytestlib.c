@@ -35,6 +35,7 @@ int mytestfunc(struct vaccel_arg *input, size_t nr_in,
 	int a = *(int *)input[0].buf;
 	assert(nr_in >= 1);
 	assert(nr_out >= 1);
+	printf("I got nr_in: %ld, nr_out: %ld\n", nr_in, nr_out);
 	printf("I got this input: %d\n", a);
 	sprintf(output[0].buf, "I got this input: %d\n", a);
 	output[0].len = strlen(output[0].buf);

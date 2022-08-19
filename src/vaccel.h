@@ -25,6 +25,7 @@
 #include "ops/genop.h"
 #include "ops/image.h"
 #include "ops/noop.h"
+#include "ops/fpga.h"
 #include "ops/vaccel_ops.h"
 
 const char *vaccel_rundir(void);

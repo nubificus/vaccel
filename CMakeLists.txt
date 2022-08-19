@@ -9,6 +9,8 @@ project(vaccelrt
 option(BUILD_PLUGIN_EXEC "Build the exec plugin" OFF)
 option(BUILD_PLUGIN_NOOP "Build the no-op debugging plugin" OFF)
 option(BUILD_EXAMPLES "Build the examples" OFF)
+option(BUILD_PLUGIN_HELLOWORLD "Build the hello-world debugging plugin" OFF)
+option(BUILD_PLUGIN_FPGA "Build the fpga debugging plugin" OFF)
 option(ENABLE_TESTS "Enable testing" OFF)
 
 # Export json with compile commands
