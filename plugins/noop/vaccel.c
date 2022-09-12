@@ -93,6 +93,32 @@ static int noop_img_segme(struct vaccel_session *sess, const void *img,
 	return VACCEL_OK;
 }
 
+static int noop_img_pose(struct vaccel_session *sess, const void *img,
+			  const unsigned char *out_imgname, size_t len_img,
+			  size_t len_out_imgname)
+{
+	fprintf(stdout, "[noop] Calling Image pose for session %u\n",
+		sess->session_id);
+
+	fprintf(stdout, "[noop] Dumping arguments for Image pose:\n");
+	fprintf(stdout, "[noop] len_img: %lu\n", len_img);
+
+	return VACCEL_OK;
+}
+
+static int noop_img_depth(struct vaccel_session *sess, const void *img,
+			  const unsigned char *out_imgname, size_t len_img,
+			  size_t len_out_imgname)
+{
+	fprintf(stdout, "[noop] Calling Image depth for session %u\n",
+		sess->session_id);
+
+	fprintf(stdout, "[noop] Dumping arguments for Image depth:\n");
+	fprintf(stdout, "[noop] len_img: %lu\n", len_img);
+
+	return VACCEL_OK;
+}
+
 static int noop_exec(struct vaccel_session *sess, const char *library,
 		     const char *fn_symbol, struct vaccel_arg *read,
 		     size_t nr_read, struct vaccel_arg *write, size_t nr_write)
@@ -221,10 +247,12 @@ struct vaccel_op ops[] = {
 	VACCEL_OP_INIT(ops[2], VACCEL_IMG_CLASS, noop_img_class),
 	VACCEL_OP_INIT(ops[3], VACCEL_IMG_DETEC, noop_img_detect),
 	VACCEL_OP_INIT(ops[4], VACCEL_IMG_SEGME, noop_img_segme),
-	VACCEL_OP_INIT(ops[5], VACCEL_EXEC, noop_exec),
-	VACCEL_OP_INIT(ops[6], VACCEL_TF_SESSION_LOAD, noop_tf_session_load),
-	VACCEL_OP_INIT(ops[7], VACCEL_TF_SESSION_RUN, noop_tf_session_run),
-	VACCEL_OP_INIT(ops[8], VACCEL_TF_SESSION_DELETE, noop_tf_session_delete),
+	VACCEL_OP_INIT(ops[5], VACCEL_IMG_POSE, noop_img_pose),
+	VACCEL_OP_INIT(ops[6], VACCEL_IMG_DEPTH, noop_img_depth),
+	VACCEL_OP_INIT(ops[7], VACCEL_EXEC, noop_exec),
+	VACCEL_OP_INIT(ops[8], VACCEL_TF_SESSION_LOAD, noop_tf_session_load),
+	VACCEL_OP_INIT(ops[9], VACCEL_TF_SESSION_RUN, noop_tf_session_run),
+	VACCEL_OP_INIT(ops[10], VACCEL_TF_SESSION_DELETE, noop_tf_session_delete),
 };
 
 static int init(void)
