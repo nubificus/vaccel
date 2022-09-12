@@ -273,6 +273,80 @@ static int noop_tf_session_delete(
 	return VACCEL_OK;
 }
 
+static int v_arraycopy(struct vaccel_session *session, int *a, int *b, size_t c)
+{
+	int i = 0;
+	fprintf(stdout, "[noop] Calling v_arraycopy for session %u\n",
+		session->session_id);
+
+	fprintf(stdout, "[noop] Dumping arguments for v_arracycopy:\n");
+	fprintf(stdout, "[noop] size: %lu \n", c);
+
+	/* Fill output with dummy values */
+	for (i = 0; i < c ; i++) {
+		b[i] = 9.1;
+	}
+
+
+	return VACCEL_OK;
+}
+
+static int v_vectoradd(struct vaccel_session *session, float *a, float *b,
+				                       float *c, size_t len_a, size_t len_b)
+{
+	int i = 0;
+	fprintf(stdout, "[noop] Calling v_vectoradd for session %u\n",
+		session->session_id);
+
+	fprintf(stdout, "[noop] Dumping arguments for v_vectoradd:\n");
+	fprintf(stdout, "[noop] len_a: %lu len_b: %lu \n", len_a, len_b);
+
+	/* Fill output with dummy values */
+	for (i = 0; i < len_a ; i++) {
+		c[i] = 9.1;
+	}
+
+
+	return VACCEL_OK;
+}
+
+static int v_parallel(struct vaccel_session *session, float *a, float *b,
+				                      float *add_out, float *mult_out, size_t len_a)
+{
+	int i = 0;
+	fprintf(stdout, "[noop] Calling v_parallel for session %u\n",
+		session->session_id);
+
+	fprintf(stdout, "[noop] Dumping arguments for v_parallel:\n");
+	fprintf(stdout, "[noop] len_a: %lu\n", len_a);
+
+	/* Fill output with dummy values */
+	for (i = 0; i < len_a ; i++) {
+		add_out[i] = 9.1;
+		mult_out[i] = 18.2;
+	}
+
+	return VACCEL_OK;
+}
+
+static int v_mmult(struct vaccel_session *session, float *a, float *b, float *c,
+				                   float *d_out, size_t len_a)
+{
+	int i = 0;
+	fprintf(stdout, "[noop] Calling v_mmult for session %u\n",
+		session->session_id);
+
+	fprintf(stdout, "[noop] Dumping arguments for v_mmult:\n");
+	fprintf(stdout, "[noop] len_a: %lu\n", len_a);
+
+	/* Fill output with dummy values */
+	for (i = 0; i < len_a ; i++) {
+		d_out[i] = 9.1;
+	}
+
+	return VACCEL_OK;
+}
+
 struct vaccel_op ops[] = {
 	VACCEL_OP_INIT(ops[0], VACCEL_NO_OP, noop_noop),
 	VACCEL_OP_INIT(ops[1], VACCEL_BLAS_SGEMM, noop_sgemm),
@@ -286,7 +360,12 @@ struct vaccel_op ops[] = {
 	VACCEL_OP_INIT(ops[9], VACCEL_TF_SESSION_RUN, noop_tf_session_run),
 	VACCEL_OP_INIT(ops[10], VACCEL_TF_SESSION_DELETE, noop_tf_session_delete),
 	VACCEL_OP_INIT(ops[11], VACCEL_MINMAX, noop_minmax),
+	VACCEL_OP_INIT(ops[12], VACCEL_F_ARRAYCOPY, v_arraycopy),
+	VACCEL_OP_INIT(ops[13], VACCEL_F_VECTORADD, v_vectoradd),
+	VACCEL_OP_INIT(ops[14], VACCEL_F_PARALLEL, v_parallel),
+	VACCEL_OP_INIT(ops[15], VACCEL_F_MMULT, v_mmult),
 };
+
 
 static int init(void)
 {
