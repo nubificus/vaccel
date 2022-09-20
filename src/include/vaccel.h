@@ -23,6 +23,7 @@
 #include "vaccel_id.h"
 #include "ops/vaccel_ops.h"
 #include "ops/blas.h"
+#include "ops/minmax.h"
 #include "ops/exec.h"
 #include "ops/genop.h"
 #include "ops/image.h"

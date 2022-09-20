@@ -15,12 +15,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <plugin.h>
-#include <error.h>
-#include <ops/vaccel_ops.h>
-#include <ops/genop.h>
-#include <ops/tf.h>
-#include <resources/tf_saved_model.h>
+#include <vaccel.h>
 
 #define noop_info(fmt, ...) \
 	fprintf(stdout, "[noop] " fmt, ##__VA_ARGS__)
@@ -36,16 +31,25 @@ static int noop_noop(struct vaccel_session *sess)
 	return VACCEL_OK;
 }
 
-static int noop_sgemm(struct vaccel_session *sess, uint32_t k, uint32_t m,
-		      uint32_t n, size_t len_a, size_t len_b, size_t len_c,
-		      float *a, float *b, float *c)
-{
+static int noop_sgemm(
+	struct vaccel_session *sess,
+	int64_t m, int64_t n, int64_t k,
+	float alpha,
+	float *a, int64_t lda,
+	float *b, int64_t ldb,
+	float beta,
+	float *c, int64_t ldc
+) {
 	fprintf(stdout, "[noop] Calling sgemm for session %u\n",
 		sess->session_id);
 
 	fprintf(stdout, "[noop] Dumping arguments for sgemm:\n");
-	fprintf(stdout, "[noop] k: %u m: %u n: %u\n", k, m, n);
-	fprintf(stdout, "[noop] len_a: %lu len_b: %lu len_c: %lu\n", len_a, len_b, len_c);
+	fprintf(stdout, "[noop] m: %ld n: %ld k: %ld\n", m, n, k);
+	fprintf(stdout, "[noop] alpha: %f\n", alpha);
+	fprintf(stdout, "[noop] A: %p lda: %ld\n", a, lda);
+	fprintf(stdout, "[noop] B: %p ldb: %ld\n", b, ldb);
+	fprintf(stdout, "[noop] beta: %f\n", beta);
+	fprintf(stdout, "[noop] C: %p ldc: %ld\n", c, ldc);
 	
 	return VACCEL_OK;
 }

@@ -13,6 +13,8 @@ set(BIN_EXAMPLES
 	exec
 	exec_generic
 	noop
+	sgemm
+	minmax
 	tf_model
 	tf_inference
 	tf_saved_model)

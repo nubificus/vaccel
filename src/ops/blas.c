@@ -21,10 +21,15 @@
 
 #include "session.h"
 
-int vaccel_sgemm(struct vaccel_session *sess, uint32_t k, uint32_t m,
-		uint32_t n, size_t len_a, size_t len_b, size_t len_c,
-		float *a, float *b, float *c)
-{
+int vaccel_sgemm(
+	struct vaccel_session *sess,
+	int64_t m, int64_t n, int64_t k,
+	float alpha,
+	float *a, int64_t lda,
+	float *b, int64_t ldb,
+	float beta,
+	float *c, int64_t ldc
+) {
 	if (!sess)
 		return VACCEL_EINVAL;
 
@@ -32,17 +37,27 @@ int vaccel_sgemm(struct vaccel_session *sess, uint32_t k, uint32_t m,
 			sess->session_id);
 
 	//Get implementation
-	int (*plugin_op)() = get_plugin_op(VACCEL_BLAS_SGEMM);
+	int (*plugin_op)(
+		struct vaccel_session *sess,
+		int64_t m, int64_t n, int64_t k,
+		float alpha,
+		float *a, int64_t lda,
+		float *b, int64_t ldb,
+		float beta,
+		float *c, int64_t ldc
+	) = get_plugin_op(VACCEL_BLAS_SGEMM);
 	if (!plugin_op)
 		return VACCEL_ENOTSUP;
 
-	return plugin_op(sess, k, m, n, len_a, len_b, len_c, a, b, c);
+	return plugin_op(sess, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc);
 }
 
-int vaccel_sgemm_unpack(struct vaccel_session *sess, struct vaccel_arg *read,
-		int nr_read, struct vaccel_arg *write, int nr_write)
-{
-	if (nr_read != 5) {
+int vaccel_sgemm_unpack(
+	struct vaccel_session *sess,
+	struct vaccel_arg *read, int nr_read,
+	struct vaccel_arg *write, int nr_write
+) {
+	if (nr_read != 7) {
 		vaccel_error("Wrong number of read arguments in SGEMM: %d",
 				nr_read);
 		return VACCEL_EINVAL;
@@ -54,16 +69,18 @@ int vaccel_sgemm_unpack(struct vaccel_session *sess, struct vaccel_arg *read,
 		return VACCEL_EINVAL;
 	}
 
-	uint32_t k = *(uint32_t*)read[0].buf;
-	uint32_t m = *(uint32_t*)read[1].buf;
-	uint32_t n = *(uint32_t*)read[2].buf;
-	size_t len_a = (size_t)read[3].size;
-	float *a = (float *)read[3].buf;
-	size_t len_b = (size_t)read[4].size;
-	float *b = (float *)read[4].buf;
+	int64_t m = *(int64_t*)read[0].buf;
+	int64_t n = *(int64_t*)read[1].buf;
+	int64_t k = *(int64_t*)read[2].buf;
+	float alpha = *(float *)read[3].buf;
+	int64_t lda  = (int64_t)read[4].size;
+	float *a = (float *)read[4].buf;
+	int64_t ldb = (int64_t)read[5].size;
+	float *b = (float *)read[5].buf;
+	float beta = *(float *)read[6].buf;
 
-	size_t len_c = (size_t)write[0].size;
+	int64_t ldc = (int64_t)write[0].size;
 	float *c = (float *)write[0].buf;
 
-	return vaccel_sgemm(sess, k, m, n, len_a, len_b, len_c, a, b, c);
+	return vaccel_sgemm(sess, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc);
 }
