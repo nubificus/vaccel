@@ -54,6 +54,33 @@ static int noop_sgemm(
 	return VACCEL_OK;
 }
 
+int noop_minmax(
+        struct vaccel_session *sess,
+        const double *indata, int ndata,
+        int low_threshold, int high_threshold,
+        double *outdata,
+        double *min,
+        double *max
+) {
+        double tmp_max = -1.0;
+        double tmp_min = 10000.0;
+
+        if (!sess)
+                return VACCEL_EINVAL;
+
+	fprintf(stdout, "[noop] Calling minmax for session %u\n",
+		sess->session_id);
+
+	fprintf(stdout, "[noop] Dumping arguments for minmax :\n");
+	fprintf(stdout, "[noop] low: %d high: %d \n", low_threshold, high_threshold);
+
+
+        *min = tmp_min;
+        *max = tmp_max;
+
+        return VACCEL_OK;
+}
+
 static int noop_img_class(struct vaccel_session *sess, const void *img,
 			  unsigned char *out_text, unsigned char *out_imgname,
 			  size_t len_img, size_t len_out_text,
@@ -257,6 +284,7 @@ struct vaccel_op ops[] = {
 	VACCEL_OP_INIT(ops[8], VACCEL_TF_SESSION_LOAD, noop_tf_session_load),
 	VACCEL_OP_INIT(ops[9], VACCEL_TF_SESSION_RUN, noop_tf_session_run),
 	VACCEL_OP_INIT(ops[10], VACCEL_TF_SESSION_DELETE, noop_tf_session_delete),
+	VACCEL_OP_INIT(ops[11], VACCEL_MINMAX, noop_minmax),
 };
 
 static int init(void)
