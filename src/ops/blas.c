@@ -18,8 +18,11 @@
 #include "log.h"
 #include "vaccel_ops.h"
 #include "genop.h"
-
 #include "session.h"
+#include "vaccel_prof.h"
+
+struct vaccel_prof_region blas_op_stats =
+	VACCEL_PROF_REGION_INIT("vaccel_blas_op");
 
 int vaccel_sgemm(
 	struct vaccel_session *sess,
@@ -30,11 +33,15 @@ int vaccel_sgemm(
 	float beta,
 	float *c, long long int ldc
 ) {
+	int ret;
+
 	if (!sess)
 		return VACCEL_EINVAL;
 
 	vaccel_debug("session:%u Looking for plugin implementing BLAS SGEMM",
 			sess->session_id);
+
+	vaccel_prof_region_start(&blas_op_stats);
 
 	//Get implementation
 	int (*plugin_op)(
@@ -49,7 +56,11 @@ int vaccel_sgemm(
 	if (!plugin_op)
 		return VACCEL_ENOTSUP;
 
-	return plugin_op(sess, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc);
+	ret = plugin_op(sess, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc);
+
+	vaccel_prof_region_stop(&blas_op_stats);
+
+	return ret;
 }
 
 int vaccel_sgemm_unpack(
@@ -83,4 +94,15 @@ int vaccel_sgemm_unpack(
 	float *c = (float *)write[0].buf;
 
 	return vaccel_sgemm(sess, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc);
+}
+
+__attribute__((constructor))
+static void vaccel_ops_init(void)
+{
+}
+
+__attribute__((destructor))
+static void vaccel_ops_fini(void)
+{
+	vaccel_prof_region_print(&blas_op_stats);
 }
