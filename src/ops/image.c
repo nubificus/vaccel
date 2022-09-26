@@ -56,6 +56,7 @@ int vaccel_image_op(enum vaccel_op_type op_type, struct vaccel_session *sess,
 
 out:
 	vaccel_prof_region_stop(&image_op_stats);
+
 	return ret;
 }
 
@@ -185,12 +186,12 @@ int vaccel_image_depth_unpack(struct vaccel_session *sess,
 }
 
 __attribute__((constructor))
-static void vaccel_tf_ops_init(void)
+static void vaccel_ops_init(void)
 {
 }
 
 __attribute__((destructor))
-static void vaccel_tf_ops_fini(void)
+static void vaccel_ops_fini(void)
 {
 	vaccel_prof_region_print(&image_op_stats);
 }

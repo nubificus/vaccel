@@ -74,7 +74,7 @@ int main(int argc, char *argv[])
 {
 	int ret, iter = 1;
 	char *file;
-    size_t file_size;
+	size_t file_size;
 	struct vaccel_session sess;
 	struct vaccel_arg args[2];
 
