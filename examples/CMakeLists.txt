@@ -15,6 +15,7 @@ set(BIN_EXAMPLES
 	noop
 	sgemm
 	minmax
+	minmax_generic
 	tf_model
 	tf_inference
 	tf_saved_model)

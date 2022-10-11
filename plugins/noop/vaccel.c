@@ -71,12 +71,13 @@ int noop_minmax(
 	fprintf(stdout, "[noop] Calling minmax for session %u\n",
 		sess->session_id);
 
-	fprintf(stdout, "[noop] Dumping arguments for minmax :\n");
+	fprintf(stdout, "[noop] Dumping arguments for minmax: ndata:%d\n", ndata);
 	fprintf(stdout, "[noop] low: %d high: %d \n", low_threshold, high_threshold);
 
 
-        *min = tmp_min;
+        *outdata = tmp_min;
         *max = tmp_max;
+        *min = tmp_min;
 
         return VACCEL_OK;
 }
