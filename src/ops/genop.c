@@ -16,6 +16,7 @@
 #include "vaccel_ops.h"
 
 #include "blas.h"
+#include "minmax.h"
 #include "exec.h"
 #include "image.h"
 #include "noop.h"
@@ -41,6 +42,14 @@ unpack_func_t callbacks[VACCEL_FUNCTIONS_NR] = {
 	vaccel_image_pose_unpack,
 	vaccel_image_depth_unpack,
 	vaccel_exec_unpack,
+	vaccel_noop_unpack,
+	vaccel_noop_unpack,
+	vaccel_noop_unpack,
+	vaccel_noop_unpack,
+	vaccel_noop_unpack,
+	vaccel_noop_unpack,
+	vaccel_noop_unpack,
+	vaccel_minmax_unpack,
 };
 
 int vaccel_genop(struct vaccel_session *sess, struct vaccel_arg  *read,

@@ -64,9 +64,24 @@ int main(int argc, char *argv[])
 
 	struct timespec t0, t1;
 
+	enum vaccel_op_type op_type = VACCEL_MINMAX;
+	struct vaccel_arg read[5] = {
+		{ .size = sizeof(enum vaccel_op_type), .buf = &op_type},
+		{ .size = ndata * sizeof(double), .buf = indata},
+		{ .size = sizeof(int), .buf = &ndata},
+		{ .size = sizeof(int), .buf = &low_threshold},
+		{ .size = sizeof(int), .buf = &high_threshold},
+	};
+	struct vaccel_arg write[3] = {
+		{ .size = sizeof(double), .buf = outdata},
+		{ .size = sizeof(double), .buf = &min},
+		{ .size = sizeof(double), .buf = &max},
+	};
+
 	clock_gettime(CLOCK_MONOTONIC_RAW, &t0);
-	ret = vaccel_minmax(&session, indata, ndata, low_threshold,
-			high_threshold, outdata, &min, &max);
+	ret = vaccel_genop(&session, &read[0], 5, &write[0], 3);
+	//ret = vaccel_minmax(&session, indata, ndata, low_threshold,
+			//high_threshold, outdata, &min, &max);
 	clock_gettime(CLOCK_MONOTONIC_RAW, &t1);
 	if (ret) {
 		fprintf(stderr, "Could not run kernel: %d\n", ret);
