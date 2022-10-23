@@ -34,15 +34,22 @@ foreach(T ${BIN_EXAMPLES})
 	target_link_libraries(${T} PRIVATE vaccel dl)
 endforeach()
 
+add_executable(torch_inference "torch_inference.cpp")
+target_compile_options(torch_inference PUBLIC -fpermissive)
+target_include_directories(torch_inference PRIVATE ${INCLUDE_DIRS})
+target_link_libraries(torch_inference PRIVATE vaccel dl)
+
 add_library(mytestlib SHARED mytestlib.c)
 target_compile_options(mytestlib PUBLIC -Wall -Wextra )
 set_target_properties(mytestlib PROPERTIES ENABLE_EXPORTS on)
 
-install(TARGETS ${BIN_EXAMPLES} DESTINATION ${CMAKE_INSTALL_BINDIR})
+install(TARGETS ${BIN_EXAMPLES} torch_inference DESTINATION ${CMAKE_INSTALL_BINDIR})
 install(TARGETS mytestlib DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 # Install misc files
 install(DIRECTORY ${CMAKE_SOURCE_DIR}/examples/models/tf
+	DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/models)
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/examples/models/torch
 	DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/models)
 install(DIRECTORY ${CMAKE_SOURCE_DIR}/examples/images
 	DESTINATION ${CMAKE_INSTALL_DATAROOTDIR})

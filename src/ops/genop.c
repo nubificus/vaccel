@@ -25,6 +25,7 @@
 #include <session.h>
 #include <error.h>
 #include <log.h>
+#include "torch.h"
 
 typedef int (*unpack_func_t)(
 	struct vaccel_session *sess,

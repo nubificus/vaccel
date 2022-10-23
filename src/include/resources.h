@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include "error.h"
 #include "vaccel_id.h"
 
 #ifdef __cplusplus
@@ -25,6 +26,8 @@ typedef enum {
 	VACCEL_RES_TF_SAVED_MODEL,
 	VACCEL_RES_CAFFE_MODEL,
 	VACCEL_RES_SHARED_OBJ,
+	VACCEL_RES_TORCH_MODEL,
+	VACCEL_RES_TORCH_SAVED_MODEL,
 	VACCEL_RES_MAX
 } vaccel_resource_t;
 
