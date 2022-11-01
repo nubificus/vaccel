@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 
 project(vaccelrt
-	VERSION 0.1
+	VERSION 0.5.0
 	DESCRIPTION "VaccelRT library"
 	LANGUAGES C CXX)
 
@@ -62,3 +62,10 @@ if (ENABLE_TESTS)
 	enable_testing()
 	add_subdirectory(test)
 endif (ENABLE_TESTS)
+
+set(CPACK_PACKAGE_NAME vaccel)
+set(CPACK_PACKAGE_CONTACT "Anastassios Nanos <ananos@nubificus.co.uk>")
+set(CPACK_GENERATOR DEB)
+set(CPACK_PACKAGING_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX})
+
+include(CPack)
