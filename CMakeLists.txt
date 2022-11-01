@@ -34,6 +34,7 @@ include_directories(
 
 add_subdirectory(src)
 add_subdirectory(plugins)
+add_subdirectory(python)
 
 if (BUILD_EXAMPLES)
 	add_subdirectory(examples)
