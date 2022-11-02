@@ -39,6 +39,10 @@ enum vaccel_op_type {
 	VACCEL_TF_SESSION_RUN,      /* 13 */
 	VACCEL_TF_SESSION_DELETE,   /* 14 */
 	VACCEL_MINMAX,              /* 15 */
+	VACCEL_F_ARRAYCOPY,	    /* 16 */
+	VACCEL_F_MMULT,		    /* 17 */
+	VACCEL_F_PARALLEL,	    /* 18 */
+	VACCEL_F_VECTORADD,	    /* 19 */
 	VACCEL_FUNCTIONS_NR
 };
 
@@ -59,6 +63,10 @@ static const char *vaccel_op_name[] = {
 	"TensorFlow session run",
 	"TensorFlow session delete",
 	"MinMax",
+	"Array copy",
+	"Matrix multiplication",
+	"Parallel acceleration",
+	"Vector Add",
 };
 
 static inline const char *vaccel_op_type_str(enum vaccel_op_type op_type)

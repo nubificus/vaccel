@@ -18,7 +18,10 @@ set(BIN_EXAMPLES
 	minmax_generic
 	tf_model
 	tf_inference
-	tf_saved_model)
+	tf_saved_model
+	pynq_vector_add
+	pynq_parallel
+	pynq_array_copy)
 
 foreach(T ${BIN_EXAMPLES})
 	add_executable(${T} "${T}.c")

@@ -20,6 +20,7 @@
 #include "exec.h"
 #include "image.h"
 #include "noop.h"
+#include "fpga.h"
 
 #include <session.h>
 #include <error.h>
@@ -34,22 +35,26 @@ typedef int (*unpack_func_t)(
 );
 
 unpack_func_t callbacks[VACCEL_FUNCTIONS_NR] = {
-	vaccel_noop_unpack,
-	vaccel_sgemm_unpack,
-	vaccel_image_classification_unpack,
-	vaccel_image_detection_unpack,
-	vaccel_image_segmentation_unpack,
-	vaccel_image_pose_unpack,
-	vaccel_image_depth_unpack,
-	vaccel_exec_unpack,
-	vaccel_noop_unpack,
-	vaccel_noop_unpack,
-	vaccel_noop_unpack,
-	vaccel_noop_unpack,
-	vaccel_noop_unpack,
-	vaccel_noop_unpack,
-	vaccel_noop_unpack,
-	vaccel_minmax_unpack,
+	vaccel_noop_unpack,			/* 0 */
+	vaccel_sgemm_unpack,			/* 1 */
+	vaccel_image_classification_unpack,	/* 2 */
+	vaccel_image_detection_unpack,		/* 3 */
+	vaccel_image_segmentation_unpack,	/* 4 */
+	vaccel_image_pose_unpack,		/* 5 */
+	vaccel_image_depth_unpack,		/* 6 */
+	vaccel_exec_unpack,			/* 7 */
+	vaccel_noop_unpack,			/* 8 */
+	vaccel_noop_unpack,			/* 9 */
+	vaccel_noop_unpack,			/* 10 */
+	vaccel_noop_unpack,			/* 11 */
+	vaccel_noop_unpack,			/* 12 */
+	vaccel_noop_unpack,			/* 13 */
+	vaccel_noop_unpack,			/* 14 */
+	vaccel_minmax_unpack,			/* 15 */
+	vaccel_fpga_arraycopy_unpack,		/* 16 */
+	vaccel_fpga_mmult_unpack,		/* 17 */
+	vaccel_fpga_parallel_unpack,		/* 18 */
+	vaccel_fpga_vadd_unpack,		/* 19 */
 };
 
 int vaccel_genop(struct vaccel_session *sess, struct vaccel_arg  *read,

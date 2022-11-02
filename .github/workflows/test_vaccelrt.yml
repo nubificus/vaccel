@@ -97,6 +97,9 @@ jobs:
         ./bin/sgemm
         ./bin/minmax 262144 ./share/input/input_262144.csv 5 100
         ./bin/minmax_generic 262144 ./share/input/input_262144.csv 5 100
+        ./bin/pynq_vector_add
+        ./bin/pynq_array_copy
+        ./bin/pynq_parallel
 
     - name: Upload artifact to s3
       uses: cloudkernels/minio-upload@master

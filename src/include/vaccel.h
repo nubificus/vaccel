@@ -29,6 +29,7 @@
 #include "ops/image.h"
 #include "ops/noop.h"
 #include "ops/tf.h"
+#include "ops/fpga.h"
 #include "resources/tf_saved_model.h"
 #include "vaccel_prof.h"
 
