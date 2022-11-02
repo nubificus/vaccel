@@ -74,6 +74,30 @@ jobs:
           -DBUILD_PLUGIN_NOOP=ON && \
         make -C plugins && make install -C plugins
 
+    - name: Run examples
+      id: run_examples
+      env:
+        LD_LIBRARY_PATH: ${{github.workspace}}/artifacts/${{matrix.archconfig}}/${{matrix.build_type}}/opt/lib
+        VACCEL_BACKENDS: ${{github.workspace}}/artifacts/${{matrix.archconfig}}/${{matrix.build_type}}/opt/lib/libvaccel-noop.so
+        VACCEL_DEBUG_LEVEL: 4
+      run: |
+        cd ${{github.workspace}}/artifacts/${{matrix.archconfig}}/${{matrix.build_type}}/opt
+        sudo mkdir -p /run/user/1001
+        sudo chown -R runner /run/user/1001
+        ./bin/classify share/images/example.jpg 1
+        ./bin/classify_generic share/images/example.jpg 1
+        ./bin/detect share/images/example.jpg 1
+        ./bin/detect_generic share/images/example.jpg 1
+        ./bin/pose share/images/example.jpg 1
+        ./bin/pose_generic share/images/example.jpg 1
+        ./bin/segment share/images/example.jpg 1
+        ./bin/segment_generic share/images/example.jpg 1
+        ./bin/depth share/images/example.jpg 1
+        ./bin/depth_generic share/images/example.jpg 1
+        ./bin/sgemm
+        ./bin/minmax 262144 ./share/input/input_262144.csv 5 100
+        ./bin/minmax_generic 262144 ./share/input/input_262144.csv 5 100
+
     - name: Upload artifact to s3
       uses: cloudkernels/minio-upload@master
       with:
