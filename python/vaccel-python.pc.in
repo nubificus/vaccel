@@ -1,0 +1,11 @@
+prefix=@DEST_DIR@
+exec_prefix=${prefix}
+libdir=${prefix}/lib
+includedir=${prefix}/include
+
+Name: libvaccel-python
+Description: Transparent acceleration for edge and cloud computing hack
+Version: 0.4.0
+
+Libs: -L${libdir} -lvaccel-python
+Cflags: -I${includedir}
