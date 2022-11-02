@@ -14,6 +14,7 @@ set(BIN_EXAMPLES
 	exec_generic
 	noop
 	sgemm
+	sgemm_generic
 	minmax
 	minmax_generic
 	tf_model

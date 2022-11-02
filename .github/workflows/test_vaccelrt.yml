@@ -95,6 +95,7 @@ jobs:
         ./bin/depth share/images/example.jpg 1
         ./bin/depth_generic share/images/example.jpg 1
         ./bin/sgemm
+        ./bin/sgemm_generic
         ./bin/minmax 262144 ./share/input/input_262144.csv 5 100
         ./bin/minmax_generic 262144 ./share/input/input_262144.csv 5 100
         ./bin/pynq_vector_add
