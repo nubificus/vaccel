@@ -52,6 +52,11 @@ static int check_plugin_info(const struct vaccel_plugin_info *pinfo)
 		return VACCEL_EINVAL;
 	}
 
+	if (!pinfo->fini) {
+		vaccel_error("Plugin needs to expose a fini function");
+		return VACCEL_EINVAL;
+	}
+
 	return VACCEL_OK;
 }
 
@@ -126,6 +131,14 @@ int unregister_plugin(struct vaccel_plugin *plugin)
 	}
 
 	list_unlink_entry(&plugin->entry);
+
+	if (!plugin->info) {
+		vaccel_error("Plugin is missing info entry");
+		return VACCEL_EINVAL;
+	}
+
+	/* Clean-up plugin's resources */
+	plugin->info->fini();
 
 	vaccel_debug("Unregistered plugin %s", plugin->info->name);
 
@@ -224,13 +237,12 @@ int plugins_shutdown(void)
 
 	struct vaccel_plugin *plugin, *tmp;
 	for_each_container_safe(plugin, tmp, &plugin_state.plugins, struct vaccel_plugin, entry) {
-		const struct vaccel_plugin_info *info = plugin->info;
-
 		/* Unregister plugin from runtime */
-		unregister_plugin(plugin);
-
-		/* Clean-up plugin's resources */
-		info->fini();
+		int ret = unregister_plugin(plugin);
+		if (ret != VACCEL_OK) {
+			vaccel_error("Failed to remove plugin, ret: %d", ret);
+			continue;
+		}
 	}
 
 	if (plugin_state.virtio)
