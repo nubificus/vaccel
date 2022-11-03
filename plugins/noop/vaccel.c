@@ -233,11 +233,13 @@ static int noop_tf_session_run(
 		noop_info("\tNode %d: %s:%ld\n", i, out_nodes[i].name,
 				out_nodes[i].id);
 		out[i] = malloc(sizeof(*out[i]));
-		out[i]->nr_dims = 0;
-		out[i]->dims = NULL;
-		out[i]->data_type = 0;
-		out[i]->data = NULL;
-		out[i]->size = 0;
+		out[i]->nr_dims = in[i]->nr_dims;
+		out[i]->dims = malloc(sizeof(*out[i]->dims) * in[i]->nr_dims);
+		memcpy(out[i]->dims,in[i]->dims, sizeof(*in[i]->dims) * in[i]->nr_dims);
+		out[i]->data_type = in[i]->data_type;
+		out[i]->data = malloc(in[i]->size * sizeof(double));
+		memcpy(out[i]->data, in[i]->data, in[i]->size);
+		out[i]->size = in[i]->size;
 	}
 
 	if (status) {
