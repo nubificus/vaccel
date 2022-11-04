@@ -33,9 +33,9 @@ jobs:
         # otherwise "main" or tag name
         if [[ "${{github.event.pull_request.head.sha}}" != "" ]]
         then
-          echo "ARTIFACT_NAME=$(echo ${{github.event.pull_request.head.ref}})" >> $GITHUB_ENV
+          echo "ARTIFACT_SHA=$(echo ${{github.event.pull_request.head.ref}})" >> $GITHUB_ENV
         else
-          echo "ARTIFACT_NAME=$(echo ${GITHUB_REF##*/})" >> $GITHUB_ENV
+          echo "ARTIFACT_SHA=$(echo ${GITHUB_REF##*/})" >> $GITHUB_ENV
         fi
 
     - name: Install deps
