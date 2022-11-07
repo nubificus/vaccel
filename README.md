@@ -145,3 +145,7 @@ Image size: 79281B
 [noop] will return a dummy result
 classification tags: This is a dummy classification tag!
 ```
+
+## License
+
+[Apache License 2.0](LICENSE)
