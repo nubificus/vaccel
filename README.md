@@ -1,46 +1,51 @@
-# vaccel Runtime System
+# vAccelRT
 
-vaccel is a runtime system for hardware acceleration. It provides an API with a set of functions that the runtime is able to offload to hardware acceleration
-devices. The design of the runtime is modular, it consists of a front-end library which exposes the API to the user application and a set of back-end plugins
-that are responsible to offload computations to the accelerator.
+[![Build project](https://github.com/cloudkernels/vaccelrt/actions/workflows/test_vaccelrt.yml/badge.svg)](https://github.com/cloudkernels/vaccelrt/actions/workflows/test_vaccelrt.yml)
+[![Build Deb Package](https://github.com/cloudkernels/vaccelrt/actions/workflows/deb.yml/badge.svg)](https://github.com/cloudkernels/vaccelrt/actions/workflows/deb.yml)
 
-This design decouples the user application from the actual accelerator specific code. The advantage of this choice is that the application can make use of
+vAccelRT is a runtime library for hardware acceleration. vAccelRT provides an
+API with a set of functions that the library is able to offload to hardware
+acceleration devices. The design of the runtime library is modular, it consists
+of a front-end library which exposes the API to the user application and a set
+of backend plugins that are responsible to offload computations to the
+accelerator.
+
+This design decouples the user application from the actual accelerator specific
+code. The advantage of this choice is that the application can make use of
 different hardware accelerators without extra development cost or re-compiling.
 
-This repo includes the core runtime system, and back-end plugins for VirtIO and the Jetson Inference framework.
+This repo includes the core runtime library, and a backend plugin for the
+`EXEC` operation. For debugging and demonstration purposes we include a `NOOP`
+plugin which just prints out debug parameters (input and output) for each API
+call.
 
-## VirtIO backend
-TODO: put link to VirtIO README.md
+There is a [splash page](https://vaccel.org) for vAccel, along with more
+[elaborate documentation](https://docs.vaccel.org). 
 
-## Jetson Inference backend
-TODO: put link to Jetson README.md
+For step-by-step tutorials, you can have a look at our
+[lab](https://github.com/nubificus/vaccel-tutorials) repo.
+
 
 ## Build & Installation
 
 ### 1. Cloning and preparing the build directory
 
-```zsh
-~ » git clone https://github.com/cloudkernels/vaccelrt.git
+```bash
+apt-get install build-essential cmake
+git clone https://github.com/cloudkernels/vaccelrt --recursive
+cd vaccelrt
+mkdir build
+cd build
 
-Cloning into 'vaccelrt'...
-remote: Enumerating objects: 215, done.
-remote: Counting objects: 100% (215/215), done.
-remote: Compressing objects: 100% (130/130), done.
-remote: Total 215 (delta 115), reused 173 (delta 82), pack-reused 0
-Receiving objects: 100% (215/215), 101.37 KiB | 804.00 KiB/s, done.
-Resolving deltas: 100% (115/115), done.
-~ » cd vaccelrt
-~/vaccelrt(master) » mkdir build
-~/vaccelrt(master) » cd build
-~/vaccelrt/build(master) »                                                                                   
 ```
 
-### 2. Building the core runtime system
-```zsh
-# This sets the installation path to ${HOME}/.local
-~/vaccelrt/build(master) » cmake -DCMAKE_INSTALL_PREFIX=~/.local ..
-~/vaccelrt/build(master) » mak
-~/vaccelrt/build(master) » mak install
+### 2. Building the core runtime library
+```bash
+# This sets the installation path to /usr/local, and the current build
+# type to 'Release'. The other option is the 'Debug' build
+cmake ../ -DCMAKE_INSTALL_PREFIX=/usr/local -DCMAKE_BUILD_TYPE=Release
+make
+make install
 ```
 
 ### 3. Building the plugins
@@ -51,63 +56,44 @@ variable of the following table to `ON`
 
 Backend Plugin | Variable | Default
 -------------- | -------- | -------
-virtio | BUILD\_PLUGIN\_VIRTIO | `OFF`
-jetson | BUILD\_PLUGIN\_JETSON | `OFF`
+noop | BUILD\_PLUGIN\_NOOP | `OFF`
+exec | BUILD\_PLUGIN\_EXEC | `OFF`
 
 For example:
 
-```sh
-cmake -DBUILD_PLUGIN_VIRTIO=ON ..
+```bash
+cmake -DBUILD_PLUGIN_NOOP=ON ..
 ```
 
-will enable building the virtio backend plugin.
-
-#### VirtIO plugin building options
-
-Variable | Values | Default
--------- | ------ | -------
-VIRTIO\_ACCEL\_ROOT | Path to virtio module installation | `/usr/local/include`
-
-
-The VirtIO plugin uses the [virtio-accel](https://github.com/cloudkernels/virtio-accel)
-kernel module to offload requests to the host. When building we need to point
-CMake to the location of virtio-accel installation prefix using the
-`VIRTIO_ACCEL_ROOT` variable.
-
-#### Jetson plugin building options
-
-The jetson inference backends depends on the Jetson inference framework, a
-corresponding CUDA installation and the STB library.
-
-Variable | Values | Default
--------- | ------ | -------
-CUDA\_DIR | Path to CUDA installation | `/usr/local/cuda/targets/x86_64-linux`
-JETSON\_DIR | Path to Jetson installation | `/usr/local`
-STB\_DIR | Path to STB installation | `/usr/local`
+will enable building the noop backend plugin.
 
 ## Building a vaccel application
 
 We will use an example of image classification which can be found under the
 [examples](https://github.com/cloudkernels/vaccelrt/tree/master/examples) folder of this project.
 
-You can build the example using the CMake of our project:
+You can build the example using the following directive in the build directory:
+```bash
+cmake -DBUILD_EXAMPLES=ON ..
+make
 ```
-$ mkdir build
-$ cd build
-$ cmake -DBUILD_EXAMPLES=ON ..
-$ make
-$ ls examples
-classify  CMakeFiles  cmake_install.cmake  Makefile
+A number of example binaries have been built:
+```console
+# ls examples
+classify          detect          exec_generic     minmax          pose             pynq_parallel    segment_generic  tf_inference
+classify_generic  depth           detect_generic   minmax_generic  pose_generic     pynq_vector_add  sgemm            tf_model
+depth_generic     exec            Makefile         noop            pynq_array_copy  segment          sgemm_generic    tf_saved_model
 ```
 
-If, instead, you want to build by hand you need to define the include and library paths (if they are not
-in your respective default search paths) and also link with `dl`:
+If, instead, you want to build by hand you need to define the include and
+library paths (if they are not in your respective default search paths) and
+also link with `dl`:
 
-```
+```console
 $ cd ../examples
-$ gcc -Wall -Wextra -I${HOME}/.local/include -L${HOME}/.local/lib classification.c -o classify -lvaccel -ldl
-$ ls
-classification.c  classify  CMakeLists.txt  images
+$ gcc -Wall -Wextra -I/usr/local/include -L/usr/local/lib classify.c -o classify -lvaccel -ldl
+$ ls classify.c classify
+classify.c  classify  
 ```
 
 ## Running a vaccel application
@@ -116,27 +102,46 @@ Having built our `classify` example, we need to prepare the vaccel environment f
 
 1. Define the path to `libvaccel.so` (if not in the default search path):
 
-```
-export LD_LIBRARY_PATH=${HOME}/.local/lib
+```bash
+export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
 ```
 
 2. Define the backend plugin to use for our application.
 
-In this example, we will use the jetson plugin which implements the image classification operation using the Jetson Inference
-framework which uses TensorRT.
+In this example, we will use the noop plugin:
 
-```
-export VACCEL_BACKENDS=${HOME}/.local/lib/libvaccel-jetson.so
+```bash
+export VACCEL_BACKENDS=/usr/local/lib/libvaccel-noop.so
 ```
 
-Finally, the classification application needs the imagent models in the current working path.
-(TODO: Find link to download those). Once you have these, you can do:
+3. Finally, you can do:
 
+```bash
+./classify images/example.jpg 1
 ```
-$ ls 
-classify  images  networks
-$ VACCEL_IMAGENET_NETWORKS=$(pwd) ./classify images/banana_0.jpg 1
+
+which should dump the following output:
+
+```console
+$ ./classify images/example.jpg 1
 Initialized session with id: 1
 Image size: 79281B
-classification tags: 99.902% banana
+[noop] Calling Image classification for session 1
+[noop] Dumping arguments for Image classification:
+[noop] len_img: 79281
+[noop] will return a dummy result
+classification tags: This is a dummy classification tag!
+```
+Alternatively from the build directory:
+
+```console
+$ cd ../build
+$ ./examples/classify ../examples/images/example.jpg 1
+Initialized session with id: 1
+Image size: 79281B
+[noop] Calling Image classification for session 1
+[noop] Dumping arguments for Image classification:
+[noop] len_img: 79281
+[noop] will return a dummy result
+classification tags: This is a dummy classification tag!
 ```
