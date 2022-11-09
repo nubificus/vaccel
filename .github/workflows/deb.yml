@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - master
+  pull_request:
+    branches:
+      - master
 
   workflow_dispatch:
 
@@ -55,6 +58,7 @@ jobs:
           -DBUILD_EXAMPLES=ON \
           -DBUILD_PLUGIN_NOOP=ON && \
         cmake --build . --config ${{matrix.build_type}} && \
+        cpack -G TGZ
         cpack 
 
     - name: Get package name
@@ -62,6 +66,12 @@ jobs:
       id: get_package
       run: |
         echo ::set-output name=NAME::$(basename build_${{ matrix.build_type }}/vaccel-*.deb)
+
+    - name: Get tar name
+      shell: bash
+      id: get_package_tar
+      run: |
+        echo ::set-output name=NAME::$(basename build_${{ matrix.build_type }}/vaccel-*.tar.gz)
 
     - name: Upload artifact to s3
       uses: cloudkernels/minio-upload@master
@@ -72,5 +82,16 @@ jobs:
         local-path: build_${{ matrix.build_type }}/${{ steps.get_package.outputs.NAME }}
         remote-path: nbfc-assets/github/vaccelrt/${{ env.ARTIFACT_SHA }}/${{ matrix.archconfig }}/${{ matrix.build_type }}-deb/
         policy: 1
+
+    - name: Upload artifact to s3
+      uses: cloudkernels/minio-upload@master
+      with:
+        url: https://s3.nubificus.co.uk
+        access-key: ${{ secrets.AWS_ACCESS_KEY }}
+        secret-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        local-path: build_${{ matrix.build_type }}/${{ steps.get_package_tar.outputs.NAME }}
+        remote-path: nbfc-assets/github/vaccelrt/${{ env.ARTIFACT_SHA }}/${{ matrix.archconfig }}/${{ matrix.build_type }}-tar/
+        policy: 1
+
     - name: Clean-up
       run: sudo rm -rf artifacts build_${{ matrix.build_type }}
