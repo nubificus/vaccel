@@ -33,23 +33,23 @@ static int noop_noop(struct vaccel_session *sess)
 
 static int noop_sgemm(
 	struct vaccel_session *sess,
-	int64_t m, int64_t n, int64_t k,
+	long long int m, long long int n, long long int k,
 	float alpha,
-	float *a, int64_t lda,
-	float *b, int64_t ldb,
+	float *a, long long int lda,
+	float *b, long long int ldb,
 	float beta,
-	float *c, int64_t ldc
+	float *c, long long int ldc
 ) {
 	fprintf(stdout, "[noop] Calling sgemm for session %u\n",
 		sess->session_id);
 
 	fprintf(stdout, "[noop] Dumping arguments for sgemm:\n");
-	fprintf(stdout, "[noop] m: %ld n: %ld k: %ld\n", m, n, k);
+	fprintf(stdout, "[noop] m: %lld n: %lld k: %lld\n", m, n, k);
 	fprintf(stdout, "[noop] alpha: %f\n", alpha);
-	fprintf(stdout, "[noop] A: %p lda: %ld\n", a, lda);
-	fprintf(stdout, "[noop] B: %p ldb: %ld\n", b, ldb);
+	fprintf(stdout, "[noop] A: %p lda: %lld\n", a, lda);
+	fprintf(stdout, "[noop] B: %p ldb: %lld\n", b, ldb);
 	fprintf(stdout, "[noop] beta: %f\n", beta);
-	fprintf(stdout, "[noop] C: %p ldc: %ld\n", c, ldc);
+	fprintf(stdout, "[noop] C: %p ldc: %lld\n", c, ldc);
 	
 	return VACCEL_OK;
 }
@@ -217,11 +217,11 @@ static int noop_tf_session_run(
 
 	noop_info("Number of inputs: %d\n", nr_inputs);
 	for (int i = 0; i < nr_inputs; ++i) {
-		noop_info("\tNode %d: %s:%ld\n", i, in_nodes[i].name,
+		noop_info("\tNode %d: %s:%lld\n", i, in_nodes[i].name,
 				in_nodes[i].id);
 		noop_info("\t#dims: %d -> {", in[i]->nr_dims);
 		for (int j = 0; j < in[i]->nr_dims; ++j)
-			printf("%ld%s", in[i]->dims[j],
+			printf("%lld%s", in[i]->dims[j],
 				(j == in[i]->nr_dims - 1) ? "}\n" : " ");
 
 		noop_info("\tData type: %d\n", in[i]->data_type);
@@ -230,7 +230,7 @@ static int noop_tf_session_run(
 
 	noop_info("Number of outputs: %d\n", nr_outputs);
 	for (int i = 0; i < nr_outputs; ++i) {
-		noop_info("\tNode %d: %s:%ld\n", i, out_nodes[i].name,
+		noop_info("\tNode %d: %s:%lld\n", i, out_nodes[i].name,
 				out_nodes[i].id);
 		out[i] = malloc(sizeof(*out[i]));
 		out[i]->nr_dims = in[i]->nr_dims;
