@@ -169,7 +169,7 @@ int resource_create_rundir(struct vaccel_resource *res)
 	const char *root_rundir = vaccel_rundir();
 
 	char rundir[MAX_RESOURCE_RUNDIR];
-	int len = snprintf(rundir, MAX_RESOURCE_RUNDIR, "%s/resource.%lu",
+	int len = snprintf(rundir, MAX_RESOURCE_RUNDIR, "%s/resource.%lld",
 			root_rundir, res->id);
 	if (len == MAX_RESOURCE_RUNDIR) {
 		vaccel_error("rundir path '%s/resource.%lu' too long",

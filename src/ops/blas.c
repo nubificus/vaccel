@@ -23,12 +23,12 @@
 
 int vaccel_sgemm(
 	struct vaccel_session *sess,
-	int64_t m, int64_t n, int64_t k,
+	long long int m, long long int n, long long int k,
 	float alpha,
-	float *a, int64_t lda,
-	float *b, int64_t ldb,
+	float *a, long long int lda,
+	float *b, long long int ldb,
 	float beta,
-	float *c, int64_t ldc
+	float *c, long long int ldc
 ) {
 	if (!sess)
 		return VACCEL_EINVAL;
@@ -39,12 +39,12 @@ int vaccel_sgemm(
 	//Get implementation
 	int (*plugin_op)(
 		struct vaccel_session *sess,
-		int64_t m, int64_t n, int64_t k,
+		long long int m, long long int n, long long int k,
 		float alpha,
-		float *a, int64_t lda,
-		float *b, int64_t ldb,
+		float *a, long long int lda,
+		float *b, long long int ldb,
 		float beta,
-		float *c, int64_t ldc
+		float *c, long long int ldc
 	) = get_plugin_op(VACCEL_BLAS_SGEMM);
 	if (!plugin_op)
 		return VACCEL_ENOTSUP;
@@ -69,17 +69,17 @@ int vaccel_sgemm_unpack(
 		return VACCEL_EINVAL;
 	}
 
-	int64_t m = *(int64_t*)read[0].buf;
-	int64_t n = *(int64_t*)read[1].buf;
-	int64_t k = *(int64_t*)read[2].buf;
+	long long int m = *(long long int*)read[0].buf;
+	long long int n = *(long long int*)read[1].buf;
+	long long int k = *(long long int*)read[2].buf;
 	float alpha = *(float *)read[3].buf;
-	int64_t lda  = (int64_t)read[4].size;
+	long long int lda  = (long long int)read[4].size;
 	float *a = (float *)read[4].buf;
-	int64_t ldb = (int64_t)read[5].size;
+	long long int ldb = (long long int)read[5].size;
 	float *b = (float *)read[5].buf;
 	float beta = *(float *)read[6].buf;
 
-	int64_t ldc = (int64_t)write[0].size;
+	long long int ldc = (long long int)write[0].size;
 	float *c = (float *)write[0].buf;
 
 	return vaccel_sgemm(sess, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc);

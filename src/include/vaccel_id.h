@@ -16,4 +16,4 @@
 
 #include <stdint.h>
 
-typedef int64_t vaccel_id_t;
+typedef long long int vaccel_id_t;
