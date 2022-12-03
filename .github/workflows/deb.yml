@@ -4,9 +4,6 @@ on:
   push:
     branches:
       - master
-  pull_request:
-    branches:
-      - master
 
   workflow_dispatch:
 
@@ -15,7 +12,7 @@ jobs:
     runs-on: [ self-hosted, "${{ matrix.archconfig }}" ]
     strategy:
       matrix:
-        archconfig: [ x86_64, aarch64 ]
+        archconfig: [ x86_64, aarch64, aarch32 ]
         build_type: [ Debug, Release ]
       fail-fast: false
     steps:
