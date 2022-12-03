@@ -22,7 +22,8 @@ set(BIN_EXAMPLES
 	tf_saved_model
 	pynq_vector_add
 	pynq_parallel
-	pynq_array_copy)
+	pynq_array_copy
+	pynq_array_copy_generic)
 
 foreach(T ${BIN_EXAMPLES})
 	add_executable(${T} "${T}.c")

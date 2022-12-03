@@ -37,7 +37,7 @@ int vaccel_fpga_arraycopy_unpack(struct vaccel_session *sess, struct vaccel_arg 
 		return VACCEL_EINVAL;
 	}
 	int *array = (int*)read[0].buf;
-	size_t len_array = (size_t)read[0].size;
+	size_t len_array = (size_t)read[0].size / sizeof(array[0]);
 	int *out_array = (int*)write[0].buf;
 
 	return vaccel_fpga_arraycopy(sess, array, out_array, len_array);
