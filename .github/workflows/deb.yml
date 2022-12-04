@@ -71,7 +71,7 @@ jobs:
         echo ::set-output name=NAME::$(basename build_${{ matrix.build_type }}/vaccel-*.tar.gz)
 
     - name: Upload artifact to s3
-      uses: cloudkernels/minio-upload@master
+      uses: cloudkernels/minio-upload@v3
       with:
         url: https://s3.nubificus.co.uk
         access-key: ${{ secrets.AWS_ACCESS_KEY }}

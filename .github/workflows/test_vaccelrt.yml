@@ -103,7 +103,7 @@ jobs:
         ./bin/pynq_parallel
 
     - name: Upload artifact to s3
-      uses: cloudkernels/minio-upload@master
+      uses: cloudkernels/minio-upload@v3
       with:
         url: https://s3.nubificus.co.uk
         access-key: ${{ secrets.AWS_ACCESS_KEY }}
