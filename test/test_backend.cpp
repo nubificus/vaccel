@@ -36,9 +36,10 @@ class PluginTests : public ::testing::Test {
 	}
 
 protected:
-	struct vaccel_plugin plugin;
-	struct vaccel_plugin_info pinfo;
-	
+	/* initialize structures with zeros */
+	struct vaccel_plugin plugin = {0};
+	struct vaccel_plugin_info pinfo = {0};
+
 	void SetUp() override
 	{
 		plugin.info = &this->pinfo;
