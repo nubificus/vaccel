@@ -101,6 +101,9 @@ jobs:
         ./bin/pynq_vector_add
         ./bin/pynq_array_copy
         ./bin/pynq_parallel
+        ./bin/pynq_vector_add_generic
+        ./bin/pynq_array_copy_generic
+        ./bin/pynq_parallel_generic
 
     - name: Upload artifact to s3
       uses: cloudkernels/minio-upload@v3
