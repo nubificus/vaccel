@@ -75,7 +75,8 @@ int noop_minmax(
 	fprintf(stdout, "[noop] low: %d high: %d \n", low_threshold, high_threshold);
 
 
-        *outdata = tmp_min;
+        //*outdata = tmp_min;
+	memcpy(outdata, indata, ndata * sizeof(double));
         *max = tmp_max;
         *min = tmp_min;
 

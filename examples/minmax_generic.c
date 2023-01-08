@@ -73,7 +73,7 @@ int main(int argc, char *argv[])
 		{ .size = sizeof(int), .buf = &high_threshold},
 	};
 	struct vaccel_arg write[3] = {
-		{ .size = sizeof(double), .buf = outdata},
+		{ .size = sizeof(double)*ndata, .buf = outdata},
 		{ .size = sizeof(double), .buf = &min},
 		{ .size = sizeof(double), .buf = &max},
 	};
