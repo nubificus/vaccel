@@ -48,7 +48,7 @@ int vaccel_fpga_arraycopy_unpack(struct vaccel_session *sess, struct vaccel_arg 
 
 
 
-int vaccel_fpga_mmult(struct vaccel_session *sess, float A_array[], float B_array[], float C_array[], float D_out[])
+int vaccel_fpga_mmult(struct vaccel_session *sess, float A_array[], float B_array[], float C_array[], size_t lenA)
 {
 	if (!sess)
 		return VACCEL_EINVAL;
@@ -61,13 +61,13 @@ int vaccel_fpga_mmult(struct vaccel_session *sess, float A_array[], float B_arra
 	if (!plugin_op)
 		return VACCEL_ENOTSUP;
 
-	return plugin_op(sess, A_array, B_array, C_array, D_out);
+	return plugin_op(sess, A_array, B_array, C_array, lenA);
 }
 
 int vaccel_fpga_mmult_unpack(struct vaccel_session *sess, struct vaccel_arg *read,
 		int nr_read, struct vaccel_arg *write, int nr_write)
 {
-	if (nr_read != 3) {
+	if (nr_read != 2) {
 		vaccel_error("Wrong number of read arguments in fpga_mmult: %d",
 				nr_read);
 		return VACCEL_EINVAL;
@@ -80,10 +80,10 @@ int vaccel_fpga_mmult_unpack(struct vaccel_session *sess, struct vaccel_arg *rea
 	}
 	float *A_array = (float*)read[0].buf;
 	float *B_array = (float*)read[1].buf;
-    float *C_array = (float*)read[2].buf;
-    float *D_out   = (float*)write[0].buf;
+    	size_t lenA = (size_t)read[0].buf;
+    	float *C_array = (float*)write[0].buf;
 
-	return vaccel_fpga_mmult(sess, A_array, B_array, C_array, D_out);
+	return vaccel_fpga_mmult(sess, A_array, B_array, C_array, lenA);
 }
 
 
@@ -124,7 +124,7 @@ int vaccel_fpga_parallel_unpack(struct vaccel_session *sess, struct vaccel_arg *
 	float *B_array      = (float*)read[1].buf;
     float *add_output   = (float*)write[0].buf;
     float *mult_output  = (float*)write[1].buf;
-	size_t len_a 		= (size_t)read[0].size;
+	size_t len_a 		= (size_t)read[0].size/sizeof(A_array[0]);
 
 
 	return vaccel_fpga_parallel(sess, A_array, B_array, add_output, mult_output, len_a);
@@ -168,8 +168,8 @@ int vaccel_fpga_vadd_unpack(struct vaccel_session *sess, struct vaccel_arg *read
 	float *A      = (float*)read[0].buf;
 	float *B      = (float*)read[1].buf;
     float *C      = (float*)write[0].buf;
-	size_t len_a  = (size_t)read[0].size;
-	size_t len_b  = (size_t)read[1].size;
+	size_t len_a  = (size_t)read[0].size/sizeof(A[0]);
+	size_t len_b  = (size_t)read[1].size/sizeof(B[0]);
 
     return vaccel_fpga_vadd(sess, A,B,C, len_a, len_b);
 }

@@ -21,7 +21,9 @@ set(BIN_EXAMPLES
 	tf_inference
 	tf_saved_model
 	pynq_vector_add
+	pynq_vector_add_generic
 	pynq_parallel
+	pynq_parallel_generic
 	pynq_array_copy
 	pynq_array_copy_generic)
 
