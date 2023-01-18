@@ -26,6 +26,7 @@ int main(int argc, char **argv)
 {
 	int ret;
 	struct vaccel_session sess;
+	int input;
 	char out_text[512];
 
 	if (argc < 2) {
@@ -40,23 +41,27 @@ int main(int argc, char **argv)
 
 	printf("Initialized session with id: %u\n", sess.session_id);
 
-	struct vaccel_arg read[3] = {
-		{.size = sizeof(uint8_t),.buf = (void *)VACCEL_EXEC},
+	input = 10;             /* some random input value */
+	enum vaccel_op_type op_type = VACCEL_EXEC;
+	struct vaccel_arg read[4] = {
+		{.size = sizeof(uint8_t),.buf = &op_type},
 		{.size = strlen("/usr/local/lib/libmytestlib.so"),.buf =
-		 "mytestlib.so"},
-		{.size = strlen("mytestfunc"),.buf = "mytestfunc"}
+		 "/usr/local/lib/libmytestlib.so"},
+		{.size = strlen("mytestfunc"),.buf = "mytestfunc"},
+		{.size = sizeof(input),.buf = &input}
 	};
 	struct vaccel_arg write[1] = {
 		{.size = sizeof(out_text),.buf = out_text},
 	};
 
 	for (int i = 0; i < atoi(argv[1]); ++i) {
-		ret = vaccel_genop(&sess, read, 3, write, 1);
+		ret = vaccel_genop(&sess, read, 4, write, 1);
 		if (ret) {
 			fprintf(stderr, "Could not run op: %d\n", ret);
 			goto close_session;
 		}
 	}
+	printf("output: %s\n", out_text);
 
  close_session:
 	if (vaccel_sess_free(&sess) != VACCEL_OK) {
