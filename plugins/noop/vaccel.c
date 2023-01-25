@@ -166,6 +166,41 @@ static int noop_exec(struct vaccel_session *sess, const char *library,
 	return VACCEL_OK;
 }
 
+static int noop_exec_with_resource(struct vaccel_session *sess, struct vaccel_shared_object *object,
+		     const char *fn_symbol, struct vaccel_arg *read,
+		     size_t nr_read, struct vaccel_arg *write, size_t nr_write)
+{
+	if (!sess) {
+		noop_error("Invalid session\n");
+		return VACCEL_EINVAL;
+	}
+
+	if (!object) {
+		noop_error("Invalid shared object\n");
+		return VACCEL_EINVAL;
+	}
+
+	if (!vaccel_sess_has_resource(sess, object->resource)) {
+		noop_error("Shared object is not registered with session\n");
+		return VACCEL_ENOENT;
+	}
+
+	fprintf(stdout, "[noop] Calling exec_with_resource for session %u\n",
+		sess->session_id);
+
+	const char* library = object->file.path;
+	fprintf(stdout, "[noop] object file path: %s\n", object->file.path);
+	fprintf(stdout, "[noop] Dumping arguments for exec_with_resource:\n");
+	fprintf(stdout, "[noop] library: %s symbol: %s\n", library, fn_symbol);
+	fprintf(stdout, "[noop] nr_read: %lu nr_write: %lu\n", nr_read, nr_write);
+	
+	if (nr_write > 0) {
+		sprintf(write[0].buf, "I got this input: %d\n", *(int*)read[0].buf);
+	}
+
+	return VACCEL_OK;
+}
+
 static int noop_tf_session_load(
 	struct vaccel_session *session,
 	struct vaccel_tf_saved_model *model,
@@ -367,6 +402,7 @@ struct vaccel_op ops[] = {
 	VACCEL_OP_INIT(ops[13], VACCEL_F_VECTORADD, v_vectoradd),
 	VACCEL_OP_INIT(ops[14], VACCEL_F_PARALLEL, v_parallel),
 	VACCEL_OP_INIT(ops[15], VACCEL_F_MMULT, v_mmult),
+	VACCEL_OP_INIT(ops[16], VACCEL_EXEC_WITH_RESOURCE, noop_exec_with_resource),
 };
 
 
