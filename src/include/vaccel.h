@@ -31,6 +31,7 @@
 #include "ops/tf.h"
 #include "ops/fpga.h"
 #include "resources/tf_saved_model.h"
+#include "resources/shared_object.h"
 #include "vaccel_prof.h"
 
 #endif /* __VACCEL_H__ */

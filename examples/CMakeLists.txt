@@ -11,6 +11,7 @@ set(BIN_EXAMPLES
 	depth
 	depth_generic
 	exec
+	exec_with_res
 	exec_generic
 	noop
 	sgemm

@@ -43,6 +43,7 @@ enum vaccel_op_type {
 	VACCEL_F_MMULT,		    /* 17 */
 	VACCEL_F_PARALLEL,	    /* 18 */
 	VACCEL_F_VECTORADD,	    /* 19 */
+	VACCEL_EXEC_WITH_RESOURCE,  /* 20 */
 	VACCEL_FUNCTIONS_NR
 };
 
@@ -67,6 +68,7 @@ static const char *vaccel_op_name[] = {
 	"Matrix multiplication",
 	"Parallel acceleration",
 	"Vector Add",
+	"Exec with resource",
 };
 
 static inline const char *vaccel_op_type_str(enum vaccel_op_type op_type)

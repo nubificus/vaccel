@@ -18,3 +18,4 @@ build*
 
 .cache
 .ccls-cache
+.vscode

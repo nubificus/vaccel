@@ -67,9 +67,49 @@ static int exec(struct vaccel_session *session, const char *library, const char
 	return VACCEL_OK;
 }
 
+static int exec_with_resource(struct vaccel_session *session, struct vaccel_shared_object *object, const char *fn_symbol, void *read, size_t nr_read, void *write,
+							  size_t nr_write)
+{
+	int i = 0;
+	void *dl;
+	int (*fptr)(void *, size_t, void *, size_t);
+	int ret;
+	struct vaccel_arg *args;
+	struct vaccel_file *file;
+
+	vaccel_debug("Calling exec_with_resource for session %u", session->session_id);
+
+	file = &object->file;
+	const char *library = file->path;
+
+	vaccel_debug("[exec_with_resource] library: %s", library);
+	dl = dlopen(library, RTLD_NOW);
+	if (!dl)
+	{
+		vaccel_error("%s", dlerror());
+		return VACCEL_EINVAL;
+	}
+
+	/* Get the function pointer based on the relevant symbol */
+	vaccel_debug("[exec] symbol: %s", fn_symbol);
+	fptr = (int (*)(void *, size_t, void *, size_t))dlsym(dl, fn_symbol);
+	if (!fptr)
+	{
+		vaccel_error("%s", dlerror());
+		return VACCEL_EINVAL;
+	}
+
+	ret = (*fptr)(read, nr_read, write, nr_write);
+	if (ret)
+		return VACCEL_ENOEXEC;
+
+	return VACCEL_OK;
+}
+
 struct vaccel_op ops[] = {
-	VACCEL_OP_INIT(ops[0],VACCEL_NO_OP, noop),
-	VACCEL_OP_INIT(ops[1],VACCEL_EXEC, exec),
+	VACCEL_OP_INIT(ops[0], VACCEL_NO_OP, noop),
+	VACCEL_OP_INIT(ops[1], VACCEL_EXEC, exec),
+	VACCEL_OP_INIT(ops[2], VACCEL_EXEC_WITH_RESOURCE, exec_with_resource),
 };
 
 static int init(void)
@@ -83,8 +123,7 @@ static int fini(void)
 }
 
 VACCEL_MODULE(
-	.name = "exec",
-	.version = "0.1",
-	.init = init,
-	.fini = fini
-)
+		.name = "exec",
+		.version = "0.1",
+		.init = init,
+		.fini = fini)
