@@ -113,5 +113,6 @@ jobs:
         secret-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         local-path: artifacts/${{ matrix.archconfig }}/${{ matrix.build_type }}/opt
         remote-path: nbfc-assets/github/vaccelrt/${{ env.ARTIFACT_SHA }}/${{ matrix.archconfig }}/${{ matrix.build_type }}/
+
     - name: Clean-up
       run: sudo rm -rf artifacts build_${{ matrix.build_type }}

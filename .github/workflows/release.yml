@@ -9,71 +9,44 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
-    container:
-      image: nubificus/vaccel-deps:latest
-      volumes:
-        - /tmp/vaccel:/vaccel
+    runs-on: [ self-hosted, "x86_64" ]
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
-
-
-    - name: Checkout submodules
-      run: |
-        git submodule update --init --recursive
-
-    - name: Find tag
-      run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
-
-    - name: Create Build Environment
-      run: cmake -E make_directory /vaccel/Release
-
-    - name: Configure CMake
-      working-directory: /vaccel/Release
-      run: |
-         cmake $GITHUB_WORKSPACE \
-                -DCMAKE_INSTALL_PREFIX=/vaccel/artifacts/Release/opt \
-                -DCMAKE_BUILD_TYPE=Release \
-                -DBUILD_PLUGIN_JETSON=ON \
-                -DBUILD_PLUGIN_NOOP=ON \
-                -DBUILD_PLUGIN_VIRTIO=ON
-                
-
-    - name: Build runtime
-      working-directory: /vaccel/Release
-      run: cmake --build . --config Release
-
-    - name: Test & Install
-      working-directory: /vaccel/Release
-      run: |
-        make test
-        make install
-
-    - name: Pack release artifacts
-      working-directory: /vaccel/artifacts/Release
-      run: tar -cjf vaccel-${{ env.RELEASE_VERSION }}.tar opt
-
-    - name: Create release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.NBFC_BUILDER_TOKEN }}
+    - name: Fetch vaccelrt x86_64
+      uses: cloudkernels/minio-download@v2
       with:
-        tag_name: ${{ github.ref }}
-        release_name: Release vaccel-${{ github.ref }}
-        body_path: ./releases/${{ env.RELEASE_VERSION }}
-        draft: false
-        prerelease: false
+        url: https://s3.nubificus.co.uk
+        access-key: ${{ env.NBFC_S3_ACCESS }}
+        secret-key: ${{ env.NBFC_S3_SECRET }}
+        local-path: /github/workspace/artifacts/vaccelrt-${{ github.ref }}-x86_64.tar.gz
+        remote-path: nbfc-assets/github/vaccelrt/main/x86_64/Release-tar/vaccelrt-${{github.ref}}.tar.gz
 
-    - name: Upload release asset
-      id: upload-release-asset
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.NBFC_BUILDER_TOKEN }}
+    - name: Fetch vaccelrt aarch64
+      uses: cloudkernels/minio-download@v2
       with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: /vaccel/artifacts/Release/vaccel-${{ env.RELEASE_VERSION }}.tar
-        asset_name: vaccel.tar
-        asset_content_type: application/zip
+        url: https://s3.nubificus.co.uk
+        access-key: ${{ env.NBFC_S3_ACCESS }}
+        secret-key: ${{ env.NBFC_S3_SECRET }}
+        local-path: /github/workspace/artifacts/vaccelrt-${{ github.ref }}-aarch64.tar.gz
+        remote-path: nbfc-assets/github/vaccelrt/main/aarch64/Release-tar/vaccelrt-${{github.ref}}.tar.gz
+
+    - name: Fetch vaccelrt aarch32
+      uses: cloudkernels/minio-download@v2
+      with:
+        url: https://s3.nubificus.co.uk
+        access-key: ${{ env.NBFC_S3_ACCESS }}
+        secret-key: ${{ env.NBFC_S3_SECRET }}
+        local-path: /github/workspace/artifacts/vaccelrt-${{ github.ref }}-aarch32.tar.gz
+        remote-path: nbfc-assets/github/vaccelrt/main/aarch32/Release-tar/vaccelrt-${{github.ref}}.tar.gz
+
+    - name: Create Release
+      uses: marvinpinto/action-automatic-releases@latest
+      with:
+        repo_token: ${{secrets.NBFC_BUILDER_TOKEN}}
+        automatic_release_tag: ${{github.event.inputs.tag}}
+        title: "vAccelrt test release ${{github.event.inputs.tag}}"
+        files: |
+          artifacts/vaccelrt-${{ github.ref }}-x86_64.tar.gz
+          artifacts/vaccelrt-${{ github.ref }}-aarch64.tar.gz
+          artifacts/vaccelrt-${{ github.ref }}-aarch32.tar.gz
+

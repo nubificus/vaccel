@@ -62,13 +62,13 @@ jobs:
       shell: bash
       id: get_package
       run: |
-        echo ::set-output name=NAME::$(basename build_${{ matrix.build_type }}/vaccel-*.deb)
+        echo ::set-output name=NAME::$(basename build_${{ matrix.build_type }}/vaccelrt-*.deb)
 
     - name: Get tar name
       shell: bash
       id: get_package_tar
       run: |
-        echo ::set-output name=NAME::$(basename build_${{ matrix.build_type }}/vaccel-*.tar.gz)
+        echo ::set-output name=NAME::$(basename build_${{ matrix.build_type }}/vaccelrt-*.tar.gz)
 
     - name: Upload artifact to s3
       uses: cloudkernels/minio-upload@v3

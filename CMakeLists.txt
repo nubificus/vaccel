@@ -63,7 +63,7 @@ if (ENABLE_TESTS)
 	add_subdirectory(test)
 endif (ENABLE_TESTS)
 
-set(CPACK_PACKAGE_NAME vaccel)
+set(CPACK_PACKAGE_NAME vaccelrt)
 set(CPACK_PACKAGE_CONTACT "Anastassios Nanos <ananos@nubificus.co.uk>")
 set(CPACK_GENERATOR DEB)
 set(CPACK_PACKAGING_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX})
