@@ -106,6 +106,24 @@ free_resource:
 	return ret;
 }
 
+/* Get a pointer to the data of the shared object file
+ *
+ * This will return a pointer to the data of shared object file.
+ * If the data have not been read before, this will first try to
+ * read the data (mmap them in memory) before returning.
+ */
+const uint8_t *vaccel_shared_object_get(
+	struct vaccel_shared_object *object,
+	size_t *len
+) {
+	if (!object)
+		return NULL;
+
+	// vaccel_file_data will read the file in memory if
+	// not already done
+	return vaccel_file_data(&object->file, len);
+}
+
 int vaccel_shared_object_destroy(struct vaccel_shared_object *object)
 {
 	if (!object)
