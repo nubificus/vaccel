@@ -94,10 +94,30 @@ int resource_new(struct vaccel_resource *res, vaccel_resource_t type,
 	res->data = data;
 	res->cleanup_resource = cleanup_resource;
 	list_init_entry(&res->entry);
+	list_add_tail(&live_resources[0], &res->entry);
 	atomic_init(&res->refcount, 0);
 	res->rundir = NULL;
 
 	return VACCEL_OK;
+}
+
+int resource_get_by_id(struct vaccel_resource **resource, vaccel_id_t id)
+{
+	if (!initialized)
+		return VACCEL_EPERM;
+
+	for (int i = 0; i < VACCEL_RES_MAX; ++i) {
+		struct vaccel_resource *res, *tmp;
+		for_each_vaccel_resource_safe(res, tmp, &live_resources[i]) {
+			if (id == res->id) {
+				*resource = res;
+				return VACCEL_OK;
+			}
+		}
+	}
+
+	if (*resource != NULL) return VACCEL_OK;
+	return VACCEL_EINVAL;
 }
 
 int resource_destroy(struct vaccel_resource *res)

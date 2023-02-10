@@ -55,6 +55,7 @@ unpack_func_t callbacks[VACCEL_FUNCTIONS_NR] = {
 	vaccel_fpga_mmult_unpack,		/* 17 */
 	vaccel_fpga_parallel_unpack,		/* 18 */
 	vaccel_fpga_vadd_unpack,		/* 19 */
+	vaccel_exec_with_res_unpack,		/* 20 */
 };
 
 int vaccel_genop(struct vaccel_session *sess, struct vaccel_arg  *read,
