@@ -44,6 +44,8 @@ struct vaccel_prof_region {
 
 #define VACCEL_PROF_REGION_INIT(name) { (name), false, 0, NULL, 0 }
 
+bool vaccel_prof_enabled(void);
+
 /* Start profiling a region */
 int vaccel_prof_region_start(struct vaccel_prof_region *region);
 

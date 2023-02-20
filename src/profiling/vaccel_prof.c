@@ -35,7 +35,7 @@ uint64_t get_tstamp_nsec(void)
 	return tp.tv_sec * 1e9 + tp.tv_nsec;
 }
 
-static bool prof_enabled(void)
+bool vaccel_prof_enabled(void)
 {
 	char *env = getenv("VACCEL_PROF_ENABLED");
 
@@ -112,7 +112,7 @@ static struct prof_sample *get_next_sample(struct vaccel_prof_region *region)
 
 int vaccel_prof_region_start(struct vaccel_prof_region *region)
 {
-	if (!prof_enabled())
+	if (!vaccel_prof_enabled())
 		return VACCEL_OK;
 
 	if (!region) {
@@ -133,7 +133,7 @@ int vaccel_prof_region_start(struct vaccel_prof_region *region)
 
 int vaccel_prof_region_stop(const struct vaccel_prof_region *region)
 {
-	if (!prof_enabled())
+	if (!vaccel_prof_enabled())
 		return VACCEL_OK;
 
 	if (!region) {
@@ -156,7 +156,7 @@ int vaccel_prof_region_init(
 	struct vaccel_prof_region *region,
 	const char *name
 ) {
-	if (!prof_enabled())
+	if (!vaccel_prof_enabled())
 		return VACCEL_OK;
 
 	if (!region) {
@@ -188,7 +188,7 @@ free_name:
 
 int vaccel_prof_region_destroy(struct vaccel_prof_region *region)
 {
-	if (!prof_enabled())
+	if (!vaccel_prof_enabled())
 		return VACCEL_OK;
 
 	if (!region) {
@@ -213,7 +213,7 @@ int vaccel_prof_region_destroy(struct vaccel_prof_region *region)
 
 int vaccel_prof_region_print(const struct vaccel_prof_region *region)
 {
-	if (!prof_enabled())
+	if (!vaccel_prof_enabled())
 		return VACCEL_OK;
 
 	if (!region) {
