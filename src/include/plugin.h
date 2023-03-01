@@ -15,7 +15,9 @@
 #ifndef __VACCEL_PLUGIN_H__
 #define __VACCEL_PLUGIN_H__
 
+#include <stdio.h>
 #include <stdint.h>
+#include <string.h>
 
 #include "session.h"
 #include "resources.h"
@@ -24,6 +26,54 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+enum vaccel_plugin_type {
+	VACCEL_PLUGIN_CPU = 0x0001,
+	VACCEL_PLUGIN_GPU = 0x0002,
+	VACCEL_PLUGIN_FPGA = 0x0004,
+	VACCEL_PLUGIN_SOFTWARE = 0x0008,
+	VACCEL_PLUGIN_TENSORFLOW = 0x0010,
+	VACCEL_PLUGIN_TORCH = 0x0020,
+	VACCEL_PLUGIN_JETSON = 0x0040,
+	VACCEL_PLUGIN_GENERIC = 0x0080,
+	VACCEL_PLUGIN_DEBUG = 0x0100,
+	VACCEL_PLUGIN_TYPE_MAX = 0x8000,
+	VACCEL_PLUGIN_ALL = 0xffff,
+};
+
+static const char *vaccel_plugin_type_name[] = {
+	"CPU",
+	"GPU",
+	"FPGA",
+	"SOFTWARE",
+	"TENSORFLOW",
+	"TORCH",
+	"JETSON",
+	"GENERIC",
+	"DEBUG",
+};
+
+/* Dummy type to str function for debug */
+static inline const char *vaccel_plugin_type_str(enum vaccel_plugin_type type)
+{
+	int i = 0;
+	char *p, *plugin_type_str = (char*)malloc(100);
+	unsigned int tester = 1;
+	p = plugin_type_str;
+	for (i = 0; i < VACCEL_PLUGIN_TYPE_MAX>>9; i++) {
+		if (tester & type) {
+			if (p != plugin_type_str) {
+				sprintf(p, " ");
+				p+=strlen(" ");
+			}
+			sprintf(p, "%s", vaccel_plugin_type_name[i]);
+			p+=strlen(vaccel_plugin_type_name[i]);
+		}
+		tester <<= 1;
+	}
+
+	return plugin_type_str;
+}
 
 struct vaccel_plugin_info {
 	/* Name of the plugin */
@@ -40,6 +90,9 @@ struct vaccel_plugin_info {
 
 	/* True if this is a VirtIO plugin */
 	bool is_virtio;
+
+	/* Plugin enum type */
+	enum vaccel_plugin_type type;
 
 	/* In some cases, like in the context of VirtIO we need to offload
 	 * session handling to the plugin itself */

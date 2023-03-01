@@ -188,8 +188,11 @@ int register_plugin_functions(struct vaccel_op *plugin_ops, size_t nr_ops)
 	return VACCEL_OK;
 }
 
-void *get_plugin_op(enum vaccel_op_type op_type)
+void *get_plugin_op(enum vaccel_op_type op_type, unsigned int hint)
 {
+	unsigned int env_priority = hint;
+	struct vaccel_op *op = NULL;
+
 	if (op_type >= VACCEL_FUNCTIONS_NR) {
 		vaccel_error("Trying to execute unknown function");
 		return NULL;
@@ -201,14 +204,46 @@ void *get_plugin_op(enum vaccel_op_type op_type)
 		return NULL;
 	}
 
-	/* At the moment, just return the first implementation we find */
-	struct vaccel_op *op =
-		get_container(plugin_state.ops[op_type].next,
+	/* Check the list of plugins implementing our function type
+	 * and compare with the bitmap hint we got from the upper
+	 * layers. If we get a match, return this plugin operation
+	 */
+	if (env_priority) {
+		struct vaccel_op *opiter, *tmp;
+		for_each_container_safe(opiter, tmp, &plugin_state.ops[op_type],
+				struct vaccel_op, func_entry) {
+			if ((env_priority & opiter->owner->info->type) != 0) {
+				op = opiter;
+				vaccel_debug("Returning func from hint plugin %s ",
+						opiter->owner->info->name);
+				break;
+			}
+		}
+	}
+
+	/* If priority check fails, just return the first implementation we find */
+	if (!op) {
+		op = get_container(plugin_state.ops[op_type].next,
 				struct vaccel_op, func_entry);
+	}
 
 	vaccel_debug("Found implementation in %s plugin", op->owner->info->name);
 
 	return op->func;
+}
+
+int get_available_plugins(enum vaccel_op_type op_type) {
+
+        struct vaccel_op *opiter, *tmp_op;
+
+        for_each_container_safe(opiter, tmp_op, &plugin_state.ops[op_type],
+			struct vaccel_op, func_entry) {
+		vaccel_debug("Found implementation of %s in %s plugin type: %s",
+				vaccel_op_type_str(opiter->type),
+				opiter->owner->info->name,
+				vaccel_plugin_type_str(opiter->owner->info->type));
+        }
+	return 0;
 }
 
 struct vaccel_plugin *get_virtio_plugin(void)

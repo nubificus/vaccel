@@ -12,6 +12,8 @@
  * limitations under the License.
  */
 
+#include <stdio.h>
+
 #include "exec.h"
 #include "error.h"
 #include "plugin.h"
@@ -34,7 +36,7 @@ int vaccel_exec(struct vaccel_session *sess, const char *library,
 				 sess->session_id);
 
 	// Get implementation
-	int (*plugin_op)() = get_plugin_op(VACCEL_EXEC);
+	int (*plugin_op)() = get_plugin_op(VACCEL_EXEC, sess->hint);
 	if (!plugin_op)
 		return VACCEL_ENOTSUP;
 
@@ -53,7 +55,7 @@ int vaccel_exec_with_resource(struct vaccel_session *sess, struct vaccel_shared_
 				 sess->session_id);
 
 	// Get implementation
-	int (*plugin_op)() = get_plugin_op(VACCEL_EXEC_WITH_RESOURCE);
+	int (*plugin_op)() = get_plugin_op(VACCEL_EXEC_WITH_RESOURCE, sess->hint);
 	if (!plugin_op)
 		return VACCEL_ENOTSUP;
 

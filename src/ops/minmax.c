@@ -27,7 +27,7 @@ int vaccel_minmax(
 		int low_threshold, int high_threshold,
 		double *outdata,
 		double *min, double *max
-	) = get_plugin_op(VACCEL_MINMAX);
+	) = get_plugin_op(VACCEL_MINMAX, sess->hint);
 	if (!plugin_op)
 		return VACCEL_ENOTSUP;
 

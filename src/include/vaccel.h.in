@@ -34,6 +34,7 @@
 #include "ops/fpga.h"
 #include "resources/tf_saved_model.h"
 #include "resources/shared_object.h"
+#include "misc.h"
 #include "vaccel_prof.h"
 #include "ops/torch.h"
 #include "resources/torch_saved_model.h"

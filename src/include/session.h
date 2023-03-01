@@ -32,6 +32,9 @@ struct vaccel_session {
 	/* session-specific resources */
 	struct session_resources *resources;
 
+	/* plugin preference */
+	unsigned int hint;
+
 	/* backend private data */
 	void *priv;
 };

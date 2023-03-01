@@ -33,7 +33,8 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	ret = vaccel_sess_init(&sess, 0);
+	sess.hint = VACCEL_PLUGIN_DEBUG;
+	ret = vaccel_sess_init(&sess, sess.hint);
 	if (ret != VACCEL_OK) {
 		fprintf(stderr, "Could not initialize session\n");
 		return 1;
@@ -48,6 +49,8 @@ int main(int argc, char *argv[])
 	struct vaccel_arg write[1] = {
 		{.size = sizeof(out_text),.buf = out_text},
 	};
+
+	//vaccel_get_plugins(&sess, 7);
 
 	for (int i = 0; i < atoi(argv[1]); ++i) {
 		ret =

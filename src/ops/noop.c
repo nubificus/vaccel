@@ -30,7 +30,7 @@ int vaccel_noop(struct vaccel_session *sess)
 			sess->session_id);
 
 	//Get implementation
-	int (*plugin_op)() = get_plugin_op(VACCEL_NO_OP);
+	int (*plugin_op)() = get_plugin_op(VACCEL_NO_OP, sess->hint);
 	if (!plugin_op)
 		return VACCEL_ENOTSUP;
 
