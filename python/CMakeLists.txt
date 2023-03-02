@@ -7,6 +7,10 @@ add_library(vaccel-python SHARED ${headers} ${sources})
 target_compile_options(vaccel-python PUBLIC -Wall -Wextra -Werror -pthread)
 #target_include_directories(vaccel-python PRIVATE ${CMAKE_SOURCE_DIR}/src)
 target_include_directories(vaccel-python PRIVATE ${CMAKE_SOURCE_DIR}/src/include)
+
+target_include_directories(vaccel-python PRIVATE ${CMAKE_BINARY_DIR}/version)
+
+
 set_property(TARGET vaccel-python PROPERTY LINK_FLAGS "-pthread")
 set_property(TARGET vaccel-python PROPERTY C_STANDARD 11)
 target_link_libraries(vaccel-python)

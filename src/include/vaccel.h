@@ -33,5 +33,6 @@
 #include "resources/tf_saved_model.h"
 #include "resources/shared_object.h"
 #include "vaccel_prof.h"
+#include "git_version.h"
 
 #endif /* __VACCEL_H__ */

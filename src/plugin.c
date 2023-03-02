@@ -92,7 +92,7 @@ int register_plugin(struct vaccel_plugin *plugin)
 
 	list_add_tail(&plugin_state.plugins, &plugin->entry);
 
-	vaccel_debug("Registered plugin %s", info->name);
+	vaccel_info("Registered plugin %s %s", info->name, info->version);
 
 	if (is_virtio_plugin(info)) {
 		vaccel_debug("%s is a VirtIO module", info->name);
