@@ -1,0 +1,6 @@
+#ifndef _GIT_VERSION_H_
+#define _GIT_VERSION_H_
+
+#define GIT_VERSION "@GIT_VERSION@"
+
+#endif  /* _GIT_VERSION_H_ */

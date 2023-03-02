@@ -71,7 +71,8 @@ jobs:
         cd build_${{matrix.build_type}}
         cmake ${{github.workspace}} \
           -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/artifacts/${{matrix.archconfig}}/${{matrix.build_type}}/opt \
-          -DBUILD_PLUGIN_NOOP=ON && \
+          -DBUILD_PLUGIN_NOOP=ON \
+          -DBUILD_PLUGIN_EXEC=ON && \
         make -C plugins && make install -C plugins
 
     - name: Run examples
@@ -79,7 +80,7 @@ jobs:
       env:
         LD_LIBRARY_PATH: ${{github.workspace}}/artifacts/${{matrix.archconfig}}/${{matrix.build_type}}/opt/lib
         VACCEL_BACKENDS: ${{github.workspace}}/artifacts/${{matrix.archconfig}}/${{matrix.build_type}}/opt/lib/libvaccel-noop.so
-        VACCEL_DEBUG_LEVEL: 4
+        VACCEL_DEBUG_LEVEL: 3
       run: |
         cd ${{github.workspace}}/artifacts/${{matrix.archconfig}}/${{matrix.build_type}}/opt
         sudo mkdir -p /run/user/1001

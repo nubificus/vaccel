@@ -53,7 +53,8 @@ jobs:
           -DCMAKE_INSTALL_PREFIX=/usr/local \
           -DCMAKE_BUILD_TYPE=${{matrix.build_type}} \
           -DBUILD_EXAMPLES=ON \
-          -DBUILD_PLUGIN_NOOP=ON && \
+          -DBUILD_PLUGIN_NOOP=ON \
+          -DBUILD_PLUGIN_EXEC=ON && \
         cmake --build . --config ${{matrix.build_type}} && \
         cpack -G TGZ
         cpack 

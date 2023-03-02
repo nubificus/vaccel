@@ -418,7 +418,7 @@ static int fini(void)
 
 VACCEL_MODULE(
 	.name = "noop",
-	.version = "0.1",
+	.version = GIT_VERSION,
 	.init = init,
 	.fini = fini
 )

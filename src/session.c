@@ -24,6 +24,7 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <string.h>
+#include "version/git_version.h"
 
 #define MAX_VACCEL_SESSIONS 1024
 

@@ -18,6 +18,7 @@
 #include "vaccel.h"
 #include "resources.h"
 #include "utils.h"
+#include "version/git_version.h"
 
 #include <sys/stat.h>
 #include <unistd.h>
@@ -165,6 +166,7 @@ static void vaccel_init(void)
 	vaccel_log_init();
 
 	vaccel_debug("Initializing vAccel");
+	vaccel_info("vAccel %s", GIT_VERSION);
 
 	ret = create_vaccel_rundir();
 	if (ret) {

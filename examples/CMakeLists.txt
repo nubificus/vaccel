@@ -1,4 +1,4 @@
-set(INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/src/include)
+set(INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/src/include ${CMAKE_BINARY_DIR}/version)
 set(BIN_EXAMPLES
 	classify
 	classify_generic
