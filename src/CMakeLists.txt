@@ -15,9 +15,27 @@ set_property(TARGET vaccel PROPERTY LINK_FLAGS "-pthread")
 set_property(TARGET vaccel PROPERTY C_STANDARD 11)
 target_link_libraries(vaccel slog)
 
+find_package(Git)
+
+add_custom_command(OUTPUT ${CMAKE_SRC_DIR}/src/include/version/git_version.h
+	COMMAND ${CMAKE_COMMAND}
+		-D SRC=${CMAKE_SOURCE_DIR}/src/include/version/git_version.h.in
+		-D DST=${CMAKE_SOURCE_DIR}/src/include/git_version.h
+		-D GIT_EXECUTABLE=${GIT_EXECUTABLE}
+		-P ${CMAKE_SOURCE_DIR}/src/include/version/generateGitVersionHeader.cmake
+	DEPENDS
+		${CMAKE_SOURCE_DIR}/src/include/version/git_version.h.in
+	COMMENT "Configuring git_version"
+	VERBATIM)
+
+add_custom_target(version ALL
+	DEPENDS ${CMAKE_SRC_DIR}/src/include/version/git_version.h)
+
+
 # Setup make install
 install(TARGETS vaccel DESTINATION ${CMAKE_INSTALL_LIBDIR})
-install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+	PATTERN "version" EXCLUDE)
 
 # Create the pkg-config file
 set(DEST_DIR "${CMAKE_INSTALL_PREFIX}")

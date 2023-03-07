@@ -32,8 +32,6 @@ include_directories(
 	third-party/slog/src
 )
 
-add_subdirectory(version)
-
 add_subdirectory(src)
 add_subdirectory(plugins)
 add_subdirectory(python)
