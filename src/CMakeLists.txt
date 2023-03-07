@@ -17,25 +17,35 @@ target_link_libraries(vaccel slog)
 
 find_package(Git)
 
-add_custom_command(OUTPUT ${CMAKE_SRC_DIR}/src/include/version/git_version.h
+add_custom_command(OUTPUT ${CMAKE_SRC_DIR}/src/include/vaccel.h
 	COMMAND ${CMAKE_COMMAND}
-		-D SRC=${CMAKE_SOURCE_DIR}/src/include/version/git_version.h.in
-		-D DST=${CMAKE_SOURCE_DIR}/src/include/git_version.h
+		-D SRC=${CMAKE_SOURCE_DIR}/src/include/vaccel.h.in
+		-D DST=${CMAKE_SOURCE_DIR}/src/include/vaccel.h
 		-D GIT_EXECUTABLE=${GIT_EXECUTABLE}
-		-P ${CMAKE_SOURCE_DIR}/src/include/version/generateGitVersionHeader.cmake
+		-P ${CMAKE_SOURCE_DIR}/cmake/GenerateGitVersionHeader.cmake
 	DEPENDS
-		${CMAKE_SOURCE_DIR}/src/include/version/git_version.h.in
-	COMMENT "Configuring git_version"
+		${CMAKE_SOURCE_DIR}/src/include/vaccel.h.in
+	COMMENT "Configuring vaccelrt_version"
+	VERBATIM)
+
+add_custom_command(OUTPUT ${CMAKE_SRC_DIR}/src/vaccel.h
+	COMMAND ${CMAKE_COMMAND}
+		-D SRC=${CMAKE_SOURCE_DIR}/src/vaccel.h.in
+		-D DST=${CMAKE_SOURCE_DIR}/src/vaccel.h
+		-D GIT_EXECUTABLE=${GIT_EXECUTABLE}
+		-P ${CMAKE_SOURCE_DIR}/cmake/GenerateGitVersionHeader.cmake
+	DEPENDS
+		${CMAKE_SOURCE_DIR}/src/vaccel.h.in
+	COMMENT "Configuring vaccelrt_version"
 	VERBATIM)
 
 add_custom_target(version ALL
-	DEPENDS ${CMAKE_SRC_DIR}/src/include/version/git_version.h)
-
+	DEPENDS ${CMAKE_SRC_DIR}/src/include/vaccel.h ${CMAKE_SRC_DIR}/src/vaccel.h)
 
 # Setup make install
 install(TARGETS vaccel DESTINATION ${CMAKE_INSTALL_LIBDIR})
 install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-	PATTERN "version" EXCLUDE)
+	PATTERN "*.in" EXCLUDE)
 
 # Create the pkg-config file
 set(DEST_DIR "${CMAKE_INSTALL_PREFIX}")
