@@ -124,6 +124,6 @@ static int fini(void)
 
 VACCEL_MODULE(
 		.name = "exec",
-		.version = GIT_VERSION,
+		.version = VACCELRT_VERSION,
 		.init = init,
 		.fini = fini)
