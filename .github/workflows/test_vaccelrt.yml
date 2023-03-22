@@ -41,12 +41,6 @@ jobs:
           echo "ARTIFACT_SHA=$(echo ${{github.sha}})" >> $GITHUB_ENV
         fi
 
-    - name: Install deps
-      id: install-deps
-      run: |
-        sudo apt update
-        sudo apt install -y cmake
-
     - name: Build project
       id: build_vaccelrt
       run: |
