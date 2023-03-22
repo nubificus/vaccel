@@ -42,6 +42,8 @@ add_custom_command(OUTPUT ${CMAKE_SRC_DIR}/src/vaccel.h
 add_custom_target(version ALL
 	DEPENDS ${CMAKE_SRC_DIR}/src/include/vaccel.h ${CMAKE_SRC_DIR}/src/vaccel.h)
 
+add_dependencies(vaccel version)
+
 # Setup make install
 install(TARGETS vaccel DESTINATION ${CMAKE_INSTALL_LIBDIR})
 install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
