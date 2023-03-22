@@ -12,7 +12,7 @@ on:
 
 jobs:
   build:
-    runs-on: [self-hosted, "${{ matrix.archconfig }}" ]
+    runs-on: [self-hosted, "${{ matrix.archconfig }}", gcc, lite ]
 
     strategy:
       matrix:
@@ -50,8 +50,6 @@ jobs:
     - name: Build project
       id: build_vaccelrt
       run: |
-        cargo --version
-        rustc --version
         mkdir -p build_${{matrix.build_type}}
         cd build_${{matrix.build_type}}
         cmake ${{github.workspace}} \
@@ -59,7 +57,7 @@ jobs:
           -DCMAKE_BUILD_TYPE=${{matrix.build_type}} \
           -DENABLE_TESTS=ON \
           -DBUILD_EXAMPLES=ON && \
-        cmake --build . --config ${{matrix.build_type}} && \
+        make && \
         make test && \
         make install -C src && \
         make install -C third-party && \
