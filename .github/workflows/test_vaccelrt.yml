@@ -12,7 +12,7 @@ on:
 
 jobs:
   build:
-    runs-on: [self-hosted, "${{ matrix.archconfig }}" ]
+    runs-on: [self-hosted, "${{ matrix.archconfig }}", gcc, lite ]
 
     strategy:
       matrix:
@@ -41,17 +41,9 @@ jobs:
           echo "ARTIFACT_SHA=$(echo ${{github.sha}})" >> $GITHUB_ENV
         fi
 
-    - name: Install deps
-      id: install-deps
-      run: |
-        sudo apt update
-        sudo apt install -y cmake
-
     - name: Build project
       id: build_vaccelrt
       run: |
-        cargo --version
-        rustc --version
         mkdir -p build_${{matrix.build_type}}
         cd build_${{matrix.build_type}}
         cmake ${{github.workspace}} \

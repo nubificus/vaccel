@@ -15,6 +15,8 @@ set_property(TARGET vaccel-python PROPERTY LINK_FLAGS "-pthread")
 set_property(TARGET vaccel-python PROPERTY C_STANDARD 11)
 target_link_libraries(vaccel-python)
 
+add_dependencies(vaccel-python version)
+
 # Setup make install
 install(TARGETS vaccel-python DESTINATION ${CMAKE_INSTALL_LIBDIR})
 #install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})

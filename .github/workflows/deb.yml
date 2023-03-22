@@ -9,7 +9,7 @@ on:
 
 jobs:
   build:
-    runs-on: [ self-hosted, "${{ matrix.archconfig }}" ]
+    runs-on: [ self-hosted, "${{ matrix.archconfig }}", gcc, lite ]
     strategy:
       matrix:
         archconfig: [ x86_64, aarch64, aarch32 ]
@@ -37,12 +37,6 @@ jobs:
         else
           echo "ARTIFACT_SHA=$(echo ${GITHUB_REF##*/})" >> $GITHUB_ENV
         fi
-
-    - name: Install deps
-      id: install-deps
-      run: |
-        sudo apt update
-        sudo apt install -y cmake
 
     - name: Build project
       id: build_vaccelrt
