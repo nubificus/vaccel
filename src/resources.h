@@ -50,6 +50,7 @@ int resources_bootstrap(void);
 int resources_cleanup(void);
 int resource_new(struct vaccel_resource *res, vaccel_resource_t type, void *data,
 		int (*cleanup_resource)(void *));
+int resource_get_by_id (struct vaccel_resource **resource, vaccel_id_t id);
 int resource_destroy(struct vaccel_resource *res);
 void resource_refcount_inc(struct vaccel_resource *res);
 void resource_refcount_dec(struct vaccel_resource *res);

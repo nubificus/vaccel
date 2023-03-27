@@ -54,6 +54,10 @@ vaccel_id_t vaccel_shared_object_get_id(
 	const struct vaccel_shared_object *object
 );
 
+const uint8_t *vaccel_shared_object_get(
+	struct vaccel_shared_object *object, size_t *len
+);
+
 #ifdef __cplusplus
 }
 #endif
