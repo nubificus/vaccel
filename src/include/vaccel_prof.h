@@ -15,6 +15,7 @@
 #pragma once
 
 #include <stdbool.h>
+#include <stdint.h>
 #include <stddef.h>
 
 #include "error.h"
@@ -23,7 +24,13 @@
 extern "C" {
 #endif
 
-struct prof_sample;
+struct vaccel_prof_sample {
+	/* Timestamp (nsec) of entering the region */
+	uint64_t start;
+
+	/* Time (nsec) elapsed inside the region */
+	uint64_t time;
+};
 
 struct vaccel_prof_region {
 	/* Name of the region */
@@ -36,7 +43,7 @@ struct vaccel_prof_region {
 	size_t nr_entries;
 
 	/* Array of collected samples */
-	struct prof_sample *samples;
+	struct vaccel_prof_sample *samples;
 
 	/* Allocated size for the array */
 	size_t size;
@@ -54,6 +61,17 @@ int vaccel_prof_region_stop(const struct vaccel_prof_region *region);
 
 /* Dump profiling results of a region */
 int vaccel_prof_region_print(const struct vaccel_prof_region *region);
+
+int vaccel_prof_region_start_name(struct vaccel_prof_region *region,
+		int size, const char *name);
+
+int vaccel_prof_region_stop_name(struct vaccel_prof_region *region,
+		int size, const char *name);
+
+int vaccel_prof_region_print_all(struct vaccel_prof_region *region, int size);
+
+int vaccel_prof_region_print_all_to_buf(char **tbuf, size_t tbuf_len,
+		struct vaccel_prof_region *region, int size);
 
 /* Initialize a profiling region */
 int vaccel_prof_region_init(
