@@ -147,14 +147,19 @@ int vaccel_prof_region_start_name(struct vaccel_prof_region *region,
 		return VACCEL_OK;
 
 	if (!region) {
-		vaccel_error("[prof] start region: Invalid profiling region");
+		vaccel_error("[prof] start region: Invalid profiling region array");
 		return VACCEL_EINVAL;
 	}
 
-	struct vaccel_prof_region *r;
+	struct vaccel_prof_region *r = NULL;
 	for (int i = 0; i < size; i++) {
 		if (strcmp(region[i].name, name) == 0)
 			r = &region[i];
+	}
+
+	if (!r) {
+		vaccel_error("[prof] stop region: Invalid profiling region");
+		return VACCEL_EINVAL;
 	}
 
 	vaccel_debug("Start profiling region %s", r->name);
@@ -175,14 +180,19 @@ int vaccel_prof_region_stop_name(struct vaccel_prof_region *region,
 		return VACCEL_OK;
 
 	if (!region) {
-		vaccel_error("[prof] stop region: Invalid profiling region");
+		vaccel_error("[prof] stop region: Invalid profiling region array");
 		return VACCEL_EINVAL;
 	}
 
-	struct vaccel_prof_region *r;
+	struct vaccel_prof_region *r = NULL;
 	for (int i = 0; i < size; i++) {
 		if (strcmp(region[i].name, name) == 0)
 			r = &region[i];
+	}
+
+	if (!r) {
+		vaccel_error("[prof] stop region: Invalid profiling region");
+		return VACCEL_EINVAL;
 	}
 
 	vaccel_debug("Stop profiling region %s", r->name);
@@ -289,7 +299,7 @@ int vaccel_prof_region_print_all(struct vaccel_prof_region *region, int size)
 		return VACCEL_OK;
 
 	if (!region) {
-		vaccel_error("[prof] print region: Invalid profiling region");
+		vaccel_error("[prof] print region: Invalid profiling region array");
 		return VACCEL_EINVAL;
 	}
 
@@ -317,7 +327,7 @@ int vaccel_prof_region_print_all_to_buf(char **tbuf, size_t tbuf_len,
 		return 0;
 
 	if (!region) {
-		vaccel_error("[prof] print region: Invalid profiling region");
+		vaccel_error("[prof] print region: Invalid profiling region array");
 		return -VACCEL_EINVAL;
 	}
 
