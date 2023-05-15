@@ -83,7 +83,7 @@ int vaccel_file_persist(struct vaccel_file *file, const char *dir,
 	}
 
 	/* +1 for '\0' */
-	int path_len = snprintf(NULL, 0, "%s/%s", dir, filename) + 1;
+	int path_len = snprintf(NULL, 0, "%s/%s.XXXXXX", dir, filename) + 1;
 
 	if (file->path) {
 		vaccel_error("Found path for vAccel file. Not overwriting");
@@ -95,11 +95,14 @@ int vaccel_file_persist(struct vaccel_file *file, const char *dir,
 		return VACCEL_ENOMEM;
 
 	/* No need to check that here, we know the length of the string */
-	snprintf(file->path, path_len, "%s/%s", dir, filename);
+	snprintf(file->path, path_len, "%s/%s.XXXXXX", dir, filename);
 	file->path_owned = true;
 
-	/* Create the new file */
-	FILE *fp = fopen(file->path, "w+");
+	/* FIXME: use a random value for the filename as we're hitting 
+	 * a weird cache issue: https://github.com/nubificus/roadmap#106
+	 */
+	int fd = mkstemp(file->path);
+	FILE *fp = fdopen(fd, "w+");
 	if (!fp) {
 		ret = errno;
 		goto free_path;
@@ -184,8 +187,13 @@ int vaccel_file_destroy(struct vaccel_file *file)
 	/* There is a path in the disk representing the file,
 	 * which means that if we hold a pointer to the contents
 	 * of the file, this has been mmaped, so unmap it */
-	if (file->data)
-		munmap(file->data, file->size);
+	if (file->data) {
+		int ret = munmap(file->data, file->size);
+		if (ret) {
+			vaccel_error("Failed to unmap file %s", file->path);
+			return ret;
+		}
+	}
 
 	/* If we own the path to the file, just remove it from the
 	 * file system */

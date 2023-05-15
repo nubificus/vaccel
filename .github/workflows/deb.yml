@@ -12,7 +12,7 @@ jobs:
     runs-on: [ self-hosted, "${{ matrix.archconfig }}", gcc, lite ]
     strategy:
       matrix:
-        archconfig: [ x86_64, aarch64, aarch32 ]
+        archconfig: [ x86_64, aarch64, armv7l ]
         build_type: [ Debug, Release ]
       fail-fast: false
     steps:
@@ -66,7 +66,7 @@ jobs:
         echo ::set-output name=NAME::$(basename build_${{ matrix.build_type }}/vaccel-*.tar.gz)
 
     - name: Upload artifact to s3
-      uses: cloudkernels/minio-upload@v3
+      uses: cloudkernels/minio-upload@v4
       with:
         url: https://s3.nubificus.co.uk
         access-key: ${{ secrets.AWS_ACCESS_KEY }}
@@ -76,7 +76,7 @@ jobs:
         policy: 1
 
     - name: Upload artifact to s3
-      uses: cloudkernels/minio-upload@v3
+      uses: cloudkernels/minio-upload@v4
       with:
         url: https://s3.nubificus.co.uk
         access-key: ${{ secrets.AWS_ACCESS_KEY }}
