@@ -257,7 +257,7 @@ static int noop_tf_session_run(
 				in_nodes[i].id);
 		noop_info("\t#dims: %d -> {", in[i]->nr_dims);
 		for (int j = 0; j < in[i]->nr_dims; ++j)
-			printf("%lld%s", in[i]->dims[j],
+			printf("%d%s", in[i]->dims[j],
 				(j == in[i]->nr_dims - 1) ? "}\n" : " ");
 
 		noop_info("\tData type: %d\n", in[i]->data_type);

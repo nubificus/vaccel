@@ -140,7 +140,7 @@ long long int vaccel_tf_node_get_id(struct vaccel_tf_node *node)
 }
 
 struct vaccel_tf_tensor *
-vaccel_tf_tensor_new(int nr_dims, long long int *dims, enum vaccel_tf_data_type type)
+vaccel_tf_tensor_new(int nr_dims, uint32_t *dims, enum vaccel_tf_data_type type)
 {
 	struct vaccel_tf_tensor *ret;
 
@@ -164,7 +164,7 @@ vaccel_tf_tensor_new(int nr_dims, long long int *dims, enum vaccel_tf_data_type 
 
 struct vaccel_tf_tensor *
 vaccel_tf_tensor_allocate(
-	int nr_dims, long long int *dims,
+	int nr_dims, uint32_t *dims,
 	enum vaccel_tf_data_type type,
 	size_t total_size
 ) {

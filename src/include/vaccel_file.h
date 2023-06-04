@@ -45,12 +45,14 @@ int vaccel_file_from_buffer(
 	size_t size,
 	const char *filename,
 	bool persist,
-	const char *dir
+	const char *dir,
+	bool randomize
 );
 int vaccel_file_persist(
 	struct vaccel_file *file,
 	const char *dir,
-	const char *filename
+	const char *filename,
+	bool randomize
 );
 int vaccel_file_destroy(struct vaccel_file *file);
 bool vaccel_file_initialized(struct vaccel_file *file);
