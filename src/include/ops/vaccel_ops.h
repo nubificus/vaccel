@@ -44,6 +44,8 @@ enum vaccel_op_type {
 	VACCEL_F_PARALLEL,	    /* 18 */
 	VACCEL_F_VECTORADD,	    /* 19 */
 	VACCEL_EXEC_WITH_RESOURCE,  /* 20 */
+	VACCEL_TORCH_JITLOAD_FORWARD, /* 21 */
+	VACCEL_TORCH_SGEMM, /* 22 */
 	VACCEL_FUNCTIONS_NR
 };
 
@@ -69,6 +71,9 @@ static const char *vaccel_op_name[] = {
 	"Parallel acceleration",
 	"Vector Add",
 	"Exec with resource",
+	"Torch jitload_forward function",
+	"Torch SGEMM",
+	"Functions NR",
 };
 
 static inline const char *vaccel_op_type_str(enum vaccel_op_type op_type)

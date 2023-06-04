@@ -105,7 +105,6 @@ free_resource:
 
 	return ret;
 }
-
 int vaccel_tf_model_destroy(struct vaccel_tf_model *model)
 {
 	if (!model)

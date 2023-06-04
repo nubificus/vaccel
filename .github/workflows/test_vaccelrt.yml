@@ -93,6 +93,7 @@ jobs:
         ./bin/pynq_vector_add
         ./bin/pynq_array_copy
         ./bin/pynq_parallel
+        ./bin/torch_inference ./share/images/example.jpg ./share/models/torch
 
     - name: Upload artifact to s3
       uses: cloudkernels/minio-upload@v4

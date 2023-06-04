@@ -12,10 +12,12 @@
  * limitations under the License.
  */
 
+#include "ops/vaccel_ops.h"
 #include <stdio.h>
 #include <string.h>
 
 #include <vaccel.h>
+#include <ops/torch.h>
 
 #define noop_info(fmt, ...) \
 	fprintf(stdout, "[noop] " fmt, ##__VA_ARGS__)
@@ -381,7 +383,76 @@ static int v_mmult(struct vaccel_session *session, float *a, float *b, float *c,
 	for (i = 0; i < len_a ; i++) {
 		d_out[i] = 9.1;
 	}
+	return VACCEL_OK;
+}
 
+
+// Torch NOOP test
+static int noop_torch_jitload_forward(struct vaccel_session *session, 
+		const struct vaccel_torch_saved_model *model,
+		const struct vaccel_torch_buffer *run_options,
+		struct vaccel_torch_tensor **in_tensor,
+		int nr_read,
+		/*char **tags, */
+		struct vaccel_torch_tensor **out_tensor,
+		int nr_write)
+{
+	if(!session) {
+		noop_error("Invalid session \n");
+		return VACCEL_EINVAL;
+	}
+
+	if(!model) {
+		noop_error("Invalid model path \n");
+		return VACCEL_EINVAL;
+	}
+
+	fprintf(stdout, "[noop] Calling jitload_forward for session %u\n",
+					session->session_id);
+
+	noop_info("Number of inputs: %d\n", nr_read);
+	for (int i = 0; i < nr_read; ++i) {
+		noop_info("\t#dims: %d -> {", in_tensor[i]->nr_dims);
+		for (int j = 0; j < in_tensor[i]->nr_dims; ++j)
+			printf("%d%s", in_tensor[i]->dims[j],
+				(j == in_tensor[i]->nr_dims - 1) ? "}\n" : " ");
+
+		noop_info("\tData type: %d\n", in_tensor[i]->data_type);
+		noop_info("\tData -> %p, %lu\n", in_tensor[i]->data, in_tensor[i]->size);
+	}
+
+	noop_info("Number of outputs: %d\n", nr_write);
+	for (int i = 0; i < nr_write; ++i) {
+		out_tensor[i] = malloc(sizeof(*out_tensor[i]));
+		out_tensor[i]->nr_dims = in_tensor[i]->nr_dims;
+		out_tensor[i]->dims = malloc(sizeof(*out_tensor[i]->dims) * in_tensor[i]->nr_dims);
+		memcpy(out_tensor[i]->dims,in_tensor[i]->dims, sizeof(*in_tensor[i]->dims) * in_tensor[i]->nr_dims);
+		out_tensor[i]->data_type = in_tensor[i]->data_type;
+		out_tensor[i]->data = malloc(in_tensor[i]->size * sizeof(double));
+		memcpy(out_tensor[i]->data, in_tensor[i]->data, in_tensor[i]->size);
+		out_tensor[i]->size = in_tensor[i]->size;
+	}
+
+
+	return VACCEL_OK;
+}
+
+static int noop_torch_sgemm(struct vaccel_session *session,
+		struct vaccel_torch_tensor **in_A,
+		struct vaccel_torch_tensor **in_B,
+		struct vaccel_torch_tensor **in_C,
+		int M, int N, int K,
+		struct vaccel_torch_tensor **out)
+{
+	if(!session) {
+		noop_error("Invalid session \n");
+		return VACCEL_EINVAL;
+	}
+
+	fprintf(stdout, "[noop] Calling torch_sgemm for session %u\n",
+					session->session_id);
+	fprintf(stdout, "[noop] Dumping arguments for torch_sgemm:\n");
+	fprintf(stdout, "[noop] m: %d n: %d k: %d\n", M, N, K);
 	return VACCEL_OK;
 }
 
@@ -403,6 +474,8 @@ struct vaccel_op ops[] = {
 	VACCEL_OP_INIT(ops[14], VACCEL_F_PARALLEL, v_parallel),
 	VACCEL_OP_INIT(ops[15], VACCEL_F_MMULT, v_mmult),
 	VACCEL_OP_INIT(ops[16], VACCEL_EXEC_WITH_RESOURCE, noop_exec_with_resource),
+	VACCEL_OP_INIT(ops[17], VACCEL_TORCH_JITLOAD_FORWARD, noop_torch_jitload_forward),
+	VACCEL_OP_INIT(ops[18], VACCEL_TORCH_SGEMM, noop_torch_sgemm),
 };
 
 
