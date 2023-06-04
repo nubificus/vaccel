@@ -73,7 +73,7 @@ int vaccel_tf_model_new_from_buffer(struct vaccel_tf_model *model,
 		return VACCEL_ENOMEM;
 
 	int ret = vaccel_file_from_buffer(&model->file, buff, size, NULL,
-			NULL, false);
+			NULL, false, false);
 	if (ret)
 		goto free_resource;
 
@@ -88,7 +88,7 @@ int vaccel_tf_model_new_from_buffer(struct vaccel_tf_model *model,
 
 	vaccel_debug("New rundir for resource %s", res->rundir);
 
-	ret = vaccel_file_persist(&model->file, res->rundir, "model.pb");
+	ret = vaccel_file_persist(&model->file, res->rundir, "model.pb", false);
 	if (ret)
 		goto destroy_resource;
 

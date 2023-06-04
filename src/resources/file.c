@@ -61,7 +61,7 @@ int vaccel_file_new(struct vaccel_file *file, const char *path)
  * path in the filesystem.
  */
 int vaccel_file_persist(struct vaccel_file *file, const char *dir,
-		const char *filename)
+		const char *filename, bool randomize)
 {
 	int ret;
 
@@ -83,7 +83,13 @@ int vaccel_file_persist(struct vaccel_file *file, const char *dir,
 	}
 
 	/* +1 for '\0' */
-	int path_len = snprintf(NULL, 0, "%s/%s.XXXXXX", dir, filename) + 1;
+	int path_len = 1;
+	
+	if (randomize) {
+		path_len += snprintf(NULL, 0, "%s/%s.XXXXXX", dir, filename);
+	} else {
+		path_len += snprintf(NULL, 0, "%s/%s", dir, filename);
+	}
 
 	if (file->path) {
 		vaccel_error("Found path for vAccel file. Not overwriting");
@@ -95,14 +101,25 @@ int vaccel_file_persist(struct vaccel_file *file, const char *dir,
 		return VACCEL_ENOMEM;
 
 	/* No need to check that here, we know the length of the string */
-	snprintf(file->path, path_len, "%s/%s.XXXXXX", dir, filename);
+	if (randomize) {
+		snprintf(file->path, path_len, "%s/%s.XXXXXX", dir, filename);
+	} else {
+		snprintf(file->path, path_len, "%s/%s", dir, filename);
+	}
 	file->path_owned = true;
 
 	/* FIXME: use a random value for the filename as we're hitting 
 	 * a weird cache issue: https://github.com/nubificus/roadmap#106
 	 */
-	int fd = mkstemp(file->path);
-	FILE *fp = fdopen(fd, "w+");
+	FILE *fp;
+	if (randomize) {
+		int fd = mkstemp(file->path);
+		fp = fdopen(fd, "w+");
+	} else {
+		fp = fopen(file->path, "w+");
+	}
+
+	/* Check if we managed to open the file */
 	if (!fp) {
 		ret = errno;
 		goto free_path;
@@ -153,7 +170,8 @@ int vaccel_file_from_buffer(
 	struct vaccel_file *file,
 	const uint8_t *buff, size_t size,
 	const char *filename,
-	bool persist, const char *dir
+	bool persist, const char *dir, 
+	bool randomize
 ) {
 	if (!file || !buff || !size)
 		return VACCEL_EINVAL;
@@ -163,7 +181,7 @@ int vaccel_file_from_buffer(
 	file->size = size;
 
 	if (persist)
-		return vaccel_file_persist(file, dir, filename);
+		return vaccel_file_persist(file, dir, filename, randomize);
 
 	return VACCEL_OK;
 }

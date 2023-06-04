@@ -73,7 +73,7 @@ int vaccel_shared_object_new_from_buffer(struct vaccel_shared_object *object,
 		return VACCEL_ENOMEM;
 
 	int ret = vaccel_file_from_buffer(&object->file, buff, size, NULL,
-			NULL, false);
+			NULL, false, false);
 	if (ret)
 		goto free_resource;
 
@@ -88,7 +88,7 @@ int vaccel_shared_object_new_from_buffer(struct vaccel_shared_object *object,
 
 	vaccel_debug("New rundir for resource %s", res->rundir);
 
-	ret = vaccel_file_persist(&object->file, res->rundir, "lib.so");
+	ret = vaccel_file_persist(&object->file, res->rundir, "lib.so", true);
 	if (ret)
 		goto destroy_resource;
 

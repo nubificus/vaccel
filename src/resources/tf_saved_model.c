@@ -209,7 +209,7 @@ int vaccel_tf_saved_model_set_model(
 	}
 
 	int ret = vaccel_file_from_buffer(&model->model, ptr, len,
-			NULL, false, NULL);
+			NULL, false, NULL, false);
 	return ret;
 }
 
@@ -253,7 +253,7 @@ int vaccel_tf_saved_model_set_checkpoint(
 	}
 
 	int ret = vaccel_file_from_buffer(&model->checkpoint, ptr, len,
-			NULL, false, NULL);
+			NULL, false, NULL, false);
 	return ret;
 }
 
@@ -297,7 +297,7 @@ int vaccel_tf_saved_model_set_var_index(
 	}
 
 	int ret = vaccel_file_from_buffer(&model->var_index, ptr, len,
-			NULL, false, NULL);
+			NULL, false, NULL, false);
 	return ret;
 }
 
@@ -373,17 +373,17 @@ int vaccel_tf_saved_model_register(struct vaccel_tf_saved_model *model)
 	}
 
 	ret = vaccel_file_persist(&model->model, res->rundir,
-			"saved_model.pb");
+			"saved_model.pb", false);
 	if (ret)
 		goto destroy_resource;
 
 	ret = vaccel_file_persist(&model->checkpoint, var_dir,
-			"variables.data-00000-of-00001");
+			"variables.data-00000-of-00001", false);
 	if (ret)
 		goto destroy_resource;
 
 	ret = vaccel_file_persist(&model->var_index, var_dir,
-			"variables.index");
+			"variables.index", false);
 	if (ret)
 		goto destroy_resource;
 
