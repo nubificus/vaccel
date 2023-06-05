@@ -208,8 +208,9 @@ int vaccel_file_destroy(struct vaccel_file *file)
 	if (file->data) {
 		int ret = munmap(file->data, file->size);
 		if (ret) {
-			vaccel_error("Failed to unmap file %s", file->path);
-			return ret;
+			// FIXME: check why munmap fails at times.
+			vaccel_debug("Failed to unmap file %s", file->path);
+			//return ret;
 		}
 	}
 
