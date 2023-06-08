@@ -97,6 +97,7 @@ struct vaccel_plugin_info {
 	/* In some cases, like in the context of VirtIO we need to offload
 	 * session handling to the plugin itself */
 	int (*sess_init)(struct vaccel_session *sess, uint32_t flags);
+	int (*sess_update)(struct vaccel_session *sess, uint32_t flags);
 	int (*sess_free)(struct vaccel_session *sess);
 	int (*sess_register)(uint32_t sess_id, vaccel_id_t resource_id);
 	int (*sess_unregister)(uint32_t sess_id, vaccel_id_t resource_id);
