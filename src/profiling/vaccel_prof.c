@@ -25,8 +25,9 @@
 #include <time.h>
 
 #define MIN_SAMPLES 1024
+#define MAX_NAME 256
 
-uint64_t get_tstamp_nsec(void)
+static uint64_t get_tstamp_nsec(void)
 {
 	struct timespec tp;
 
@@ -35,41 +36,28 @@ uint64_t get_tstamp_nsec(void)
 	return tp.tv_sec * 1e9 + tp.tv_nsec;
 }
 
-static bool prof_enabled(void)
+bool vaccel_prof_enabled(void)
 {
 	char *env = getenv("VACCEL_PROF_ENABLED");
 
 	return env && !strncmp(env, "enabled", 7);
 }
 
-struct prof_sample {
-	/* Timestamp (nsec) of entering the region */
-	uint64_t tstamp_start;
-
-	/* Timestamp (nsec) of exiting the region */
-	uint64_t tstamp_end;
-};
-
-void prof_sample_start(struct prof_sample *sample)
+static void prof_sample_start(struct vaccel_prof_sample *sample)
 {
-	sample->tstamp_start = get_tstamp_nsec();
+	sample->start = get_tstamp_nsec();
 }
 
-void prof_sample_stop(struct prof_sample *sample)
+static void prof_sample_stop(struct vaccel_prof_sample *sample)
 {
-	sample->tstamp_end = get_tstamp_nsec();
-}
-
-uint64_t prof_sample_duration(struct prof_sample *sample)
-{
-	return sample->tstamp_end - sample->tstamp_start;
+	sample->time = get_tstamp_nsec() - sample->start;
 }
 
 static int grow_samples_array(struct vaccel_prof_region *region)
 {
 	size_t alloc_size = (region->size) ? region->size * 2 : MIN_SAMPLES;
 
-	struct prof_sample *new_ptr =
+	struct vaccel_prof_sample *new_ptr =
 		realloc(region->samples, alloc_size * sizeof(*new_ptr));
 	if (!new_ptr)
 		return VACCEL_ENOMEM;
@@ -82,8 +70,8 @@ static int grow_samples_array(struct vaccel_prof_region *region)
 
 /* This will return that last used sample entry or NULL if no entries
  * have been used */
-static struct prof_sample *get_last_sample(
-	const struct vaccel_prof_region *region
+static struct vaccel_prof_sample *get_last_sample(
+		const struct vaccel_prof_region *region
 ) {
 	size_t size = region->nr_entries;
 
@@ -97,8 +85,9 @@ static struct prof_sample *get_last_sample(
  *
  * This will return the first unused sample entry. If needed it will
  * grow the capacity of the array */
-static struct prof_sample *get_next_sample(struct vaccel_prof_region *region)
-{
+static struct vaccel_prof_sample *get_next_sample(
+		struct vaccel_prof_region *region
+) {
 	size_t pos = region->nr_entries;
 
 	/* The array is full. Try to grow it */
@@ -112,7 +101,7 @@ static struct prof_sample *get_next_sample(struct vaccel_prof_region *region)
 
 int vaccel_prof_region_start(struct vaccel_prof_region *region)
 {
-	if (!prof_enabled())
+	if (!vaccel_prof_enabled())
 		return VACCEL_OK;
 
 	if (!region) {
@@ -122,7 +111,7 @@ int vaccel_prof_region_start(struct vaccel_prof_region *region)
 
 	vaccel_debug("Start profiling region %s", region->name);
 
-	struct prof_sample *sample = get_next_sample(region);
+	struct vaccel_prof_sample *sample = get_next_sample(region);
 	if (!sample)
 		return VACCEL_ENOMEM;
 
@@ -133,7 +122,7 @@ int vaccel_prof_region_start(struct vaccel_prof_region *region)
 
 int vaccel_prof_region_stop(const struct vaccel_prof_region *region)
 {
-	if (!prof_enabled())
+	if (!vaccel_prof_enabled())
 		return VACCEL_OK;
 
 	if (!region) {
@@ -143,7 +132,7 @@ int vaccel_prof_region_stop(const struct vaccel_prof_region *region)
 
 	vaccel_debug("Stop profiling region %s", region->name);
 
-	struct prof_sample *sample = get_last_sample(region);
+	struct vaccel_prof_sample *sample = get_last_sample(region);
 	if (!sample)
 		return VACCEL_ENOENT;
 
@@ -153,10 +142,10 @@ int vaccel_prof_region_stop(const struct vaccel_prof_region *region)
 }
 
 int vaccel_prof_region_init(
-	struct vaccel_prof_region *region,
-	const char *name
+		struct vaccel_prof_region *region,
+		const char *name
 ) {
-	if (!prof_enabled())
+	if (!vaccel_prof_enabled())
 		return VACCEL_OK;
 
 	if (!region) {
@@ -164,14 +153,19 @@ int vaccel_prof_region_init(
 		return VACCEL_EINVAL;
 	}
 
-	if (!name) {
+	if (name == NULL) {
+		region->name = malloc(MAX_NAME);
+		if (!region->name)
+			return VACCEL_ENOMEM;
+		memset((void *)region->name, 0, MAX_NAME);
+	} else if (name) {
+		region->name = strdup(name);
+		if (!region->name)
+			return VACCEL_ENOMEM;
+	} else {
 		vaccel_error("[prof] init region: Invalid region name");
 		return VACCEL_EINVAL;
 	}
-
-	region->name = strdup(name);
-	if (!region->name)
-		return VACCEL_ENOMEM;
 
 	region->name_owned = true;
 
@@ -188,7 +182,7 @@ free_name:
 
 int vaccel_prof_region_destroy(struct vaccel_prof_region *region)
 {
-	if (!prof_enabled())
+	if (!vaccel_prof_enabled())
 		return VACCEL_OK;
 
 	if (!region) {
@@ -213,7 +207,7 @@ int vaccel_prof_region_destroy(struct vaccel_prof_region *region)
 
 int vaccel_prof_region_print(const struct vaccel_prof_region *region)
 {
-	if (!prof_enabled())
+	if (!vaccel_prof_enabled())
 		return VACCEL_OK;
 
 	if (!region) {
@@ -226,10 +220,189 @@ int vaccel_prof_region_print(const struct vaccel_prof_region *region)
 
 	uint64_t total_time = 0;
 	for (size_t i = 0; i < region->nr_entries; ++i)
-		total_time += prof_sample_duration(&region->samples[i]);
+		total_time += region->samples[i].time;
 
 	vaccel_info("[prof] %s: total_time: %lu nsec nr_entries: %lu",
 			region->name, total_time, region->nr_entries);
 
 	return VACCEL_OK;
+}
+
+static struct vaccel_prof_region *prof_regions_get_by_name(
+		struct vaccel_prof_region *regions,
+		int nregions,
+		const char *name
+) {
+	struct vaccel_prof_region *r = NULL;
+	for (int i = 0; i < nregions; i++) {
+		if (strcmp(regions[i].name, name) == 0)
+			r = &regions[i];
+	}
+	return r;
+}
+
+int vaccel_prof_regions_start_by_name(
+		struct vaccel_prof_region *regions,
+		int nregions,
+		const char *name
+) {
+	if (!vaccel_prof_enabled())
+		return VACCEL_OK;
+
+	if (!regions) {
+		vaccel_error("[prof] start region: Invalid profiling region array");
+		return VACCEL_EINVAL;
+	}
+
+	struct vaccel_prof_region *r = prof_regions_get_by_name(regions, nregions,
+			name);
+	if (!r) {
+		vaccel_error("[prof] stop region: Invalid profiling region");
+		return VACCEL_EINVAL;
+	}
+
+	vaccel_debug("Start profiling region %s", r->name);
+
+	struct vaccel_prof_sample *sample = get_next_sample(r);
+	if (!sample)
+		return VACCEL_ENOMEM;
+
+	prof_sample_start(sample);
+
+	return VACCEL_OK;
+}
+
+int vaccel_prof_regions_stop_by_name(
+		struct vaccel_prof_region *regions,
+		int nregions,
+		const char *name
+) {
+	if (!vaccel_prof_enabled())
+		return VACCEL_OK;
+
+	if (!regions) {
+		vaccel_error("[prof] stop region: Invalid profiling region array");
+		return VACCEL_EINVAL;
+	}
+
+	struct vaccel_prof_region *r = prof_regions_get_by_name(regions, nregions,
+			name);
+	if (!r) {
+		vaccel_error("[prof] stop region: Invalid profiling region");
+		return VACCEL_EINVAL;
+	}
+
+	vaccel_debug("Stop profiling region %s", r->name);
+
+	struct vaccel_prof_sample *sample = get_last_sample(r);
+	if (!sample)
+		return VACCEL_ENOENT;
+
+	prof_sample_stop(sample);
+
+	return VACCEL_OK;
+}
+
+void vaccel_prof_regions_clear(
+		struct vaccel_prof_region *regions,
+		int nregions
+) {
+	for (int i = 0; i < nregions; i++) {
+		free(regions[i].samples);
+		regions[i].samples = NULL;
+		regions[i].size = 0;
+	}
+}
+
+int vaccel_prof_regions_init(
+		struct vaccel_prof_region *regions,
+		int nregions
+) {
+	for (int i = 0; i < nregions; i++) {
+		regions[i].size = 0;
+		regions[i].samples = NULL;
+		int ret = vaccel_prof_region_init(&regions[i], NULL);
+		if (ret != VACCEL_OK) {
+			vaccel_prof_regions_clear(regions, i);
+			return ret;
+		}
+	}
+
+	return VACCEL_OK;
+}
+
+int vaccel_prof_regions_print_all(
+		struct vaccel_prof_region *regions,
+		int nregions
+) {
+	if (!vaccel_prof_enabled())
+		return VACCEL_OK;
+
+	if (!regions) {
+		vaccel_error("[prof] print region: Invalid profiling region array");
+		return VACCEL_EINVAL;
+	}
+
+	for (int i = 0; i < nregions; i++) {
+		if (!regions[i].nr_entries)
+			continue;
+
+		uint64_t total_time = 0;
+		for (size_t j = 0; j < regions[i].nr_entries; ++j)
+			total_time += regions[i].samples[j].time;
+
+		vaccel_info("[prof] %s: total_time: %lu nsec nr_entries: %lu",
+				regions[i].name, total_time, regions[i].nr_entries);
+	}
+
+	return VACCEL_OK;
+}
+
+int vaccel_prof_regions_print_all_to_buf(
+		char **tbuf,
+		size_t tbuf_len,
+		struct vaccel_prof_region *regions,
+		int size
+) {
+	int ssize = 0, tsize = 0;
+
+	if (!vaccel_prof_enabled())
+		return 0;
+
+	if (!regions) {
+		vaccel_error("[prof] print region: Invalid profiling region array");
+		return -VACCEL_EINVAL;
+	}
+
+	uint64_t total_time[size];
+	memset(total_time, 0, size * sizeof(uint64_t));
+	for (int i = 0; i < size; i++) {
+		if (!regions[i].nr_entries)
+			continue;
+
+		for (size_t j = 0; j < regions[i].nr_entries; ++j)
+			total_time[i] += regions[i].samples[j].time;
+
+		ssize += snprintf(NULL, 0,
+				"[prof] %s: total_time: %ju nsec nr_entries: %zu",
+				regions[i].name, total_time[i], regions[i].nr_entries) + 1;
+	}
+
+	if (tbuf == NULL)
+		return ssize;
+
+	*tbuf = malloc(tbuf_len);
+	if (!*tbuf)
+		return -VACCEL_ENOMEM;
+
+	for (int i = 0; i < size; i++) {
+		if (!regions[i].nr_entries)
+			continue;
+
+		tsize += snprintf(*tbuf+tsize, tbuf_len-tsize,
+				"[prof] %s: total_time: %ju nsec nr_entries: %zu",
+				regions[i].name, total_time[i], regions[i].nr_entries) + 1;
+	}
+
+	return size;
 }

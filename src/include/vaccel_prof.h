@@ -15,6 +15,7 @@
 #pragma once
 
 #include <stdbool.h>
+#include <stdint.h>
 #include <stddef.h>
 
 #include "error.h"
@@ -23,7 +24,13 @@
 extern "C" {
 #endif
 
-struct prof_sample;
+struct vaccel_prof_sample {
+	/* Timestamp (nsec) of entering the region */
+	uint64_t start;
+
+	/* Time (nsec) elapsed inside the region */
+	uint64_t time;
+};
 
 struct vaccel_prof_region {
 	/* Name of the region */
@@ -36,13 +43,15 @@ struct vaccel_prof_region {
 	size_t nr_entries;
 
 	/* Array of collected samples */
-	struct prof_sample *samples;
+	struct vaccel_prof_sample *samples;
 
 	/* Allocated size for the array */
 	size_t size;
 };
 
 #define VACCEL_PROF_REGION_INIT(name) { (name), false, 0, NULL, 0 }
+
+bool vaccel_prof_enabled(void);
 
 /* Start profiling a region */
 int vaccel_prof_region_start(struct vaccel_prof_region *region);
@@ -55,12 +64,46 @@ int vaccel_prof_region_print(const struct vaccel_prof_region *region);
 
 /* Initialize a profiling region */
 int vaccel_prof_region_init(
-	struct vaccel_prof_region *region,
-	const char *name
+		struct vaccel_prof_region *region,
+		const char *name
 );
 
 /* Destroy a profiling region */
 int vaccel_prof_region_destroy(struct vaccel_prof_region *region);
+
+int vaccel_prof_regions_start_by_name(
+		struct vaccel_prof_region *regions,
+		int nregions,
+		const char *name
+);
+
+int vaccel_prof_regions_stop_by_name(
+		struct vaccel_prof_region *regions,
+		int nregions,
+		const char *name
+);
+
+void vaccel_prof_regions_clear(
+		struct vaccel_prof_region *regions,
+		int nregions
+);
+
+int vaccel_prof_regions_init(
+		struct vaccel_prof_region *regions,
+		int nregions
+);
+
+int vaccel_prof_regions_print_all(
+		struct vaccel_prof_region *regions,
+		int nregions
+);
+
+int vaccel_prof_regions_print_all_to_buf(
+		char **tbuf,
+		size_t tbuf_len,
+		struct vaccel_prof_region *regions,
+		int nregions
+);
 
 #ifdef __cplusplus
 }
