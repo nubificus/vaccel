@@ -94,7 +94,7 @@ static int noop_img_class(struct vaccel_session *sess, const void *img,
 		sess->session_id);
 
 	fprintf(stdout, "[noop] Dumping arguments for Image classification:\n");
-	fprintf(stdout, "[noop] len_img: %lu\n", len_img);
+	fprintf(stdout, "[noop] len_img: %zu\n", len_img);
 	fprintf(stdout, "[noop] will return a dummy result\n");
 	sprintf(out_text, "This is a dummy classification tag!");
 	len_out_text = strlen("This is a dummy classification tag!");
@@ -110,7 +110,7 @@ static int noop_img_detect(struct vaccel_session *sess, const void *img,
 		sess->session_id);
 
 	fprintf(stdout, "[noop] Dumping arguments for Image detection:\n");
-	fprintf(stdout, "[noop] len_img: %lu\n", len_img);
+	fprintf(stdout, "[noop] len_img: %zu\n", len_img);
 
 	return VACCEL_OK;
 }
@@ -123,7 +123,7 @@ static int noop_img_segme(struct vaccel_session *sess, const void *img,
 		sess->session_id);
 
 	fprintf(stdout, "[noop] Dumping arguments for Image segmentation:\n");
-	fprintf(stdout, "[noop] len_img: %lu\n", len_img);
+	fprintf(stdout, "[noop] len_img: %zu\n", len_img);
 
 	return VACCEL_OK;
 }
@@ -136,7 +136,7 @@ static int noop_img_pose(struct vaccel_session *sess, const void *img,
 		sess->session_id);
 
 	fprintf(stdout, "[noop] Dumping arguments for Image pose:\n");
-	fprintf(stdout, "[noop] len_img: %lu\n", len_img);
+	fprintf(stdout, "[noop] len_img: %zu\n", len_img);
 
 	return VACCEL_OK;
 }
@@ -149,7 +149,7 @@ static int noop_img_depth(struct vaccel_session *sess, const void *img,
 		sess->session_id);
 
 	fprintf(stdout, "[noop] Dumping arguments for Image depth:\n");
-	fprintf(stdout, "[noop] len_img: %lu\n", len_img);
+	fprintf(stdout, "[noop] len_img: %zu\n", len_img);
 
 	return VACCEL_OK;
 }
@@ -163,7 +163,7 @@ static int noop_exec(struct vaccel_session *sess, const char *library,
 
 	fprintf(stdout, "[noop] Dumping arguments for exec:\n");
 	fprintf(stdout, "[noop] library: %s symbol: %s\n", library, fn_symbol);
-	fprintf(stdout, "[noop] nr_read: %lu nr_write: %lu\n", nr_read, nr_write);
+	fprintf(stdout, "[noop] nr_read: %zu nr_write: %zu\n", nr_read, nr_write);
 
 	return VACCEL_OK;
 }
@@ -194,7 +194,7 @@ static int noop_exec_with_resource(struct vaccel_session *sess, struct vaccel_sh
 	fprintf(stdout, "[noop] object file path: %s\n", object->file.path);
 	fprintf(stdout, "[noop] Dumping arguments for exec_with_resource:\n");
 	fprintf(stdout, "[noop] library: %s symbol: %s\n", library, fn_symbol);
-	fprintf(stdout, "[noop] nr_read: %lu nr_write: %lu\n", nr_read, nr_write);
+	fprintf(stdout, "[noop] nr_read: %zu nr_write: %zu\n", nr_read, nr_write);
 	
 	if (nr_write > 0) {
 		sprintf(write[0].buf, "I got this input: %d\n", *(int*)read[0].buf);
@@ -250,7 +250,7 @@ static int noop_tf_session_run(
 	}
 
 	if (run_options)
-		noop_info("Run options -> %p, %lu\n", run_options->data,
+		noop_info("Run options -> %p, %zu\n", run_options->data,
 			run_options->size);
 
 	noop_info("Number of inputs: %d\n", nr_inputs);
@@ -263,7 +263,7 @@ static int noop_tf_session_run(
 				(j == in[i]->nr_dims - 1) ? "}\n" : " ");
 
 		noop_info("\tData type: %d\n", in[i]->data_type);
-		noop_info("\tData -> %p, %lu\n", in[i]->data, in[i]->size);
+		noop_info("\tData -> %p, %zu\n", in[i]->data, in[i]->size);
 	}
 
 	noop_info("Number of outputs: %d\n", nr_outputs);
@@ -320,7 +320,7 @@ static int v_arraycopy(struct vaccel_session *session, int *a, int *b, size_t c)
 		session->session_id);
 
 	fprintf(stdout, "[noop] Dumping arguments for v_arracycopy:\n");
-	fprintf(stdout, "[noop] size: %lu \n", c);
+	fprintf(stdout, "[noop] size: %zu \n", c);
 
 	/* Fill output with dummy values */
 	for (i = 0; i < c ; i++) {
@@ -339,7 +339,7 @@ static int v_vectoradd(struct vaccel_session *session, float *a, float *b,
 		session->session_id);
 
 	fprintf(stdout, "[noop] Dumping arguments for v_vectoradd:\n");
-	fprintf(stdout, "[noop] len_a: %lu len_b: %lu \n", len_a, len_b);
+	fprintf(stdout, "[noop] len_a: %zu len_b: %zu \n", len_a, len_b);
 
 	/* Fill output with dummy values */
 	for (i = 0; i < len_a ; i++) {
@@ -358,7 +358,7 @@ static int v_parallel(struct vaccel_session *session, float *a, float *b,
 		session->session_id);
 
 	fprintf(stdout, "[noop] Dumping arguments for v_parallel:\n");
-	fprintf(stdout, "[noop] len_a: %lu\n", len_a);
+	fprintf(stdout, "[noop] len_a: %zu\n", len_a);
 
 	/* Fill output with dummy values */
 	for (i = 0; i < len_a ; i++) {
@@ -377,7 +377,7 @@ static int v_mmult(struct vaccel_session *session, float *a, float *b, float *c,
 		session->session_id);
 
 	fprintf(stdout, "[noop] Dumping arguments for v_mmult:\n");
-	fprintf(stdout, "[noop] len_a: %lu\n", len_a);
+	fprintf(stdout, "[noop] len_a: %zu\n", len_a);
 
 	/* Fill output with dummy values */
 	for (i = 0; i < len_a ; i++) {
@@ -418,7 +418,7 @@ static int noop_torch_jitload_forward(struct vaccel_session *session,
 				(j == in_tensor[i]->nr_dims - 1) ? "}\n" : " ");
 
 		noop_info("\tData type: %d\n", in_tensor[i]->data_type);
-		noop_info("\tData -> %p, %lu\n", in_tensor[i]->data, in_tensor[i]->size);
+		noop_info("\tData -> %p, %zu\n", in_tensor[i]->data, in_tensor[i]->size);
 	}
 
 	noop_info("Number of outputs: %d\n", nr_write);

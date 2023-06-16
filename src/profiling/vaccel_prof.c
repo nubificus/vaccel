@@ -384,7 +384,7 @@ int vaccel_prof_regions_print_all_to_buf(
 			total_time[i] += regions[i].samples[j].time;
 
 		ssize += snprintf(NULL, 0,
-				"[prof] %s: total_time: %lu nsec nr_entries: %lu",
+				"[prof] %s: total_time: %ju nsec nr_entries: %zu",
 				regions[i].name, total_time[i], regions[i].nr_entries) + 1;
 	}
 
@@ -400,7 +400,7 @@ int vaccel_prof_regions_print_all_to_buf(
 			continue;
 
 		tsize += snprintf(*tbuf+tsize, tbuf_len-tsize,
-				"[prof] %s: total_time: %lu nsec nr_entries: %lu",
+				"[prof] %s: total_time: %ju nsec nr_entries: %zu",
 				regions[i].name, total_time[i], regions[i].nr_entries) + 1;
 	}
 
