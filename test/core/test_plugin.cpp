@@ -15,11 +15,11 @@
 
 #include <catch.hpp>
 #include <cerrno>
+#include <cstring>
 #include <utils.hpp>
 
+#include <cstdlib>
 #include <dlfcn.h>
-
-#include <cstring>
 #include <vaccel.h>
 
 static const char *pname = "mock_plugin_test";
@@ -55,6 +55,7 @@ TEST_CASE("get_all_available_functions", "[core_plugin]")
 
 	plugin.info->name = pname;
 	plugin.info->version = pversion;
+	plugin.info->vaccel_version = VACCEL_VERSION;
 	plugin.info->init = init;
 	plugin.info->fini = fini;
 	plugin.info->is_virtio = false;
@@ -100,6 +101,7 @@ TEST_CASE("register_multiple_functions", "[core_plugin]")
 
 	plugin.info->name = pname;
 	plugin.info->version = pversion;
+	plugin.info->vaccel_version = VACCEL_VERSION;
 	plugin.info->init = init;
 	plugin.info->fini = fini;
 	plugin.info->is_virtio = false;
@@ -174,6 +176,7 @@ TEST_CASE("register_plugin_ops", "[core_plugin]")
 
 	plugin.info->name = pname;
 	plugin.info->version = pversion;
+	plugin.info->vaccel_version = VACCEL_VERSION;
 	plugin.info->init = init;
 	plugin.info->fini = fini;
 	plugin.info->is_virtio = false;
@@ -233,7 +236,128 @@ TEST_CASE("register_plugin_ops", "[core_plugin]")
 		ret = register_plugin(&plugin);
 		REQUIRE(ret == VACCEL_EINVAL);
 
+		pinfo.vaccel_version = nullptr;
+		ret = register_plugin(&plugin);
+		REQUIRE(ret == VACCEL_EINVAL);
+
 		ret = plugins_shutdown();
 		REQUIRE(ret == VACCEL_OK);
 	}
+}
+
+TEST_CASE("register_plugin_vaccel_versions", "[core_plugin]")
+{
+	int ret;
+	int major;
+	int minor1;
+	int minor2;
+	size_t vaccel_version_size;
+	char *extra;
+	char *vaccel_version;
+
+	vaccel_plugin plugin;
+	vaccel_plugin_info pinfo;
+	plugin.dl_handle = nullptr;
+	plugin.info = &pinfo;
+	list_init_entry(&plugin.entry);
+	list_init_entry(&plugin.ops);
+
+	plugin.info->name = pname;
+	plugin.info->version = pversion;
+	plugin.info->vaccel_version = VACCEL_VERSION;
+	plugin.info->init = init;
+	plugin.info->fini = fini;
+	plugin.info->is_virtio = false;
+	plugin.info->sess_init = nullptr;
+	plugin.info->sess_free = nullptr;
+	plugin.info->type = VACCEL_PLUGIN_GENERIC;
+
+	vaccel_op operation;
+	operation.type = VACCEL_NO_OP;
+	operation.func = (void *)no_op;
+	operation.owner = &plugin;
+	list_init_entry(&operation.plugin_entry);
+	list_init_entry(&operation.func_entry);
+
+	ret = parse_plugin_version(&major, &minor1, &minor2, &extra,
+				   VACCEL_VERSION);
+	REQUIRE(ret == VACCEL_OK);
+	vaccel_version_size = strlen(VACCEL_VERSION) + 10;
+	vaccel_version = (char *)calloc(1, vaccel_version_size);
+	REQUIRE(vaccel_version);
+
+	ret = plugins_bootstrap();
+	REQUIRE(ret == VACCEL_OK);
+
+	SECTION("same_version")
+	{
+		ret = register_plugin(&plugin);
+		REQUIRE(ret == VACCEL_OK);
+	}
+
+	plugin.info->vaccel_version = vaccel_version;
+	SECTION("same_old_format_version")
+	{
+		snprintf(vaccel_version, vaccel_version_size, "v%d.%d.%d%s",
+			 major, minor1, minor2, extra);
+		ret = register_plugin(&plugin);
+		REQUIRE(ret == VACCEL_OK);
+	}
+
+	SECTION("different_major_version")
+	{
+		snprintf(vaccel_version, vaccel_version_size, "%d.%d.%d%s",
+			 major + 1, minor1, minor2, extra);
+		ret = register_plugin(&plugin);
+		REQUIRE(ret == VACCEL_EINVAL);
+	}
+
+	SECTION("different_minor1_version")
+	{
+		snprintf(vaccel_version, vaccel_version_size, "%d.%d.%d%s",
+			 major, minor1 + 1, minor2, extra);
+		ret = register_plugin(&plugin);
+		REQUIRE(ret == VACCEL_OK);
+	}
+
+	SECTION("different_minor2_version")
+	{
+		snprintf(vaccel_version, vaccel_version_size, "%d.%d.%d%s",
+			 major, minor1, minor2 + 1, extra);
+		ret = register_plugin(&plugin);
+		REQUIRE(ret == VACCEL_OK);
+	}
+
+	SECTION("different_extra_version")
+	{
+		snprintf(vaccel_version, vaccel_version_size, "%d.%d.%d%s",
+			 major, minor1, minor2 + 1, "-extra");
+		ret = register_plugin(&plugin);
+		REQUIRE(ret == VACCEL_OK);
+	}
+
+	SECTION("wrong_format_version")
+	{
+		snprintf(vaccel_version, vaccel_version_size, "%d-%d.%d%s",
+			 major, minor1, minor2, extra);
+		ret = register_plugin(&plugin);
+		REQUIRE(ret == VACCEL_EINVAL);
+	}
+
+	SECTION("wrong_format_version_ignore")
+	{
+		snprintf(vaccel_version, vaccel_version_size, "%d-%d.%d%s",
+			 major, minor1, minor2, extra);
+		ret = setenv("VACCEL_IGNORE_VERSION", "1", 1);
+		REQUIRE(ret == 0);
+
+		ret = register_plugin(&plugin);
+		REQUIRE(ret == VACCEL_OK);
+	}
+
+	ret = plugins_shutdown();
+	REQUIRE(ret == VACCEL_OK);
+
+	free(vaccel_version);
+	free(extra);
 }

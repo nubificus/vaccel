@@ -84,4 +84,8 @@ static int fini(void)
 	return VACCEL_OK;
 }
 
-VACCEL_MODULE(.name = "mbench", .version = "0.1", .init = init, .fini = fini)
+VACCEL_MODULE(.name = "mbench", .version = VACCEL_VERSION,
+	      .vaccel_version = VACCEL_VERSION,
+	      .type = VACCEL_PLUGIN_SOFTWARE | VACCEL_PLUGIN_GENERIC |
+		      VACCEL_PLUGIN_CPU,
+	      .init = init, .fini = fini)

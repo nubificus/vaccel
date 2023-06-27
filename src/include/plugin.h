@@ -64,8 +64,11 @@ struct vaccel_plugin_info {
 	/* Name of the plugin */
 	const char *name;
 
-	/* human-readable version number */
+	/* Human-readable version number */
 	const char *version;
+
+	/* Human-readable vAccelRT version that the plugin has been built with */
+	const char *vaccel_version;
 
 	/* Plugin initialization function */
 	int (*init)(void);

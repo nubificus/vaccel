@@ -36,7 +36,7 @@ add_custom_command(OUTPUT ${CMAKE_SRC_DIR}/src/include/vaccel.h
 		-P ${CMAKE_SOURCE_DIR}/cmake/GenerateGitVersionHeader.cmake
 	DEPENDS
 		${CMAKE_SOURCE_DIR}/src/include/vaccel.h.in
-	COMMENT "Configuring vaccelrt_version"
+	COMMENT "Configuring vaccel_version"
 	VERBATIM)
 
 add_custom_command(OUTPUT ${CMAKE_SRC_DIR}/src/vaccel.h
@@ -47,7 +47,7 @@ add_custom_command(OUTPUT ${CMAKE_SRC_DIR}/src/vaccel.h
 		-P ${CMAKE_SOURCE_DIR}/cmake/GenerateGitVersionHeader.cmake
 	DEPENDS
 		${CMAKE_SOURCE_DIR}/src/vaccel.h.in
-	COMMENT "Configuring vaccelrt_version"
+	COMMENT "Configuring vaccel_version"
 	VERBATIM)
 
 add_custom_target(version ALL
