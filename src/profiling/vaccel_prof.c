@@ -18,6 +18,7 @@
 #include "error.h"
 
 #include <malloc.h>
+#include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <stddef.h>

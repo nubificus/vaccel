@@ -30,20 +30,30 @@ set(BIN_EXAMPLES
 
 foreach(T ${BIN_EXAMPLES})
 	add_executable(${T} "${T}.c")
+	IF(MUSL_BUILD)
+	set_property(TARGET ${T} PROPERTY LINK_FLAGS "-Os")
+	ENDIF()
 	target_include_directories(${T} PRIVATE ${INCLUDE_DIRS})
+	IF(MUSL_BUILD)
+	set(CMAKE_FIND_LIBRARY_SUFFIXES .so)
+	ENDIF()
 	target_link_libraries(${T} PRIVATE vaccel dl)
 endforeach()
 
+IF(NOT MUSL_BUILD)
 add_executable(torch_inference "torch_inference.cpp")
 target_compile_options(torch_inference PUBLIC -fpermissive)
 target_include_directories(torch_inference PRIVATE ${INCLUDE_DIRS})
 target_link_libraries(torch_inference PRIVATE vaccel dl)
+ENDIF()
 
 add_library(mytestlib SHARED mytestlib.c)
 target_compile_options(mytestlib PUBLIC -Wall -Wextra )
 set_target_properties(mytestlib PROPERTIES ENABLE_EXPORTS on)
 
+IF(NOT MUSL_BUILD)
 install(TARGETS ${BIN_EXAMPLES} torch_inference DESTINATION ${CMAKE_INSTALL_BINDIR})
+ENDIF()
 install(TARGETS mytestlib DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 # Install misc files

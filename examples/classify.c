@@ -19,55 +19,8 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+#include "common.h"
 #include <vaccel.h>
-
-int read_file(const char *filename, char **img, size_t *img_size)
-{
-	int fd;
-
-	fd = open(filename, O_RDONLY);
-	if (fd < 0) {
-		perror("open: ");
-		return 1;
-	}
-
-	struct stat info;
-	fstat(fd, &info);
-	fprintf(stdout, "Image size: %luB\n", info.st_size);
-
-	char *buf = malloc(info.st_size);
-	if (!buf) {
-		fprintf(stderr, "Could not allocate memory for image\n");
-		goto close_file;
-	}
-
-	long bytes = 0;
-	do {
-		int ret = read(fd, buf, info.st_size);
-		if (ret < 0) {
-			perror("Error while reading image: ");
-			goto free_buff;
-		}
-		bytes += ret;
-	} while (bytes < info.st_size);
-
-	if (bytes < info.st_size) {
-		fprintf(stderr, "Could not read image\n");
-		goto free_buff;
-	}
-
-	*img = buf;
-	*img_size = info.st_size;
-	close(fd);
-
-	return 0;
-
-free_buff:
-	free(buf);
-close_file:
-	close(fd);
-	return 1;
-}
 
 int main(int argc, char *argv[])
 {
