@@ -17,13 +17,12 @@ subdir('unit')
 subdir('op')
 
 libtests_main = library('tests-main',
-  ['main.cpp', 'utils.cpp'],
+  ['main.cpp', 'utils.cpp', vaccel_utils_c],
   cpp_args : vaccel_cargs,
+  include_directories : [tests_includes, vaccel_src_includes],
+  dependencies : libvaccel_private,
   install : false)
 
-tests_deps = [
-  libvaccel_private,
-]
 
 tests_args = [
   '--order rand',

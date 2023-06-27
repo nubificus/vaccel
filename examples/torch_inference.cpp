@@ -7,62 +7,13 @@
 #include <unistd.h>
 
 #include <vaccel.h>
+extern "C" {
+#include "../src/utils.h"
+}
 #include <iostream>
 #include <vector>
 #include <random>
 #include <cstring>
-
-int
-read_file (const char *filename, struct vaccel_torch_buffer *run_options)
-{
-  int fd;
-  long bytes = 0;
-  fd = open (filename, O_RDONLY);
-  if (fd < 0)
-    {
-      perror ("open: ");
-      return 1;
-    }
-
-  struct stat info;
-  fstat (fd, &info);
-  fprintf (stdout, "Image size: %luB\n", info.st_size);
-  char *buf = (char *) malloc (info.st_size);
-  if (!buf)
-    {
-      fprintf (stderr, "Could not allocate memory for image\n");
-      goto close_file;
-    }
-  do
-    {
-      int ret = read (fd, buf, info.st_size);
-      if (ret < 0)
-	{
-	  perror ("Error while reading image: ");
-	  goto free_buff;
-	}
-      bytes += ret;
-    }
-  while (bytes < info.st_size);
-
-  if (bytes < info.st_size)
-    {
-      fprintf (stderr, "Could not read image\n");
-      goto free_buff;
-    }
-
-  run_options->data = buf;
-  run_options->size = info.st_size;
-  close (fd);
-
-  return 0;
-free_buff:
-  free (buf);
-close_file:
-  close (fd);
-  return 1;
-}
-
 
 std::vector < float >
 random_input_generator (int min_value = 1,
@@ -134,7 +85,7 @@ main (int argc, char **argv)
   printf ("Created new model %lld\n", vaccel_torch_saved_model_id (&model));
 
   /* Read the image file */
-  ret = read_file (argv[1], &run_options);
+  ret = read_file (argv[1], (void **)&run_options.data, &run_options.size);
   if (ret)
     {
       fprintf (stderr, "Could not load the image file: %d", ret);

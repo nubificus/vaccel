@@ -31,13 +31,13 @@ set(BIN_EXAMPLES
 	exec_helpers_nonser)
 
 foreach(T ${BIN_EXAMPLES})
-	add_executable(${T} "${T}.c")
+	add_executable(${T} "${T}.c" ../src/utils.c)
 	target_include_directories(${T} PRIVATE ${INCLUDE_DIRS})
 	target_link_libraries(${T} PRIVATE vaccel dl)
 endforeach()
 
-add_executable(torch_inference "torch_inference.cpp")
-target_compile_options(torch_inference PUBLIC -fpermissive)
+add_executable(torch_inference torch_inference.cpp ../src/utils.c)
+target_compile_options(torch_inference PUBLIC $<$<COMPILE_LANGUAGE:CXX>:-fpermissive>)
 target_include_directories(torch_inference PRIVATE ${INCLUDE_DIRS})
 target_link_libraries(torch_inference PRIVATE vaccel dl)
 

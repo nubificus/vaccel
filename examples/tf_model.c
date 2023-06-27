@@ -21,51 +21,7 @@
 #include <unistd.h>
 
 #include <vaccel.h>
-
-static unsigned char *read_file(const char *path, size_t *len)
-{
-	struct stat buffer;
-	int status, fd;
-
-	fd = open(path, O_RDONLY);
-	if (fd < 0) {
-		perror("Could not open file");
-		return NULL;
-	}
-
-	status = fstat(fd, &buffer);
-	if (status < 0) {
-		perror("Coult not stat file");
-		return NULL;
-	}
-
-	unsigned char *buff = malloc(buffer.st_size);
-	if (!buff) {
-		close(fd);
-		perror("malloc");
-		return NULL;
-	}
-
-	size_t bytes = buffer.st_size;
-	ssize_t ptr = 0;
-	while (bytes) {
-		ssize_t ret = read(fd, &buff[ptr], bytes);
-		if (ret < 0) {
-			perror("read");
-			free(buff);
-			close(fd);
-			return NULL;
-		}
-
-		ptr += ret;
-		bytes -= ret;
-	}
-
-	close(fd);
-
-	*len = ptr;
-	return buff;
-}
+#include "../src/utils.h"
 
 int main(int argc, char *argv[])
 {
@@ -98,8 +54,9 @@ int main(int argc, char *argv[])
 
 	struct vaccel_tf_model model2;
 	size_t len;
-	unsigned char *buff = read_file(argv[1], &len);
-	if (!buff) {
+	unsigned char *buff;
+	ret = read_file(argv[1], (void **)&buff, &len);
+	if (ret) {
 		fprintf(stderr, "Could not read model file\n");
 		exit(1);
 	}
