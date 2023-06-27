@@ -12,41 +12,14 @@
  * limitations under the License.
  */
 
-#include <vaccel.h>
 #include <stdio.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
 
-static unsigned char *read_file(const char *path, size_t *len)
-{
-	struct stat stat;
-	int status, fd;
-
-	fd = open(path, O_RDONLY);
-	if (fd < 0) {
-		perror("Could not open file");
-		return NULL;
-	}
-
-	status = fstat(fd, &stat);
-	if (status < 0) {
-		perror("Could not stat file");
-		return NULL;
-	}
-
-	unsigned char *ptr = mmap(NULL, stat.st_size, PROT_READ|PROT_WRITE,
-				MAP_PRIVATE, fd, 0);
-	close(fd);
-
-	if(!ptr)
-		return NULL;
-
-	*len = stat.st_size;
-
-	return ptr;
-}
+#include <vaccel.h>
+#include "../src/utils.h"
 
 static unsigned char *read_file_from_dir(
 	const char *dir,
@@ -56,9 +29,10 @@ static unsigned char *read_file_from_dir(
 	char fpath[1024];
 
 	snprintf(fpath, 1024, "%s/%s", dir, path);
-	unsigned char *ptr = read_file(fpath, len);
-	if (!ptr)
-		vaccel_error("Could not mmap %s", fpath);
+	unsigned char *ptr;
+	int ret = read_file_mmap(fpath, (void **)&ptr, len);
+	if (ret)
+		vaccel_error("Could not mmap %s (err: %d)", fpath, ret);
 
 	return ptr;
 }

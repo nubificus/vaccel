@@ -142,9 +142,9 @@ int vaccel_file_persist(struct vaccel_file *file, const char *dir,
 	 * file */
 	void *old_ptr = file->data;
 	size_t old_size = file->size;
-	ret = read_file(file->path, (void **)&file->data, &file->size);
+	ret = read_file_mmap(file->path, (void **)&file->data, &file->size);
 	if (ret) {
-		vaccel_debug("Could not re-map file");
+		vaccel_error("Could not re-map file");
 		file->data = old_ptr;
 		file->size = old_size;
 		goto remove_file;
@@ -259,7 +259,7 @@ int vaccel_file_read(struct vaccel_file *file)
 	if (!file->path)
 		return VACCEL_EINVAL;
 	
-	return read_file(file->path, (void **)&file->data, &file->size);
+	return read_file_mmap(file->path, (void **)&file->data, &file->size);
 }
 
 /* Get a pointer to the data of the file

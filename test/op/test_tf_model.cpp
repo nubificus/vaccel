@@ -18,6 +18,7 @@ extern "C" {
 #include <sys/types.h>
 #include <unistd.h>
 #include <vaccel.h>
+#include "utils.h"
 }
 
 TEST_CASE("tf_model")
@@ -60,8 +61,8 @@ TEST_CASE("tf_model")
 
     size_t len = 0;
     char* buff;
-    ret = read_file(model_path, &buff, &len);
-    REQUIRE(ret == VACCEL_OK);
+    ret = read_file(model_path, (void **)&buff, &len);
+    REQUIRE(ret == 0);
     REQUIRE(buff);
     REQUIRE(len);
 

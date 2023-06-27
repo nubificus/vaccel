@@ -52,7 +52,7 @@ int read_file(const char *path, void **data, size_t *size)
 
 	fd = open(path, O_RDONLY);
 	if (fd == -1) {
-		vaccel_debug("Could not open file %s: %s", path, strerror(errno));
+		vaccel_error("Could not open file %s: %s", path, strerror(errno));
 		return errno;
 	}
 
@@ -60,12 +60,66 @@ int read_file(const char *path, void **data, size_t *size)
 	struct stat stat;
 	ret = fstat(fd, &stat);
 	if (ret < 0) {
-		vaccel_debug("Could not fstat file: %s", strerror(errno));
+		vaccel_error("Could not fstat file %s: %s", path, strerror(errno));
 		ret = errno;
 		goto close_file;
 	}
 	if (!stat.st_size) {
-		vaccel_debug("File %s is empty", path);
+		vaccel_error("File %s is empty", path);
+		ret = VACCEL_EINVAL;
+		goto close_file;
+	}
+
+	unsigned char *buff = malloc(stat.st_size);
+	if (!buff) {
+		vaccel_error("Could not malloc buff: %s", strerror(errno));
+		ret = errno;
+		goto close_file;
+	}
+
+	size_t bytes = stat.st_size;
+	ssize_t ptr = 0;
+	while (bytes) {
+		ssize_t ret = read(fd, &buff[ptr], bytes);
+		if (ret < 0) {
+			vaccel_error("Could not read file %s: %s", path, strerror(errno));
+			free(buff);
+			ret = errno;
+			goto close_file;
+		}
+
+		ptr += ret;
+		bytes -= ret;
+	}
+
+	*data = buff;
+	*size = ptr;
+
+close_file:
+	close(fd);
+	return ret;
+}
+
+int read_file_mmap(const char *path, void **data, size_t *size)
+{
+	int fd, ret;
+
+	fd = open(path, O_RDONLY);
+	if (fd == -1) {
+		vaccel_error("Could not open file %s: %s", path, strerror(errno));
+		return errno;
+	}
+
+	/* Find the size of the file */
+	struct stat stat;
+	ret = fstat(fd, &stat);
+	if (ret < 0) {
+		vaccel_error("Could not fstat file %s: %s", path, strerror(errno));
+		ret = errno;
+		goto close_file;
+	}
+	if (!stat.st_size) {
+		vaccel_error("File %s is empty", path);
 		ret = VACCEL_EINVAL;
 		goto close_file;
 	}
@@ -73,7 +127,7 @@ int read_file(const char *path, void **data, size_t *size)
 	void *ptr = mmap(NULL, stat.st_size, PROT_READ|PROT_WRITE, MAP_PRIVATE,
 			fd, 0);
 	if (!ptr) {
-		vaccel_debug("Could not mmap file: %s", strerror(errno));
+		vaccel_error("Could not mmap file %s: %s", path, strerror(errno));
 		ret = VACCEL_ENOMEM;
 		goto close_file;
 	}

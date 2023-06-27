@@ -26,11 +26,12 @@ bool dir_exists(const char *path);
  */
 int cleanup_rundir(const char *path);
 
-/* Read a file into a buffer
- *
- * This will actually mmap the file with read and write
- * access and it will reteurn the mapped memory and the
- * size of the file */
+/* Read a file into a buffer */
 int read_file(const char *path, void **data, size_t *size);
+
+/* Read a file into a buffer with mmap.
+ * This will actually mmap the file with read and write access
+ * and return the mapped memory and the size of the file */
+int read_file_mmap(const char *path, void **data, size_t *size);
 
 #endif /* __UTILS_H__ */

@@ -23,6 +23,7 @@ extern "C" {
 #include <sys/types.h>
 #include <unistd.h>
 #include <vaccel.h>
+#include "utils.h"
 }
 
 TEST_CASE("classify")
@@ -46,8 +47,8 @@ TEST_CASE("classify")
     REQUIRE(sess.resources);
     REQUIRE(sess.priv == nullptr);
 
-    ret = read_file(file_path, &image, &image_size);
-    REQUIRE(ret == VACCEL_OK);
+    ret = read_file(file_path, (void **)&image, &image_size);
+    REQUIRE(ret == 0);
     REQUIRE(image_size);
     REQUIRE(&image);
 
@@ -82,8 +83,8 @@ TEST_CASE("depth")
     REQUIRE(sess.resources);
     REQUIRE(sess.priv == nullptr);
 
-    ret = read_file(file_path, &image, &image_size);
-    REQUIRE(ret == VACCEL_OK);
+    ret = read_file(file_path, (void **)&image, &image_size);
+    REQUIRE(ret == 0);
     REQUIRE(image_size);
     REQUIRE(&image);
 
@@ -116,8 +117,8 @@ TEST_CASE("detect")
     REQUIRE(sess.resources);
     REQUIRE(sess.priv == nullptr);
 
-    ret = read_file(file_path, &image, &image_size);
-    REQUIRE(ret == VACCEL_OK);
+    ret = read_file(file_path, (void **)&image, &image_size);
+    REQUIRE(ret == 0);
     REQUIRE(image_size);
     REQUIRE(&image);
 
@@ -151,8 +152,8 @@ TEST_CASE("pose")
     REQUIRE(sess.resources);
     REQUIRE(sess.priv == nullptr);
 
-    ret = read_file(file_path, &image, &image_size);
-    REQUIRE(ret == VACCEL_OK);
+    ret = read_file(file_path, (void **)&image, &image_size);
+    REQUIRE(ret == 0);
     REQUIRE(image_size);
     REQUIRE(&image);
 
@@ -190,8 +191,8 @@ TEST_CASE("segmentation")
     REQUIRE(sess.resources);
     REQUIRE(sess.priv == nullptr);
 
-    ret = read_file(file_path, &image, &image_size);
-    REQUIRE(ret == VACCEL_OK);
+    ret = read_file(file_path, (void **)&image, &image_size);
+    REQUIRE(ret == 0);
     REQUIRE(image_size);
     REQUIRE(&image);
 

@@ -9,10 +9,6 @@
 
 #include <catch.hpp>
 #include <utils.hpp>
-#include <atomic>
-
-using atomic_int = std::atomic<int>;
-using atomic_uint = std::atomic<unsigned int>;
 
 extern "C" {
 #include <fcntl.h>
@@ -22,6 +18,7 @@ extern "C" {
 #include <sys/types.h>
 #include <unistd.h>
 #include <vaccel.h>
+#include "utils.h"
 }
 
 TEST_CASE("due to vaccel_arg change - TODO: redo these tests")
@@ -107,8 +104,8 @@ TEST_CASE("exec_with_resources")
 
     size_t len = 0;
     char* buff;
-    ret = read_file(plugin_path, &buff, &len);
-    REQUIRE(ret == VACCEL_OK);
+    ret = read_file(plugin_path, (void **)&buff, &len);
+    REQUIRE(ret == 0);
     REQUIRE(buff);
     REQUIRE(len);
 

@@ -19,6 +19,7 @@ extern "C" {
 #include <sys/types.h>
 #include <unistd.h>
 #include <vaccel.h>
+#include "utils.h"
 }
 
 TEST_CASE("saved_tf_model_from_memory")
