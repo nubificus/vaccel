@@ -203,6 +203,7 @@ static int fini(void)
 }
 
 VACCEL_MODULE(.name = "exec", .version = VACCEL_VERSION,
+	      .vaccel_version = VACCEL_VERSION,
 	      .type = VACCEL_PLUGIN_SOFTWARE | VACCEL_PLUGIN_GENERIC |
 		      VACCEL_PLUGIN_CPU,
 	      .init = init, .fini = fini)
