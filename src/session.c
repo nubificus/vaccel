@@ -242,6 +242,8 @@ int vaccel_sess_init(struct vaccel_session *sess, uint32_t flags)
 	if (ret)
 		goto cleanup_session;
 
+	sess->hint = flags;
+
 	vaccel_debug("session:%u New session", sess->session_id);
 
 	sessions.running_sessions[sess->session_id - 1] = sess;

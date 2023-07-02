@@ -45,7 +45,7 @@ int vaccel_sgemm(
 		float *b, long long int ldb,
 		float beta,
 		float *c, long long int ldc
-	) = get_plugin_op(VACCEL_BLAS_SGEMM);
+	) = get_plugin_op(VACCEL_BLAS_SGEMM, sess->hint);
 	if (!plugin_op)
 		return VACCEL_ENOTSUP;
 

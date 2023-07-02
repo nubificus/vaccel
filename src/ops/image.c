@@ -40,7 +40,7 @@ int vaccel_image_op(enum vaccel_op_type op_type, struct vaccel_session *sess,
 	vaccel_prof_region_start(&image_op_stats);
 
 	//Get implementation
-	int (*plugin_op)() = get_plugin_op(op_type);
+	int (*plugin_op)() = get_plugin_op(op_type, sess->hint);
 	if (!plugin_op) {
 		ret = VACCEL_ENOTSUP;
 		goto out;

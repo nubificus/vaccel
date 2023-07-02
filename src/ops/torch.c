@@ -224,7 +224,7 @@ int vaccel_torch_jitload_forward(struct vaccel_session *sess,
 			int,
 			struct vaccel_torch_tensor **,
 			int
-			) = get_plugin_op(VACCEL_TORCH_JITLOAD_FORWARD);
+			) = get_plugin_op(VACCEL_TORCH_JITLOAD_FORWARD, sess->hint);
 
 	if (!plugin_op)
 		return VACCEL_ENOTSUP;
@@ -253,7 +253,7 @@ int vaccel_torch_sgemm(struct vaccel_session *sess,
 			int ,
 			int ,
 			struct vaccel_torch_tensor **
-			) = get_plugin_op(VACCEL_TORCH_SGEMM);
+			) = get_plugin_op(VACCEL_TORCH_SGEMM, sess->hint);
 	if (!plugin_op) {
 		vaccel_debug("Plugin loading failed");
 		return VACCEL_ENOTSUP;

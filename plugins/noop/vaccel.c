@@ -492,6 +492,7 @@ static int fini(void)
 VACCEL_MODULE(
 	.name = "noop",
 	.version = VACCELRT_VERSION,
+	.type = VACCEL_PLUGIN_DEBUG,
 	.init = init,
 	.fini = fini
 )

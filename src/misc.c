@@ -12,19 +12,24 @@
  * limitations under the License.
  */
 
-#ifndef __PLUGIN_H__
-#define __PLUGIN_H__
+#include <stdio.h>
 
-#include "include/plugin.h"
-#include "ops/vaccel_ops.h"
+#include "misc.h"
+#include "error.h"
+#include "plugin.h"
+#include "log.h"
 
-#include <stdint.h>
-#include "vaccel.h"
+#include "session.h"
 
-void *get_plugin_op(enum vaccel_op_type op_type, unsigned int hint);
-int get_available_plugins(enum vaccel_op_type op_type);
-struct vaccel_plugin *get_virtio_plugin(void);
-int plugins_bootstrap(void);
-int plugins_shutdown(void);
+int vaccel_get_plugins(struct vaccel_session *sess, enum vaccel_op_type op_type)
+{
+	if (!sess)
+		return VACCEL_EINVAL;
 
-#endif /* __PLUGIN_H__ */
+	vaccel_debug("session:%u Query for plugins implementing %s",
+				 sess->session_id, vaccel_op_type_str(op_type));
+
+	int ret = get_available_plugins(op_type);
+
+	return ret;
+}
