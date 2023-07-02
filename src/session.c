@@ -264,6 +264,31 @@ cleanup_session:
 	return ret;
 }
 
+int vaccel_sess_update(struct vaccel_session *sess, uint32_t flags)
+{
+	if (!sess)
+		return VACCEL_EINVAL;
+
+	if (!sessions.initialized)
+		return VACCEL_ESESS;
+
+	/* if we're using virtio as a plugin offload the session update to the
+	 * host */
+	struct vaccel_plugin *virtio = get_virtio_plugin();
+	if (virtio) {
+		int ret = virtio->info->sess_update(sess, flags);
+		if (ret) {
+			vaccel_warn("Could not update host-side session");
+		}
+	} else {
+		sess->hint = flags;
+	}
+
+	vaccel_debug("session:%u update with flags: %u", sess->session_id, flags);
+
+	return VACCEL_OK;
+}
+
 int vaccel_sess_free(struct vaccel_session *sess)
 {
 	if (!sess)
