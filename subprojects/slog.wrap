@@ -1,0 +1,9 @@
+[wrap-git]
+url = https://github.com/kala13x/slog
+revision = 1.8.22
+patch_directory = slog
+
+diff_files = slog/0001-add-non-posix.patch
+
+[provide]
+slog = libslog_dep

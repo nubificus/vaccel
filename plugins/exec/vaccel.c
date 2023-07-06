@@ -86,8 +86,8 @@ static int exec_with_resource(struct vaccel_session *session, struct vaccel_shar
 	void *dl;
 	int (*fptr)(void *, size_t, void *, size_t);
 	int ret;
-	struct vaccel_arg *args;
 	struct vaccel_file *file;
+	struct vaccel_arg *args;
 
 	vaccel_debug("Calling exec_with_resource for session %u", session->session_id);
 

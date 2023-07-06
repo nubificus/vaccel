@@ -11,6 +11,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#define _POSIX_C_SOURCE 200809L
 
 #include "plugin.h"
 #include "session.h"
@@ -25,6 +26,7 @@
 #include <string.h>
 #include <dlfcn.h>
 #include <stdio.h>
+#include <string.h>
 
 #define MAX_RUNDIR_PATH 1024
 

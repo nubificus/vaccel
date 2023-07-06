@@ -11,6 +11,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#define _POSIX_C_SOURCE 200809L
 
 #include "vaccel_prof.h"
 
@@ -23,6 +24,8 @@
 #include <stddef.h>
 #include <string.h>
 #include <time.h>
+#include <stdio.h>
+#include <string.h>
 
 #define MIN_SAMPLES 1024
 #define MAX_NAME 256
