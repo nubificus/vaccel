@@ -11,6 +11,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#define _POSIX_C_SOURCE 200809L
 
 #include "error.h"
 #include "plugin.h"
@@ -22,6 +23,7 @@
 #include "vaccel_prof.h"
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 
 /* Create a new TensorFlow buffer

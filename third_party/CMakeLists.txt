@@ -7,7 +7,7 @@ add_subdirectory(slog)
 # Install slog header files
 install(
 	FILES
-	${CMAKE_SOURCE_DIR}/third-party/slog/src/slog.h
+	${CMAKE_SOURCE_DIR}/third_party/slog/src/slog.h
 	DESTINATION
 	${CMAKE_INSTALL_INCLUDEDIR}
 )

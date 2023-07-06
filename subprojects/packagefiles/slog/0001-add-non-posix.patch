@@ -1,0 +1,19 @@
+diff --git a/src/slog.c b/src/slog.c
+index f231db7..67afffb 100644
+--- a/src/slog.c
++++ b/src/slog.c
+@@ -21,6 +21,7 @@
+  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+  * SOFTWARE
+  */
++#define _GNU_SOURCE
+ 
+ #include <stdio.h>
+ #include <pthread.h>
+@@ -311,4 +312,4 @@ void slog_destroy()
+     if (!g_slog.nTdSafe) return;
+     pthread_mutex_destroy(&g_slog.mutex);
+     g_slog.nTdSafe = 0;
+-}
+\ No newline at end of file
++}

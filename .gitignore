@@ -15,6 +15,9 @@ _deps
 cscope.out
 build*
 **target
+/subprojects/*
+!/subprojects/*.wrap
+!/subprojects/packagefiles
 
 .cache
 .ccls-cache

@@ -11,6 +11,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#define _POSIX_C_SOURCE 200809L
 
 #include "ops/vaccel_ops.h"
 #include <stdio.h>
@@ -96,7 +97,7 @@ static int noop_img_class(struct vaccel_session *sess, const void *img,
 	fprintf(stdout, "[noop] Dumping arguments for Image classification:\n");
 	fprintf(stdout, "[noop] len_img: %zu\n", len_img);
 	fprintf(stdout, "[noop] will return a dummy result\n");
-	sprintf(out_text, "This is a dummy classification tag!");
+	sprintf((char *)out_text, "This is a dummy classification tag!");
 	len_out_text = strlen("This is a dummy classification tag!");
 
 	return VACCEL_OK;

@@ -1,0 +1,19 @@
+option('plugin-noop',
+  type : 'feature',
+  value : 'auto',
+  description : 'Build the no-op debugging plugin')
+
+option('plugin-exec',
+  type : 'feature',
+  value : 'disabled',
+  description : 'Build the exec plugin')
+
+option('examples',
+  type : 'feature',
+  value : 'auto',
+  description : 'Build the examples')
+
+option('tests',
+  type : 'feature',
+  value : 'disabled',
+  description : 'Enable testing')
