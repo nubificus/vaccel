@@ -15,7 +15,6 @@ vaccel_version = run_command('scripts/generate-version.sh',
 
 libvaccel_version = vaccel_version.split('-')[0]
 
-meson.add_dist_script('scripts/dist.sh')
 opt_tests = get_option('tests')
 opt_examples = get_option('examples').enable_if(opt_tests.enabled())
 
@@ -45,3 +44,15 @@ summary({
   },
   section : 'Configuration',
   bool_yn : true)
+
+meson.add_dist_script(
+  'scripts/dist.sh',
+  'vaccel',
+  'plugin-exec',
+  opt_plugin_exec.enabled() ? 'enabled' : 'disabled',
+  'plugin-noop',
+  opt_plugin_noop.enabled() ? 'enabled' : 'disabled',
+  'examples',
+  opt_examples.enabled() ? 'enabled' : 'disabled',
+  'tests',
+  opt_tests.enabled() ? 'enabled' : 'disabled')
