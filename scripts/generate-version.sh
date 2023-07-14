@@ -27,6 +27,15 @@ then
 fi
 
 DIRTY=$(git diff --quiet || echo '-dirty')
+for i in $@
+do
+	if [ $i = "--no-dirty" ]
+	then
+		DIRTY=""
+		break
+	fi
+done
+
 VERSION=$(echo ${VERSION}${DIRTY} | sed -e 's/-g/-/' | cut -c 2-)
 
 echo ${VERSION}

@@ -4,7 +4,7 @@ project('vaccel', 'c', 'cpp',
   license : 'Apache-2.0',
   license_files : 'LICENSE',
   version : run_command('scripts/generate-version.sh',
-    check: false).stdout().strip())
+    '', '--no-dirty', check: false).stdout().strip())
 
 vaccel_cargs = ['-Wall','-Wextra','-Werror']
 plugins_cargs = ['-Wno-unused']
