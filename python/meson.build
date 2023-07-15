@@ -13,5 +13,6 @@ libvaccel_python = library('vaccel-python',
 pkg_mod = import('pkgconfig')
 pkg_mod.generate(libvaccel_python,
   version : libvaccel_version,
+  subdirs: ['.', 'vaccel'],
   name : 'vaccel-python',
   description : 'Hardware Acceleration for Serverless Computing')

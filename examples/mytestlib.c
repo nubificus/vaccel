@@ -75,7 +75,7 @@ int mytestfunc(struct vaccel_arg *input, size_t nr_in,
 	/* Input */
 	int* input_int = vaccel_extract_serial_arg(input, 0);
 	
-	printf("I got nr_in: %ld, nr_out: %ld\n", nr_in, nr_out);
+	printf("I got nr_in: %zu, nr_out: %zu\n", nr_in, nr_out);
 	printf("I got this input: %d\n", *input_int);
 
 	/* Output */
@@ -90,7 +90,7 @@ int mytestfunc_nonser(struct vaccel_arg *input, size_t nr_in,
 {
 	assert(nr_in >= 1);
 	assert(nr_out >= 1);
-	printf("I got nr_in: %ld, nr_out: %ld\n", nr_in, nr_out);
+	printf("I got nr_in: %zu, nr_out: %zu\n", nr_in, nr_out);
 
 	/* Input */
 	struct mydata* input_data =

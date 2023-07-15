@@ -62,5 +62,6 @@ libvaccel_private = declare_dependency(
 pkg_mod = import('pkgconfig')
 pkg_mod.generate(libvaccel,
   version : libvaccel_version,
+  subdirs: ['.', 'vaccel'],
   name : 'vaccel',
   description : 'Hardware Acceleration for Serverless Computing')

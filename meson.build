@@ -7,7 +7,7 @@ project('vaccel', 'c', 'cpp',
     '', '--no-dirty', check: false).stdout().strip())
 
 vaccel_cargs = ['-Wall','-Wextra','-Werror']
-plugins_cargs = ['-Wno-unused']
+plugins_cargs = vaccel_cargs + '-Wno-unused'
 
 vaccel_version = run_command('scripts/generate-version.sh',
   meson.project_source_root(),
@@ -19,7 +19,6 @@ opt_tests = get_option('tests')
 opt_examples = get_option('examples').enable_if(opt_tests.enabled())
 
 slog_subproj = subproject('slog')
-#libslog_dep = slog_subproj.get_variable('libslog_dep')
 libslog_dep = dependency('slog')
 
 subdir('src')

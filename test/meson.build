@@ -18,7 +18,7 @@ subdir('op')
 
 libtests_main = library('tests-main',
   ['main.cpp', 'utils.cpp'],
-  c_args : vaccel_cargs,
+  cpp_args : vaccel_cargs,
   install : false)
 
 tests_deps = [
@@ -39,8 +39,7 @@ foreach t : tests_core_sources + tests_api_sources
   name = fs.stem(t)
   exe = executable(name,
     sources : t,
-    cpp_args : '-std=c++2b',
-    c_args : vaccel_cargs,
+    cpp_args : vaccel_cargs + '-std=c++2b',
     include_directories : [tests_includes, vaccel_src_includes],
     dependencies : libvaccel_private,
     link_with : libtests_main,
