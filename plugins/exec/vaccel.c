@@ -37,7 +37,6 @@ static int exec(struct vaccel_session *session, const char *library, const char
 		*fn_symbol, void *read, size_t nr_read, void *write,
 		size_t nr_write)
 {
-	int i = 0;
 	void *dl;
 	int (*fptr)(void *, size_t, void *, size_t);
 	int ret;
@@ -56,12 +55,12 @@ static int exec(struct vaccel_session *session, const char *library, const char
 	vaccel_debug("[exec] symbol: %s", fn_symbol);
 
 	args = (struct vaccel_arg*) read;
-	for (i = 0 ; i<nr_read;i++) {
+	for (size_t i = 0; i < nr_read; i++) {
 		vaccel_debug("[exec]: read[%d].size: %u\n", i, args[i].size);
 		vaccel_debug("[exec]: read[%d].argtype: %u\n", i, args[i].argtype);
 	}
 	args = (struct vaccel_arg*) write;
-	for (i = 0 ; i<nr_write;i++) {
+	for (size_t i = 0; i < nr_write; i++) {
 		vaccel_debug("[exec]: write[%d].size: %u\n", i, args[i].size);
 		vaccel_debug("[exec]: write[%d].argtype: %u\n", i, args[i].argtype);
 	}
@@ -82,7 +81,6 @@ static int exec(struct vaccel_session *session, const char *library, const char
 static int exec_with_resource(struct vaccel_session *session, struct vaccel_shared_object *object, const char *fn_symbol, void *read, size_t nr_read, void *write,
 							  size_t nr_write)
 {
-	int i = 0;
 	void *dl;
 	int (*fptr)(void *, size_t, void *, size_t);
 	int ret;
@@ -112,12 +110,12 @@ static int exec_with_resource(struct vaccel_session *session, struct vaccel_shar
 	}
 
 	args = (struct vaccel_arg*) read;
-	for (i = 0 ; i<nr_read;i++) {
+	for (size_t i = 0; i < nr_read; i++) {
 		vaccel_debug("[exec]: read[%d].size: %u\n", args[i].size);
 		vaccel_debug("[exec]: read[%d].argtype: %u\n", args[i].argtype);
 	}
 	args = (struct vaccel_arg*) write;
-	for (i = 0 ; i<nr_write;i++) {
+	for (size_t i = 0; i < nr_write; i++) {
 		vaccel_debug("[exec]: write[%d].size: %u\n", args[i].size);
 		vaccel_debug("[exec]: write[%d].argtype: %u\n", args[i].argtype);
 	}
