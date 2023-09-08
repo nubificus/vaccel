@@ -30,7 +30,13 @@ set(BIN_EXAMPLES
 
 foreach(T ${BIN_EXAMPLES})
 	add_executable(${T} "${T}.c")
+	IF(MUSL_BUILD)
+	set_property(TARGET ${T} PROPERTY LINK_FLAGS "-Os")
+	ENDIF()
 	target_include_directories(${T} PRIVATE ${INCLUDE_DIRS})
+	IF(MUSL_BUILD)
+	set(CMAKE_FIND_LIBRARY_SUFFIXES .so)
+	ENDIF()
 	target_link_libraries(${T} PRIVATE vaccel dl)
 endforeach()
 
