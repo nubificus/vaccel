@@ -28,6 +28,7 @@
 #include "ops/image.h"
 #include "ops/noop.h"
 #include "ops/fpga.h"
+#include "ops/opencv.h"
 #include "ops/vaccel_ops.h"
 #include "ops/torch.h"
 

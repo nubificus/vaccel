@@ -21,6 +21,7 @@
 #include "image.h"
 #include "noop.h"
 #include "fpga.h"
+#include "opencv.h"
 
 #include <session.h>
 #include <error.h>
@@ -57,6 +58,9 @@ unpack_func_t callbacks[VACCEL_FUNCTIONS_NR] = {
 	vaccel_fpga_parallel_unpack,		/* 18 */
 	vaccel_fpga_vadd_unpack,		/* 19 */
 	vaccel_exec_with_res_unpack,		/* 20 */
+	vaccel_noop_unpack,			/* 21 */
+	vaccel_noop_unpack,			/* 22 */
+	vaccel_opencv_unpack,			/* 23 */
 };
 
 int vaccel_genop(struct vaccel_session *sess, struct vaccel_arg  *read,
