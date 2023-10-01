@@ -456,6 +456,34 @@ static int noop_torch_sgemm(struct vaccel_session *session,
 	return VACCEL_OK;
 }
 
+static int noop_opencv(struct vaccel_session *sess, struct vaccel_arg *read,
+		     size_t nr_read, struct vaccel_arg *write, size_t nr_write)
+{
+	int i = 0;
+	fprintf(stdout, "[noop] Calling opencv for session %u\n",
+		sess->session_id);
+
+	fprintf(stdout, "[noop] Dumping arguments for opencv:\n");
+	fprintf(stdout, "[noop] nr_read: %zu nr_write: %zu\n", nr_read, nr_write);
+	fprintf(stdout, "[noop] [OpenCV] function: %u\n", *(uint8_t*)read[0].buf);
+	for (i = 1 ; i < nr_read; i++) {
+		fprintf(stdout, "[noop] opencv read[%d] size: %u\n", i, read[i].size);
+	}
+	for (i = 0 ; i < nr_write; i++) {
+		fprintf(stdout, "[noop] opencv write[%d] size: %u\n", i, write[i].size);
+		size_t *header;
+		header = write[i].buf;
+		header[0] = write[i].size/sizeof(float);
+	}
+#if 0
+	uint8_t *p;
+	p = write[1].buf;
+	p[10] = 1;
+#endif
+
+	return VACCEL_OK;
+}
+
 struct vaccel_op ops[] = {
 	VACCEL_OP_INIT(ops[0], VACCEL_NO_OP, noop_noop),
 	VACCEL_OP_INIT(ops[1], VACCEL_BLAS_SGEMM, noop_sgemm),
@@ -476,6 +504,7 @@ struct vaccel_op ops[] = {
 	VACCEL_OP_INIT(ops[16], VACCEL_EXEC_WITH_RESOURCE, noop_exec_with_resource),
 	VACCEL_OP_INIT(ops[17], VACCEL_TORCH_JITLOAD_FORWARD, noop_torch_jitload_forward),
 	VACCEL_OP_INIT(ops[18], VACCEL_TORCH_SGEMM, noop_torch_sgemm),
+	VACCEL_OP_INIT(ops[19], VACCEL_OPENCV, noop_opencv),
 };
 
 

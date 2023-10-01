@@ -37,7 +37,9 @@ jobs:
         if [[ "${{github.event.pull_request.head.sha}}" != "" ]]
         then
           echo "ARTIFACT_SHA=$(echo ${{github.event.pull_request.head.sha}})" >> $GITHUB_ENV
+          echo "ARTIFACT_NAME=$(echo ${{ github.head_ref || github.ref_name }})" >> $GITHUB_ENV
         else
+          echo "ARTIFACT_NAME=$(echo ${GITHUB_REF##*/})" >> $GITHUB_ENV
           echo "ARTIFACT_SHA=$(echo ${{github.sha}})" >> $GITHUB_ENV
         fi
 
@@ -95,7 +97,7 @@ jobs:
         ./bin/pynq_parallel
         ./bin/torch_inference ./share/images/example.jpg ./share/models/torch
 
-    - name: Upload artifact to s3
+    - name: Upload binary distr to s3
       uses: cloudkernels/minio-upload@v4
       with:
         url: https://s3.nubificus.co.uk
@@ -103,5 +105,75 @@ jobs:
         secret-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         local-path: artifacts/${{ matrix.archconfig }}/${{ matrix.build_type }}/opt
         remote-path: nbfc-assets/github/vaccelrt/${{ env.ARTIFACT_SHA }}/${{ matrix.archconfig }}/${{ matrix.build_type }}/
+
+    - name: Build project for packages
+      id: build_pkg_vaccelrt
+      run: |
+        mkdir -p build_pkg_${{matrix.build_type}}
+        cd build_pkg_${{matrix.build_type}}
+        cmake ${{github.workspace}} \
+          -DCMAKE_INSTALL_PREFIX=/usr/local \
+          -DCMAKE_BUILD_TYPE=${{matrix.build_type}} \
+          -DBUILD_EXAMPLES=ON \
+          -DBUILD_PLUGIN_NOOP=ON \
+          -DBUILD_PLUGIN_EXEC=ON && \
+        cmake --build . --config ${{matrix.build_type}} && \
+        cpack -G TGZ
+        cpack 
+
+    - name: Get package name
+      shell: bash
+      id: get_package_deb
+      run: |
+        echo ::set-output name=NAME::$(basename build_pkg_${{ matrix.build_type }}/vaccel-*.deb)
+
+    - name: Get tar name
+      shell: bash
+      id: get_package_tar
+      run: |
+        echo ::set-output name=NAME::$(basename build_pkg_${{ matrix.build_type }}/vaccel-*.tar.gz)
+
+    - name: Upload deb artifact to s3 by name
+      uses: cloudkernels/minio-upload@v4
+      if: ${{ env.ARTIFACT_NAME != 'master' }}
+      with:
+        url: https://s3.nubificus.co.uk
+        access-key: ${{ secrets.AWS_ACCESS_KEY }}
+        secret-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        local-path: build_pkg_${{ matrix.build_type }}/${{ steps.get_package_deb.outputs.NAME }}
+        remote-path: nbfc-assets/github/vaccelrt/${{ env.ARTIFACT_NAME }}/${{ matrix.archconfig }}/${{ matrix.build_type }}-deb/
+        policy: 1
+
+    - name: Upload deb artifact to s3
+      uses: cloudkernels/minio-upload@v4
+      with:
+        url: https://s3.nubificus.co.uk
+        access-key: ${{ secrets.AWS_ACCESS_KEY }}
+        secret-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        local-path: build_pkg_${{ matrix.build_type }}/${{ steps.get_package_deb.outputs.NAME }}
+        remote-path: nbfc-assets/github/vaccelrt/${{ env.ARTIFACT_SHA }}/${{ matrix.archconfig }}/${{ matrix.build_type }}-deb/
+        policy: 1
+
+    - name: Upload tar artifact to s3 by name
+      uses: cloudkernels/minio-upload@v4
+      if: ${{ env.ARTIFACT_NAME != 'master' }}
+      with:
+        url: https://s3.nubificus.co.uk
+        access-key: ${{ secrets.AWS_ACCESS_KEY }}
+        secret-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        local-path: build_pkg_${{ matrix.build_type }}/${{ steps.get_package_tar.outputs.NAME }}
+        remote-path: nbfc-assets/github/vaccelrt/${{ env.ARTIFACT_NAME }}/${{ matrix.archconfig }}/${{ matrix.build_type }}-tar/
+        policy: 1
+
+    - name: Upload tar artifact to s3
+      uses: cloudkernels/minio-upload@v4
+      with:
+        url: https://s3.nubificus.co.uk
+        access-key: ${{ secrets.AWS_ACCESS_KEY }}
+        secret-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        local-path: build_pkg_${{ matrix.build_type }}/${{ steps.get_package_tar.outputs.NAME }}
+        remote-path: nbfc-assets/github/vaccelrt/${{ env.ARTIFACT_SHA }}/${{ matrix.archconfig }}/${{ matrix.build_type }}-tar/
+        policy: 1
+
     - name: Clean-up
       run: sudo rm -rf artifacts build_${{ matrix.build_type }}

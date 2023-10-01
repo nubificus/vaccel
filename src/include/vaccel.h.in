@@ -32,6 +32,7 @@
 #include "ops/noop.h"
 #include "ops/tf.h"
 #include "ops/fpga.h"
+#include "ops/opencv.h"
 #include "resources/tf_saved_model.h"
 #include "resources/shared_object.h"
 #include "misc.h"

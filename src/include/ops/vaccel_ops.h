@@ -46,6 +46,7 @@ enum vaccel_op_type {
 	VACCEL_EXEC_WITH_RESOURCE,  /* 20 */
 	VACCEL_TORCH_JITLOAD_FORWARD, /* 21 */
 	VACCEL_TORCH_SGEMM, /* 22 */
+	VACCEL_OPENCV,  /* 23 */
 	VACCEL_FUNCTIONS_NR
 };
 
@@ -73,6 +74,7 @@ static const char *vaccel_op_name[] = {
 	"Exec with resource",
 	"Torch jitload_forward function",
 	"Torch SGEMM",
+	"OpenCV Generic",
 	"Functions NR",
 };
 
