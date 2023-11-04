@@ -119,7 +119,7 @@ int unregister_plugin(struct vaccel_plugin *plugin)
 		return VACCEL_EINVAL;
 
 	if (!entry_linked(&plugin->entry)) {
-		assert(0 && "Trying to unregister unknown plugin");
+		//assert(0 && "Trying to unregister unknown plugin");
 		return VACCEL_ENOENT;
 	}
 
