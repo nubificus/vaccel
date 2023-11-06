@@ -38,6 +38,7 @@ endif
 summary({
   'Build the exec plugin': opt_plugin_exec.enabled(),
   'Build the no-op debugging plugin': opt_plugin_noop.enabled(),
+  'Build the mbench plugin': opt_plugin_mbench.enabled(),
   'Build the examples': opt_examples.enabled(),
   'Enable testing': opt_tests.enabled(),
   },
@@ -51,6 +52,8 @@ meson.add_dist_script(
   opt_plugin_exec.enabled() ? 'enabled' : 'disabled',
   'plugin-noop',
   opt_plugin_noop.enabled() ? 'enabled' : 'disabled',
+  'plugin-mbench',
+  opt_plugin_mbench.enabled() ? 'enabled' : 'disabled',
   'examples',
   opt_examples.enabled() ? 'enabled' : 'disabled',
   'tests',

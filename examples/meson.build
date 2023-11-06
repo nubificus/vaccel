@@ -29,6 +29,7 @@ examples_sources = files([
   'torch_inference.cpp',
   'exec_helpers.c',
   'exec_helpers_nonser.c',
+  'mbench.c',
 ])
 
 foreach e : examples_sources

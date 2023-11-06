@@ -8,6 +8,11 @@ option('plugin-exec',
   value : 'auto',
   description : 'Build the exec plugin')
 
+option('plugin-mbench',
+  type : 'feature',
+  value : 'auto',
+  description : 'Build the mbench plugin')
+
 option('plugins',
   type : 'feature',
   value : 'disabled',

@@ -40,7 +40,7 @@ static int mbench(int time)
 	while (1) {
 		clock_gettime(CLOCK_MONOTONIC_RAW, &t);
 		ets = t.tv_sec * 1e9 + t.tv_nsec; // nsec
-		if ((ets-sts)/1000000 >= time)
+		if ((ets-sts)/1000000 >= (uint64_t)time)
 			break;
 	}
 
