@@ -160,11 +160,42 @@ void vaccel_calcOpticalFlowPyrLK(struct vaccel_session *session, Mat prevFrame, 
 	return vaccel_opencv_op(VACCEL_OPENCV_OPTFLOW, session);
 }
 
+void vaccel_calcOpticalFlowPyrLK(struct vaccel_session *session,
+			struct vaccel_arg *read, int nr_read,
+			struct vaccel_arg *write, int nr_write)
+{
+	return vaccel_opencv_op_upack(VACCEL_OPENCV_OPTFLOW, session, read, nr_read, 7,
+			write, nr_write, 3);
+}
+
 
 bool vaccel_findChessboardCorners(struct vaccel_session *session, Mat image,
 							Size pattern_size, Point2fVector *corners)
 {
 	return vaccel_opencv_op(VACCEL_OPENCV_FIND_CHESSBOARD_CORNERS, session);
+}
+
+bool vaccel_findChessboardCorners(struct vaccel_session *session,
+			struct vaccel_arg *read, int nr_read,
+			struct vaccel_arg *write, int nr_write)
+{
+	return vaccel_opencv_op_upack(VACCEL_OPENCV_FIND_CHESSBOARD_CORNERS, session, read, nr_read, 3,
+			write, nr_write, 2);
+}
+
+
+void vaccel_cornerSubPix(struct vaccel_session *session, Mat *gray, Mat *corner_pts,
+							Size win, Size zeroZone, TermCriteria criteria)
+{
+	return vaccel_opencv_op(VACCEL_OPENCV_CORNER_SUB_PIX, session);
+}
+
+void vaccel_cornerSubPix(struct vaccel_session *session,
+			struct vaccel_arg *read, int nr_read,
+			struct vaccel_arg *write, int nr_write)
+{
+	return vaccel_opencv_op_upack(VACCEL_OPENCV_CORNER_SUB_PIX, session, read, nr_read, 5,
+			write, nr_write, 1);
 }
 
 
@@ -175,12 +206,28 @@ void vaccel_calibrateCamera(struct vaccel_session *session, VectorOfPoint3fVecto
 	return vaccel_opencv_op(VACCEL_OPENCV_CALIBRATE_CAMERA, session);
 }
 
-
-cv::Mat vaccel_getOptimalNewCameraMatrix(struct vaccel_session *session, Mat cameraMatrix, Mat distCoeffs,
-                                       Size imgSize, double alpha)
+void vaccel_calibrateCamera(struct vaccel_session *session,
+			struct vaccel_arg *read, int nr_read,
+			struct vaccel_arg *write, int nr_write)
 {
-	return vaccel_opencv_op(VACCEL_OPENCV_GET_OPTIMAL_NEW_CAMERA_MATRIX, session);
+	return vaccel_opencv_op_upack(VACCEL_OPENCV_CALIBRATE_CAMERA, session, read, nr_read, 4,
+			write, nr_write, 4);
 }
+
+
+// cv::Mat vaccel_getOptimalNewCameraMatrix(struct vaccel_session *session, Mat cameraMatrix, Mat distCoeffs,
+//                                        Size imgSize, double alpha)
+// {
+// 	return vaccel_opencv_op(VACCEL_OPENCV_GET_OPTIMAL_NEW_CAMERA_MATRIX, session);
+// }
+
+// cv::Mat vaccel_getOptimalNewCameraMatrix(struct vaccel_session *session,
+// 			struct vaccel_arg *read, int nr_read,
+// 			struct vaccel_arg *write, int nr_write)
+// {
+// 	return vaccel_opencv_op_upack(VACCEL_OPENCV_GET_OPTIMAL_NEW_CAMERA_MATRIX, session, read, nr_read, 5,
+// 			write, nr_write, 1);
+// }
 
 
 void  vaccel_stereoCalibrate(struct vaccel_session *session, VectorOfPoint3fVector *objpoints,
@@ -192,12 +239,44 @@ void  vaccel_stereoCalibrate(struct vaccel_session *session, VectorOfPoint3fVect
 	return vaccel_opencv_op(VACCEL_OPENCV_STEREO_CALIBRATE, session);
 }
 
+void  vaccel_stereoCalibrate(struct vaccel_session *session,
+			struct vaccel_arg *read, int nr_read,
+			struct vaccel_arg *write, int nr_write)
+{
+	return vaccel_opencv_op_upack(VACCEL_OPENCV_STEREO_CALIBRATE, session, read, nr_read, 11,
+			write, nr_write, 4);
+}
+
 
 void vaccel_stereoRectify(struct vaccel_session *session, Mat *new_mtxL, Mat *distL, Mat *new_mtxR, Mat *distR,
                     				Size *imagesizeR, Mat *Rot, Mat *Trns,
 									Mat *rect_l,  Mat *rect_r,  Mat *proj_mat_l,  Mat *proj_mat_r,  Mat *Q, int rec_flag)
 {
 	return vaccel_opencv_op(VACCEL_OPENCV_STEREO_RECTIFY, session);
+}
+
+void vaccel_stereoRectify(struct vaccel_session *session,
+			struct vaccel_arg *read, int nr_read,
+			struct vaccel_arg *write, int nr_write)
+{
+	return vaccel_opencv_op_upack(VACCEL_OPENCV_STEREO_RECTIFY, session, read, nr_read, 9,
+			write, nr_write, 5);
+}
+
+
+void vaccel_initUndistortRectifyMap(struct vaccel_session *session, Mat *new_mtx, Mat *dist,
+							Mat *rect, Mat *proj_mat, Size *imagesize, int m1type,
+							Mat *Stereo_Map1, Mat *Stereo_Map2)
+{
+	return vaccel_opencv_op(VACCEL_OPENCV_INIT_UNDISTORT_RECTIFY_MAP, session);
+}
+
+void vaccel_initUndistortRectifyMap(struct vaccel_session *session,
+			struct vaccel_arg *read, int nr_read,
+			struct vaccel_arg *write, int nr_write)
+{
+	return vaccel_opencv_op_upack(VACCEL_OPENCV_INIT_UNDISTORT_RECTIFY_MAP, session, read, nr_read, 7,
+			write, nr_write, 2);
 }
 
 
@@ -208,10 +287,26 @@ void vaccel_remap(struct vaccel_session *session,
 	return vaccel_opencv_op(VACCEL_OPENCV_REMAP, session);
 }
 
+void vaccel_remap(struct vaccel_session *session,
+			struct vaccel_arg *read, int nr_read,
+			struct vaccel_arg *write, int nr_write)
+{
+	return vaccel_opencv_op_upack(VACCEL_OPENCV_REMAP, session, read, nr_read, 7,
+			write, nr_write, 1);
+}
+
 
 void vaccel_inRange(struct vaccel_session *session, Mat depth_map, float lowerb, float upperb, Mat mask)
 {
 	return vaccel_opencv_op(VACCEL_OPENCV_IN_RANGE, session);
+}
+
+void vaccel_inRange(struct vaccel_session *session,
+			struct vaccel_arg *read, int nr_read,
+			struct vaccel_arg *write, int nr_write)
+{
+	return vaccel_opencv_op_upack(VACCEL_OPENCV_IN_RANGE,session, read, nr_read, 4,
+			write, nr_write, 1);
 }
 
 
@@ -220,29 +315,61 @@ void vaccel_findContours(struct vaccel_session *session, Mat *mask, VectorOfPoin
 	return vaccel_opencv_op(VACCEL_OPENCV_FIND_CONTOURS, session);
 }
 
+void vaccel_findContours(struct vaccel_session *session,
+			struct vaccel_arg *read, int nr_read,
+			struct vaccel_arg *write, int nr_write)
+{
+	return vaccel_opencv_op_upack(VACCEL_OPENCV_FIND_CONTOURS, session, read, nr_read, 4,
+			write, nr_write, 2);
+}
+
 
 void vaccel_solve(struct vaccel_session *session, Mat *coeff, Mat *Z_mat, Mat *sol, int method)
 {
 	return vaccel_opencv_op(VACCEL_OPENCV_SOLVE, session);
 }
 
-
-cv::Ptr<cv::StereoBM> vaccel_stereoBM_create_compute(struct vaccel_session *session, int numDisparities, int blockSize, 
-													int preFilterType, int preFilterSize, int preFilterCap,
-													int textureThreshold,int uniquenessRatio, int speckleRange,
-													int speckleWindowSize,int disp12MaxDiff, int minDisparity,
-													Mat Left_nice, Mat Right_nice, Mat disp)
+void vaccel_solve(struct vaccel_session *session,
+			struct vaccel_arg *read, int nr_read,
+			struct vaccel_arg *write, int nr_write)
 {
-	return vaccel_opencv_op(VACCEL_OPENCV_BM_CREATE_COMPUTE, session);
+	return vaccel_opencv_op_upack(VACCEL_OPENCV_SOLVE, session, read, nr_read, 4,
+			write, nr_write, 1);
 }
 
 
-cv::Ptr<cv::StereoSGBM> vaccel_stereoSGBM_create_compute(struct vaccel_session *session, int minDisparity, int numDisparities,
-													int blockSize, int disp12MaxDiff, int uniquenessRatio, int speckleWindowSize,
-													int speckleRange, Mat Left_nice, Mat Right_nice, Mat disp)
-{
-	return vaccel_opencv_op(VACCEL_OPENCV_SGBM_CREATE_COMPUTE, session);
-}
+// cv::Ptr<cv::StereoBM> vaccel_stereoBM_create_compute(struct vaccel_session *session, int numDisparities, int blockSize, 
+// 													int preFilterType, int preFilterSize, int preFilterCap,
+// 													int textureThreshold,int uniquenessRatio, int speckleRange,
+// 													int speckleWindowSize,int disp12MaxDiff, int minDisparity,
+// 													Mat Left_nice, Mat Right_nice, Mat disp)
+// {
+// 	return vaccel_opencv_op(VACCEL_OPENCV_BM_CREATE_COMPUTE, session);
+// }
+// 
+// cv::Ptr<cv::StereoBM> vaccel_stereoBM_create_compute(struct vaccel_session *session,
+// 			struct vaccel_arg *read, int nr_read,
+// 			struct vaccel_arg *write, int nr_write)
+// {
+// 	return vaccel_opencv_op_upack(VACCEL_OPENCV_BM_CREATE_COMPUTE, session, read, nr_read, 14,
+// 			write, nr_write, 1);
+// }
+
+
+// cv::Ptr<cv::StereoSGBM> vaccel_stereoSGBM_create_compute(struct vaccel_session *session, int minDisparity, int numDisparities,
+// 													int blockSize, int disp12MaxDiff, int uniquenessRatio, int speckleWindowSize,
+// 													int speckleRange, Mat Left_nice, Mat Right_nice, Mat disp)
+// {
+// 	return vaccel_opencv_op(VACCEL_OPENCV_SGBM_CREATE_COMPUTE, session);
+// }
+
+// cv::Ptr<cv::StereoSGBM> vaccel_stereoSGBM_create_compute(struct vaccel_session *session,
+// 			struct vaccel_arg *read, int nr_read,
+// 			struct vaccel_arg *write, int nr_write)
+// {
+// 	return vaccel_opencv_op_upack(VACCEL_OPENCV_SGBM_CREATE_COMPUTE, session, read, nr_read, 10,
+// 			write, nr_write, 1);
+// }
 
 
 __attribute__((constructor))
