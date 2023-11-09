@@ -52,7 +52,7 @@ int read_file(const char *path, void **data, size_t *size)
 
 	fd = open(path, O_RDONLY);
 	if (fd == -1) {
-		vaccel_debug("Could not open file %s", path);
+		vaccel_debug("Could not open file %s: %s", path, strerror(errno));
 		return errno;
 	}
 
@@ -60,15 +60,20 @@ int read_file(const char *path, void **data, size_t *size)
 	struct stat stat;
 	ret = fstat(fd, &stat);
 	if (ret < 0) {
-		vaccel_debug("Could not debug file %s", strerror(errno));
+		vaccel_debug("Could not fstat file: %s", strerror(errno));
 		ret = errno;
+		goto close_file;
+	}
+	if (!stat.st_size) {
+		vaccel_debug("File %s is empty", path);
+		ret = VACCEL_EINVAL;
 		goto close_file;
 	}
 
 	void *ptr = mmap(NULL, stat.st_size, PROT_READ|PROT_WRITE, MAP_PRIVATE,
 			fd, 0);
 	if (!ptr) {
-		vaccel_debug("Could not mmap file");
+		vaccel_debug("Could not mmap file: %s", strerror(errno));
 		ret = VACCEL_ENOMEM;
 		goto close_file;
 	}

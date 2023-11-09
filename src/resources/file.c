@@ -11,6 +11,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#define _POSIX_C_SOURCE 200809L
 
 #include "resources.h"
 #include "file.h"
@@ -65,7 +66,7 @@ int vaccel_file_persist(struct vaccel_file *file, const char *dir,
 {
 	int ret;
 
-	vaccel_debug("Persisting file");
+	vaccel_debug("Persisting file %s", filename);
 
 	if (!file || !file->data | !file->size) {
 		vaccel_error("Invalid file");
@@ -131,6 +132,11 @@ int vaccel_file_persist(struct vaccel_file *file, const char *dir,
 		goto remove_file;
 	}
 
+	/* fwrite() is a buffered operation so we need to fclose() here.
+	 * If we don't, we will have to fflush() to ensure data has been written
+	 * to disk before we try to mmap */
+	fclose(fp);
+
 	/* We deallocate the initial pointer and mmap a new one,
 	 * so that changes through the pointer are synced with the
 	 * file */
@@ -144,7 +150,6 @@ int vaccel_file_persist(struct vaccel_file *file, const char *dir,
 		goto remove_file;
 	}
 
-	fclose(fp);
 	return VACCEL_OK;
 
 remove_file:
@@ -208,9 +213,9 @@ int vaccel_file_destroy(struct vaccel_file *file)
 	if (file->data) {
 		int ret = munmap(file->data, file->size);
 		if (ret) {
-			// FIXME: check why munmap fails at times.
-			vaccel_debug("Failed to unmap file %s", file->path);
-			//return ret;
+			vaccel_debug("Failed to unmap file %s (size=%d): %s",
+					file->path, file->size, strerror(errno));
+			return ret;
 		}
 	}
 
