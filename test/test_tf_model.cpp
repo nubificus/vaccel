@@ -109,7 +109,3 @@ TEST_CASE("tf_model")
     free(buff);
 }
 
-TEST_CASE("saved_model")
-{
-
-}

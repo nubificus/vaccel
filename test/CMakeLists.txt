@@ -117,8 +117,8 @@ target_include_directories(test_log
 target_compile_options(test_log PRIVATE -Wall -Wextra -g -ggdb --coverage -lgcov)
 target_link_libraries(test_log PRIVATE Catch2::Catch2WithMain vaccel vaccel-noop gcov --coverage)
 
-add_executable(test_classify ${PROJECT_SOURCE_DIR}/test/test_classify.cpp)
-target_include_directories(test_classify
+add_executable(test_image ${PROJECT_SOURCE_DIR}/test/test_image.cpp)
+target_include_directories(test_image
     PRIVATE
         ../third-party/slog/src
         ../src
@@ -127,8 +127,8 @@ target_include_directories(test_classify
         ../build
         ../fff
 )
-target_compile_options(test_classify PRIVATE -Wall -Wextra -g -ggdb --coverage -lgcov)
-target_link_libraries(test_classify PRIVATE Catch2::Catch2WithMain vaccel vaccel-noop gcov --coverage)
+target_compile_options(test_image PRIVATE -Wall -Wextra -g -ggdb --coverage -lgcov)
+target_link_libraries(test_image PRIVATE Catch2::Catch2WithMain vaccel vaccel-noop gcov --coverage)
 
 add_executable(test_tf_interference ${PROJECT_SOURCE_DIR}/test/test_tf_interference.cpp)
 target_include_directories(test_tf_interference
@@ -173,6 +173,20 @@ target_include_directories(test_tf_saved_model
 target_compile_options(test_tf_saved_model PRIVATE -Wall -Wextra -g -ggdb --coverage -lgcov)
 target_link_libraries(test_tf_saved_model PRIVATE Catch2::Catch2WithMain vaccel vaccel-noop gcov --coverage)
 
+add_executable(test_exec ${PROJECT_SOURCE_DIR}/test/test_exec.cpp)
+target_include_directories(test_exec
+    PRIVATE
+        ../third-party/slog/src
+        ../src
+        ../src/include
+        ../src/include/ops
+        ../build
+        ../fff
+        ../src/resources
+)
+target_compile_options(test_exec PRIVATE -Wall -Wextra -g -ggdb --coverage -lgcov)
+target_link_libraries(test_exec PRIVATE Catch2::Catch2WithMain vaccel vaccel-noop gcov --coverage)
+
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/_deps/catch2-/src/extras")
 include(CTest)
@@ -188,10 +202,11 @@ add_test(NAME test_resource COMMAND test_resource)
 add_test(NAME test_session COMMAND test_session)
 add_test(NAME test_plugins COMMAND test_plugins)
 add_test(NAME test_fpga COMMAND test_fpga)
-add_test(NAME test_classify COMMAND test_classify)
+add_test(NAME test_image COMMAND test_image)
 add_test(NAME test_tf_interference COMMAND test_tf_interference)
 add_test(NAME test_tf_model COMMAND test_tf_model)
 add_test(NAME test_tf_saved_model COMMAND test_tf_saved_model)
+add_test(NAME test_exec COMMAND test_exec)
 
 set_tests_properties(
     test_vaccel test_fpga
@@ -201,7 +216,7 @@ set_tests_properties(
 )
 
 set_tests_properties(
-    test_plugins test_classify test_tf_interference test_tf_model test_tf_saved_model
+    test_plugins test_image test_tf_interference test_tf_model test_tf_saved_model test_exec
     PROPERTIES
     ENVIRONMENT "VACCEL_BACKENDS=${CMAKE_BINARY_DIR}/plugins/noop/libvaccel-noop.so"
     ARGS=--order rand --warn NoAssertions
