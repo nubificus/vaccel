@@ -54,6 +54,18 @@ static int exec(struct vaccel_session *session, const char *library, const char
 
 	/* Get the function pointer based on the relevant symbol */
 	vaccel_debug("[exec] symbol: %s", fn_symbol);
+
+	args = (struct vaccel_arg*) read;
+	for (i = 0 ; i<nr_read;i++) {
+		vaccel_debug("[exec]: read[%d].size: %u\n", i, args[i].size);
+		vaccel_debug("[exec]: read[%d].argtype: %u\n", i, args[i].argtype);
+	}
+	args = (struct vaccel_arg*) write;
+	for (i = 0 ; i<nr_write;i++) {
+		vaccel_debug("[exec]: write[%d].size: %u\n", i, args[i].size);
+		vaccel_debug("[exec]: write[%d].argtype: %u\n", i, args[i].argtype);
+	}
+
 	fptr = (int (*)(void*, size_t, void*,size_t))dlsym(dl, fn_symbol);
 	if (!fptr) {
 		vaccel_error("%s", dlerror());
@@ -99,6 +111,16 @@ static int exec_with_resource(struct vaccel_session *session, struct vaccel_shar
 		return VACCEL_EINVAL;
 	}
 
+	args = (struct vaccel_arg*) read;
+	for (i = 0 ; i<nr_read;i++) {
+		vaccel_debug("[exec]: read[%d].size: %u\n", args[i].size);
+		vaccel_debug("[exec]: read[%d].argtype: %u\n", args[i].argtype);
+	}
+	args = (struct vaccel_arg*) write;
+	for (i = 0 ; i<nr_write;i++) {
+		vaccel_debug("[exec]: write[%d].size: %u\n", args[i].size);
+		vaccel_debug("[exec]: write[%d].argtype: %u\n", args[i].argtype);
+	}
 	ret = (*fptr)(read, nr_read, write, nr_write);
 	if (ret)
 		return VACCEL_ENOEXEC;

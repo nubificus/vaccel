@@ -81,8 +81,8 @@ int main(int argc, char *argv[])
 	}
 
 	int input;
-	char out_text[512];
-	char out_text2[512];
+	int output1;
+	int output2;
 
 	struct vaccel_shared_object object;
 
@@ -135,9 +135,10 @@ int main(int argc, char *argv[])
 
 	input = 10; /* some random input value */
 	struct vaccel_arg read[1] = {
-		{.size = sizeof(input), .buf = &input}};
+		{.size = sizeof(input), .buf = &input, .argtype = 42}
+	};
 	struct vaccel_arg write[1] = {
-		{.size = sizeof(out_text), .buf = out_text},
+		{.size = sizeof(output1), .buf = &output1, .argtype = 42},
 	};
 
 	for (int i = 0; i < atoi(argv[2]); ++i)
@@ -149,12 +150,12 @@ int main(int argc, char *argv[])
 			goto close_session;
 		}
 	}
-	printf("output: %s\n", out_text);
+	printf("output1(2x%d): %d\n", input, output1);
 
 	struct vaccel_arg read_2[1] = {
 		{.size = sizeof(input), .buf = &input}};
 	struct vaccel_arg write_2[1] = {
-		{.size = sizeof(out_text2), .buf = out_text2},
+		{.size = sizeof(output2), .buf = &output2},
 	};
 
 	for (int i = 0; i < atoi(argv[2]); ++i)
@@ -167,7 +168,7 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	printf("output: %s\n", out_text2);
+	printf("output1(2x%d): %d\n", input, output2);
 	ret = vaccel_sess_unregister(&sess, object.resource);
 	if (ret) {
 		fprintf(stderr, "Could not unregister object from session\n");

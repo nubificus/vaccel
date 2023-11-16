@@ -12,26 +12,9 @@
  * limitations under the License.
  */
 
-#ifndef __VACCEL_GENOP_H__
-#define __VACCEL_GENOP_H__
+#ifndef __VACCEL_ARGS_H__
+#define __VACCEL_ARGS_H__
 
-#include <stdint.h>
-#include "vaccel_args.h"
+#include "include/vaccel_args.h"
 
-#ifdef __cplusplus
-extern "C" {
 #endif
-
-struct vaccel_session;
-
-
-/* Call one of the supported functions, given an op code and a set of arbitrary
- * arguments */
-int vaccel_genop(struct vaccel_session *sess, struct vaccel_arg *read,
-		int nr_read, struct vaccel_arg *write, int nr_write);
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif /* __VACCEL_GENOP_H__ */

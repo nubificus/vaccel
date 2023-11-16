@@ -26,7 +26,9 @@ set(BIN_EXAMPLES
 	pynq_parallel
 	pynq_parallel_generic
 	pynq_array_copy
-	pynq_array_copy_generic)
+	pynq_array_copy_generic
+	exec_helpers
+	exec_helpers_nonser)
 
 foreach(T ${BIN_EXAMPLES})
 	add_executable(${T} "${T}.c")
@@ -41,6 +43,7 @@ target_link_libraries(torch_inference PRIVATE vaccel dl)
 
 add_library(mytestlib SHARED mytestlib.c)
 target_compile_options(mytestlib PUBLIC -Wall -Wextra )
+target_include_directories(mytestlib PRIVATE ${INCLUDE_DIRS})
 set_target_properties(mytestlib PROPERTIES ENABLE_EXPORTS on)
 
 install(TARGETS ${BIN_EXAMPLES} torch_inference DESTINATION ${CMAKE_INSTALL_BINDIR})

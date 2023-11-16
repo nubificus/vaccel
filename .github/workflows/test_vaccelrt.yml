@@ -65,7 +65,8 @@ jobs:
         cd build_${{matrix.build_type}}
         cmake ${{github.workspace}} \
           -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/artifacts/${{matrix.archconfig}}/${{matrix.build_type}}/opt \
-          -DBUILD_PLUGIN_NOOP=ON && \
+          -DBUILD_PLUGIN_NOOP=ON \
+          -DBUILD_PLUGIN_EXEC=ON && \
         make -C plugins && make install -C plugins
 
     - name: Run examples
@@ -100,14 +101,19 @@ jobs:
         ./bin/tf_saved_model share/models/tf/lstm2
         ./bin/tf_inference share/models/tf/lstm2
 
-    - name: Upload binary distr to s3
-      uses: cloudkernels/minio-upload@v4
-      with:
-        url: https://s3.nubificus.co.uk
-        access-key: ${{ secrets.AWS_ACCESS_KEY }}
-        secret-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        local-path: artifacts/${{ matrix.archconfig }}/${{ matrix.build_type }}/opt
-        remote-path: nbfc-assets/github/vaccelrt/${{ env.ARTIFACT_SHA }}/${{ matrix.archconfig }}/${{ matrix.build_type }}/
+    - name: Run exec examples
+      id: run_exec_examples
+      env:
+        LD_LIBRARY_PATH: ${{github.workspace}}/artifacts/${{matrix.archconfig}}/${{matrix.build_type}}/opt/lib
+        VACCEL_BACKENDS: ${{github.workspace}}/artifacts/${{matrix.archconfig}}/${{matrix.build_type}}/opt/lib/libvaccel-exec.so
+        VACCEL_DEBUG_LEVEL: 4
+      run: |
+        cd ${{github.workspace}}/artifacts/${{matrix.archconfig}}/${{matrix.build_type}}/opt
+        #sudo mkdir -p /run/user/1001
+        #sudo chown -R runner /run/user/1001
+        ./bin/exec_with_res lib/libmytestlib.so 1
+        ./bin/exec_helpers lib/libmytestlib.so 1
+        ./bin/exec_helpers_nonser lib/libmytestlib.so 1
 
     - name: Build project for packages
       id: build_pkg_vaccelrt
