@@ -27,7 +27,7 @@ int main(int argc, char **argv)
 	int ret;
 	struct vaccel_session sess;
 	int input;
-	char out_text[512];
+	int output;
 
 	if (argc < 2) {
 		fprintf(stderr, "You must specify the number of iterations\n");
@@ -51,7 +51,7 @@ int main(int argc, char **argv)
 		{.size = sizeof(input),.buf = &input}
 	};
 	struct vaccel_arg write[1] = {
-		{.size = sizeof(out_text),.buf = out_text},
+		{.size = sizeof(output),.buf = &output},
 	};
 
 	for (int i = 0; i < atoi(argv[1]); ++i) {
@@ -61,7 +61,8 @@ int main(int argc, char **argv)
 			goto close_session;
 		}
 	}
-	printf("output: %s\n", out_text);
+	
+	printf("output(2x%d): %d\n", input, output);
 
  close_session:
 	if (vaccel_sess_free(&sess) != VACCEL_OK) {
