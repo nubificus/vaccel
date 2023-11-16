@@ -55,8 +55,7 @@ jobs:
           -DBUILD_EXAMPLES=ON \
           -DBUILD_PLUGIN_NOOP=ON \
           -DCMAKE_CXX_STANDARD=11 \
-          -DCMAKE_C_COMPILER=gcc-12 \
-          -DCMAKE_CXX_COMPILER=g++-12 && \
+          -DCMAKE_C_COMPILER=gcc-12 && \
         cmake --build . --config ${{matrix.build_type}} && \
         make test && \
         make install -C src && \
