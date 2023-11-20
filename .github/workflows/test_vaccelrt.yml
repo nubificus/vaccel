@@ -46,9 +46,14 @@ jobs:
     - name: Update GCC
       run: |
         sudo apt update
-        sudo apt upgrade -y
-        sudo apt install -y gcc
+        sudo apt install -y gcc-12 g++-12
+        sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 120
+        sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-12 120
+        sudo update-alternatives --config gcc
+        sudo update-alternatives --config g++
 
+    - name: Check GCC version
+      run: gcc --version
 
     - name: Build project
       id: build_vaccelrt
