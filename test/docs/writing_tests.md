@@ -132,6 +132,26 @@ We do not need to include a main function in our tests if we link our tests with
 
 To include tests, modify the ```CMakeLists.txt``` file in the ```test``` directory.
 
+Quickest way is to look at which ```set``` of ```include``` files you need, either ```core``` or ```api``` and add the ```test_name``` into the set.
+
+```
+set(TESTS_CORE
+    test_example
+    test_plugin
+    test_session
+    test_misc
+    test_resource
+    test_id_pool
+    test_vaccel
+    test_log
+    .
+    .
+    test_name
+)
+```
+
+#### For manual tests/more control over what you would like:
+
 Basic template to include tests:
 
 
@@ -150,6 +170,8 @@ To make sure the tests run, add the following lines below ```enable_testing()```
 ```
 add_test(NAME OUTPUT_NAME COMMAND NAME_OF_TEST)
 ```
+
+#### Adding environment properties
 
 If you would like to add some environment properties, i.e setting ```VACCEL_DEBUG_LEVEL``` etc. You can do so by:
 
