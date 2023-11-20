@@ -50,6 +50,7 @@ jobs:
     - name: Install GCC 12
       run: |
         sudo apt-get install -y g++-12
+        which g++-12
 
     - name: Build project
       id: build_vaccelrt
