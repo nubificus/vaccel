@@ -49,14 +49,7 @@ jobs:
         sudo apt-get update
     - name: Install GCC 12
       run: |
-        sudo apt-get install -y gcc-12 g++-12
-    - name: Update alternatives
-      run: |
-        sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 120
-        sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-12 120
-        sudo update-alternatives --config gcc
-        sudo update-alternatives --config g++
-
+        sudo apt-get install -y gcc g++
     - name: Check GCC version
       run: gcc --version
 
