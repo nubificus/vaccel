@@ -43,6 +43,12 @@ jobs:
           echo "ARTIFACT_SHA=$(echo ${{github.sha}})" >> $GITHUB_ENV
         fi
 
+    - name: Update GCC
+      run: |
+          sudo apt update
+          sudo apt upgrade
+          sudo apt install gcc
+
     - name: Build project
       id: build_vaccelrt
       run: |
