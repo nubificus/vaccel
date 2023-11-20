@@ -81,7 +81,7 @@ TEST_CASE("tf_model")
     REQUIRE(ret == 0);
 
     struct vaccel_tf_model model2;
-    size_t len;
+    size_t len = 0;
 	unsigned char *buff = read_file(model_path, &len);
     REQUIRE(buff);
 

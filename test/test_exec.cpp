@@ -183,7 +183,7 @@ TEST_CASE("exec_with_resources")
     REQUIRE(ret == VACCEL_OK);
 
     struct vaccel_shared_object object2;
-    size_t len;
+    size_t len = 0;
     unsigned char *buff = read_file(plugin_path, &len);
     REQUIRE(buff);
 

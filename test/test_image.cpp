@@ -139,7 +139,7 @@ TEST_CASE("classify_generic")
 
     REQUIRE(ret == 0);
 
-    uint32_t image_size_uint32;
+    uint32_t image_size_uint32 = 0;
     if (image_size <= UINT32_MAX) {
         image_size_uint32 = static_cast<uint32_t>(image_size);
     } else {
@@ -240,7 +240,7 @@ TEST_CASE("depth_generic")
     ret = read_file(file_path, &image, &image_size);
     REQUIRE(ret == 0);
 
-    uint32_t image_size_uint32;
+    uint32_t image_size_uint32 = 0;
     if (image_size <= UINT32_MAX) {
         image_size_uint32 = static_cast<uint32_t>(image_size);
     } else {
@@ -340,7 +340,7 @@ TEST_CASE("detect_generic")
     ret = read_file(argv[1], &image, &image_size);
     REQUIRE(ret == VACCEL_OK);
 
-    uint32_t image_size_uint32;
+    uint32_t image_size_uint32 = 0;
     if (image_size <= UINT32_MAX) {
         image_size_uint32 = static_cast<uint32_t>(image_size);
     } else {
@@ -440,7 +440,7 @@ TEST_CASE("pose_generic")
     ret = read_file(argv[1], &image, &image_size);
     REQUIRE(ret == VACCEL_OK);
 
-    uint32_t image_size_uint32;
+    uint32_t image_size_uint32 = 0;
     if (image_size <= UINT32_MAX) {
         image_size_uint32 = static_cast<uint32_t>(image_size);
     } else {
@@ -541,7 +541,7 @@ TEST_CASE("segmentation_generic")
     ret = read_file(argv[1], &image, &image_size);
     REQUIRE(ret == VACCEL_OK);
 
-    uint32_t image_size_uint32;
+    uint32_t image_size_uint32 = 0;
     if (image_size <= UINT32_MAX) {
         image_size_uint32 = static_cast<uint32_t>(image_size);
     } else {
