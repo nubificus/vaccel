@@ -47,7 +47,7 @@ jobs:
       run: |
           sudo apt update
           sudo apt upgrade
-          sudo apt install gcc
+          sudo apt install -y gcc
 
     - name: Build project
       id: build_vaccelrt
