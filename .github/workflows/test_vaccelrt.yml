@@ -50,10 +50,6 @@ jobs:
     - name: Install GCC 12
       run: |
         sudo apt-get install -y g++-12
-    - name: Update alternatives
-      run: |
-        sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-12 120
-        sudo update-alternatives --config g++
 
     - name: Build project
       id: build_vaccelrt
