@@ -45,9 +45,10 @@ jobs:
 
     - name: Update GCC
       run: |
-          sudo apt update
-          sudo apt upgrade
-          sudo apt install -y gcc
+        sudo apt update
+        sudo apt upgrade -y
+        sudo apt install -y gcc
+
 
     - name: Build project
       id: build_vaccelrt
