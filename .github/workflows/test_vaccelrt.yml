@@ -50,13 +50,11 @@ jobs:
     - name: Install GCC 12
       run: |
         sudo apt-get install -y g++-12
-    - name: Set CXX to g++-12
-      run: |
-        export CXX=/usr/bin/g++-12
 
     - name: Build project
       id: build_vaccelrt
       run: |
+        export CXX=/usr/bin/g++-12
         mkdir -p build_${{matrix.build_type}}
         cd build_${{matrix.build_type}}
         cmake ${{github.workspace}} \
