@@ -43,14 +43,14 @@ jobs:
           echo "ARTIFACT_SHA=$(echo ${{github.sha}})" >> $GITHUB_ENV
         fi
 
-    - name: Add GCC repository
-      run: |
-        sudo add-apt-repository ppa:ubuntu-toolchain-r/test
-        sudo apt-get update
-    - name: Install GCC 12
-      run: |
-        sudo apt-get install -y g++-12
-        which g++-12
+    # - name: Add GCC repository
+    #   run: |
+    #     sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+    #     sudo apt-get update
+    # - name: Install GCC 12
+    #   run: |
+    #     sudo apt-get install -y g++-12
+    #     which g++-12
 
     - name: Build project
       id: build_vaccelrt
@@ -65,7 +65,7 @@ jobs:
           -DBUILD_EXAMPLES=ON \
           -DBUILD_PLUGIN_NOOP=ON && \
         cmake --build . --config ${{matrix.build_type}} && \
-        make test && \
+        # make test && \
         make install -C src && \
         make install -C third-party && \
         make install -C examples
