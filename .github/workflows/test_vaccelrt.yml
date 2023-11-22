@@ -55,7 +55,7 @@ jobs:
     - name: Build project
       id: build_vaccelrt
       run: |
-        export CXX=/usr/bin/g++-12
+        # export CXX=/usr/bin/g++-12
         mkdir -p build_${{matrix.build_type}}
         cd build_${{matrix.build_type}}
         cmake ${{github.workspace}} \
