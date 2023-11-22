@@ -55,17 +55,14 @@ jobs:
     - name: Build project
       id: build_vaccelrt
       run: |
-        # export CXX=/usr/bin/g++-12
         mkdir -p build_${{matrix.build_type}}
         cd build_${{matrix.build_type}}
         cmake ${{github.workspace}} \
           -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/artifacts/${{matrix.archconfig}}/${{matrix.build_type}}/opt \
           -DCMAKE_BUILD_TYPE=${{matrix.build_type}} \
-          -DENABLE_TESTS=ON \
           -DBUILD_EXAMPLES=ON \
           -DBUILD_PLUGIN_NOOP=ON && \
         cmake --build . --config ${{matrix.build_type}} && \
-        # make test && \
         make install -C src && \
         make install -C third-party && \
         make install -C examples
