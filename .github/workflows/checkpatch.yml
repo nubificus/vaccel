@@ -1,6 +1,7 @@
 name: checkpatch review
-on: [pull_request]
-workflow_dispatch:
+on: 
+  pull_request:
+  workflow_dispatch:
 jobs:
   review:
     name: checkpatch review
