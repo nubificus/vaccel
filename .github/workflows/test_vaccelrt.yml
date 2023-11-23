@@ -18,7 +18,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        architecture: [x86_64, aarch64, armv7l]
+        architecture: [ x86_64, aarch64, armv7l ]
         build_type: [Debug, Release]
         
     steps:
@@ -28,7 +28,7 @@ jobs:
           submodules: recursive
           
       - name: Install dependencies
-        run: sudo apt-get install lcov
+        run: sudo apt update && sudo apt-get install -y lcov cmake gcc-9 libclang-dev
       
       - name: Check g++ version
         run : |
