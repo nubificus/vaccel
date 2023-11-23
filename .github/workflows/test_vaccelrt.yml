@@ -13,7 +13,7 @@ on:
 jobs:
 
   testing:
-    runs-on: ubuntu-latest
+    runs-on: ["self-hosted", "${{ matrix.architecture }}", gcc, lite, 2204 ]
 
     strategy:
       fail-fast: false
