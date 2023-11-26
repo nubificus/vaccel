@@ -51,7 +51,6 @@ jobs:
         cmake ${{github.workspace}} \
           -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/artifacts/${{matrix.archconfig}}/${{matrix.build_type}}/opt \
           -DCMAKE_BUILD_TYPE=${{matrix.build_type}} \
-          -DENABLE_TESTS=ON \
           -DBUILD_EXAMPLES=ON && \
         cmake --build . --config ${{matrix.build_type}} && \
         make install -C src && \
