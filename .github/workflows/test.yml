@@ -17,7 +17,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        architecture: [ x86_64, aarch64 , armv7l]
+        architecture: [ x86_64, aarch64]
         build_type: [Debug, Release]
         
     steps:
