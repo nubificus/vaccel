@@ -43,8 +43,7 @@ jobs:
           cd build
           cmake ../ -DBUILD_PLUGIN_NOOP=ON -DENABLE_TESTS=ON -DBUILD_EXAMPLES=ON -DCMAKE_CXX_COMPILER=g++-12 -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
           make
-          make CTEST_OUTPUT_ON_FAILURE=1 test || true
-          cat /home/runner/_work/vaccelrt/vaccelrt/build/Testing/Temporary/LastTest.log
+          make test ARGS="-V"
           cd ../
         shell: bash
         env:
