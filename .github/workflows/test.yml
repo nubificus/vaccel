@@ -13,12 +13,16 @@ jobs:
 
   testing:
     runs-on: ["self-hosted", "${{ matrix.architecture }}", gcc, lite, 2204 ]
+  
+    concurrency:
+      group: ${{ matrix.architecture }}
 
     strategy:
       fail-fast: false
       matrix:
         architecture: [ x86_64, aarch64]
         build_type: [Debug, Release]
+      
         
     steps:
       - name: Cleanup pervious jobs
