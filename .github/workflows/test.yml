@@ -17,12 +17,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        architecture: [ x86_64, aarch64 ]
+        architecture: [ x86_64, aarch64 , armv7l]
         build_type: [Debug, Release]
         
     steps:
-      - name: Clean Build Directory
-        run: rm -rf build
+      - name: Cleanup pervious jobs
+        run: |
+          echo "Cleaning up previous runs"
+          sudo rm -rf ${{ github.workspace }}/*
+          sudo rm -rf ${{ github.workspace }}/.??*
 
       - name: Checkout code
         uses: actions/checkout@v2
