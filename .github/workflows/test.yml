@@ -72,6 +72,9 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+        with:
+          clean: true 
+          submodules: recursive
 
         
       - name: Install dependencies
