@@ -21,25 +21,14 @@ jobs:
         build_type: [Debug, Release]
         
     steps:
-      - name: Cleanup pervious jobs
+      - name: Cleanup previous runs, Checkout code, Install dependencies
         run: |
           echo "Cleaning up previous runs"
           sudo rm -rf ${{ github.workspace }}/*
           sudo rm -rf ${{ github.workspace }}/.??*
-
-      - name: Checkout code
-        uses: actions/checkout@v2
-        with:
-          clean: true 
-          submodules: recursive
-          
-      - name: Install dependencies
-        run: sudo apt update && sudo apt-get install -y lcov cmake gcc g++ libclang-dev
-      
-      - name: Check g++ version
-        run : |
+          actions/checkout@v2
+          sudo apt update && sudo apt-get install -y lcov cmake gcc g++ libclang-dev
           gcc --version
-
       - name: Set up CMake and run tests
         run: |
           export CXX=g++
