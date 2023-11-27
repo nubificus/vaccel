@@ -56,3 +56,41 @@ jobs:
         shell: bash
         env:
           ARCHITECTURE: ${{ matrix.architecture }}
+
+
+  github_runners:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        architecture: [x86_64, aarch64, armv7l]
+        build_type: [Debug, Release]
+
+    
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+        
+      - name: Install dependencies
+        run: sudo apt-get install lcov
+      
+      - name: Check g++ version
+        run : |
+          gcc --version
+
+      - name: Set up CMake and run tests
+        run: |
+          export CXX=g++
+          rm -rf build
+          mkdir -p build
+          cd build
+          cmake ../ -DBUILD_PLUGIN_NOOP=ON -DENABLE_TESTS=ON -DBUILD_EXAMPLES=ON -DCMAKE_CXX_COMPILER=g++-12 -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+          make
+          make test ARGS="-V"
+          cd ../
+        shell: bash
+        env:
+          ARCHITECTURE: ${{ matrix.architecture }}
