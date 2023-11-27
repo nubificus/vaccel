@@ -42,6 +42,7 @@ jobs:
 
       - name: Set up CMake and run tests
         run: |
+          export CXX=g++
           mkdir -p build
           cd build
           cmake ../ -DBUILD_PLUGIN_NOOP=ON -DENABLE_TESTS=ON -DBUILD_EXAMPLES=ON -DCMAKE_CXX_COMPILER=g++-12 -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
