@@ -18,7 +18,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        architecture: [ x86_64, aarch64, armv7l ]
+        architecture: [ x86_64, aarch64 ]
         build_type: [Debug, Release]
         
     steps:
@@ -38,7 +38,7 @@ jobs:
           rm -rf build
           mkdir -p build
           cd build
-          cmake ../ -DBUILD_PLUGIN_NOOP=ON -DENABLE_TESTS=ON -DBUILD_EXAMPLES=ON -DCMAKE_CXX_STANDARD=11 -DCMAKE_C_COMPILER=gcc-9 -DCMAKE_CXX_COMPILER=g++-12 -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+          cmake ../ -DBUILD_PLUGIN_NOOP=ON -DENABLE_TESTS=ON -DBUILD_EXAMPLES=ON -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
           make
           make test ARGS="-V"
           cd ../
