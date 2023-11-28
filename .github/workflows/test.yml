@@ -43,7 +43,14 @@ jobs:
       - name: Check g++ version
         run : |
           gcc --version
-
+          
+      - name: Create dir
+        run : |
+          if [ "${{ matrix.architecture }}" = "armv7l" ]; then
+            sudo mkdir /run/user/1001/ 
+            sudo chown runner /run/user/1001
+          fi
+       
       - name: Set up CMake and run tests
         run: |
           export CXX=g++
