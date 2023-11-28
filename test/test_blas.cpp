@@ -43,7 +43,7 @@ void init(int m, int n, int k, float *A, float *B, float *C)
 TEST_CASE("sgemm", "[blas]"){
 
     FILE *data_fp = NULL;
-    const char *path_output = "../../test/input/output.txt";
+    const char *path_output = "../../test/empty.txt";
 
     data_fp = fopen(path_output, "wb");
     REQUIRE(data_fp);

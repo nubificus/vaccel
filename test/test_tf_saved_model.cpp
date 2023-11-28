@@ -74,7 +74,7 @@ static unsigned char *read_file_from_dir(
 TEST_CASE("saved_tf_model_from_memory")
 {   
     int ret;
-    const char *path = "../../test/models/tf/lstm2/";
+    const char *path = "../../examples/models/tf/lstm2/";
 
     struct vaccel_tf_saved_model *model = vaccel_tf_saved_model_new();
     REQUIRE(model);
@@ -128,7 +128,7 @@ TEST_CASE("saved_model_from_file")
 {
 
     int ret;
-    const char *path = "../../test/models/tf/lstm2/";
+    const char *path = "../../examples/models/tf/lstm2/";
 
     struct vaccel_tf_saved_model *model = vaccel_tf_saved_model_new();
     REQUIRE(model);

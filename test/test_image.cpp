@@ -71,7 +71,7 @@ free_buff:
 TEST_CASE("classify")
 {   
     char program_name[] = "program_name";
-    char file_path[] = "../../test/images/example.jpg";
+    char file_path[] = "../../examples/images/example.jpg";
     char iterations[] = "2";
     char *argv[] = {program_name, file_path, iterations};
 
@@ -120,7 +120,7 @@ close_session:
 TEST_CASE("classify_generic")
 {   
     char program_name[] = "program_name";
-    char file_path[] = "../../test/images/example.jpg";
+    char file_path[] = "../../examples/images/example.jpg";
     char iterations[] = "2";
     char *argv[] = {program_name, file_path, iterations};
 
@@ -181,7 +181,7 @@ TEST_CASE("depth")
 {
 
     char program_name[] = "program_name";
-    char file_path[] = "../../test/images/example.jpg";
+    char file_path[] = "../../examples/images/example.jpg";
     char iterations[] = "2";
     char *argv[] = {program_name, file_path, iterations};
     int ret;
@@ -224,7 +224,7 @@ close_session:
 TEST_CASE("depth_generic")
 {   
     char program_name[] = "program_name";
-    char file_path[] = "../../test/images/example.jpg";
+    char file_path[] = "../../examples/images/example.jpg";
     char iterations[] = "2";
     char *argv[] = {program_name, file_path, iterations};
 
@@ -279,7 +279,7 @@ TEST_CASE("detect")
 {
 
     char program_name[] = "program_name";
-    char file_path[] = "../../test/images/example.jpg";
+    char file_path[] = "../../examples/images/example.jpg";
     char iterations[] = "2";
     char *argv[] = {program_name, file_path, iterations};
 
@@ -324,7 +324,7 @@ TEST_CASE("detect_generic")
 {
 
     char program_name[] = "program_name";
-    char file_path[] = "../../test/images/example.jpg";
+    char file_path[] = "../../examples/images/example.jpg";
     char iterations[] = "2";
     char *argv[] = {program_name, file_path, iterations};
 
@@ -379,7 +379,7 @@ TEST_CASE("pose")
 {
 
     char program_name[] = "program_name";
-    char file_path[] = "../../test/images/example.jpg";
+    char file_path[] = "../../examples/images/example.jpg";
     char iterations[] = "2";
     char *argv[] = {program_name, file_path, iterations};
 
@@ -424,7 +424,7 @@ TEST_CASE("pose_generic")
 {
 
     char program_name[] = "program_name";
-    char file_path[] = "../../test/images/example.jpg";
+    char file_path[] = "../../examples/images/example.jpg";
     char iterations[] = "2";
     char *argv[] = {program_name, file_path, iterations};
 
@@ -480,7 +480,7 @@ TEST_CASE("segmentation")
 {
 
     char program_name[] = "program_name";
-    char file_path[] = "../../test/images/example.jpg";
+    char file_path[] = "../../examples/images/example.jpg";
     char iterations[] = "2";
     char *argv[] = {program_name, file_path, iterations};
 
@@ -525,7 +525,7 @@ TEST_CASE("segmentation_generic")
 {
 
     char program_name[] = "program_name";
-    char file_path[] = "../../test/images/example.jpg";
+    char file_path[] = "../../examples/images/example.jpg";
     char iterations[] = "2";
     char *argv[] = {program_name, file_path, iterations};
 

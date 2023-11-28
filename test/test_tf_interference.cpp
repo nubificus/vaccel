@@ -29,7 +29,7 @@ TEST_CASE("main")
     struct vaccel_tf_status status;
     int ret;
 
-    const char *model_path = "../../test/models/tf/lstm2";
+    const char *model_path = "../../examples/models/tf/lstm2";
 
     ret = vaccel_tf_saved_model_set_path(&model, model_path);
     REQUIRE(ret == 0);
