@@ -44,12 +44,16 @@ jobs:
         run : |
           gcc --version
           
-      - name: Create dir
-        run : |
+      - name: Set up dir for armv7l
+        run: |
           if [ "${{ matrix.architecture }}" = "armv7l" ]; then
-            sudo mkdir /run/user/1001/ 
-            sudo chown runner /run/user/1001
+            if [ ! -d "/run/user/1001/" ]; then
+              sudo mkdir /run/user/1001/
+              sudo chown runner /run/user/1001
+            fi
           fi
+        shell: bash
+
        
       - name: Set up CMake and run tests
         run: |
