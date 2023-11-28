@@ -53,6 +53,7 @@ set(TESTS_CORE
     test_id_pool
     test_vaccel
     test_log
+    test_plugin
 )
 
 set(TESTS_API
@@ -85,7 +86,7 @@ set_tests_properties(
 )
 
 set_tests_properties(
-    test_image test_tf_interference test_tf_model test_tf_saved_model test_exec test_minmax test_noop test_blas test_fpga
+    test_image test_tf_interference test_tf_model test_tf_saved_model test_exec test_minmax test_noop test_blas test_fpga test_plugin
     PROPERTIES
     ENVIRONMENT "VACCEL_DEBUG_LEVEL=4;VACCEL_BACKENDS=${CMAKE_BINARY_DIR}/plugins/noop/libvaccel-noop.so"
     ARGS=--order rand --warn NoAssertions
