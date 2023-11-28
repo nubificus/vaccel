@@ -69,7 +69,7 @@ TEST_CASE("tf_model")
 {   
     struct vaccel_tf_model model;
     struct vaccel_session sess;
-    const char *model_path = "../../test/models/tf/lstm2/saved_model.pb";
+    const char *model_path = "../../examples/models/tf/lstm2/saved_model.pb";
 
     int ret = vaccel_tf_model_new(&model, model_path);
     REQUIRE(ret == 0);

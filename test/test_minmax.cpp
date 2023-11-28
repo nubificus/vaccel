@@ -25,7 +25,7 @@ extern "C"
 
 TEST_CASE("min_max", "[minmax]") {
 
-    const char *path = "../../test/input/input_262144.csv";
+    const char *path = "../../examples/input/input_262144.csv";
     double min, max;
     int ret;
 
@@ -70,7 +70,7 @@ TEST_CASE("min_max", "[minmax]") {
 
 TEST_CASE("min_max_generic", "[minmax]") {
 
-    const char *path = "../../test/input/input_262144.csv";
+    const char *path = "../../examples/input/input_262144.csv";
     double min, max;
     int ret;
 
