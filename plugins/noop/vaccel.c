@@ -316,15 +316,15 @@ static int noop_tf_session_delete(
 static int v_arraycopy(struct vaccel_session *session, int *a, int *b, size_t c)
 {
 	int i = 0;
-	fprintf(stdout, "[noop] Calling v_arraycopy for session %u\n",
-		session->session_id);
+	// fprintf(stdout, "[noop] Calling v_arraycopy for session %u\n",
+	// 	session->session_id);
 
-	fprintf(stdout, "[noop] Dumping arguments for v_arracycopy:\n");
-	fprintf(stdout, "[noop] size: %zu \n", c);
+	// fprintf(stdout, "[noop] Dumping arguments for v_arracycopy:\n");
+	// fprintf(stdout, "[noop] size: %zu \n", c);
 
 	/* Fill output with dummy values */
 	for (i = 0; i < c ; i++) {
-		b[i] = 9.1;
+		b[i] = a[i];
 	}
 
 
@@ -335,15 +335,15 @@ static int v_vectoradd(struct vaccel_session *session, float *a, float *b,
 				                       float *c, size_t len_a, size_t len_b)
 {
 	int i = 0;
-	fprintf(stdout, "[noop] Calling v_vectoradd for session %u\n",
-		session->session_id);
+	// fprintf(stdout, "[noop] Calling v_vectoradd for session %u\n",
+	// 	session->session_id);
 
-	fprintf(stdout, "[noop] Dumping arguments for v_vectoradd:\n");
-	fprintf(stdout, "[noop] len_a: %zu len_b: %zu \n", len_a, len_b);
+	// fprintf(stdout, "[noop] Dumping arguments for v_vectoradd:\n");
+	// fprintf(stdout, "[noop] len_a: %zu len_b: %zu \n", len_a, len_b);
 
 	/* Fill output with dummy values */
 	for (i = 0; i < len_a ; i++) {
-		c[i] = 9.1;
+		c[i] = a[i] + b[i];
 	}
 
 
@@ -354,34 +354,34 @@ static int v_parallel(struct vaccel_session *session, float *a, float *b,
 				                      float *add_out, float *mult_out, size_t len_a)
 {
 	int i = 0;
-	fprintf(stdout, "[noop] Calling v_parallel for session %u\n",
-		session->session_id);
+	// fprintf(stdout, "[noop] Calling v_parallel for session %u\n",
+	// 	session->session_id);
 
-	fprintf(stdout, "[noop] Dumping arguments for v_parallel:\n");
-	fprintf(stdout, "[noop] len_a: %zu\n", len_a);
+	// fprintf(stdout, "[noop] Dumping arguments for v_parallel:\n");
+	// fprintf(stdout, "[noop] len_a: %zu\n", len_a);
 
 	/* Fill output with dummy values */
 	for (i = 0; i < len_a ; i++) {
-		add_out[i] = 9.1;
-		mult_out[i] = 18.2;
+		add_out[i] = a[i] + b[i];
+		mult_out[i] = 1;
 	}
 
 	return VACCEL_OK;
 }
 
-static int v_mmult(struct vaccel_session *session, float *a, float *b, float *c,
-				                   float *d_out, size_t len_a)
+static int v_mmult(struct vaccel_session *session, float *a, float *b,
+				                   float *c_out, size_t len_a)
 {
 	int i = 0;
-	fprintf(stdout, "[noop] Calling v_mmult for session %u\n",
-		session->session_id);
+	// fprintf(stdout, "[noop] Calling v_mmult for session %u\n",
+	// 	session->session_id);
 
-	fprintf(stdout, "[noop] Dumping arguments for v_mmult:\n");
-	fprintf(stdout, "[noop] len_a: %zu\n", len_a);
+	// fprintf(stdout, "[noop] Dumping arguments for v_mmult:\n");
+	// fprintf(stdout, "[noop] len_a: %zu\n", len_a);
 
 	/* Fill output with dummy values */
 	for (i = 0; i < len_a ; i++) {
-		d_out[i] = 9.1;
+		c_out[i] = 9.1;
 	}
 	return VACCEL_OK;
 }
