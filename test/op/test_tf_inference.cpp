@@ -11,6 +11,7 @@
 extern "C" {
 #include <stdio.h>
 #include <stdlib.h>
+#include <inttypes.h>
 #include <vaccel.h>
 }
 
@@ -70,7 +71,7 @@ TEST_CASE("main")
 
     struct vaccel_tf_node in_node = { const_cast<char*>(in_node_name), 0 };
 
-    uint32_t dims[] = { 1, 30 };
+    int64_t dims[] = { 1, 30 };
     float data[30];
     for (int i = 0; i < 30; ++i)
         data[i] = 1.00;
@@ -94,7 +95,7 @@ TEST_CASE("main")
     printf("Success!\n");
     printf("Output tensor => type:%u nr_dims:%u\n", out->data_type, out->nr_dims);
     for (int i = 0; i < out->nr_dims; ++i)
-        printf("dim[%d]: %d\n", i, out->dims[i]);
+        printf("dim[%d]: %" PRId64 "\n", i, out->dims[i]);
 
     printf("Result Tensor :\n");
     float* offsets = (float*)out->data;
