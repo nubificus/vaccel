@@ -14,6 +14,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <inttypes.h>
 
 #include <vaccel.h>
 #include <ops/tf.h>
@@ -72,7 +73,7 @@ int main(int argc, char *argv[])
 	/* Input tensors & nodes */
 	struct vaccel_tf_node in_node = { "serving_default_input_1", 0 };
 	
-	uint32_t dims[] = {1, 30};
+	int64_t dims[] = {1, 30};
 	float data[30];
 	for (int i = 0; i < 30; ++i)
 		data[i] = 1.00;
@@ -102,7 +103,7 @@ int main(int argc, char *argv[])
 	printf("Success!\n");
 	printf("Output tensor => type:%u nr_dims:%u\n", out->data_type, out->nr_dims);
 	for (int i = 0; i < out->nr_dims; ++i)
-		printf("dim[%d]: %d\n", i, out->dims[i]);
+		printf("dim[%d]: %" PRId64 "\n", i, out->dims[i]);
 		
 	printf("Result Tensor :\n");
 	float *offsets = (float *)out->data;

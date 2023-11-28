@@ -72,14 +72,13 @@ struct vaccel_tf_node {
 	char *name;
 
         /* id of the node */
-        long long int id;
+        int id;
 };
 
-struct vaccel_tf_node *vaccel_tf_node_new(const char *name, long long int id);
+struct vaccel_tf_node *vaccel_tf_node_new(const char *name, int id);
 void vaccel_tf_node_destroy(struct vaccel_tf_node *node);
 const char *vaccel_tf_node_get_name(struct vaccel_tf_node *node);
-long long int vaccel_tf_node_get_id(struct vaccel_tf_node *node);
-
+int vaccel_tf_node_get_id(struct vaccel_tf_node *node);
 
 struct vaccel_tf_tensor {
         /* Tensor's data */
@@ -93,7 +92,7 @@ struct vaccel_tf_tensor {
 
         /* dimensions of the data */
         int nr_dims;
-        uint32_t *dims;
+        int64_t *dims;
 
         /* Data type */
         enum vaccel_tf_data_type data_type;
@@ -102,13 +101,13 @@ struct vaccel_tf_tensor {
 struct vaccel_tf_tensor *
 vaccel_tf_tensor_new(
 	int nr_dims,
-	uint32_t  *dims,
+	int64_t *dims,
 	enum vaccel_tf_data_type type
 );
 
 struct vaccel_tf_tensor *
 vaccel_tf_tensor_allocate(
-	int nr_dims, uint32_t *dims,
+	int nr_dims, int64_t *dims,
 	enum vaccel_tf_data_type type,
 	size_t total_size
 );

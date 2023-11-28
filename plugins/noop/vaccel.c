@@ -16,6 +16,7 @@
 #include "ops/vaccel_ops.h"
 #include <stdio.h>
 #include <string.h>
+#include <inttypes.h>
 
 #include <vaccel.h>
 #include <ops/torch.h>
@@ -256,11 +257,11 @@ static int noop_tf_session_run(
 
 	noop_info("Number of inputs: %d\n", nr_inputs);
 	for (int i = 0; i < nr_inputs; ++i) {
-		noop_info("\tNode %d: %s:%lld\n", i, in_nodes[i].name,
+		noop_info("\tNode %d: %s:%d\n", i, in_nodes[i].name,
 				in_nodes[i].id);
 		noop_info("\t#dims: %d -> {", in[i]->nr_dims);
 		for (int j = 0; j < in[i]->nr_dims; ++j)
-			printf("%d%s", in[i]->dims[j],
+			printf("%" PRId64 "%s", in[i]->dims[j],
 				(j == in[i]->nr_dims - 1) ? "}\n" : " ");
 
 		noop_info("\tData type: %d\n", in[i]->data_type);
@@ -269,7 +270,7 @@ static int noop_tf_session_run(
 
 	noop_info("Number of outputs: %d\n", nr_outputs);
 	for (int i = 0; i < nr_outputs; ++i) {
-		noop_info("\tNode %d: %s:%lld\n", i, out_nodes[i].name,
+		noop_info("\tNode %d: %s:%d\n", i, out_nodes[i].name,
 				out_nodes[i].id);
 		out[i] = malloc(sizeof(*out[i]));
 		out[i]->nr_dims = in[i]->nr_dims;
