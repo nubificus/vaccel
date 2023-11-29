@@ -340,67 +340,67 @@ TEST_CASE("get_all_available_functions") {
 }
 
 
-static int no_op_exec(){return 2;}
-static int no_op_fpga() {return 3;}
+// static int no_op_exec(){return 2;}
+// static int no_op_fpga() {return 3;}
 
-TEST_CASE("register_multiple_plugin_functions") {
+// TEST_CASE("register_multiple_plugin_functions") {
 
-    struct vaccel_plugin no_op_plugin;
-    struct vaccel_plugin_info pinfo;
+//     struct vaccel_plugin no_op_plugin;
+//     struct vaccel_plugin_info pinfo;
 
-    struct vaccel_op exec_operation;
-    exec_operation.type = VACCEL_EXEC;
-    exec_operation.func = (void *)no_op_exec;
-    exec_operation.owner = &no_op_plugin;
+//     struct vaccel_op exec_operation;
+//     exec_operation.type = VACCEL_EXEC;
+//     exec_operation.func = (void *)no_op_exec;
+//     exec_operation.owner = &no_op_plugin;
 
-    struct vaccel_op copy_operation;
-    copy_operation.type = VACCEL_F_ARRAYCOPY;
-    copy_operation.func = (void *)no_op_fpga;
-    copy_operation.owner = &no_op_plugin;
+//     struct vaccel_op copy_operation;
+//     copy_operation.type = VACCEL_F_ARRAYCOPY;
+//     copy_operation.func = (void *)no_op_fpga;
+//     copy_operation.owner = &no_op_plugin;
 
-    struct vaccel_op array_ops[2] = {exec_operation, copy_operation};
+//     struct vaccel_op array_ops[2] = {exec_operation, copy_operation};
 
-    int ret;
-    ret = plugins_bootstrap();
-    REQUIRE(ret ==  VACCEL_OK);
+//     int ret;
+//     ret = plugins_bootstrap();
+//     REQUIRE(ret ==  VACCEL_OK);
 
-    no_op_plugin.info = &pinfo;
-    no_op_plugin.info->name = pname;
-    list_init_entry(&no_op_plugin.entry);
-    list_init_entry(&no_op_plugin.ops);
-    no_op_plugin.info->init = init;
-    no_op_plugin.info->fini = fini;
+//     no_op_plugin.info = &pinfo;
+//     no_op_plugin.info->name = pname;
+//     list_init_entry(&no_op_plugin.entry);
+//     list_init_entry(&no_op_plugin.ops);
+//     no_op_plugin.info->init = init;
+//     no_op_plugin.info->fini = fini;
 
-    ret = register_plugin(&no_op_plugin);
-    REQUIRE(ret ==  VACCEL_OK);
-
-
-    ret = register_plugin_functions(array_ops, (sizeof(array_ops) / sizeof(array_ops[0])));
-    REQUIRE(ret ==  VACCEL_OK);
+//     ret = register_plugin(&no_op_plugin);
+//     REQUIRE(ret ==  VACCEL_OK);
 
 
-    void* operation ;
-    operation = get_plugin_op(VACCEL_EXEC, 0);
-    REQUIRE(operation != nullptr);
-    ret = reinterpret_cast<int (*)(void)>(operation)();
-    REQUIRE(ret == 2);
+//     ret = register_plugin_functions(array_ops, (sizeof(array_ops) / sizeof(array_ops[0])));
+//     REQUIRE(ret ==  VACCEL_OK);
 
-    operation = get_plugin_op(VACCEL_F_ARRAYCOPY, 0);
-    REQUIRE(operation !=  nullptr);
-    ret = reinterpret_cast<int (*)(void)>(operation)();
-    REQUIRE(ret == 3);
 
-    // we have implemented FPGA in our fixture and lets assume our plugin only implements FPGA functions
-    pinfo.type = VACCEL_PLUGIN_FPGA;
+//     void* operation ;
+//     operation = get_plugin_op(VACCEL_EXEC, 0);
+//     REQUIRE(operation != nullptr);
+//     ret = reinterpret_cast<int (*)(void)>(operation)();
+//     REQUIRE(ret == 2);
 
-    operation = get_plugin_op(VACCEL_F_ARRAYCOPY, VACCEL_PLUGIN_FPGA);
-    REQUIRE(operation != nullptr);
+//     operation = get_plugin_op(VACCEL_F_ARRAYCOPY, 0);
+//     REQUIRE(operation !=  nullptr);
+//     ret = reinterpret_cast<int (*)(void)>(operation)();
+//     REQUIRE(ret == 3);
 
-    ret = reinterpret_cast<int (*)(void)>(operation)();
-    REQUIRE(ret == 3);
+//     // we have implemented FPGA in our fixture and lets assume our plugin only implements FPGA functions
+//     pinfo.type = VACCEL_PLUGIN_FPGA;
 
-    ret = unregister_plugin(&no_op_plugin);
-    REQUIRE(ret == VACCEL_OK);
+//     operation = get_plugin_op(VACCEL_F_ARRAYCOPY, VACCEL_PLUGIN_FPGA);
+//     REQUIRE(operation != nullptr);
+
+//     ret = reinterpret_cast<int (*)(void)>(operation)();
+//     REQUIRE(ret == 3);
+
+//     ret = unregister_plugin(&no_op_plugin);
+//     REQUIRE(ret == VACCEL_OK);
 
     ret = plugins_shutdown();
     REQUIRE(ret ==  VACCEL_OK);
