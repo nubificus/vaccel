@@ -402,6 +402,6 @@ TEST_CASE("get_all_available_functions") {
 //     ret = unregister_plugin(&no_op_plugin);
 //     REQUIRE(ret == VACCEL_OK);
 
-    ret = plugins_shutdown();
-    REQUIRE(ret ==  VACCEL_OK);
-}
+//     ret = plugins_shutdown();
+//     REQUIRE(ret ==  VACCEL_OK);
+// }
