@@ -3,10 +3,10 @@ name: Build project
 on:
   pull_request:
     branches:
-      - mainq
+      - main
   push:
     branches:
-      - mainq
+      - main
 
   workflow_dispatch:
 
