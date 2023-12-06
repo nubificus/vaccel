@@ -106,14 +106,15 @@ jobs:
     - name: Run Tests
       id: run_tests
       run: |
-        cd build_${{matrix.build_type}}
+        cd ${{github.workspace}}/build_${{matrix.build_type}}
         cmake ${{github.workspace}} \
           -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/artifacts/${{matrix.archconfig}}/${{matrix.build_type}}/opt \
           -DCMAKE_BUILD_TYPE=${{matrix.build_type}} \
           -DCMAKE_CXX_COMPILER=g++-12 \
           -DBUILD_TESTS=ON && \
         cmake --build . --config ${{matrix.build_type}} && \
-        make test && \
+        make && \
+        make
 
     - name: Upload binary distr to s3
       uses: cloudkernels/minio-upload@v4
