@@ -106,7 +106,6 @@ jobs:
     - name: Run Tests
       id: run_tests
       run: |
-        mkdir -p build_${{matrix.build_type}}
         cd build_${{matrix.build_type}}
         cmake ${{github.workspace}} \
           -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/artifacts/${{matrix.archconfig}}/${{matrix.build_type}}/opt \
