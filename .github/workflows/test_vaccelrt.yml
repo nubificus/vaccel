@@ -68,12 +68,8 @@ jobs:
         cd build_${{matrix.build_type}}
         cmake ${{github.workspace}} \
           -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/artifacts/${{matrix.archconfig}}/${{matrix.build_type}}/opt \
-          -DCMAKE_BUILD_TYPE=${{matrix.build_type}} \
-          -DENABLE_TESTS=ON \
-          -DCMAKE_CXX_COMPILER=g++-12 \
           -DBUILD_PLUGIN_NOOP=ON && \
-        make
-        make test -ARGS="-V"
+        make -C plugins && make install -C plugins
 
     - name: Run examples
       id: run_examples
@@ -111,8 +107,14 @@ jobs:
       id: run_tests
       run: |
         cd build_${{matrix.build_type}}
+        cmake ${{github.workspace}} \
+          -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/artifacts/${{matrix.archconfig}}/${{matrix.build_type}}/opt \
+          -DCMAKE_BUILD_TYPE=${{matrix.build_type}} \
+          -DENABLE_TESTS=ON \
+          -DCMAKE_CXX_COMPILER=g++-12 \
+          -DBUILD_PLUGIN_NOOP=ON && \
         make
-        make test ARGS="-V"
+        make test -ARGS="-V"
       shell: bash
       env:
         ARCHITECTURE: ${{ matrix.archconfig }}
