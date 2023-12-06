@@ -114,7 +114,7 @@ jobs:
           -DCMAKE_CXX_COMPILER=g++-12 \
           -DBUILD_PLUGIN_NOOP=ON && \
         make
-        make test -ARGS="-V"
+        make test ARGS="-V"
       shell: bash
       env:
         ARCHITECTURE: ${{ matrix.archconfig }}
