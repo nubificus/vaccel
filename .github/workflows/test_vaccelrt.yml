@@ -42,6 +42,10 @@ jobs:
           echo "ARTIFACT_NAME=$(echo ${GITHUB_REF##*/})" >> $GITHUB_ENV
           echo "ARTIFACT_SHA=$(echo ${{github.sha}})" >> $GITHUB_ENV
         fi
+      
+    - name: Install dependencies for tests
+      id: install_dependencies
+      run : sudo apt update && sudo apt-get install -y lcov cmake gcc g++ libclang-dev
 
     - name: Build project
       id: build_vaccelrt
@@ -51,6 +55,7 @@ jobs:
         cmake ${{github.workspace}} \
           -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/artifacts/${{matrix.archconfig}}/${{matrix.build_type}}/opt \
           -DCMAKE_BUILD_TYPE=${{matrix.build_type}} \
+          -DENABLE_TESTS=ON \
           -DBUILD_EXAMPLES=ON && \
         cmake --build . --config ${{matrix.build_type}} && \
         make install -C src && \
@@ -98,15 +103,10 @@ jobs:
         ./bin/tf_saved_model share/models/tf/lstm2
         ./bin/tf_inference share/models/tf/lstm2
     
-    - name: Install dependencies for tests
-      id: install_dependencies
-      run : sudo apt update && sudo apt-get install -y lcov cmake gcc g++ libclang-dev
-    
     - name: Run tests
       id: run_tests
       run: |
         cd build_${{matrix.build_type}}
-        cmake ${{github.workspace}} -DBUILD_PLUGIN_NOOP=ON -DENABLE_TESTS=ON -DBUILD_EXAMPLES=ON -DCMAKE_CXX_COMPILER=g++-12 -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
         make
         make test ARGS="-V"
       shell: bash
