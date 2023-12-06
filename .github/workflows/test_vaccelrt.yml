@@ -97,6 +97,19 @@ jobs:
         ./bin/tf_model share/models/tf/frozen_graph.pb
         ./bin/tf_saved_model share/models/tf/lstm2
         ./bin/tf_inference share/models/tf/lstm2
+    
+    - name: Run tests
+      id: run_tests
+      run: |
+        cd build_${{matrix.build_type}}
+        cmake ${{github.workspace}} -DBUILD_PLUGIN_NOOP=ON -DENABLE_TESTS=ON \
+        -DBUILD_EXAMPLES=ON -DCMAKE_CXX_COMPILER=g++-12 \
+        -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+        make
+        make test ARGS="-V"
+      shell: bash
+      env:
+        ARCHITECTURE: ${{ matrix.archconfig }}
 
     - name: Upload binary distr to s3
       uses: cloudkernels/minio-upload@v4
