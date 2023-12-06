@@ -113,8 +113,8 @@ jobs:
           -DENABLE_TESTS=ON \
           -DCMAKE_CXX_COMPILER=g++-12 \
           -DBUILD_PLUGIN_NOOP=ON && \
-        make
-        make test ARGS="-V"
+        cmake --build . --config ${{matrix.build_type}} && \
+        make test \
       shell: bash
       env:
         ARCHITECTURE: ${{ matrix.archconfig }}
