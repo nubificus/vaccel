@@ -59,7 +59,7 @@ jobs:
           -DCMAKE_CXX_COMPILER=g++-12 \
           -DBUILD_EXAMPLES=ON && \
         cmake --build . --config ${{matrix.build_type}} && \
-        make test && \
+        make && \
         make install -C src && \
         make install -C third-party && \
         make install -C examples
@@ -70,8 +70,12 @@ jobs:
         cd build_${{matrix.build_type}}
         cmake ${{github.workspace}} \
           -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/artifacts/${{matrix.archconfig}}/${{matrix.build_type}}/opt \
+          -DCMAKE_BUILD_TYPE=${{matrix.build_type}} \
+          -DENABLE_TESTS=ON \
+          -DCMAKE_CXX_COMPILER=g++-12 \
           -DBUILD_PLUGIN_NOOP=ON && \
-        make -C plugins && make install -C plugins
+        make
+        make test -ARGS="-V"
 
     - name: Run examples
       id: run_examples
