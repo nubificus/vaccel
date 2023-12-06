@@ -103,21 +103,18 @@ jobs:
         ./bin/tf_saved_model share/models/tf/lstm2
         ./bin/tf_inference share/models/tf/lstm2
     
-    - name: Run tests
+    - name: Run Tests
       id: run_tests
       run: |
+        mkdir -p build_${{matrix.build_type}}
         cd build_${{matrix.build_type}}
         cmake ${{github.workspace}} \
           -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/artifacts/${{matrix.archconfig}}/${{matrix.build_type}}/opt \
           -DCMAKE_BUILD_TYPE=${{matrix.build_type}} \
-          -DENABLE_TESTS=ON \
           -DCMAKE_CXX_COMPILER=g++-12 \
-          -DBUILD_PLUGIN_NOOP=ON && \
+          -DBUILD_TESTS=ON && \
         cmake --build . --config ${{matrix.build_type}} && \
-        make test \
-      shell: bash
-      env:
-        ARCHITECTURE: ${{ matrix.archconfig }}
+        make test && \
 
     - name: Upload binary distr to s3
       uses: cloudkernels/minio-upload@v4
