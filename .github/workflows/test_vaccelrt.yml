@@ -111,7 +111,7 @@ jobs:
           -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/artifacts/${{matrix.archconfig}}/${{matrix.build_type}}/opt \
           -DCMAKE_BUILD_TYPE=${{matrix.build_type}} \
           -DCMAKE_CXX_COMPILER=g++-12 \
-          -DBUILD_TESTS=ON && \
+          -DENABLE_TESTS=ON && \
         cmake --build . --config ${{matrix.build_type}} && \
         make && \
         make
