@@ -106,7 +106,7 @@ jobs:
     - name: Run Tests
       id: run_tests
       run: |
-        rm ${{github.workspace}}/build_${{matrix.build_type}}
+        rm ${{github.workspace}}/build_${{matrix.build_type}} -rf
         mkdir -p ${{github.workspace}}/build_${{matrix.build_type}}
         cd ${{github.workspace}}/build_${{matrix.build_type}}
         cmake ${{github.workspace}} \
