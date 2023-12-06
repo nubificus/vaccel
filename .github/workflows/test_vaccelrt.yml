@@ -26,6 +26,10 @@ jobs:
         echo "Cleaning up previous runs"
         sudo rm -rf ${{ github.workspace }}/*
         sudo rm -rf ${{ github.workspace }}/.??*
+    
+    - name: Install dependencies for tests
+      id: install_dependencies
+      run : sudo apt update && sudo apt-get install -y lcov g++
 
     - name: Checkout code
       uses: actions/checkout@v2
@@ -43,10 +47,6 @@ jobs:
           echo "ARTIFACT_SHA=$(echo ${{github.sha}})" >> $GITHUB_ENV
         fi
       
-    - name: Install dependencies for tests
-      id: install_dependencies
-      run : sudo apt update && sudo apt-get install -y lcov gcc g++ libclang-dev
-
     - name: Build project
       id: build_vaccelrt
       run: |
