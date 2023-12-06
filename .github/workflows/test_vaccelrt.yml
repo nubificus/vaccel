@@ -12,7 +12,7 @@ on:
 
 jobs:
   build:
-    runs-on: [self-hosted, "${{ matrix.archconfig }}", gcc, lite , 2204]
+    runs-on: [self-hosted, "${{ matrix.archconfig }}", gcc, lite , '2204']
 
     strategy:
       matrix:
@@ -97,6 +97,10 @@ jobs:
         ./bin/tf_model share/models/tf/frozen_graph.pb
         ./bin/tf_saved_model share/models/tf/lstm2
         ./bin/tf_inference share/models/tf/lstm2
+    
+    - name: Install dependencies for tests
+      id: install_dependencies
+      run : sudo apt update && sudo apt-get install -y lcov cmake gcc g++ libclang-dev
     
     - name: Run tests
       id: run_tests
