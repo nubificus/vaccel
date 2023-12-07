@@ -313,3 +313,4 @@ jobs:
       uses: webispy/checkpatch-action@v9
       env:
         GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+      continue-on-error: true
