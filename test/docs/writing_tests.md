@@ -1,3 +1,19 @@
+Pre-reqs:
+
+Make sure you have version 12+ for g++ (can check with g++ --version in terminal)
+
+## To run tests locally
+
+```
+mkdir build
+cd build
+cmake ../ -DBUILD_PLUGIN_NOOP=ON -DENABLE_TESTS=ON -DBUILD_EXAMPLES=ON
+make
+make test
+```
+
+For a more verbose output of tests use : ```make  test ARGS="-V"```
+
 ## Writing tests
 
 To write basic tests:
