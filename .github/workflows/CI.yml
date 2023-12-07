@@ -129,7 +129,6 @@ jobs:
     - name: Apply coverage patch
       id: coverage_patch
       run: |
-        cd ${{github.workspace}}/src/
         patch -p1 < ../test/docs/coverage.patch
 
     - name: Run Coverage
