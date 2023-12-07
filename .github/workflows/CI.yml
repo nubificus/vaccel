@@ -112,7 +112,6 @@ jobs:
       run: sudo rm -rf artifacts build_${{ matrix.build_type }}
   
   coverage:
-    needs: [test]
     runs-on: ubuntu-latest
 
     steps:
@@ -129,7 +128,7 @@ jobs:
     - name: Apply coverage patch
       id: coverage_patch
       run: |
-        patch -p1 < ../test/docs/coverage.patch
+        patch -p1 < ./test/docs/coverage.patch
 
     - name: Run Coverage
       id: run_coverage
