@@ -128,7 +128,7 @@ jobs:
     - name: Apply coverage patch
       id: coverage_patch
       run: |
-        patch -p1 < ./test/docs/coverage.patch
+        patch < ./test/docs/coverage.patch
 
     - name: Run Coverage
       id: run_coverage
