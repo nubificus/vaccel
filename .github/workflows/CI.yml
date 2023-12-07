@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  test:
     runs-on: [self-hosted, "${{ matrix.archconfig }}", gcc, lite , '2204']
 
     strategy:
@@ -21,7 +21,7 @@ jobs:
       fail-fast: false
 
     steps:
-    - name: Cleanup pervious jobs
+    - name: Cleanup previous jobs
       run: |
         echo "Cleaning up previous runs"
         sudo rm -rf ${{ github.workspace }}/*
@@ -110,3 +110,48 @@ jobs:
 
     - name: Clean-up
       run: sudo rm -rf artifacts build_${{ matrix.build_type }}
+  
+  coverage:
+    runs-on: ubuntu-latest
+
+    steps:
+    
+    - name: Checkout code
+      uses: actions/checkout@v2
+      with:
+        submodules: recursive
+
+    - name: Install dependencies for tests
+      id: install_dependencies
+      run : sudo apt update && sudo apt-get install -y lcov cmake gcc g++ libclang-dev gcovr
+
+    - name: Run Coverage
+      id: run_coverage
+      run: |
+        mkdir build
+        cd build
+        cmake ${{github.workspace}} -DBUILD_PLUGIN_NOOP=ON -DENABLE_TESTS=ON -DENABLE_COVERAGE=ON -DCMAKE_CXX_COMPILER=g++-12 -DCMAKE_C_COMPILER=gcc-12 -DGCOV_EXECUTABLE=gcov-12
+        make
+        make test ARGS="-V"
+        cd ../
+
+        echo "Creating build/coverage_data directory..."
+        mkdir -p build/coverage_data
+        
+        echo "Copying files to build/coverage_data:"
+        find build -type f -name "*.gcda" -exec cp {} build/coverage_data/ \;
+        find build -type f -name "*.gcno" -exec cp {} build/coverage_data/ \;
+
+        gcovr --html --gcov-executable gcov-12 -o coverage.html --print-summary -e "build/_deps/*"
+    
+        # echo "Setting up git configuration..."
+        # git config --local user.email "actions@github.com"
+        # git config --local user.name "GitHub Actions"
+    
+        # echo "Committing and pushing changes..."
+        # git add coverage.html
+        # git commit -m "Update coverage report [skip ci]"
+        # git push
+        # TODO: Automate this part
+
+  

@@ -1,8 +1,8 @@
-name: Build project
+name: Build and upload
 
 on:
     workflow_run:
-      workflows: ["CI"]
+      workflows: [CI]
       types:
         - completed
 
