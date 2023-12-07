@@ -1,5 +1,5 @@
---- src/CMakeLists.txt	
-+++ src/CMakeLists.txt
+--- src/CMakeLists.txt	2023-12-07 03:53:02.257526792 +0000
++++ src/CMakeLists.txt	2023-12-07 03:52:50.833240906 +0000
 @@ -5,7 +5,13 @@
  file(GLOB_RECURSE headers *.h)
  
@@ -27,5 +27,5 @@
 +	target_link_libraries(vaccel slog)
 +endif()
 +
- find_package(Git)
  
+ find_package(Git)
