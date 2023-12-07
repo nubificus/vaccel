@@ -112,6 +112,7 @@ jobs:
       run: sudo rm -rf artifacts build_${{ matrix.build_type }}
   
   coverage:
+    needs: [test]
     runs-on: ubuntu-latest
 
     steps:
@@ -153,5 +154,3 @@ jobs:
         # git commit -m "Update coverage report [skip ci]"
         # git push
         # TODO: Automate this part
-
-  
