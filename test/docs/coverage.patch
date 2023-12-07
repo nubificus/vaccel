@@ -1,5 +1,5 @@
---- CMakeLists.txt	2023-12-07 03:11:42.341243757 +0000
-+++ CMakeLists.txt	2023-12-07 03:10:38.279498151 +0000
+--- src/CMakeLists.txt	
++++ src/CMakeLists.txt
 @@ -5,7 +5,13 @@
  file(GLOB_RECURSE headers *.h)
  
@@ -28,5 +28,5 @@
 +endif()
 +
  
- find_package(Git)
+find_package(Git)
  
