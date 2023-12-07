@@ -2,7 +2,7 @@ name: Build project
 
 on:
     workflow_run:
-      workflows: ["Continuous Integration"]
+      workflows: ["CI"]
       types:
         - completed
 
