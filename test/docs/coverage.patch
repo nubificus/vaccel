@@ -28,5 +28,3 @@
 +endif()
 +
  
-find_package(Git)
- 
