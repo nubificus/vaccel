@@ -1,19 +1,3 @@
-Pre-reqs:
-
-Make sure you have version 12+ for g++ (can check with g++ --version in terminal)
-
-## To run tests locally
-
-```
-mkdir build
-cd build
-cmake ../ -DBUILD_PLUGIN_NOOP=ON -DENABLE_TESTS=ON -DBUILD_EXAMPLES=ON
-make
-make test
-```
-
-For a more verbose output of tests use : ```make  test ARGS="-V"```
-
 ## Writing tests
 
 To write basic tests:
@@ -65,7 +49,7 @@ So far in our test we also use ```SECTIONS``` for nesting test cases within a te
 ```cpp
 #include <catch2/catch_test_macros.hpp>
 
-#include <atomic>'
+#include <atomic>
 
 using atomic_int = std::atomic<int>;
 using atomic_uint = std::atomic<unsigned int>;
@@ -95,109 +79,3 @@ TEST_CASE("basic_test") {
 }
 ```
 When we run these tests, we will run this test two times, one which runs the initial code at the start and followed by section A, whereas the other one is followed by section B. From our test runner results we would get an ouput of 1 pass and 1 fail.
-
-#### Mock functions
-
-For basic mock functions we use ```fff.h``` (fake function framework).
-As an example, in ```test_misc.cpp``` a function is mocked by:
-
-
-```cpp
-#include <catch2/catch_test_macros.hpp>
-#include <fff.h>
-DEFINE_FFF_GLOBALS;
-
-extern "C"{
-#include "misc.h"
-FAKE_VALUE_FUNC(int, get_available_plugins, enum vaccel_op_type);
-}
-
-TEST_CASE("vaccel_get_plugins", "[vaccel_get_plugins]")
-{
-
-    struct vaccel_session session;
-    session.session_id = 123;
-
-    SECTION("return correct implementation")
-    {
-        get_available_plugins_fake.return_val = 15;
-        int result = vaccel_get_plugins(&session, VACCEL_NO_OP);
-        REQUIRE(result == 15);
-    }
-
-    ...
-
-}
-```
-
-Add the following at the top: 
-```cpp
-#include <fff.h>
-DEFINE_FFF_GLOBALS;
-```
-To declare a mocked function, use ```FAKE_VALUE_FUNC(return type, name of function, arguments)``` - this may change depending on the function you use.
-
-```cpp
-get_available_plugins_fake.return_val = 15;
-```
-when ```get_available_plugins()``` is called in our test, this will return 15 which is self explanatory here.
-
-### Adding tests to the test runner
-
-We do not need to include a main function in our tests if we link our tests with ```Catch2::Catch2WithMain```.
-
-To include tests, modify the ```CMakeLists.txt``` file in the ```test``` directory.
-
-Quickest way is to look at which ```set``` of ```include``` files you need, either ```core``` or ```api``` and add the ```test_name``` into the set.
-
-```
-set(TESTS_CORE
-    test_example
-    test_plugin
-    test_session
-    test_misc
-    test_resource
-    test_id_pool
-    test_vaccel
-    test_log
-    .
-    .
-    test_name
-)
-```
-
-#### For manual tests/more control over what you would like:
-
-Basic template to include tests:
-
-
-```
-add_executable(NAME_OF_TEST ${PROJECT_SOURCE_DIR}/test/TEST.cpp)
-target_include_directories(NAME_OF_TEST
-    PRIVATE
-        ${INCLUDE_LOCATIONS}
-)
-target_compile_options(NAME_OF_TEST PRIVATE -Wall -Wextra -g -ggdb --coverage -lgcov)
-target_link_libraries(NAME_OF_TEST PRIVATE Catch2::Catch2WithMain gcov --coverage)
-```
-
-To make sure the tests run, add the following lines below ```enable_testing()```
-
-```
-add_test(NAME OUTPUT_NAME COMMAND NAME_OF_TEST)
-```
-
-#### Adding environment properties
-
-If you would like to add some environment properties, i.e setting ```VACCEL_DEBUG_LEVEL``` etc. You can do so by:
-
-```
-set_tests_properties(
-    OUTPUT_NAME
-    PROPERTIES
-    ENVIRONMENT "VACCEL_DEBUG_LEVEL=4"
-    ARGS=--order rand --warn NoAssertions
-)
-```
-
-
