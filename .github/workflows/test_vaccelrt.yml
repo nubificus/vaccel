@@ -3,16 +3,16 @@ name: Build project
 on:
   pull_request:
     branches:
-      - main
+      - mainq
   push:
     branches:
-      - main
+      - mainq
 
   workflow_dispatch:
 
 jobs:
   build:
-    runs-on: [self-hosted, "${{ matrix.archconfig }}", gcc, lite ]
+    runs-on: [self-hosted, "${{ matrix.archconfig }}", gcc, lite , '2204']
 
     strategy:
       matrix:
@@ -26,6 +26,10 @@ jobs:
         echo "Cleaning up previous runs"
         sudo rm -rf ${{ github.workspace }}/*
         sudo rm -rf ${{ github.workspace }}/.??*
+    
+    - name: Install dependencies for tests
+      id: install_dependencies
+      run : sudo apt update && sudo apt-get install -y lcov g++
 
     - name: Checkout code
       uses: actions/checkout@v2
@@ -42,7 +46,7 @@ jobs:
           echo "ARTIFACT_NAME=$(echo ${GITHUB_REF##*/})" >> $GITHUB_ENV
           echo "ARTIFACT_SHA=$(echo ${{github.sha}})" >> $GITHUB_ENV
         fi
-
+      
     - name: Build project
       id: build_vaccelrt
       run: |
@@ -51,10 +55,9 @@ jobs:
         cmake ${{github.workspace}} \
           -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/artifacts/${{matrix.archconfig}}/${{matrix.build_type}}/opt \
           -DCMAKE_BUILD_TYPE=${{matrix.build_type}} \
-          -DENABLE_TESTS=ON \
           -DBUILD_EXAMPLES=ON && \
         cmake --build . --config ${{matrix.build_type}} && \
-        make test && \
+        make && \
         make install -C src && \
         make install -C third-party && \
         make install -C examples
@@ -100,6 +103,22 @@ jobs:
         ./bin/tf_model share/models/tf/frozen_graph.pb
         ./bin/tf_saved_model share/models/tf/lstm2
         ./bin/tf_inference share/models/tf/lstm2
+    
+    - name: Run Tests
+      id: run_tests
+      run: |
+        rm ${{github.workspace}}/build_${{matrix.build_type}} -rf
+        mkdir -p ${{github.workspace}}/build_${{matrix.build_type}}
+        cd ${{github.workspace}}/build_${{matrix.build_type}}
+        cmake ${{github.workspace}} \
+          -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/artifacts/${{matrix.archconfig}}/${{matrix.build_type}}/opt \
+          -DCMAKE_BUILD_TYPE=${{matrix.build_type}} \
+          -DCMAKE_CXX_COMPILER=g++-12 \
+          -DBUILD_PLUGIN_NOOP=ON \
+          -DENABLE_TESTS=ON && \
+        cmake --build . --config ${{matrix.build_type}} && \
+        make && \
+        make test
 
     - name: Run exec examples
       id: run_exec_examples
