@@ -28,7 +28,7 @@ struct vaccel_torch_buffer *vaccel_torch_buffer_new(char *data, size_t size)
 	return ret;
 }
 
-// Destory Torch buffer data
+// Destroy Torch buffer data
 void vaccel_torch_buffer_destroy(struct vaccel_torch_buffer *buffer)
 {
 	if (buffer->data)

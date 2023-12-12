@@ -1,0 +1,235 @@
+name: utils
+
+on:
+  workflow_call:
+
+jobs:
+  test_valgrind:
+    runs-on: [self-hosted, "x86_64", gcc, lite, "2204"]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
+
+      - name: Install dependencies
+        id: install_dependencies
+        run: sudo apt update && sudo apt-get install -y lcov cmake gcc g++-12 libclang-dev valgrind
+
+      - name: Run tests
+        run: |
+          mkdir build
+          cd build
+          cmake ../ -DBUILD_PLUGIN_NOOP=ON -DENABLE_TESTS=ON -DBUILD_EXAMPLES=ON -DCMAKE_CXX_COMPILER=g++-12
+          make && make test
+
+      - name: Run valgrind tests (core)
+        run: |
+          valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes  ./build/test/test_id_pool
+          valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes  ./build/test/test_log
+          valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes  ./build/test/test_misc_mock
+          valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes  ./build/test/test_misc
+          valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes  ./build/test/test_plugin
+          valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes  ./build/test/test_resource
+          valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes  ./build/test/test_session
+          valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes  ./build/test/test_vaccel
+
+      - name: Run valgrind tests (ops)
+        run: |
+          cd build/test/
+          env VACCEL_BACKENDS=../plugins/noop/libvaccel-noop.so valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./test_blas
+          env VACCEL_BACKENDS=../plugins/noop/libvaccel-noop.so valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./test_exec
+          env VACCEL_BACKENDS=../plugins/noop/libvaccel-noop.so valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./test_image
+          env VACCEL_BACKENDS=../plugins/noop/libvaccel-noop.so valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./test_image_generic
+          env VACCEL_BACKENDS=../plugins/noop/libvaccel-noop.so valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./test_image
+          env VACCEL_BACKENDS=../plugins/noop/libvaccel-noop.so valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./test_minmax
+          env VACCEL_BACKENDS=../plugins/noop/libvaccel-noop.so valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./test_noop
+          env VACCEL_BACKENDS=../plugins/noop/libvaccel-noop.so valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./test_tf_interference
+          env VACCEL_BACKENDS=../plugins/noop/libvaccel-noop.so valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./test_tf_model
+          env VACCEL_BACKENDS=../plugins/noop/libvaccel-noop.so valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./test_tf_saved_model
+
+      - name: Run valgrind tests (examples)
+        env:
+          LD_LIBRARY_PATH: ${{github.workspace}}/build/src/libvaccel.so
+          VACCEL_BACKENDS: ${{github.workspace}}/build/plugins/noop/libvaccel-noop.so
+          VACCEL_DEBUG_LEVEL: 4
+        run: |
+          cd build/examples
+          valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./classify ../../examples/images/example.jpg 1 /
+          valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./classify_generic ../../examples/images/example.jpg 1
+          valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./detect ../../examples/images/example.jpg 1
+          valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./detect_generic ../../examples/images/example.jpg 1
+          valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./pose ../../examples/images/example.jpg 1
+          valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./pose_generic ../../examples/images/example.jpg 1
+          valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./segment ../../examples/images/example.jpg 1
+          valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./segment_generic ../../examples/images/example.jpg 1
+          valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./depth ../../examples/images/example.jpg 1
+          valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./depth_generic ../../examples/images/example.jpg 1
+          valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./sgemm
+          valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./sgemm_generic
+          valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./minmax 262144 ../../examples/input/input_262144.csv 5 100
+          valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./minmax_generic 262144 ../../examples/input/input_262144.csv 5 100
+          valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./pynq_vector_add
+          valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./pynq_array_copy
+          valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./pynq_parallel
+          valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./torch_inference ../../examples/images/example.jpg ./../../examples/models/torch
+          valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./tf_model ../../examples/models/tf/frozen_graph.pb
+          valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./tf_saved_model ../../examples/models/tf/lstm2
+          valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./tf_inference ../../examples/models/tf/lstm2
+
+  spell_check:
+    name: spell check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
+
+      - name: Install codespell
+        run: pip3 install codespell
+
+      - name: Run spell check
+        run: |
+          codespell ./src
+          codespell ./test/docs
+          codespell ./test/op
+          codespell ./test/unit
+
+  cppcheck:
+    name: cppcheck
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
+
+      - name: Install cppcheck
+        run: sudo apt install cppcheck
+
+      - name: Run cppcheck in src
+        run: cppcheck --enable=style src
+
+      - name: Run cppcheck in examples
+        run: cppcheck --enable=style examples
+
+      - name: Run cppcheck in test
+        run: cppcheck --enable=style test
+
+      - name: Run cppcheck in plugins
+        run: cppcheck --enable=style plugins
+
+  linter:
+    name: linter
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: read
+      statuses: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: linter
+        uses: super-linter/super-linter@v5
+        env:
+          DEFAULT_BRANCH: main
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DISABLE_ERRORS: true
+          VALIDATE_CLANG_FORMAT: false
+          FILTER_REGEX_EXCLUDE: .*(test|examples)/.*
+
+  checkpatch:
+    name: checkpatch review
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - name: "Calculate PR commits + 1"
+        run: echo "PR_FETCH_DEPTH=$(( ${{ github.event.pull_request.commits }} + 1 ))" >> $GITHUB_ENV
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: ${{ env.PR_FETCH_DEPTH }}
+      - name: Run checkpatch review
+        uses: webispy/checkpatch-action@v9
+        continue-on-error: true
+
+  coverage_diff:
+    needs: [checkpatch, spell_check, test_valgrind]
+    runs-on: ubuntu-latest
+    outputs:
+      commit_hash: ${{ steps.commit-and-push.outputs.commit_hash }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
+
+      - name: Apply coverage patch
+        id: coverage_patch
+        run: |
+          cd ${{github.workspace}}/src/
+          patch < ../test/coverage.patch
+
+      - name: Install dependencies for tests
+        id: install_dependencies
+        run: |
+          sudo apt-get install -y lcov cmake gcc g++ libclang-dev gcovr colordiff
+          pip install --upgrade gcovr
+          pip install pycobertura
+
+      - name: Build and make tests for coverage (PR)
+        id: run_coverage_pr
+        run: |
+          mkdir build
+          cd build
+          cmake ${{github.workspace}} -DBUILD_PLUGIN_NOOP=ON -DENABLE_TESTS=ON -DENABLE_COVERAGE=ON -DCMAKE_CXX_COMPILER=g++-12 -DCMAKE_C_COMPILER=gcc-12 -DGCOV_EXECUTABLE=gcov-12
+          make
+          make test ARGS="-V"
+          cd ../
+        shell: bash
+
+      - name: Calculate coverage
+        run: |
+          gcovr --cobertura=./docs/coverage/coverage_pr.xml --gcov-executable gcov-12 -s -e "build/_deps/*"
+
+    ### This should produce a github comment showing coverage change however since this is the first release of test - doesn't do much
+    ### TODO: add cache/artifacts to speed up this whole file
+
+    # - name: Build and make tests for coverage (main)
+    #   id: run_coverage_main
+    #   run: |
+    #     mkdir main_vaccelrt
+    #     cd main_vaccelrt
+    #     git clone https://github.com/jlcsf/feat_vaccel_testing --recursive
+    #     cd feat_vaccel_testing
+    #     cd ./src/
+    #     patch < ../test/docs/coverage.patch
+    #     cd ../
+    #     mkdir build
+    #     cd build
+    #     cmake ../ -DBUILD_PLUGIN_NOOP=ON -DENABLE_TESTS=ON -DENABLE_COVERAGE=ON -DCMAKE_CXX_COMPILER=g++-12 -DCMAKE_C_COMPILER=gcc-12 -DGCOV_EXECUTABLE=gcov-12
+    #     make
+    #     make test
+    #     cd ../
+    #     gcovr --cobertura=./test/docs/coverage_main.xml --gcov-executable gcov-12 -s -e "build/_deps/*"
+
+    # - name: Calculate coverage diff
+    #   run: |
+    #     pycobertura diff main_vaccelrt/feat_vaccel_testing/test/docs/coverage_main.xml test/docs/coverage_pr.xml -s1 . -s2 . > coverage_diff.txt
+    #     echo '```' > temp_file && cat ./coverage_diff.txt >> temp_file && echo -e '\n```' >> temp_file && mv temp_file ./coverage_diff.txt
+    #     rm main_vaccelrt -rf
+    #   continue-on-error: true
+
+    # - name: PR comment with file
+    #   uses: thollander/actions-comment-pull-request@v2
+    #   with:
+    #     filePath: ./coverage_diff.txt

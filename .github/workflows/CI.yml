@@ -1,0 +1,128 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - main
+
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: [self-hosted, "${{ matrix.archconfig }}", gcc, lite, "2204"]
+
+    strategy:
+      matrix:
+        archconfig: [x86_64, aarch64, armv7l]
+        build_type: [Debug, Release]
+      fail-fast: false
+
+    steps:
+      - name: Cleanup previous jobs
+        run: |
+          echo "Cleaning up previous runs"
+          sudo rm -rf ${{ github.workspace }}/*
+          sudo rm -rf ${{ github.workspace }}/.??*
+
+      - name: Install dependencies for tests
+        id: install_dependencies
+        run: sudo apt update && sudo apt-get install -y lcov g++ valgrind
+
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
+
+      - name: Build project
+        id: build_vaccelrt
+        run: |
+          mkdir -p build_${{matrix.build_type}}
+          cd build_${{matrix.build_type}}
+          cmake ${{github.workspace}} \
+            -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/artifacts/${{matrix.archconfig}}/${{matrix.build_type}}/opt \
+            -DCMAKE_BUILD_TYPE=${{matrix.build_type}} \
+            -DBUILD_EXAMPLES=ON && \
+          cmake --build . --config ${{matrix.build_type}} && \
+          make && \
+          make install -C src && \
+          make install -C third-party && \
+          make install -C examples
+
+      - name: Build vAccel plugins
+        id: build_plugins
+        run: |
+          cd build_${{matrix.build_type}}
+          cmake ${{github.workspace}} \
+            -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/artifacts/${{matrix.archconfig}}/${{matrix.build_type}}/opt \
+            -DBUILD_PLUGIN_NOOP=ON \
+            -DBUILD_PLUGIN_EXEC=ON && \
+          make -C plugins && make install -C plugins
+
+      - name: Run examples
+        id: run_examples
+        env:
+          LD_LIBRARY_PATH: ${{github.workspace}}/artifacts/${{matrix.archconfig}}/${{matrix.build_type}}/opt/lib
+          VACCEL_BACKENDS: ${{github.workspace}}/artifacts/${{matrix.archconfig}}/${{matrix.build_type}}/opt/lib/libvaccel-noop.so
+          VACCEL_DEBUG_LEVEL: 4
+        run: |
+          cd ${{github.workspace}}/artifacts/${{matrix.archconfig}}/${{matrix.build_type}}/opt
+          sudo mkdir -p /run/user/1001
+          sudo chown -R runner /run/user/1001
+          ./bin/classify share/images/example.jpg 1
+          ./bin/classify_generic share/images/example.jpg 1
+          ./bin/detect share/images/example.jpg 1
+          ./bin/detect_generic share/images/example.jpg 1
+          ./bin/pose share/images/example.jpg 1
+          ./bin/pose_generic share/images/example.jpg 1
+          ./bin/segment share/images/example.jpg 1
+          ./bin/segment_generic share/images/example.jpg 1
+          ./bin/depth share/images/example.jpg 1
+          ./bin/depth_generic share/images/example.jpg 1
+          ./bin/sgemm
+          ./bin/sgemm_generic
+          ./bin/minmax 262144 ./share/input/input_262144.csv 5 100
+          ./bin/minmax_generic 262144 ./share/input/input_262144.csv 5 100
+          ./bin/pynq_vector_add
+          ./bin/pynq_array_copy
+          ./bin/pynq_parallel
+          ./bin/torch_inference ./share/images/example.jpg ./share/models/torch
+          ./bin/tf_model share/models/tf/frozen_graph.pb
+          ./bin/tf_saved_model share/models/tf/lstm2
+          ./bin/tf_inference share/models/tf/lstm2
+
+      - name: Run exec examples
+        id: run_exec_examples
+        env:
+          LD_LIBRARY_PATH: ${{github.workspace}}/artifacts/${{matrix.archconfig}}/${{matrix.build_type}}/opt/lib
+          VACCEL_BACKENDS: ${{github.workspace}}/artifacts/${{matrix.archconfig}}/${{matrix.build_type}}/opt/lib/libvaccel-exec.so
+          VACCEL_DEBUG_LEVEL: 4
+        run: |
+          cd ${{github.workspace}}/artifacts/${{matrix.archconfig}}/${{matrix.build_type}}/opt
+          #sudo mkdir -p /run/user/1001
+          #sudo chown -R runner /run/user/1001
+          ./bin/exec_with_res lib/libmytestlib.so 1
+          ./bin/exec_helpers lib/libmytestlib.so 1
+          ./bin/exec_helpers_nonser lib/libmytestlib.so 1
+
+      - name: Run Tests
+        id: run_tests
+        run: |
+          rm ${{github.workspace}}/build_${{matrix.build_type}} -rf
+          mkdir -p ${{github.workspace}}/build_${{matrix.build_type}}
+          cd ${{github.workspace}}/build_${{matrix.build_type}}
+          cmake ${{github.workspace}} \
+            -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/artifacts/${{matrix.archconfig}}/${{matrix.build_type}}/opt \
+            -DCMAKE_BUILD_TYPE=${{matrix.build_type}} \
+            -DCMAKE_CXX_COMPILER=g++-12 \
+            -DBUILD_PLUGIN_NOOP=ON \
+            -DENABLE_TESTS=ON && \
+          cmake --build . --config ${{matrix.build_type}} && \
+          make && \
+          make test
+
+      - name: Clean-up
+        run: sudo rm -rf artifacts build_${{ matrix.build_type }}
+
+  utils:
+    uses: ./.github/workflows/utils.yml
+    needs: [test]

@@ -209,7 +209,7 @@ int vaccel_file_destroy(struct vaccel_file *file)
 
 	/* There is a path in the disk representing the file,
 	 * which means that if we hold a pointer to the contents
-	 * of the file, this has been mmaped, so unmap it */
+	 * of the file, this has been mapped, so unmap it */
 	if (file->data) {
 		int ret = munmap(file->data, file->size);
 		if (ret) {

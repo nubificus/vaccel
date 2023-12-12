@@ -1,0 +1,66 @@
+name: coverage_upload
+
+on:
+  workflow_call:
+
+jobs:
+  coverage_upload:
+    runs-on: ubuntu-latest
+    outputs:
+      commit_hash: ${{ steps.commit-and-push.outputs.commit_hash }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
+
+      - name: Apply coverage patch
+        id: coverage_patch
+        run: |
+          cd ${{github.workspace}}/src/
+          patch < ../test/coverage.patch
+
+      - name: Install dependencies for tests
+        id: install_dependencies
+        run: |
+          sudo apt-get install -y lcov cmake gcc g++ libclang-dev gcovr valgrind
+          pip install --upgrade gcovr
+          pip install pycobertura
+
+      - name: Run Coverage
+        id: run_coverage
+        run: |
+          mkdir build
+          cd build
+          cmake ${{github.workspace}} -DBUILD_PLUGIN_NOOP=ON -DENABLE_TESTS=ON -DENABLE_COVERAGE=ON -DCMAKE_CXX_COMPILER=g++-12 -DCMAKE_C_COMPILER=gcc-12 -DGCOV_EXECUTABLE=gcov-12
+          make
+          make test ARGS="-V"
+          cd ../
+
+      - name: Generate coverage report
+        run: gcovr --cobertura --gcov-executable gcov-12 -o ${{github.workspace}}/test/docs/coverage.xml --print-summary -e "build/_deps/*"
+        shell: bash
+
+      - name: Produce markdown file
+        run: pycobertura show ${{github.workspace}}/test/docs/coverage.xml --format markdown --output ${{github.workspace}}/test/docs/coverage/coverage.md
+        shell: bash
+
+      - name: Configure Git
+        run: |
+          echo "Setting up git configuration..."
+          git config --local user.email "actions@github.com"
+          git config --local user.name "GitHub Actions"
+
+      - name: Push to vaccel-docs
+        uses: datalbry/copy_folder_to_another_repo_action@1.0.0
+        env:
+          API_TOKEN_GITHUB: ${{ secrets.NBFC_BUILDER_TOKEN }}
+        with:
+          source_folder: "./docs/coverage/src_coverage"
+          destination_repo: "nubificus/vaccel-docs"
+          destination_folder: "docs/python"
+          user_email: "jlima@nubificus.co.uk"
+          user_name: "jlima"
+          commit_msg: "[GHA] Update the coverage files"
+          destination_branch: "feat_coverage"
