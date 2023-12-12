@@ -1,72 +1,149 @@
-name: Upload new release
+name: Build and upload
 
 on:
-  push:
-    tags:
-      - v*
+  pull_request:
+    types:
+      - closed
+
+  workflow_dispatch:
 
 jobs:
-  build:
+  check_merged:
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
-    container:
-      image: nubificus/vaccel-deps:latest
-      volumes:
-        - /tmp/vaccel:/vaccel
+    steps:
+      - run: |
+          echo The PR was merged - running upload workflows
+
+  build:
+    needs: [check_merged]
+    runs-on: [self-hosted, "${{ matrix.archconfig }}", gcc, lite, "2204"]
+
+    strategy:
+      matrix:
+        archconfig: [x86_64, aarch64, armv7l]
+        build_type: [Debug, Release]
+      fail-fast: false
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
+      - name: Cleanup previous jobs
+        run: |
+          echo "Cleaning up previous runs"
+          sudo rm -rf ${{ github.workspace }}/*
+          sudo rm -rf ${{ github.workspace }}/.??*
 
-    - name: Find tag
-      run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
 
-    - name: Create Build Environment
-      run: cmake -E make_directory /vaccel/Release
+      - name: Find SHA
+        run: |
+          if [[ "${{github.event.pull_request.head.sha}}" != "" ]]
+          then
+            echo "ARTIFACT_SHA=$(echo ${{github.event.pull_request.head.sha}})" >> $GITHUB_ENV
+            echo "ARTIFACT_NAME=$(echo ${{ github.head_ref || github.ref_name }})" >> $GITHUB_ENV
+          else
+            echo "ARTIFACT_NAME=$(echo ${GITHUB_REF##*/})" >> $GITHUB_ENV
+            echo "ARTIFACT_SHA=$(echo ${{github.sha}})" >> $GITHUB_ENV
+          fi
 
-    - name: Configure CMake
-      working-directory: /vaccel/Release
-      run: |
-         cmake $GITHUB_WORKSPACE \
-                -DCMAKE_INSTALL_PREFIX=/vaccel/artifacts/Release/opt \
-                -DCMAKE_BUILD_TYPE=Release \
-                -DBUILD_PLUGIN_JETSON=ON \
-                -DBUILD_PLUGIN_NOOP=ON \
-                -DBUILD_PLUGIN_VIRTIO=ON
-                
+      - name: Build project
+        id: build_vaccelrt
+        run: |
+          mkdir -p build_${{matrix.build_type}}
+          cd build_${{matrix.build_type}}
+          cmake ${{github.workspace}} \
+            -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/artifacts/${{matrix.archconfig}}/${{matrix.build_type}}/opt \
+            -DCMAKE_BUILD_TYPE=${{matrix.build_type}} \
+            -DBUILD_EXAMPLES=ON && \
+          cmake --build . --config ${{matrix.build_type}} && \
+          make && \
+          make install -C src && \
+          make install -C third-party && \
+          make install -C examples
 
-    - name: Build runtime
-      working-directory: /vaccel/Release
-      run: cmake --build . --config Release
+      - name: Build vAccel plugins
+        id: build_plugins
+        run: |
+          cd build_${{matrix.build_type}}
+          cmake ${{github.workspace}} \
+            -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/artifacts/${{matrix.archconfig}}/${{matrix.build_type}}/opt \
+            -DBUILD_PLUGIN_NOOP=ON && \
+          make -C plugins && make install -C plugins
 
-    - name: Test & Install
-      working-directory: /vaccel/Release
-      run: |
-        make test
-        make install
+      - name: Build project for packages
+        id: build_pkg_vaccelrt
+        run: |
+          mkdir -p build_pkg_${{matrix.build_type}}
+          cd build_pkg_${{matrix.build_type}}
+          cmake ${{github.workspace}} \
+            -DCMAKE_INSTALL_PREFIX=/usr/local \
+            -DCMAKE_BUILD_TYPE=${{matrix.build_type}} \
+            -DBUILD_EXAMPLES=ON \
+            -DBUILD_PLUGIN_NOOP=ON \
+            -DBUILD_PLUGIN_EXEC=ON && \
+          cmake --build . --config ${{matrix.build_type}} && \
+          cpack -G TGZ
+          cpack
 
-    - name: Pack release artifacts
-      working-directory: /vaccel/artifacts/Release
-      run: tar -cjf vaccel-${{ env.RELEASE_VERSION }}.tar opt
+      - name: Get package name
+        shell: bash
+        id: get_package_deb
+        run: |
+          echo ::set-output name=NAME::$(basename build_pkg_${{ matrix.build_type }}/vaccel-*.deb)
 
-    - name: Create release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.NBFC_BUILDER_TOKEN }}
-      with:
-        tag_name: ${{ github.ref }}
-        release_name: Release vaccel-${{ github.ref }}
-        body_path: ./releases/${{ env.RELEASE_VERSION }}
-        draft: false
-        prerelease: false
+      - name: Get tar name
+        shell: bash
+        id: get_package_tar
+        run: |
+          echo ::set-output name=NAME::$(basename build_pkg_${{ matrix.build_type }}/vaccel-*.tar.gz)
 
-    - name: Upload release asset
-      id: upload-release-asset
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.NBFC_BUILDER_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: /vaccel/artifacts/Release/vaccel-${{ env.RELEASE_VERSION }}.tar
-        asset_name: vaccel.tar
-        asset_content_type: application/zip
+      - name: Upload deb artifact to s3 by name
+        uses: cloudkernels/minio-upload@v4
+        if: ${{ env.ARTIFACT_NAME != 'master' }}
+        with:
+          url: https://s3.nubificus.co.uk
+          access-key: ${{ secrets.AWS_ACCESS_KEY }}
+          secret-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          local-path: build_pkg_${{ matrix.build_type }}/${{ steps.get_package_deb.outputs.NAME }}
+          remote-path: nbfc-assets/github/vaccelrt/${{ env.ARTIFACT_NAME }}/${{ matrix.archconfig }}/${{ matrix.build_type }}-deb/
+          policy: 1
+
+      - name: Upload deb artifact to s3
+        uses: cloudkernels/minio-upload@v4
+        with:
+          url: https://s3.nubificus.co.uk
+          access-key: ${{ secrets.AWS_ACCESS_KEY }}
+          secret-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          local-path: build_pkg_${{ matrix.build_type }}/${{ steps.get_package_deb.outputs.NAME }}
+          remote-path: nbfc-assets/github/vaccelrt/${{ env.ARTIFACT_SHA }}/${{ matrix.archconfig }}/${{ matrix.build_type }}-deb/
+          policy: 1
+
+      - name: Upload tar artifact to s3 by name
+        uses: cloudkernels/minio-upload@v4
+        if: ${{ env.ARTIFACT_NAME != 'master' }}
+        with:
+          url: https://s3.nubificus.co.uk
+          access-key: ${{ secrets.AWS_ACCESS_KEY }}
+          secret-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          local-path: build_pkg_${{ matrix.build_type }}/${{ steps.get_package_tar.outputs.NAME }}
+          remote-path: nbfc-assets/github/vaccelrt/${{ env.ARTIFACT_NAME }}/${{ matrix.archconfig }}/${{ matrix.build_type }}-tar/
+          policy: 1
+
+      - name: Upload tar artifact to s3
+        uses: cloudkernels/minio-upload@v4
+        with:
+          url: https://s3.nubificus.co.uk
+          access-key: ${{ secrets.AWS_ACCESS_KEY }}
+          secret-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          local-path: build_pkg_${{ matrix.build_type }}/${{ steps.get_package_tar.outputs.NAME }}
+          remote-path: nbfc-assets/github/vaccelrt/${{ env.ARTIFACT_SHA }}/${{ matrix.archconfig }}/${{ matrix.build_type }}-tar/
+          policy: 1
+
+      - name: Clean-up
+        run: sudo rm -rf artifacts build_${{ matrix.build_type }}
+
+  coverage_docs:
+    uses: ./.github/workflows/coverage_upload.yml
+    needs: [build]
