@@ -42,23 +42,6 @@ endif (BUILD_EXAMPLES)
 
 # tests
 if (ENABLE_TESTS)
-	## Download GoogleTest framework
-	configure_file(
-		CMakeLists.txt.in
-		googletest-download/CMakeLists.txt)
-	execute_process(
-		COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
-		WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/googletest-download)
-	execute_process(
-		COMMAND ${CMAKE_COMMAND} --build .
-		WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/googletest-download)
-
-	# Add GTest directly to our build. This adds the targets:
-	# gtest, gtest_main, gmock, and gmock_main
-	add_subdirectory(
-		${CMAKE_BINARY_DIR}/googletest-src
-		${CMAKE_BINARY_DIR}/googletest-build)
-
 	enable_testing()
 	add_subdirectory(test)
 endif (ENABLE_TESTS)
