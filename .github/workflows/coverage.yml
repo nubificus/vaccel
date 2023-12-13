@@ -29,7 +29,7 @@ jobs:
     - name: Install dependencies for tests
       id: install_dependencies
       run : |
-        sudo apt update && sudo apt-get install -y lcov cmake gcc g++ libclang-dev gcovr
+        sudo apt-get install -y lcov cmake gcc g++ libclang-dev gcovr
         pip install --upgrade gcovr
         pip install pycobertura
 
@@ -48,7 +48,7 @@ jobs:
       shell: bash
     
     - name: Produce markdown file
-      run: pycobertura show ${{github.workspace}}/test/docs/coverage.xml --format markdown --output ${{github.workspace}}/test/docs/coverage.md
+      run: pycobertura show ${{github.workspace}}/test/docs/coverage.xml --format markdown --output ${{github.workspace}}/test/docs/coverage/coverage.md
       shell: bash
         
     - name: Configure Git
@@ -57,23 +57,15 @@ jobs:
         git config --local user.email "actions@github.com"
         git config --local user.name "GitHub Actions"
 
-    # Note:
-    # This changes a file on merge
-    #
-    # - name: Commit and push changes
-    #   id: commit-and-push
-    #   uses: stefanzweifel/git-auto-commit-action@v5
-    #   with:
-    #     disable_globbing: true
-    #     commit_message: Updated coverage
-    #     file_pattern: '*.md'
-
-  publish:
-    needs: coverage
-    runs-on: ubuntu-latest
-    steps:
-
-    - name: Check Out the Repo Again
-      uses: actions/checkout@v3
+    - name: Push to vaccel-docs
+      uses: datalbry/copy_folder_to_another_repo_action@1.0.0
+      env:
+        API_TOKEN_GITHUB: ${{ secrets.NBFC_BUILDER_TOKEN }}
       with:
-        ref: ${{ needs.update-changelog.outputs.commit_hash }}
+        source_folder: 'test/docs/coverage'
+        destination_repo: 'nubificus/vaccel-docs'
+        destination_folder: 'docs/python'
+        user_email: 'jlima@nubificus.co.uk'
+        user_name: 'jlima'
+        commit_msg: '[GHA] Update the coverage files'
+        destination_branch: 'feat_coverage'
