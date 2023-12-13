@@ -22,6 +22,7 @@ set(BIN_EXAMPLES
 	tf_model
 	tf_inference
 	tf_saved_model
+	tflite_inference
 	pynq_vector_add
 	pynq_vector_add_generic
 	pynq_parallel

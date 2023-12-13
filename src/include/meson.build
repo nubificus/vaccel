@@ -14,6 +14,7 @@ vaccel_public_headers = files([
   'ops/noop.h',
   'ops/opencv.h',
   'ops/tf.h',
+  'ops/tflite.h',
   'ops/torch.h',
   'ops/vaccel_ops.h',
   'resources/shared_object.h',

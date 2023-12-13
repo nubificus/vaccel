@@ -52,10 +52,10 @@ enum vaccel_tf_data_type {
 };
 
 struct vaccel_tf_buffer {
-	/* data of the buffer */
+	/* Data of the buffer */
 	void *data;
 
-	/* size of the buffer */
+	/* Size of the buffer */
 	size_t size;
 };
 
@@ -71,7 +71,7 @@ struct vaccel_tf_node {
 	/* Name of the node */
 	char *name;
 
-        /* id of the node */
+        /* Id of the node */
         int id;
 };
 
@@ -84,13 +84,13 @@ struct vaccel_tf_tensor {
         /* Tensor's data */
         void *data;
 
-        /* size of the data */
+        /* Size of the data */
         size_t size;
 
 	/* Do we own the data */
 	bool owned;
 
-        /* dimensions of the data */
+        /* Dimensions of the data */
         int nr_dims;
         int64_t *dims;
 

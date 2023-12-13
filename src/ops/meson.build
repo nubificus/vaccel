@@ -9,6 +9,7 @@ vaccel_headers += files([
   'noop.h',
   'opencv.h',
   'tf.h',
+  'tflite.h',
   'torch.h',
 ])
 
@@ -22,5 +23,6 @@ vaccel_sources += files([
   'noop.c',
   'opencv.c',
   'tf.c',
+  'tflite.c',
   'torch.c',
 ])

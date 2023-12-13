@@ -47,6 +47,9 @@ enum vaccel_op_type {
 	VACCEL_TORCH_JITLOAD_FORWARD, /* 21 */
 	VACCEL_TORCH_SGEMM, /* 22 */
 	VACCEL_OPENCV,  /* 23 */
+	VACCEL_TFLITE_SESSION_LOAD,  /* 24 */
+	VACCEL_TFLITE_SESSION_RUN,   /* 25 */
+	VACCEL_TFLITE_SESSION_DELETE,/* 26 */
 	VACCEL_FUNCTIONS_NR
 };
 
@@ -75,6 +78,9 @@ static const char *vaccel_op_name[] = {
 	"Torch jitload_forward function",
 	"Torch SGEMM",
 	"OpenCV Generic",
+	"TensorFlow Lite session load",
+	"TensorFlow Lite session run",
+	"TensorFlow Lite session delete",
 	"Functions NR",
 };
 
