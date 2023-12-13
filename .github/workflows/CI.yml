@@ -26,7 +26,7 @@ jobs:
     
     - name: Install dependencies for tests
       id: install_dependencies
-      run : sudo apt-get install -y lcov g++
+      run : sudo apt update && sudo apt-get install -y lcov g++
 
     - name: Checkout code
       uses: actions/checkout@v2
