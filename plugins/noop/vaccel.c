@@ -315,6 +315,88 @@ static int noop_tf_session_delete(
 	return VACCEL_OK;
 }
 
+static int noop_tflite_session_load(
+	struct vaccel_session *session,
+	struct vaccel_tf_model *model
+) {
+	if (!session) {
+		noop_error("Invalid session\n");
+		return VACCEL_EINVAL;
+	}
+
+	if (!model) {
+		noop_error("Invalid model\n");
+		return VACCEL_EINVAL;
+	}
+
+	if (!vaccel_sess_has_resource(session, model->resource)) {
+		noop_error("Model is not registered with session\n");
+		return VACCEL_ENOENT;
+	}
+
+	return VACCEL_OK;
+}
+
+static int noop_tflite_session_run(
+	struct vaccel_session *session,
+        const struct vaccel_tf_model *model,
+        struct vaccel_tflite_tensor *const *in, int nr_inputs,
+        struct vaccel_tflite_tensor **out, int nr_outputs,
+        uint8_t *status)
+{
+	if (!session) {
+		noop_error("Invalid session\n");
+		return VACCEL_EINVAL;
+	}
+
+	if (!model) {
+		noop_error("Invalid model\n");
+		return VACCEL_EINVAL;
+	}
+
+	noop_info("Number of inputs: %d\n", nr_inputs);
+	for (int i = 0; i < nr_inputs; ++i) {
+		noop_info("\t#dims: %d -> {", in[i]->nr_dims);
+		for (int j = 0; j < in[i]->nr_dims; ++j)
+			printf("%" PRId32 "%s", in[i]->dims[j],
+				(j == in[i]->nr_dims - 1) ? "}\n" : " ");
+
+		noop_info("\tData type: %d\n", in[i]->data_type);
+		noop_info("\tData -> %p, %zu\n", in[i]->data, in[i]->size);
+	}
+
+	noop_info("Number of outputs: %d\n", nr_outputs);
+	for (int i = 0; i < nr_outputs; ++i) {
+		out[i] = malloc(sizeof(*out[i]));
+		out[i]->nr_dims = in[i]->nr_dims;
+		out[i]->dims = malloc(sizeof(*out[i]->dims) * in[i]->nr_dims);
+		memcpy(out[i]->dims,in[i]->dims, sizeof(*in[i]->dims) * in[i]->nr_dims);
+		out[i]->data_type = in[i]->data_type;
+		out[i]->data = malloc(in[i]->size * sizeof(double));
+		memcpy(out[i]->data, in[i]->data, in[i]->size);
+		out[i]->size = in[i]->size;
+	}
+
+	return VACCEL_OK;
+}
+
+static int noop_tflite_session_delete(
+	struct vaccel_session *session,
+        const struct vaccel_tf_model *model
+) {
+	if (!session) {
+		noop_error("Invalid session\n");
+		return VACCEL_EINVAL;
+	}
+
+	if (!model) {
+		noop_error("Invalid model\n");
+		return VACCEL_EINVAL;
+	}
+
+	return VACCEL_OK;
+}
+
 static int v_arraycopy(struct vaccel_session *session, int *a, int *b, size_t c)
 {
 	fprintf(stdout, "[noop] Calling v_arraycopy for session %u\n",
@@ -502,6 +584,9 @@ struct vaccel_op ops[] = {
 	VACCEL_OP_INIT(ops[17], VACCEL_TORCH_JITLOAD_FORWARD, noop_torch_jitload_forward),
 	VACCEL_OP_INIT(ops[18], VACCEL_TORCH_SGEMM, noop_torch_sgemm),
 	VACCEL_OP_INIT(ops[19], VACCEL_OPENCV, noop_opencv),
+	VACCEL_OP_INIT(ops[20], VACCEL_TFLITE_SESSION_LOAD, noop_tflite_session_load),
+	VACCEL_OP_INIT(ops[21], VACCEL_TFLITE_SESSION_RUN, noop_tflite_session_run),
+	VACCEL_OP_INIT(ops[22], VACCEL_TFLITE_SESSION_DELETE, noop_tflite_session_delete),
 };
 
 

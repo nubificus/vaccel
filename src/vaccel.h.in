@@ -33,6 +33,7 @@
 #include "ops/image.h"
 #include "ops/noop.h"
 #include "ops/tf.h"
+#include "ops/tflite.h"
 #include "ops/fpga.h"
 #include "ops/opencv.h"
 #include "resources/tf_saved_model.h"
