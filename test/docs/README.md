@@ -16,7 +16,7 @@ In essence: as a start please read the following sections first:
 3. [Mocking functions](mocking_functions.md)
 4. [Adding tests to the test runner](test_runner.md)
 3. [FAQ](faq.md)
-4. [Coverage](coverage.md)
+4. [Coverage](coverage/coverage.md)
 5. [Previous Research](research.md)
 
 
