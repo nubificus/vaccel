@@ -30,12 +30,12 @@ ENDIF()
 include(GNUInstallDirs)
 
 # Add CMake third-party dependencies to be built
-add_subdirectory(third_party)
+add_subdirectory(third-party)
 
 # Add include directories from third-party libraries
 include_directories(
 	#slog
-	third_party/slog/src
+	third-party/slog/src
 )
 
 add_subdirectory(src)
