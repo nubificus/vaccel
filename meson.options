@@ -5,8 +5,13 @@ option('plugin-noop',
 
 option('plugin-exec',
   type : 'feature',
-  value : 'disabled',
+  value : 'auto',
   description : 'Build the exec plugin')
+
+option('plugins',
+  type : 'feature',
+  value : 'disabled',
+  description : 'Build all the plugins')
 
 option('examples',
   type : 'feature',
