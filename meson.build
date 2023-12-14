@@ -36,10 +36,10 @@ if opt_tests.enabled()
 endif
 
 summary({
-  'Build the exec plugin': opt_plugin_exec,
-  'Build the no-op debugging plugin': opt_plugin_noop,
-  'Build the examples': opt_examples,
-  'Enable testing': opt_tests,
+  'Build the exec plugin': opt_plugin_exec.enabled(),
+  'Build the no-op debugging plugin': opt_plugin_noop.enabled(),
+  'Build the examples': opt_examples.enabled(),
+  'Enable testing': opt_tests.enabled(),
   },
   section : 'Configuration',
   bool_yn : true)
