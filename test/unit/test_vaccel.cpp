@@ -186,8 +186,8 @@ TEST_CASE("constructor & destructor", "[vaccel]")
     char* plugins = getenv("VACCEL_BACKENDS");
     REQUIRE(plugins);
     ret = load_backend_plugins(plugins);
-    // REQUIRE(ret == VACCEL_OK);
 
+    // REQUIRE(ret == VACCEL_OK);
     // ret = plugins_shutdown();
     // REQUIRE(ret == VACCEL_OK);
     // ret = resources_cleanup();

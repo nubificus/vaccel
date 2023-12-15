@@ -15,5 +15,4 @@ TEST_CASE("template", "[temp]")
 
     int ret = 0;
     REQUIRE(ret == VACCEL_OK);
-    
 }

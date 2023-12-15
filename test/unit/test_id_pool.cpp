@@ -26,17 +26,22 @@ extern "C" {
 TEST_CASE("id_pool_new", "[id_pool]")
 {
     id_pool_t test_pool;
+    test_pool.ids = nullptr;
 
     // Check if the pool is created properly with a capacity of 10
     SECTION("id_pool created properly")
     {
         REQUIRE(id_pool_new(&test_pool, 10) == VACCEL_OK);
+        REQUIRE(test_pool.ids != nullptr);
+        REQUIRE(test_pool.max == 10);
+        REQUIRE(test_pool.next == 0);
     }
 
     // Check handling of a pool with 0 IDs
     SECTION("id_pool has 0 ids")
     {
         REQUIRE(id_pool_new(&test_pool, 0) == VACCEL_EINVAL);
+        REQUIRE(test_pool.ids == nullptr);
     }
 
     // Check handling of not enough memory (mocked here for simplicity)
@@ -54,7 +59,14 @@ TEST_CASE("id_pool_destroy", "[id_pool]")
     SECTION("id_pool successfully destroyed")
     {
         id_pool_t test_pool;
+        test_pool.ids = nullptr;
+        REQUIRE(test_pool.ids == nullptr);
         REQUIRE(id_pool_new(&test_pool, 10) == VACCEL_OK);
+
+        REQUIRE(test_pool.ids != nullptr);
+        REQUIRE(test_pool.max == 10);
+        REQUIRE(test_pool.next == 0);
+
         REQUIRE(id_pool_destroy(&test_pool) == VACCEL_OK);
     }
 
@@ -73,15 +85,39 @@ TEST_CASE("id_pool_get", "[id_pool]")
     {
         id_pool_t test_pool;
         id_pool_new(&test_pool, 3);
+
+        REQUIRE(test_pool.ids != nullptr);
+        REQUIRE(test_pool.max == 3);
+        REQUIRE(test_pool.next == 0);
+
         vaccel_id_t id_test = id_pool_get(&test_pool);
         REQUIRE(id_test == 1);
+
+        REQUIRE(test_pool.ids != nullptr);
+        REQUIRE(test_pool.max == 3);
+        REQUIRE(test_pool.next == 1);
+
         id_test = id_pool_get(&test_pool);
         REQUIRE(id_test == 2);
+
+        REQUIRE(test_pool.ids != nullptr);
+        REQUIRE(test_pool.max == 3);
+        REQUIRE(test_pool.next == 2);
+
         id_test = id_pool_get(&test_pool);
         REQUIRE(id_test == 3);
 
+        REQUIRE(test_pool.ids != nullptr);
+        REQUIRE(test_pool.max == 3);
+        REQUIRE(test_pool.next == 3);
+
         // No more IDs should be available
         id_test = id_pool_get(&test_pool);
+
+        REQUIRE(test_pool.ids != nullptr);
+        REQUIRE(test_pool.max == 3);
+        REQUIRE(test_pool.next == 4);
+
         REQUIRE(id_test == 0);
     }
 
@@ -97,15 +133,36 @@ TEST_CASE("id_pool_release", "[id_pool]")
     {
         id_pool_t test_pool;
         id_pool_new(&test_pool, 3);
+
+        REQUIRE(test_pool.ids != nullptr);
+        REQUIRE(test_pool.max == 3);
+        REQUIRE(test_pool.next == 0);
+
         vaccel_id_t id_test = id_pool_get(&test_pool);
         REQUIRE(id_test == 1);
+        REQUIRE(test_pool.ids != nullptr);
+        REQUIRE(test_pool.max == 3);
+        REQUIRE(test_pool.next == 1);
+
         id_pool_get(&test_pool);
+
+        REQUIRE(test_pool.ids != nullptr);
+        REQUIRE(test_pool.max == 3);
+        REQUIRE(test_pool.next == 2);
 
         // Release ID 1 back into the pool
         id_pool_release(&test_pool, 1);
 
+        REQUIRE(test_pool.ids != nullptr);
+        REQUIRE(test_pool.max == 3);
+        REQUIRE(test_pool.next == 1); // this goes back to 1
+
         // Get ID 1 back
         id_test = id_pool_get(&test_pool);
+
         REQUIRE(id_test == 1);
+        REQUIRE(test_pool.ids != nullptr);
+        REQUIRE(test_pool.max == 3);
+        REQUIRE(test_pool.next == 2);
     }
 }

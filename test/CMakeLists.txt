@@ -46,6 +46,7 @@ set(TESTS_CORE
     test_plugin
     test_session
     test_misc
+    test_misc_mock
     test_resource
     test_id_pool
     test_vaccel
@@ -82,7 +83,15 @@ set_tests_properties(
 )
 
 set_tests_properties(
-    test_log test_id_pool test_misc test_resource test_session test_plugin test_vaccel
+    test_log test_id_pool test_misc_mock test_resource test_session test_plugin test_vaccel
     PROPERTIES
+    ARGS=--order rand --warn NoAssertions
+)
+
+
+set_tests_properties(
+    test_misc
+    PROPERTIES
+    ENVIRONMENT "VACCEL_BACKENDS=${CMAKE_BINARY_DIR}/plugins/noop/libvaccel-noop.so;VACCEL_DEBUG_LEVEL=4"
     ARGS=--order rand --warn NoAssertions
 )
