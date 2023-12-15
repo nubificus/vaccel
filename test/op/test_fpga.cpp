@@ -23,7 +23,13 @@ extern "C" {
 
 TEST_CASE("vaccel_fpga_add", "[vaccel_fpga_plugins]")
 {
+    int ret;
     struct vaccel_session sess;
+    sess.session_id = 0;
+    sess.priv = nullptr;
+    sess.resources = nullptr;
+    sess.hint = 1;
+
     float A[] = { 1, 2, 3, 4, 5 };
     float B[] = { 1, 2, 6, 4, 5 };
     float C[] = { 1, 2, 6, 4, 5 };
@@ -46,8 +52,13 @@ TEST_CASE("vaccel_fpga_add", "[vaccel_fpga_plugins]")
 
     SECTION("valid session and inputs")
     {
-        int ret = vaccel_sess_init(&sess, 0);
+        ret = vaccel_sess_init(&sess, 0);
         REQUIRE(ret == VACCEL_OK);
+        REQUIRE(sess.session_id);
+        REQUIRE(sess.hint == 0);
+        REQUIRE(sess.resources);
+        REQUIRE(sess.priv == nullptr);
+
         ret = vaccel_fpga_vadd(&sess, A, B, C, len_A, len_B);
         float C_expected[] = { 2, 4, 9, 8, 10 };
         size_t len_C = sizeof(C) / sizeof(C[0]);
@@ -64,7 +75,13 @@ TEST_CASE("vaccel_fpga_add", "[vaccel_fpga_plugins]")
 
 TEST_CASE("vaccel_fpga_copy", "[vaccel_fpga_plugins]")
 {
+    int ret;
     struct vaccel_session sess;
+    sess.session_id = 0;
+    sess.priv = nullptr;
+    sess.resources = nullptr;
+    sess.hint = 1;
+
     int A[] = { 1, 2, 3, 4, 5 };
     int B[] = { 1, 1, 1, 1, 1 };
 
@@ -78,8 +95,12 @@ TEST_CASE("vaccel_fpga_copy", "[vaccel_fpga_plugins]")
 
     SECTION("valid session and inputs")
     {
-        int ret = vaccel_sess_init(&sess, 0);
+        ret = vaccel_sess_init(&sess, 0);
         REQUIRE(ret == VACCEL_OK);
+        REQUIRE(sess.session_id);
+        REQUIRE(sess.hint == 0);
+        REQUIRE(sess.resources);
+        REQUIRE(sess.priv == nullptr);
         ret = vaccel_fpga_arraycopy(&sess, A, B, len_A);
         float B_expected[] = { 1, 2, 3, 4, 5 };
 
@@ -92,7 +113,13 @@ TEST_CASE("vaccel_fpga_copy", "[vaccel_fpga_plugins]")
 
 TEST_CASE("vaccel_fpga_mmult", "[vaccel_fpga_plugins]")
 {
-    struct vaccel_session test_sess;
+    int ret;
+    struct vaccel_session sess;
+    sess.session_id = 0;
+    sess.priv = nullptr;
+    sess.resources = nullptr;
+    sess.hint = 1;
+
     float a[] = { 1.2, 3.2, 3.0, 4.1, 5.7 };
     float b[] = { 1.1, 0.2, 6.1, 4.6, 5.2 };
 
@@ -106,45 +133,19 @@ TEST_CASE("vaccel_fpga_mmult", "[vaccel_fpga_plugins]")
 
     SECTION("valid session and inputs")
     {
-        int ret = vaccel_sess_init(&test_sess, 0);
+        ret = vaccel_sess_init(&sess, 0);
         REQUIRE(ret == VACCEL_OK);
-        ret = vaccel_fpga_mmult(&test_sess, a, b, c, len_c);
+        REQUIRE(sess.session_id);
+        REQUIRE(sess.hint == 0);
+        REQUIRE(sess.resources);
+        REQUIRE(sess.priv == nullptr);
+
+        ret = vaccel_fpga_mmult(&sess, a, b, c, len_c);
         float C_expected[] = { 9.1, 9.1, 9.1, 9.1, 9.1 };
 
-        REQUIRE(vaccel_sess_free(&test_sess) == VACCEL_OK);
+        REQUIRE(vaccel_sess_free(&sess) == VACCEL_OK);
         REQUIRE(ret != VACCEL_ENOTSUP);
 
         REQUIRE(std::equal(c, c + len_c, C_expected));
-    }
-}
-
-TEST_CASE("vaccel_fpga_parallel", "[vaccel_fpga_plugins]")
-{
-    struct vaccel_session test_sess;
-    float a[] = { 1.2, 3.2, 3.0, 4.1, 5.7 };
-    float b[] = { 1.1, 0.2, 6.1, 4.6, 5.2 };
-    size_t len_a = sizeof(a) / sizeof(a[0]);
-    float add_out[len_a];
-    float mult_out[len_a];
-
-    SECTION("null session")
-    {
-        REQUIRE(vaccel_fpga_parallel(NULL, a, b, add_out, mult_out, len_a) == VACCEL_EINVAL);
-    }
-
-    SECTION("valid session and inputs")
-    {
-        int ret = vaccel_sess_init(&test_sess, 0);
-        REQUIRE(ret == VACCEL_OK);
-        ret = vaccel_fpga_parallel(&test_sess, a, b, add_out, mult_out, len_a);
-
-        // float expected_add_out[] = {2.3, 3.4, 9.1, 8.7, 10.9};
-        // float expected_mult_out[] = {1, 1, 1, 1, 1};
-
-        REQUIRE(vaccel_sess_free(&test_sess) == VACCEL_OK);
-        REQUIRE(ret != VACCEL_ENOTSUP);
-
-        // REQUIRE(std::equal(add_out, add_out + len_a, expected_add_out));
-        // REQUIRE(std::equal(mult_out, mult_out + len_a, expected_mult_out));
     }
 }

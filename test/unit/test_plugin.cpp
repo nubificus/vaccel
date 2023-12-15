@@ -12,7 +12,7 @@ extern "C" {
 
 // TODO: Investigate unregister plugin function and freeing memory
 
-static const char *pname = "mock_plugin_test";
+static const char* pname = "mock_plugin_test";
 
 static int fini(void)
 {
@@ -23,7 +23,7 @@ static int init(void)
     return VACCEL_OK;
 }
 
-static int no_op(){return 2;}
+static int no_op() { return 2; }
 
 TEST_CASE("get_all_available_functions")
 {
@@ -34,7 +34,7 @@ TEST_CASE("get_all_available_functions")
     plugin.info = &pinfo;
     list_init_entry(&plugin.entry);
     list_init_entry(&plugin.ops);
-    
+
     plugin.info->name = pname;
     plugin.info->init = init;
     plugin.info->fini = fini;

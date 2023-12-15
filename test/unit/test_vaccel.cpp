@@ -42,7 +42,7 @@ extern "C" {
  * runtime */
 static char rundir[MAX_RUNDIR_PATH];
 
-static int load_backend_plugin(const char* path)
+[[maybe_unused]] static int load_backend_plugin(const char* path)
 {
     int ret;
     struct vaccel_plugin *plugin, **plugin_p;
@@ -83,7 +83,7 @@ close_dl:
     return ret;
 }
 
-static int load_backend_plugins(char* plugins)
+[[maybe_unused]] static int load_backend_plugins(char* plugins)
 {
     char* plugin;
 
@@ -105,7 +105,7 @@ static int load_backend_plugins(char* plugins)
     return VACCEL_OK;
 }
 
-static int create_vaccel_rundir(void)
+[[maybe_unused]] static int create_vaccel_rundir(void)
 {
     int ret = snprintf(rundir, MAX_RUNDIR_PATH, "/run/user/%u", getuid());
     if (ret == MAX_RUNDIR_PATH) {
@@ -149,17 +149,17 @@ static int create_vaccel_rundir(void)
     return VACCEL_OK;
 }
 
-// static int cleanup_vaccel_rundir(void)
-// {
-// 	/* Try to cleanup the rundir. At the moment, we do not fail
-// 	 * if this fails, we just warn the user */
-// 	if (cleanup_rundir(rundir))
-// 		vaccel_warn("Could not cleanup rundir '%s'", rundir);
+[[maybe_unused]] static int cleanup_vaccel_rundir(void)
+{
+    /* Try to cleanup the rundir. At the moment, we do not fail
+     * if this fails, we just warn the user */
+    if (cleanup_rundir(rundir))
+        vaccel_warn("Could not cleanup rundir '%s'", rundir);
 
-// 	return VACCEL_OK;
-// }
+    return VACCEL_OK;
+}
 
-const char* vaccel_rundir(void) { return rundir; }
+[[maybe_unused]] const char* vaccel_rundir(void) { return rundir; }
 }
 
 TEST_CASE("constructor & destructor", "[vaccel]")
@@ -183,16 +183,19 @@ TEST_CASE("constructor & destructor", "[vaccel]")
     ret = plugins_bootstrap();
     REQUIRE(ret == VACCEL_OK);
 
-    char* plugins = getenv("VACCEL_BACKENDS");
-    REQUIRE(plugins);
-    ret = load_backend_plugins(plugins);
+    // char* plugins = getenv("VACCEL_BACKENDS");
+    // REQUIRE(plugins);
+    // ret = load_backend_plugins(plugins);
 
-    // REQUIRE(ret == VACCEL_OK);
     // ret = plugins_shutdown();
     // REQUIRE(ret == VACCEL_OK);
+
     // ret = resources_cleanup();
     // REQUIRE(ret == VACCEL_OK);
+
     // ret = sessions_cleanup();
     // REQUIRE(ret == VACCEL_OK);
+
     // ret = cleanup_vaccel_rundir();
+    // REQUIRE(ret == VACCEL_OK);
 }

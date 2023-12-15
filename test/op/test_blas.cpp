@@ -74,7 +74,7 @@ TEST_CASE("sgemm", "[blas]")
         beta, (float*)C, N);
     REQUIRE(ret == VACCEL_OK);
 
-    // Write the result matrix C to a file (currently commented out)
+    // Write the result matrix C to a file
     // fwrite(C, sizeof(float), M * N, data_fp);
 
     // Free the VAccel session

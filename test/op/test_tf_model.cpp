@@ -78,13 +78,13 @@ TEST_CASE("tf_model")
     const char* model_path = "../../examples/models/tf/lstm2/saved_model.pb";
 
     int ret = vaccel_tf_model_new(&model, model_path);
-    REQUIRE(ret == 0);
+    REQUIRE(ret == VACCEL_OK);
 
     ret = vaccel_sess_init(&sess, 0);
-    REQUIRE(ret == 0);
+    REQUIRE(ret == VACCEL_OK);
 
     ret = vaccel_sess_register(&sess, model.resource);
-    REQUIRE(ret == 0);
+    REQUIRE(ret == VACCEL_OK);
 
     struct vaccel_tf_model model2;
     size_t len = 0;
@@ -92,25 +92,25 @@ TEST_CASE("tf_model")
     REQUIRE(buff);
 
     ret = vaccel_tf_model_new_from_buffer(&model2, buff, len);
-    REQUIRE(ret == 0);
+    REQUIRE(ret == VACCEL_OK);
 
     ret = vaccel_sess_register(&sess, model2.resource);
-    REQUIRE(ret == 0);
+    REQUIRE(ret == VACCEL_OK);
 
     ret = vaccel_sess_unregister(&sess, model.resource);
-    REQUIRE(ret == 0);
+    REQUIRE(ret == VACCEL_OK);
 
     ret = vaccel_sess_unregister(&sess, model2.resource);
-    REQUIRE(ret == 0);
+    REQUIRE(ret == VACCEL_OK);
 
     ret = vaccel_tf_model_destroy(&model);
-    REQUIRE(ret == 0);
+    REQUIRE(ret == VACCEL_OK);
 
     ret = vaccel_tf_model_destroy(&model2);
-    REQUIRE(ret == 0);
+    REQUIRE(ret == VACCEL_OK);
 
     ret = vaccel_sess_free(&sess);
-    REQUIRE(ret == 0);
+    REQUIRE(ret == VACCEL_OK);
 
     free(buff);
 }

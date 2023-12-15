@@ -284,6 +284,7 @@ TEST_CASE("session_sess_virtio", "[session]")
     struct vaccel_session test_sess;
     test_sess.hint = 0;
     test_sess.session_id = 1;
+    test_sess.resources = nullptr;
     test_sess.priv = nullptr;
     struct vaccel_resource test_res;
     test_res.type = VACCEL_RES_SHARED_OBJ;
