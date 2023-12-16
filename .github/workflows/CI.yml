@@ -26,7 +26,7 @@ jobs:
     
     - name: Install dependencies for tests
       id: install_dependencies
-      run : sudo apt update && sudo apt-get install -y lcov g++
+      run : sudo apt update && sudo apt-get install -y lcov g++ valgrind
 
     - name: Checkout code
       uses: actions/checkout@v2
@@ -104,6 +104,17 @@ jobs:
         cmake --build . --config ${{matrix.build_type}} && \
         make && \
         make test
+
+    - name: Valgrind memory tests
+      run: |
+        valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes  ./build/test/test_id_pool
+        valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes  ./build/test/test_log
+        valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes  ./build/test/test_misc_mock
+        valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes  ./build/test/test_misc
+        valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes  ./build/test/test_plugin
+        valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes  ./build/test/test_resource
+        valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes  ./build/test/test_session
+        valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes  ./build/test/test_vaccel
 
     - name: Clean-up
       run: sudo rm -rf artifacts build_${{ matrix.build_type }}
