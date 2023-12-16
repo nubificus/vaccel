@@ -107,14 +107,14 @@ jobs:
 
     - name: Valgrind memory tests
       run: |
-        valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes  ./build/test/test_id_pool
-        valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes  ./build/test/test_log
-        valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes  ./build/test/test_misc_mock
-        valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes  ./build/test/test_misc
-        valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes  ./build/test/test_plugin
-        valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes  ./build/test/test_resource
-        valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes  ./build/test/test_session
-        valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes  ./build/test/test_vaccel
+        valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes  ./build_${{matrix.build_type}}/test/test_id_pool
+        valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes  ./build_${{matrix.build_type}}/test/test_log
+        valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes  ./build_${{matrix.build_type}}/test/test_misc_mock
+        valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes  ./build_${{matrix.build_type}}/test/test_misc
+        valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes  ./build_${{matrix.build_type}}/test/test_plugin
+        valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes  ./build_${{matrix.build_type}}/test/test_resource
+        valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes  ./build_${{matrix.build_type}}/test/test_session
+        valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes  ./build_${{matrix.build_type}}/test/test_vaccel
 
     - name: Clean-up
       run: sudo rm -rf artifacts build_${{ matrix.build_type }}
