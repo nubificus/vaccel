@@ -33,12 +33,19 @@ int main(int argc, char *argv[])
 
 	const char *model_path = argv[1];
 
-	int ret = vaccel_tf_model_new(&model, model_path);
+	int ret = vaccel_tf_model_set_path(&model, model_path);
 	if (ret) {
-		fprintf(stderr, "Could not create TensorFlow Lite model resource: %s",
-				strerror(ret));
+		fprintf(stderr, "Could not set model path to TensorFlow Lite model\n");
 		exit(1);
 	}
+
+	ret = vaccel_tf_model_register(&model);
+	if (ret) {
+		fprintf(stderr, "Could not register TensorFlow Lite model resource\n");
+		exit(1);
+	}
+
+	printf("Created new model %lld\n", vaccel_tf_model_get_id(&model));
 
 	ret = vaccel_sess_init(&vsess, 0);
 	if (ret) {

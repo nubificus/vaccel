@@ -14,4 +14,4 @@
 
 #pragma once
 
-#include "include/tf_model.h"
+#include "include/resources/tf_model.h"

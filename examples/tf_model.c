@@ -13,100 +13,170 @@
  */
 
 #include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
 #include <sys/stat.h>
-#include <sys/types.h>
 #include <fcntl.h>
 #include <unistd.h>
 
 #include <vaccel.h>
 #include "../src/utils.h"
 
+int create_session(struct vaccel_session *sess)
+{
+	int ret = vaccel_sess_init(sess, 0);
+	if (ret) {
+		vaccel_error("Could not initialize session");
+		return ret;
+	}
+
+	vaccel_info("New session: %u", sess->session_id);
+	return VACCEL_OK;
+}
+
+int destroy_session(struct vaccel_session *sess)
+{
+	vaccel_sess_free(sess);
+	return VACCEL_OK;
+}
+
+int create_from_path(const char *path)
+{
+	vaccel_info("Creating new model handle");
+	struct vaccel_tf_model *model = vaccel_tf_model_new();
+	if (!model) {
+		vaccel_error("Could not create model");
+		return VACCEL_ENOMEM;
+	}
+
+	vaccel_info("Setting path of the model");
+	int ret = vaccel_tf_model_set_path(model, path);
+	if (ret) {
+		vaccel_error("Could not load saved model");
+		return ret;
+	}
+
+	vaccel_info("Registering model resource with vAccel");
+	ret = vaccel_tf_model_register(model);
+	if (ret) {
+		vaccel_error("Could not create model resource");
+		return ret;
+	}
+
+	vaccel_id_t model_id = vaccel_tf_model_get_id(model);
+	vaccel_info("Registered new resource: %ld", model_id);
+
+	struct vaccel_session sess;
+	ret = create_session(&sess);
+	if (ret)
+		return ret;
+
+	vaccel_info("Registering model %ld with session %u", model_id,
+			sess.session_id);
+
+	ret = vaccel_sess_register(&sess, model->resource);
+	if (ret) {
+		vaccel_error("Could not register model to session");
+		return ret;
+	}
+
+	vaccel_info("Unregistering model %ld from session %u", model_id,
+			sess.session_id);
+
+	ret = vaccel_sess_unregister(&sess, model->resource);
+	if (ret) {
+		vaccel_error("Could not unregister model from session");
+		return ret;
+	}
+
+	vaccel_info("Destroying model %ld", model_id);
+	ret = vaccel_tf_model_destroy(model);
+	if (ret) {
+		vaccel_error("Could not destroy model");
+		return ret;
+	}
+
+	vaccel_info("Destroying session %u", sess.session_id);
+	return destroy_session(&sess);
+}
+
+int create_from_in_mem(const char *path)
+{
+	vaccel_info("Creating new model handle");
+	struct vaccel_tf_model *model = vaccel_tf_model_new();
+	if (!model) {
+		vaccel_error("Could not create model");
+		return VACCEL_ENOMEM;
+	}
+
+	unsigned char *ptr;
+	size_t len;
+	int ret = read_file(path, (void **)&ptr, &len);
+	if (ret) {
+		vaccel_error("Could not read model from path");
+		return VACCEL_ENOMEM;
+	}
+
+	ret = vaccel_tf_model_set_model(model, NULL, ptr, len);
+	if (ret) {
+		vaccel_error("Could not set file for model");
+		return ret;
+	}
+
+	vaccel_info("Registering model resource with vAccel");
+	ret = vaccel_tf_model_register(model);
+	if (ret) {
+		vaccel_error("Could not create model resource");
+		return ret;
+	}
+
+	vaccel_id_t model_id = vaccel_tf_model_get_id(model);
+	vaccel_info("Registered new resource: %ld", model_id);
+
+	struct vaccel_session sess;
+	ret = create_session(&sess);
+	if (ret)
+		return ret;
+
+	vaccel_info("Registering model %ld with session %u", model_id,
+			sess.session_id);
+
+	ret = vaccel_sess_register(&sess, model->resource);
+	if (ret) {
+		vaccel_error("Could not register model to session");
+		return ret;
+	}
+
+	vaccel_info("Unregistering model %ld from session %u", model_id,
+			sess.session_id);
+
+	ret = vaccel_sess_unregister(&sess, model->resource);
+	if (ret) {
+		vaccel_error("Could not unregister model from session");
+		return ret;
+	}
+
+	vaccel_info("Destroying model %ld", model_id);
+	ret = vaccel_tf_model_destroy(model);
+	if (ret) {
+		vaccel_error("Could not destroy model");
+		return ret;
+	}
+
+	vaccel_info("Destroying session %u", sess.session_id);
+	return destroy_session(&sess);}
+
+
 int main(int argc, char *argv[])
 {
 	if (argc != 2) {
-		fprintf(stderr, "usage: %s path_to_tf_model\n", argv[0]);
+		vaccel_info("usage: %s saved_model_path", argv[0]);
 		return 0;
 	}
 
-	struct vaccel_tf_model model;
+	vaccel_info("Testing model handling from path");
+	int ret = create_from_path(argv[1]);
+	if (ret)
+		return ret;
 
-	int ret = vaccel_tf_model_new(&model, argv[1]);
-	if (ret) {
-		fprintf(stderr, "Could not create TF model resource: %s",
-				strerror(ret));
-		exit(1);
-	}
-
-	struct vaccel_session sess;
-	ret = vaccel_sess_init(&sess, 0);
-	if (ret) {
-		fprintf(stderr, "Could not create new session\n");
-		exit(1);
-	}
-
-	ret = vaccel_sess_register(&sess, model.resource);
-	if (ret) {
-		fprintf(stderr, "Could register model to session\n");
-		exit(1);
-	}
-
-	struct vaccel_tf_model model2;
-	size_t len;
-	unsigned char *buff;
-	ret = read_file(argv[1], (void **)&buff, &len);
-	if (ret) {
-		fprintf(stderr, "Could not read model file\n");
-		exit(1);
-	}
-		
-
-	ret = vaccel_tf_model_new_from_buffer(&model2, buff, len);
-	if (ret) {
-		fprintf(stderr, "Could not create TF model resource from buffer: %s\n",
-				strerror(ret));
-		exit(1);
-	}
-
-	ret = vaccel_sess_register(&sess, model2.resource);
-	if (ret) {
-		fprintf(stderr, "Could not register model 2 to session\n");
-		exit(1);
-	}
-
-	ret = vaccel_sess_unregister(&sess, model.resource);
-	if (ret) {
-		fprintf(stderr, "Could not unregister model from session\n");
-		exit(1);
-	}
-
-	ret = vaccel_sess_unregister(&sess, model2.resource);
-	if (ret) {
-		fprintf(stderr, "Could not unregister model 2 from session\n");
-		exit(1);
-	}
-	
-
-	ret = vaccel_tf_model_destroy(&model);
-	if (ret) {
-		fprintf(stderr, "Could not destroy model\n");
-		exit(1);
-	}
-
-	ret = vaccel_tf_model_destroy(&model2);
-	if (ret) {
-		fprintf(stderr, "Could not destroy model2\n");
-		exit(1);
-	}
-
-	ret = vaccel_sess_free(&sess);
-	if (ret) {
-		fprintf(stderr, "Could not close session\n");
-		exit(1);
-	}
-
-	free(buff);
-
-	return 0;
+	vaccel_info("Testing model handling from in memory data");
+	return create_from_in_mem(argv[1]);
 }
