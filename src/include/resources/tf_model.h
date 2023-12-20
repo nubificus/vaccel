@@ -26,9 +26,17 @@ extern "C" {
 
 struct vaccel_resource;
 
+/* A struct representing a TensorFlow frozen/Lite model
+ */
 struct vaccel_tf_model {
 	/* Underlying resource object */
 	struct vaccel_resource *resource;
+
+	/* The path of the model in disk */
+	const char *path;
+
+	/* The filename used to persist the file */
+	const char *filename;
 
 	/* The protobuf file of the model */
 	struct vaccel_file file;
@@ -37,22 +45,30 @@ struct vaccel_tf_model {
 	void *plugin_data;
 };
 
-int vaccel_tf_model_new(
+struct vaccel_tf_model *vaccel_tf_model_new(void);
+
+int vaccel_tf_model_set_path(
 	struct vaccel_tf_model *model,
 	const char *path
 );
 
-int vaccel_tf_model_new_from_buffer(
-	struct vaccel_tf_model *model,
-	const uint8_t *buff,
-	size_t size
+const char *vaccel_tf_model_get_path(struct vaccel_tf_model *model);
+
+int vaccel_tf_model_set_model(
+	struct vaccel_tf_model *model, const char *filename,
+	const uint8_t *ptr, size_t len
 );
+
+const uint8_t *vaccel_tf_model_get_model(
+	struct vaccel_tf_model *model,
+	size_t *len
+);
+
+int vaccel_tf_model_register(struct vaccel_tf_model *model);
 
 int vaccel_tf_model_destroy(struct vaccel_tf_model *model);
 
-vaccel_id_t vaccel_tf_model_get_id(
-	const struct vaccel_tf_model *model
-);
+vaccel_id_t vaccel_tf_model_get_id(const struct vaccel_tf_model *model);
 
 #ifdef __cplusplus
 }
