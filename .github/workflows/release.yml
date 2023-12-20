@@ -146,3 +146,7 @@ jobs:
 
     - name: Clean-up
       run: sudo rm -rf artifacts build_${{ matrix.build_type }}
+
+  coverage_docs:
+    uses: ./.github/workflows/coverage_upload.yml
+    needs: [build]

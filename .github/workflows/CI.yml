@@ -118,3 +118,7 @@ jobs:
 
     - name: Clean-up
       run: sudo rm -rf artifacts build_${{ matrix.build_type }}
+  
+  utils:
+      uses: ./.github/workflows/utils.yml
+      needs: [test]
