@@ -33,8 +33,7 @@ TEST_CASE("temp")
     REQUIRE(1==1);
 }
 
-// #define timespec_usec(t) \
-//     ((double)(t).tv_nsec / 10e3 + (double)(t).tv_sec * 10e6)
+// #define timespec_usec(t) ((double)(t).tv_nsec / 10e3 + (double)(t).tv_sec * 10e6)
 // #define time_diff_usec(t0, t1) (timespec_usec((t1)) - timespec_usec((t0)))
 
 // TEST_CASE("min_max", "[minmax]")
