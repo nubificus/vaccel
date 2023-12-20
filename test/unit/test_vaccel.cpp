@@ -187,8 +187,8 @@ TEST_CASE("constructor & destructor", "[vaccel]")
     // REQUIRE(plugins);
     // ret = load_backend_plugins(plugins);
 
-    // ret = plugins_shutdown();
-    // REQUIRE(ret == VACCEL_OK);
+    ret = plugins_shutdown();
+    REQUIRE(ret == VACCEL_OK);
 
     // ret = resources_cleanup();
     // REQUIRE(ret == VACCEL_OK);

@@ -1,6 +1,5 @@
-#include <catch2/catch_test_macros.hpp>
-
 #include <atomic>
+#include <catch2/catch_test_macros.hpp>
 
 using atomic_int = std::atomic<int>;
 using atomic_uint = std::atomic<unsigned int>;
@@ -81,6 +80,8 @@ TEST_CASE("destroy_OK", "[Resources]")
 
         REQUIRE(ret == VACCEL_OK);
     }
+
+    REQUIRE(resources_cleanup() == VACCEL_OK);
 }
 
 // Test case for resource creation and rundir creation
@@ -129,6 +130,8 @@ TEST_CASE("Resource Create Rundir", "[Resources]")
     REQUIRE(list_empty(&res.entry));
     REQUIRE(res.refcount == 0);
     REQUIRE_FALSE(res.rundir == NULL);
+
+    REQUIRE(resources_cleanup() == VACCEL_OK);
 }
 
 // Test case for finding a resource by ID (failure case)
@@ -185,4 +188,6 @@ TEST_CASE("find_resource_by_id", "[Resources]")
     // Cleanup the test resource
     result = resource_destroy(&test_res);
     REQUIRE(result == VACCEL_OK);
+
+    // REQUIRE(resources_cleanup() == VACCEL_OK);
 }

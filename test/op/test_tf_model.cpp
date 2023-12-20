@@ -38,7 +38,7 @@ static unsigned char* read_file(const char* path, size_t* len)
 
     status = fstat(fd, &buffer);
     if (status < 0) {
-        perror("Coult not stat file");
+        perror("Could not stat file");
         return NULL;
     }
 

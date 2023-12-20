@@ -35,6 +35,7 @@ TEST_CASE("id_pool_new", "[id_pool]")
         REQUIRE(test_pool.ids != nullptr);
         REQUIRE(test_pool.max == 10);
         REQUIRE(test_pool.next == 0);
+        REQUIRE(id_pool_destroy(&test_pool) == VACCEL_OK);
     }
 
     // Check handling of a pool with 0 IDs
@@ -42,6 +43,7 @@ TEST_CASE("id_pool_new", "[id_pool]")
     {
         REQUIRE(id_pool_new(&test_pool, 0) == VACCEL_EINVAL);
         REQUIRE(test_pool.ids == nullptr);
+        REQUIRE(id_pool_destroy(&test_pool) == VACCEL_OK);
     }
 
     // Check handling of not enough memory (mocked here for simplicity)
@@ -119,6 +121,8 @@ TEST_CASE("id_pool_get", "[id_pool]")
         REQUIRE(test_pool.next == 4);
 
         REQUIRE(id_test == 0);
+
+        REQUIRE(id_pool_destroy(&test_pool) == VACCEL_OK);
     }
 
     // Check handling when there is no pool to get IDs from
@@ -164,5 +168,7 @@ TEST_CASE("id_pool_release", "[id_pool]")
         REQUIRE(test_pool.ids != nullptr);
         REQUIRE(test_pool.max == 3);
         REQUIRE(test_pool.next == 2);
+
+        REQUIRE(id_pool_destroy(&test_pool) == VACCEL_OK);
     }
 }

@@ -4,7 +4,7 @@ To include tests, modify the ```CMakeLists.txt``` file in the ```test``` directo
 
 Quickest way is to look at which ```set``` of ```include``` files you need, either ```core``` or ```api``` and add the ```test_name``` into the set.
 
-```API``` enables a plugin backend when running the tests which is useful if you are testing operations implementated by a plugin.
+```API``` enables a plugin backend when running the tests which is useful if you are testing operations implemented by a plugin.
 
 ```
 set(TESTS_CORE

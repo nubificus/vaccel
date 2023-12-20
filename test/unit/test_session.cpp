@@ -82,7 +82,8 @@ TEST_CASE("session_init", "[session]")
 {
     int ret;
     // Ensure that the session system is initialized
-    sessions_bootstrap();
+    ret = sessions_bootstrap();
+    REQUIRE(ret == VACCEL_OK);
     struct vaccel_session sess;
     sess.session_id = 0;
     sess.resources = nullptr;
@@ -106,19 +107,24 @@ TEST_CASE("session_init", "[session]")
     REQUIRE(sess.resources == nullptr);
     REQUIRE(sess.priv == nullptr);
 
-    // sessions_cleanup();
+    ret = sessions_cleanup();
+    REQUIRE(ret == VACCEL_OK);
 }
 
 // Test case for session update and cleanup
 TEST_CASE("vaccel_sess_update_and_free", "[session]")
 {
-    sessions_bootstrap();
+
     struct vaccel_session sess;
     sess.session_id = 0;
     sess.resources = nullptr;
     sess.priv = nullptr;
+    int ret;
 
-    int ret = vaccel_sess_init(&sess, 1);
+    ret = sessions_bootstrap();
+    REQUIRE(ret == VACCEL_OK);
+
+    ret = vaccel_sess_init(&sess, 1);
     REQUIRE(ret == VACCEL_OK);
     REQUIRE(sess.session_id);
     REQUIRE(sess.hint == 1);
@@ -145,13 +151,15 @@ TEST_CASE("vaccel_sess_update_and_free", "[session]")
     REQUIRE(sess.resources == nullptr);
     REQUIRE(sess.priv == nullptr);
 
-    // sessions_cleanup();
+    ret = sessions_cleanup();
+    REQUIRE(ret == VACCEL_OK);
 }
 
 // Test case for unregistering a session with null parameters
 TEST_CASE("sess_unregister_null", "[session]")
 {
     int ret;
+
     ret = sessions_bootstrap();
     REQUIRE(VACCEL_OK == ret);
 
@@ -209,8 +217,8 @@ TEST_CASE("sess_unregister_null", "[session]")
     REQUIRE(sess.resources == nullptr);
     REQUIRE(sess.priv == nullptr);
 
-    // ret = sessions_cleanup();
-    // REQUIRE(VACCEL_OK == ret);
+    ret = sessions_cleanup();
+    REQUIRE(VACCEL_OK == ret);
 }
 
 // Test case for session initialization, update, registration, and cleanup
@@ -269,11 +277,11 @@ TEST_CASE("session_sess", "[session]")
     REQUIRE(test_sess.resources == nullptr);
     REQUIRE(test_sess.priv == nullptr);
 
-    // ret = resources_cleanup();
-    // REQUIRE(VACCEL_OK == ret);
+    ret = resources_cleanup();
+    REQUIRE(VACCEL_OK == ret);
 
-    // ret = sessions_cleanup();
-    // REQUIRE(VACCEL_OK == ret);
+    ret = sessions_cleanup();
+    REQUIRE(VACCEL_OK == ret);
 }
 
 // Test case for session initialization, update, registration, and cleanup with
