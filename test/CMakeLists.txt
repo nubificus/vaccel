@@ -81,12 +81,10 @@ endforeach()
 
 foreach(TEST_NAME ${TESTS_CORE})
     target_compile_definitions(${TEST_NAME} PRIVATE CATCH_CONFIG_FAST_COMPILE CATCH_CONFIG_DISABLE_MATCHERS)
-    target_precompile_headers(${TEST_NAME} PRIVATE catch2/catch.hpp)
 endforeach()
 
 foreach(TEST_NAME ${TESTS_API})
     target_compile_definitions(${TEST_NAME} PRIVATE CATCH_CONFIG_FAST_COMPILE CATCH_CONFIG_DISABLE_MATCHERS)
-    target_precompile_headers(${TEST_NAME} PRIVATE catch2/catch.hpp)
 endforeach()
 
 # Set properties for specific tests
