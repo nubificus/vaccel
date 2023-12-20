@@ -7,7 +7,7 @@
  *
  */
 
-#include <catch2/catch_test_macros.hpp>
+#include "../catch2/catch.hpp"
 
 #include <atomic>
 using atomic_int = std::atomic<int>;

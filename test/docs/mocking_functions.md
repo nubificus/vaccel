@@ -5,7 +5,7 @@ As an example, in ```test_misc.cpp``` a function is mocked by:
 
 
 ```cpp
-#include <catch2/catch_test_macros.hpp>
+#include "../catch2/catch.hpp"
 #include <fff.h>
 DEFINE_FFF_GLOBALS;
 

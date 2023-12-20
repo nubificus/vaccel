@@ -7,7 +7,7 @@ In order to write a test for a ```test.c``` using the cpp framework catch2. ```t
 - include the header file which you want to test alongside the catch2 header file as well as the relevant dependencies.
 
 ```cpp
-#include <catch2/catch_test_macros.hpp>
+#include "../catch2/catch.hpp"
 
 extern "C"{
 #include "test_header.h"
@@ -18,7 +18,7 @@ extern "C"{
 > Note: some files use the ```<stdatomic>``` library/types and you may get an error with ```atomic_uint refcount``` etc. Workaround:
 
 ```cpp
-#include <catch2/catch_test_macros.hpp>
+#include "../catch2/catch.hpp"
 
 #include <atomic>'
 
@@ -47,7 +47,7 @@ TEST_CASE(<name of test>)
 So far in our test we also use ```SECTIONS``` for nesting test cases within a test. This is equivalent to test fixtures, even though catch2 do provide a more traditional approach to test fixtures if needed.
 
 ```cpp
-#include <catch2/catch_test_macros.hpp>
+#include "../catch2/catch.hpp"
 
 #include <atomic>
 
