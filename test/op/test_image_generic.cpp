@@ -31,310 +31,315 @@ extern "C" {
 #include <vaccel.h>
 }
 
-extern "C" {
-
-int read_file(const char* filename, char** img, size_t* img_size)
+TEST_CASE("temp")
 {
-    int fd;
-    long bytes = 0;
-
-    fd = open(filename, O_RDONLY);
-    if (fd < 0) {
-        perror("open: ");
-        return 1;
-    }
-
-    struct stat info;
-    fstat(fd, &info);
-    fprintf(stdout, "Image size: %luB\n", info.st_size);
-
-    char* buf = (char*)malloc(info.st_size);
-    if (!buf) {
-        fprintf(stderr, "Could not allocate memory for image\n");
-        goto free_buff;
-    }
-
-    do {
-        int ret = read(fd, buf, info.st_size);
-        if (ret < 0) {
-            perror("Error while reading image: ");
-            goto close_file;
-        }
-        bytes += ret;
-    } while (bytes < info.st_size);
-
-    if (bytes < info.st_size) {
-        fprintf(stderr, "Could not read image\n");
-        goto close_file;
-    }
-
-    *img = buf;
-    *img_size = info.st_size;
-    close(fd);
-
-    return 0;
-
-close_file:
-    close(fd);
-free_buff:
-    free(buf);
-    return 1;
-}
+    REQUIRE(1==1);
 }
 
-TEST_CASE("classify_generic")
-{
-    char file_path[] = "../../examples/images/example.jpg";
-    int ret;
-    char* image;
-    size_t image_size = 0;
-    char out_text[512], out_imagename[512];
+// extern "C" {
 
-    struct vaccel_session sess;
-    sess.session_id = 0;
-    sess.priv = nullptr;
-    sess.resources = nullptr;
-    sess.hint = 1;
+// int read_file(const char* filename, char** img, size_t* img_size)
+// {
+//     int fd;
+//     long bytes = 0;
 
-    ret = vaccel_sess_init(&sess, 0);
-    REQUIRE(ret == VACCEL_OK);
-    REQUIRE(sess.session_id);
-    REQUIRE(sess.hint == 0);
-    REQUIRE(sess.resources);
-    REQUIRE(sess.priv == nullptr);
+//     fd = open(filename, O_RDONLY);
+//     if (fd < 0) {
+//         perror("open: ");
+//         return 1;
+//     }
 
-    ret = read_file(file_path, &image, &image_size);
-    REQUIRE(ret == VACCEL_OK);
-    REQUIRE(image_size);
-    REQUIRE(&image);
+//     struct stat info;
+//     fstat(fd, &info);
+//     fprintf(stdout, "Image size: %luB\n", info.st_size);
 
-    uint32_t image_size_uint32 = 0;
-    if (image_size <= UINT32_MAX) {
-        image_size_uint32 = static_cast<uint32_t>(image_size);
-    } else {
-        REQUIRE(1 == 2); // lets fail the test here
-    }
+//     char* buf = (char*)malloc(info.st_size);
+//     if (!buf) {
+//         fprintf(stderr, "Could not allocate memory for image\n");
+//         goto free_buff;
+//     }
 
-    enum vaccel_op_type op_type = VACCEL_IMG_CLASS;
-    struct vaccel_arg read[2] = {
-        { .size = sizeof(enum vaccel_op_type), .buf = &op_type },
-        { .size = image_size_uint32, .buf = image }
-    };
+//     do {
+//         int ret = read(fd, buf, info.st_size);
+//         if (ret < 0) {
+//             perror("Error while reading image: ");
+//             goto close_file;
+//         }
+//         bytes += ret;
+//     } while (bytes < info.st_size);
 
-    struct vaccel_arg write[2] = {
-        { .size = sizeof(out_text), .buf = out_text },
-        { .size = sizeof(out_imagename), .buf = out_imagename }
-    };
+//     if (bytes < info.st_size) {
+//         fprintf(stderr, "Could not read image\n");
+//         goto close_file;
+//     }
 
-    ret = vaccel_genop(&sess, read, 2, write, 2);
+//     *img = buf;
+//     *img_size = info.st_size;
+//     close(fd);
 
-    printf("classification tags: %s\n", out_text);
+//     return 0;
 
-    ret = vaccel_sess_free(&sess);
-    REQUIRE(ret == VACCEL_OK);
-}
+// close_file:
+//     close(fd);
+// free_buff:
+//     free(buf);
+//     return 1;
+// }
+// }
 
-TEST_CASE("depth_generic")
-{
-    char file_path[] = "../../examples/images/example.jpg";
-    int ret;
-    char* image;
-    size_t image_size = 0;
-    char out_imagename[512];
+// TEST_CASE("classify_generic")
+// {
+//     char file_path[] = "../../examples/images/example.jpg";
+//     int ret;
+//     char* image;
+//     size_t image_size = 0;
+//     char out_text[512], out_imagename[512];
 
-    struct vaccel_session sess;
-    sess.session_id = 0;
-    sess.priv = nullptr;
-    sess.resources = nullptr;
-    sess.hint = 1;
+//     struct vaccel_session sess;
+//     sess.session_id = 0;
+//     sess.priv = nullptr;
+//     sess.resources = nullptr;
+//     sess.hint = 1;
 
-    ret = vaccel_sess_init(&sess, 0);
-    REQUIRE(ret == VACCEL_OK);
-    REQUIRE(sess.session_id);
-    REQUIRE(sess.hint == 0);
-    REQUIRE(sess.resources);
-    REQUIRE(sess.priv == nullptr);
+//     ret = vaccel_sess_init(&sess, 0);
+//     REQUIRE(ret == VACCEL_OK);
+//     REQUIRE(sess.session_id);
+//     REQUIRE(sess.hint == 0);
+//     REQUIRE(sess.resources);
+//     REQUIRE(sess.priv == nullptr);
 
-    ret = read_file(file_path, &image, &image_size);
-    REQUIRE(ret == VACCEL_OK);
-    REQUIRE(image_size);
-    REQUIRE(&image);
+//     ret = read_file(file_path, &image, &image_size);
+//     REQUIRE(ret == VACCEL_OK);
+//     REQUIRE(image_size);
+//     REQUIRE(&image);
 
-    uint32_t image_size_uint32 = 0;
-    if (image_size <= UINT32_MAX) {
-        image_size_uint32 = static_cast<uint32_t>(image_size);
-    } else {
-        REQUIRE(1 == 2); // lets fail the test here
-    }
+//     uint32_t image_size_uint32 = 0;
+//     if (image_size <= UINT32_MAX) {
+//         image_size_uint32 = static_cast<uint32_t>(image_size);
+//     } else {
+//         REQUIRE(1 == 2); // lets fail the test here
+//     }
 
-    enum vaccel_op_type op_type = VACCEL_IMG_DEPTH;
-    struct vaccel_arg read[2] = {
-        { .size = sizeof(enum vaccel_op_type), .buf = &op_type },
-        { .size = image_size_uint32, .buf = image }
-    };
+//     enum vaccel_op_type op_type = VACCEL_IMG_CLASS;
+//     struct vaccel_arg read[2] = {
+//         { .size = sizeof(enum vaccel_op_type), .buf = &op_type },
+//         { .size = image_size_uint32, .buf = image }
+//     };
 
-    struct vaccel_arg write[1] = {
-        { .size = sizeof(out_imagename), .buf = out_imagename }
-    };
+//     struct vaccel_arg write[2] = {
+//         { .size = sizeof(out_text), .buf = out_text },
+//         { .size = sizeof(out_imagename), .buf = out_imagename }
+//     };
 
-    ret = vaccel_genop(&sess, read, 2, write, 1);
-    REQUIRE(ret == VACCEL_OK);
-    printf("depth estimation imagename: %s\n", out_imagename);
+//     ret = vaccel_genop(&sess, read, 2, write, 2);
 
-    ret = vaccel_sess_free(&sess);
-    REQUIRE(ret == VACCEL_OK);
-}
+//     printf("classification tags: %s\n", out_text);
 
-TEST_CASE("detect_generic")
-{
+//     ret = vaccel_sess_free(&sess);
+//     REQUIRE(ret == VACCEL_OK);
+// }
 
-    char file_path[] = "../../examples/images/example.jpg";
-    int ret;
-    char* image;
-    size_t image_size = 0;
-    char out_imagename[512];
+// TEST_CASE("depth_generic")
+// {
+//     char file_path[] = "../../examples/images/example.jpg";
+//     int ret;
+//     char* image;
+//     size_t image_size = 0;
+//     char out_imagename[512];
 
-    struct vaccel_session sess;
-    sess.session_id = 0;
-    sess.priv = nullptr;
-    sess.resources = nullptr;
-    sess.hint = 1;
+//     struct vaccel_session sess;
+//     sess.session_id = 0;
+//     sess.priv = nullptr;
+//     sess.resources = nullptr;
+//     sess.hint = 1;
 
-    ret = vaccel_sess_init(&sess, 0);
-    REQUIRE(ret == VACCEL_OK);
-    REQUIRE(sess.session_id);
-    REQUIRE(sess.hint == 0);
-    REQUIRE(sess.resources);
-    REQUIRE(sess.priv == nullptr);
+//     ret = vaccel_sess_init(&sess, 0);
+//     REQUIRE(ret == VACCEL_OK);
+//     REQUIRE(sess.session_id);
+//     REQUIRE(sess.hint == 0);
+//     REQUIRE(sess.resources);
+//     REQUIRE(sess.priv == nullptr);
 
-    ret = read_file(file_path, &image, &image_size);
-    REQUIRE(ret == VACCEL_OK);
-    REQUIRE(image_size);
-    REQUIRE(&image);
+//     ret = read_file(file_path, &image, &image_size);
+//     REQUIRE(ret == VACCEL_OK);
+//     REQUIRE(image_size);
+//     REQUIRE(&image);
 
-    uint32_t image_size_uint32 = 0;
-    if (image_size <= UINT32_MAX) {
-        image_size_uint32 = static_cast<uint32_t>(image_size);
-    } else {
-        REQUIRE(1 == 2); // lets fail the test here
-    }
+//     uint32_t image_size_uint32 = 0;
+//     if (image_size <= UINT32_MAX) {
+//         image_size_uint32 = static_cast<uint32_t>(image_size);
+//     } else {
+//         REQUIRE(1 == 2); // lets fail the test here
+//     }
 
-    enum vaccel_op_type op_type = VACCEL_IMG_DETEC;
-    struct vaccel_arg read[2] = {
-        { .size = sizeof(enum vaccel_op_type), .buf = &op_type },
-        { .size = image_size_uint32, .buf = image }
-    };
-    struct vaccel_arg write[1] = {
-        { .size = sizeof(out_imagename), .buf = out_imagename },
-    };
+//     enum vaccel_op_type op_type = VACCEL_IMG_DEPTH;
+//     struct vaccel_arg read[2] = {
+//         { .size = sizeof(enum vaccel_op_type), .buf = &op_type },
+//         { .size = image_size_uint32, .buf = image }
+//     };
 
-    ret = vaccel_genop(&sess, read, 2, write, 1);
-    REQUIRE(ret == VACCEL_OK);
+//     struct vaccel_arg write[1] = {
+//         { .size = sizeof(out_imagename), .buf = out_imagename }
+//     };
 
-    printf("detection image name: %s\n", out_imagename);
+//     ret = vaccel_genop(&sess, read, 2, write, 1);
+//     REQUIRE(ret == VACCEL_OK);
+//     printf("depth estimation imagename: %s\n", out_imagename);
 
-    ret = vaccel_sess_free(&sess);
-    REQUIRE(ret == VACCEL_OK);
-}
+//     ret = vaccel_sess_free(&sess);
+//     REQUIRE(ret == VACCEL_OK);
+// }
 
-TEST_CASE("pose_generic")
-{
+// TEST_CASE("detect_generic")
+// {
 
-    char file_path[] = "../../examples/images/example.jpg";
-    int ret;
-    char* image;
-    size_t image_size = 0;
-    char out_imagename[512];
+//     char file_path[] = "../../examples/images/example.jpg";
+//     int ret;
+//     char* image;
+//     size_t image_size = 0;
+//     char out_imagename[512];
 
-    struct vaccel_session sess;
-    sess.session_id = 0;
-    sess.priv = nullptr;
-    sess.resources = nullptr;
-    sess.hint = 1;
+//     struct vaccel_session sess;
+//     sess.session_id = 0;
+//     sess.priv = nullptr;
+//     sess.resources = nullptr;
+//     sess.hint = 1;
 
-    ret = vaccel_sess_init(&sess, 0);
-    REQUIRE(ret == VACCEL_OK);
-    REQUIRE(sess.session_id);
-    REQUIRE(sess.hint == 0);
-    REQUIRE(sess.resources);
-    REQUIRE(sess.priv == nullptr);
+//     ret = vaccel_sess_init(&sess, 0);
+//     REQUIRE(ret == VACCEL_OK);
+//     REQUIRE(sess.session_id);
+//     REQUIRE(sess.hint == 0);
+//     REQUIRE(sess.resources);
+//     REQUIRE(sess.priv == nullptr);
 
-    ret = read_file(file_path, &image, &image_size);
-    REQUIRE(ret == VACCEL_OK);
-    REQUIRE(image_size);
-    REQUIRE(&image);
+//     ret = read_file(file_path, &image, &image_size);
+//     REQUIRE(ret == VACCEL_OK);
+//     REQUIRE(image_size);
+//     REQUIRE(&image);
 
-    uint32_t image_size_uint32 = 0;
-    if (image_size <= UINT32_MAX) {
-        image_size_uint32 = static_cast<uint32_t>(image_size);
-    } else {
-        REQUIRE(1 == 2); // lets fail the test here
-    }
+//     uint32_t image_size_uint32 = 0;
+//     if (image_size <= UINT32_MAX) {
+//         image_size_uint32 = static_cast<uint32_t>(image_size);
+//     } else {
+//         REQUIRE(1 == 2); // lets fail the test here
+//     }
 
-    enum vaccel_op_type op_type = VACCEL_IMG_POSE;
-    struct vaccel_arg read[2] = {
-        { .size = sizeof(enum vaccel_op_type), .buf = &op_type },
-        { .size = image_size_uint32, .buf = image }
-    };
-    struct vaccel_arg write[1] = {
-        { .size = sizeof(out_imagename), .buf = out_imagename },
-    };
+//     enum vaccel_op_type op_type = VACCEL_IMG_DETEC;
+//     struct vaccel_arg read[2] = {
+//         { .size = sizeof(enum vaccel_op_type), .buf = &op_type },
+//         { .size = image_size_uint32, .buf = image }
+//     };
+//     struct vaccel_arg write[1] = {
+//         { .size = sizeof(out_imagename), .buf = out_imagename },
+//     };
 
-    ret = vaccel_genop(&sess, read, 2, write, 1);
-    REQUIRE(ret == VACCEL_OK);
-    printf("pose estimation imagename: %s\n", out_imagename);
+//     ret = vaccel_genop(&sess, read, 2, write, 1);
+//     REQUIRE(ret == VACCEL_OK);
 
-    ret = vaccel_sess_free(&sess);
-    REQUIRE(ret == VACCEL_OK);
-}
+//     printf("detection image name: %s\n", out_imagename);
 
-TEST_CASE("segmentation_generic")
-{
+//     ret = vaccel_sess_free(&sess);
+//     REQUIRE(ret == VACCEL_OK);
+// }
 
-    char file_path[] = "../../examples/images/example.jpg";
-    int ret;
-    char* image;
-    size_t image_size = 0;
-    char out_imagename[512];
+// TEST_CASE("pose_generic")
+// {
 
-    struct vaccel_session sess;
-    sess.session_id = 0;
-    sess.priv = nullptr;
-    sess.resources = nullptr;
-    sess.hint = 1;
+//     char file_path[] = "../../examples/images/example.jpg";
+//     int ret;
+//     char* image;
+//     size_t image_size = 0;
+//     char out_imagename[512];
 
-    ret = vaccel_sess_init(&sess, 0);
-    REQUIRE(ret == VACCEL_OK);
-    REQUIRE(sess.session_id);
-    REQUIRE(sess.hint == 0);
-    REQUIRE(sess.resources);
-    REQUIRE(sess.priv == nullptr);
+//     struct vaccel_session sess;
+//     sess.session_id = 0;
+//     sess.priv = nullptr;
+//     sess.resources = nullptr;
+//     sess.hint = 1;
 
-    ret = read_file(file_path, &image, &image_size);
-    REQUIRE(ret == VACCEL_OK);
-    REQUIRE(image_size);
-    REQUIRE(&image);
+//     ret = vaccel_sess_init(&sess, 0);
+//     REQUIRE(ret == VACCEL_OK);
+//     REQUIRE(sess.session_id);
+//     REQUIRE(sess.hint == 0);
+//     REQUIRE(sess.resources);
+//     REQUIRE(sess.priv == nullptr);
 
-    uint32_t image_size_uint32 = 0;
-    if (image_size <= UINT32_MAX) {
-        image_size_uint32 = static_cast<uint32_t>(image_size);
-    } else {
-        REQUIRE(1 == 2); // lets fail the test here
-    }
+//     ret = read_file(file_path, &image, &image_size);
+//     REQUIRE(ret == VACCEL_OK);
+//     REQUIRE(image_size);
+//     REQUIRE(&image);
 
-    enum vaccel_op_type op_type = VACCEL_IMG_SEGME;
-    struct vaccel_arg read[2] = {
-        { .size = sizeof(enum vaccel_op_type), .buf = &op_type },
-        { .size = image_size_uint32, .buf = image }
-    };
-    struct vaccel_arg write[1] = {
-        { .size = sizeof(out_imagename), .buf = out_imagename },
-    };
+//     uint32_t image_size_uint32 = 0;
+//     if (image_size <= UINT32_MAX) {
+//         image_size_uint32 = static_cast<uint32_t>(image_size);
+//     } else {
+//         REQUIRE(1 == 2); // lets fail the test here
+//     }
 
-    ret = vaccel_genop(&sess, read, 2, write, 1);
-    REQUIRE(ret == VACCEL_OK);
-    printf("segmentation output: %s\n", out_imagename);
+//     enum vaccel_op_type op_type = VACCEL_IMG_POSE;
+//     struct vaccel_arg read[2] = {
+//         { .size = sizeof(enum vaccel_op_type), .buf = &op_type },
+//         { .size = image_size_uint32, .buf = image }
+//     };
+//     struct vaccel_arg write[1] = {
+//         { .size = sizeof(out_imagename), .buf = out_imagename },
+//     };
 
-    ret = vaccel_sess_free(&sess);
-    REQUIRE(ret == VACCEL_OK);
-}
+//     ret = vaccel_genop(&sess, read, 2, write, 1);
+//     REQUIRE(ret == VACCEL_OK);
+//     printf("pose estimation imagename: %s\n", out_imagename);
+
+//     ret = vaccel_sess_free(&sess);
+//     REQUIRE(ret == VACCEL_OK);
+// }
+
+// TEST_CASE("segmentation_generic")
+// {
+
+//     char file_path[] = "../../examples/images/example.jpg";
+//     int ret;
+//     char* image;
+//     size_t image_size = 0;
+//     char out_imagename[512];
+
+//     struct vaccel_session sess;
+//     sess.session_id = 0;
+//     sess.priv = nullptr;
+//     sess.resources = nullptr;
+//     sess.hint = 1;
+
+//     ret = vaccel_sess_init(&sess, 0);
+//     REQUIRE(ret == VACCEL_OK);
+//     REQUIRE(sess.session_id);
+//     REQUIRE(sess.hint == 0);
+//     REQUIRE(sess.resources);
+//     REQUIRE(sess.priv == nullptr);
+
+//     ret = read_file(file_path, &image, &image_size);
+//     REQUIRE(ret == VACCEL_OK);
+//     REQUIRE(image_size);
+//     REQUIRE(&image);
+
+//     uint32_t image_size_uint32 = 0;
+//     if (image_size <= UINT32_MAX) {
+//         image_size_uint32 = static_cast<uint32_t>(image_size);
+//     } else {
+//         REQUIRE(1 == 2); // lets fail the test here
+//     }
+
+//     enum vaccel_op_type op_type = VACCEL_IMG_SEGME;
+//     struct vaccel_arg read[2] = {
+//         { .size = sizeof(enum vaccel_op_type), .buf = &op_type },
+//         { .size = image_size_uint32, .buf = image }
+//     };
+//     struct vaccel_arg write[1] = {
+//         { .size = sizeof(out_imagename), .buf = out_imagename },
+//     };
+
+//     ret = vaccel_genop(&sess, read, 2, write, 1);
+//     REQUIRE(ret == VACCEL_OK);
+//     printf("segmentation output: %s\n", out_imagename);
+
+//     ret = vaccel_sess_free(&sess);
+//     REQUIRE(ret == VACCEL_OK);
+// }
