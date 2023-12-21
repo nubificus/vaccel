@@ -345,7 +345,7 @@ int vaccel_tf_saved_model_register(struct vaccel_tf_saved_model *model)
 		return VACCEL_ENOMEM;
 	}
 
-	int ret = resource_new(res, VACCEL_RES_TF_MODEL, (void *)model,
+	int ret = resource_new(res, VACCEL_RES_TF_SAVED_MODEL, (void *)model,
 			tf_model_destructor);
 	if (ret)
 		goto free_resource;

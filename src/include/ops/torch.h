@@ -9,7 +9,7 @@ extern "C" {
 #endif
 
 struct vaccel_session;
-struct vaccel_torch_saved_model;
+struct vaccel_single_model;
 
 /*
 
@@ -56,30 +56,30 @@ enum vaccel_torch_data_type {
 };
 
 struct vaccel_torch_tensor {
-        void *data;
-        size_t size;
-	    uint8_t owned;
+	void *data;
+	size_t size;
+	uint8_t owned;
 
-        int nr_dims;
-        int32_t *dims;
+	int nr_dims;
+	int32_t *dims;
 
-        /* Data type */
-        enum vaccel_torch_data_type data_type;
+	/* Data type */
+	enum vaccel_torch_data_type data_type;
 };
 
 struct vaccel_torch_tensor *
 vaccel_torch_tensor_new(
-	int nr_dims,
-	int64_t *dims,
-	enum vaccel_torch_data_type type
-);
+		int nr_dims,
+		int64_t *dims,
+		enum vaccel_torch_data_type type
+		);
 
 struct vaccel_torch_tensor *
 vaccel_torch_tensor_allocate(
-	int nr_dims, int64_t *dims,
-	enum vaccel_torch_data_type type,
-	size_t total_size
-);
+		int nr_dims, int64_t *dims,
+		enum vaccel_torch_data_type type,
+		size_t total_size
+		);
 
 struct vaccel_torch_buffer {
 	/* data of the buffer */
@@ -117,7 +117,7 @@ int vaccel_torch_jitload_forward(struct vaccel_session *sess,
 
 // struct vaccel_arg *write -> char **tags
 int vaccel_torch_jitload_forward(struct vaccel_session *sess,
-		const struct vaccel_torch_saved_model *model, 
+		const struct vaccel_single_model *model, 
 		const struct vaccel_torch_buffer *run_options,
 		struct vaccel_torch_tensor **in_tensor,
 		int nr_read,
@@ -132,10 +132,10 @@ int vaccel_torch_sgemm(struct vaccel_session *sess,
 		struct vaccel_torch_tensor **out);
 
 int vaccel_torch_tensor_set_data(
-    struct vaccel_torch_tensor *tensor,
-    void *data,
-    size_t size
-);
+		struct vaccel_torch_tensor *tensor,
+		void *data,
+		size_t size
+		);
 
 void *vaccel_torch_tensor_get_data(struct vaccel_torch_tensor *tensor);
 struct vaccel_torch_buffer *vaccel_torch_buffer_new(char *data, size_t size);

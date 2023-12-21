@@ -13,7 +13,7 @@
  */
 #define _POSIX_C_SOURCE 200809L
 
-#include "resources/tf_model.h"
+#include "resources/single_model.h"
 #include "resources.h"
 #include "log.h"
 #include "error.h"
@@ -24,9 +24,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-static int tf_model_destructor(void *data)
+static int single_model_destructor(void *data)
 {
-	struct vaccel_tf_model *model = (struct vaccel_tf_model *)data;
+	struct vaccel_single_model *model = (struct vaccel_single_model *)data;
 
 	if (!model)
 		return VACCEL_EINVAL;
@@ -36,9 +36,9 @@ static int tf_model_destructor(void *data)
 	return VACCEL_OK;
 }
 
-struct vaccel_tf_model *vaccel_tf_model_new(void)
+struct vaccel_single_model *vaccel_single_model_new(void)
 {
-	struct vaccel_tf_model *new = calloc(1, sizeof(*new));
+	struct vaccel_single_model *new = calloc(1, sizeof(*new));
 	if (!new)
 		vaccel_error("Could not allocate memory");
 
@@ -54,8 +54,8 @@ struct vaccel_tf_model *vaccel_tf_model_new(void)
  * If the exported model is malformed this will not fail. We will
  * find that out when trying to actually load the model.
  */
-int vaccel_tf_model_set_path(
-	struct vaccel_tf_model *model,
+int vaccel_single_model_set_path(
+	struct vaccel_single_model *model,
 	const char *path
 ) {
 	if (!model)
@@ -75,7 +75,7 @@ int vaccel_tf_model_set_path(
 	}
 
 	model->resource = NULL;
-	vaccel_debug("Set TensorFlow model path to %s", model->path);
+	vaccel_debug("Set single model path to %s", model->path);
 
 	return VACCEL_OK;
 
@@ -89,7 +89,7 @@ destroy_model_file:
  *
  * This will be NULL if the path is not owned
  */
-const char *vaccel_tf_model_get_path(struct vaccel_tf_model *model)
+const char *vaccel_single_model_get_path(struct vaccel_single_model *model)
 {
 	if (!model)
 		return NULL;
@@ -101,14 +101,12 @@ const char *vaccel_tf_model_get_path(struct vaccel_tf_model *model)
  *
  * Create the underlying file resource for the model file.
  * This will take ownership of the buffer passed as an argument.
- * If no filename is supplied, 'model.tf' will be used instead
- * when persisting the file.
  */
-int vaccel_tf_model_set_model(
-	struct vaccel_tf_model *model, const char *filename,
+int vaccel_single_model_set_file(
+	struct vaccel_single_model *model, const char *filename,
 	const uint8_t *ptr, size_t len
 ) {
-	vaccel_debug("Setting file resource for model");
+	vaccel_debug("Setting file resource for single model");
 
 	if (!model) {
 		vaccel_error("Invalid model");
@@ -120,11 +118,10 @@ int vaccel_tf_model_set_model(
 		return VACCEL_EINVAL;
 	}
 
-	if (!filename) {
-		model->filename = strdup("model.tf");
-		if (!model->filename)
-			return VACCEL_ENOMEM;
-	}
+	if (filename)
+		model->filename = strdup(filename);
+	else
+		model->filename = NULL;
 
 	int ret = vaccel_file_from_buffer(&model->file, ptr, len,
 			NULL, false, NULL, false);
@@ -137,8 +134,8 @@ int vaccel_tf_model_set_model(
  * If the data have not been read before, this will first try to
  * read the data (mmap them in memory) before returning.
  */
-const uint8_t *vaccel_tf_model_get_model(
-	struct vaccel_tf_model *model,
+const uint8_t *vaccel_single_model_get_file(
+	struct vaccel_single_model *model,
 	size_t *len
 ) {
 	if (!model)
@@ -153,11 +150,15 @@ const uint8_t *vaccel_tf_model_get_model(
  *
  * If the model is created from in-memory data, this will first
  * create the model export directory and persist the file before
- * creating the resource.
+ * creating the resource. If no filename is supplied when persisting,
+ * 'model.XXXXXX' (where X is random) will be used instead.
+ *
+ *  This function should be used in conjunction with either
+ *  vaccel_single_model_set_path() or vaccel_single_model_set_file().
  */
-int vaccel_tf_model_register(struct vaccel_tf_model *model)
+int vaccel_single_model_register(struct vaccel_single_model *model)
 {
-	vaccel_debug("Registering new vAccel TensorFlow model");
+	vaccel_debug("Registering new vAccel single model");
 
 	if (!vaccel_file_initialized(&model->file)) {
 		vaccel_error("Will not register uninitialized resource");
@@ -170,8 +171,8 @@ int vaccel_tf_model_register(struct vaccel_tf_model *model)
 		return VACCEL_ENOMEM;
 	}
 
-	int ret = resource_new(res, VACCEL_RES_TF_MODEL, (void *)model,
-			tf_model_destructor);
+	int ret = resource_new(res, VACCEL_RES_SINGLE_MODEL, (void *)model,
+			single_model_destructor);
 	if (ret)
 		goto free_resource;
 
@@ -180,19 +181,19 @@ int vaccel_tf_model_register(struct vaccel_tf_model *model)
 	if (model->path)
 		goto out;
 
-	if (!model->filename) {
-		vaccel_error("Need a valid filename to persist file");
-		ret = VACCEL_EINVAL;
-		goto destroy_resource;
-	}
-
 	/* Else we need to persist the file in the disk */
 	ret = resource_create_rundir(res);
 	if (ret)
 		goto destroy_resource;
 
+	bool random = false;
+	if (!model->filename) {
+		model->filename = strdup("model");
+		random = true;
+	}
+
 	ret = vaccel_file_persist(&model->file, res->rundir,
-			model->filename, false);
+			model->filename, random);
 	if (ret)
 		goto destroy_resource;
 
@@ -216,7 +217,7 @@ free_resource:
  * This will handle the destruction of the underlying resource and
  * release any resources allocated for the model.
  */
-int vaccel_tf_model_destroy(struct vaccel_tf_model *model)
+int vaccel_single_model_destroy(struct vaccel_single_model *model)
 {
 	if (!model)
 		return VACCEL_EINVAL;
@@ -233,7 +234,7 @@ int vaccel_tf_model_destroy(struct vaccel_tf_model *model)
 	return VACCEL_OK;
 }
 
-vaccel_id_t vaccel_tf_model_get_id(const struct vaccel_tf_model *model)
+vaccel_id_t vaccel_single_model_get_id(const struct vaccel_single_model *model)
 {
 	if (!model || !model->resource)
 		return -1;

@@ -48,6 +48,10 @@ vaccel_tflite_tensor_new(
 	if (dims)
 		memcpy(ret->dims, dims, nr_dims * sizeof(*dims));
 
+	ret->data = NULL;
+	ret->size = 0;
+	ret->owned = false;
+
 	return ret;
 }
 
@@ -106,6 +110,7 @@ int vaccel_tflite_tensor_set_data(
 
 	tensor->data = data;
 	tensor->size = size;
+	tensor->owned = false;
 
 	return VACCEL_OK;
 }
@@ -123,7 +128,7 @@ struct vaccel_prof_region tflite_load_stats =
 
 int vaccel_tflite_session_load(
 	struct vaccel_session *sess,
-	struct vaccel_tf_model *model
+	struct vaccel_single_model *model
 ) {
 	int ret;
 
@@ -141,7 +146,7 @@ int vaccel_tflite_session_load(
 	// Get implementation
 	int (*plugin_op)(
 		struct vaccel_session *,
-		struct vaccel_tf_model *
+		struct vaccel_single_model *
 	) = get_plugin_op(VACCEL_TFLITE_SESSION_LOAD, sess->hint);
 	if (!plugin_op) {
 		ret = VACCEL_ENOTSUP;
@@ -160,7 +165,7 @@ struct vaccel_prof_region tflite_session_run_stats =
 
 int vaccel_tflite_session_run(
 	struct vaccel_session *sess,
-        const struct vaccel_tf_model *model,
+        const struct vaccel_single_model *model,
         struct vaccel_tflite_tensor *const *in, int nr_inputs,
 	struct vaccel_tflite_tensor **out, int nr_outputs,
         uint8_t *status
@@ -180,7 +185,7 @@ int vaccel_tflite_session_run(
 	// Get implementation
 	int (*plugin_op)(
 		struct vaccel_session *,
-		const struct vaccel_tf_model *,
+		const struct vaccel_single_model *,
 		struct vaccel_tflite_tensor *const *, int,
 		struct vaccel_tflite_tensor **, int,
 		uint8_t *
@@ -202,7 +207,7 @@ struct vaccel_prof_region tflite_session_delete_stats =
 
 int vaccel_tflite_session_delete(
 	struct vaccel_session *sess,
-	struct vaccel_tf_model *model
+	struct vaccel_single_model *model
 ) {
 	int ret;
 
@@ -216,7 +221,7 @@ int vaccel_tflite_session_delete(
 
 	int (*plugin_op)(
 		struct vaccel_session *,
-		struct vaccel_tf_model *
+		struct vaccel_single_model *
 	) = get_plugin_op(VACCEL_TFLITE_SESSION_DELETE, sess->hint);
 	if (!plugin_op) {
 		ret = VACCEL_ENOTSUP;

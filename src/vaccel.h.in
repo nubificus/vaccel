@@ -36,13 +36,12 @@
 #include "ops/tflite.h"
 #include "ops/fpga.h"
 #include "ops/opencv.h"
-#include "resources/tf_saved_model.h"
+#include "ops/torch.h"
 #include "resources/shared_object.h"
-#include "resources/tf_model.h"
+#include "resources/single_model.h"
+#include "resources/tf_saved_model.h"
 #include "misc.h"
 #include "vaccel_prof.h"
-#include "ops/torch.h"
-#include "resources/torch_saved_model.h"
 
 const char *vaccel_rundir(void);
 
