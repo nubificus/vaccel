@@ -24,7 +24,7 @@
 int main(int argc, char *argv[])
 {
 	struct vaccel_session vsess;
-	struct vaccel_tf_model model;
+	struct vaccel_single_model model;
 
 	if (argc != 2) {
 		fprintf(stderr, "usage: %s model\n", argv[0]);
@@ -33,19 +33,19 @@ int main(int argc, char *argv[])
 
 	const char *model_path = argv[1];
 
-	int ret = vaccel_tf_model_set_path(&model, model_path);
+	int ret = vaccel_single_model_set_path(&model, model_path);
 	if (ret) {
 		fprintf(stderr, "Could not set model path to TensorFlow Lite model\n");
 		exit(1);
 	}
 
-	ret = vaccel_tf_model_register(&model);
+	ret = vaccel_single_model_register(&model);
 	if (ret) {
 		fprintf(stderr, "Could not register TensorFlow Lite model resource\n");
 		exit(1);
 	}
 
-	printf("Created new model %lld\n", vaccel_tf_model_get_id(&model));
+	printf("Created new model %lld\n", vaccel_single_model_get_id(&model));
 
 	ret = vaccel_sess_init(&vsess, 0);
 	if (ret) {
@@ -115,7 +115,7 @@ close_session:
 	vaccel_sess_free(&vsess);
 
 destroy_resource:
-	vaccel_tf_model_destroy(&model);
+	vaccel_single_model_destroy(&model);
 
 	return ret;
 }

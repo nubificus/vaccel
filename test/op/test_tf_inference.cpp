@@ -89,7 +89,6 @@ TEST_CASE("main")
 
     ret = vaccel_tf_session_run(&vsess, &model, &run_options, &in_node, &in, 1,
         &out_node, &out, 1, &status);
-
     REQUIRE(ret == VACCEL_OK);
 
     printf("Success!\n");
@@ -101,4 +100,7 @@ TEST_CASE("main")
     float* offsets = (float*)out->data;
     for (unsigned int i = 0; i < min(10, out->size / sizeof(float)); ++i)
         printf("%f\n", offsets[i]);
+
+    ret = vaccel_tf_session_delete(&vsess, &model, &status);
+    REQUIRE(ret == VACCEL_OK);
 }

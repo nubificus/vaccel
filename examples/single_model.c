@@ -41,27 +41,27 @@ int destroy_session(struct vaccel_session *sess)
 int create_from_path(const char *path)
 {
 	vaccel_info("Creating new model handle");
-	struct vaccel_tf_model *model = vaccel_tf_model_new();
+	struct vaccel_single_model *model = vaccel_single_model_new();
 	if (!model) {
 		vaccel_error("Could not create model");
 		return VACCEL_ENOMEM;
 	}
 
 	vaccel_info("Setting path of the model");
-	int ret = vaccel_tf_model_set_path(model, path);
+	int ret = vaccel_single_model_set_path(model, path);
 	if (ret) {
 		vaccel_error("Could not load saved model");
 		return ret;
 	}
 
 	vaccel_info("Registering model resource with vAccel");
-	ret = vaccel_tf_model_register(model);
+	ret = vaccel_single_model_register(model);
 	if (ret) {
 		vaccel_error("Could not create model resource");
 		return ret;
 	}
 
-	vaccel_id_t model_id = vaccel_tf_model_get_id(model);
+	vaccel_id_t model_id = vaccel_single_model_get_id(model);
 	vaccel_info("Registered new resource: %ld", model_id);
 
 	struct vaccel_session sess;
@@ -88,7 +88,7 @@ int create_from_path(const char *path)
 	}
 
 	vaccel_info("Destroying model %ld", model_id);
-	ret = vaccel_tf_model_destroy(model);
+	ret = vaccel_single_model_destroy(model);
 	if (ret) {
 		vaccel_error("Could not destroy model");
 		return ret;
@@ -101,7 +101,7 @@ int create_from_path(const char *path)
 int create_from_in_mem(const char *path)
 {
 	vaccel_info("Creating new model handle");
-	struct vaccel_tf_model *model = vaccel_tf_model_new();
+	struct vaccel_single_model *model = vaccel_single_model_new();
 	if (!model) {
 		vaccel_error("Could not create model");
 		return VACCEL_ENOMEM;
@@ -115,20 +115,20 @@ int create_from_in_mem(const char *path)
 		return VACCEL_ENOMEM;
 	}
 
-	ret = vaccel_tf_model_set_model(model, NULL, ptr, len);
+	ret = vaccel_single_model_set_file(model, NULL, ptr, len);
 	if (ret) {
 		vaccel_error("Could not set file for model");
 		return ret;
 	}
 
 	vaccel_info("Registering model resource with vAccel");
-	ret = vaccel_tf_model_register(model);
+	ret = vaccel_single_model_register(model);
 	if (ret) {
 		vaccel_error("Could not create model resource");
 		return ret;
 	}
 
-	vaccel_id_t model_id = vaccel_tf_model_get_id(model);
+	vaccel_id_t model_id = vaccel_single_model_get_id(model);
 	vaccel_info("Registered new resource: %ld", model_id);
 
 	struct vaccel_session sess;
@@ -155,7 +155,7 @@ int create_from_in_mem(const char *path)
 	}
 
 	vaccel_info("Destroying model %ld", model_id);
-	ret = vaccel_tf_model_destroy(model);
+	ret = vaccel_single_model_destroy(model);
 	if (ret) {
 		vaccel_error("Could not destroy model");
 		return ret;

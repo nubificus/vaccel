@@ -317,7 +317,7 @@ static int noop_tf_session_delete(
 
 static int noop_tflite_session_load(
 	struct vaccel_session *session,
-	struct vaccel_tf_model *model
+	struct vaccel_single_model *model
 ) {
 	if (!session) {
 		noop_error("Invalid session\n");
@@ -339,7 +339,7 @@ static int noop_tflite_session_load(
 
 static int noop_tflite_session_run(
 	struct vaccel_session *session,
-        const struct vaccel_tf_model *model,
+        const struct vaccel_single_model *model,
         struct vaccel_tflite_tensor *const *in, int nr_inputs,
         struct vaccel_tflite_tensor **out, int nr_outputs,
         uint8_t *status)
@@ -382,7 +382,7 @@ static int noop_tflite_session_run(
 
 static int noop_tflite_session_delete(
 	struct vaccel_session *session,
-        const struct vaccel_tf_model *model
+        const struct vaccel_single_model *model
 ) {
 	if (!session) {
 		noop_error("Invalid session\n");
@@ -469,7 +469,7 @@ static int v_mmult(struct vaccel_session *session, float *a, float *b,
 
 // Torch NOOP test
 static int noop_torch_jitload_forward(struct vaccel_session *session, 
-		const struct vaccel_torch_saved_model *model,
+		const struct vaccel_single_model *model,
 		const struct vaccel_torch_buffer *run_options,
 		struct vaccel_torch_tensor **in_tensor,
 		int nr_read,

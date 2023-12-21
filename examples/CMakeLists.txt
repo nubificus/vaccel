@@ -19,7 +19,7 @@ set(BIN_EXAMPLES
 	sgemm_generic
 	minmax
 	minmax_generic
-	tf_model
+	single_model
 	tf_inference
 	tf_saved_model
 	tflite_inference

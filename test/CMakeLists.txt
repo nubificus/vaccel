@@ -51,7 +51,8 @@ set(TESTS_API
     test_image
     test_image_generic
     test_tf_inference
-    test_tf_model
+    test_tflite_inference
+    test_single_model
     test_tf_saved_model
     test_exec
     test_minmax
@@ -70,7 +71,7 @@ endforeach()
 
 # Set properties for specific tests
 set_tests_properties(
-    test_image test_image_generic test_tf_inference test_tf_model test_tf_saved_model test_exec test_minmax test_noop test_blas test_fpga test_vaccel test_arg_helpers
+    test_image test_image_generic test_tf_inference test_tflite_inference test_single_model test_tf_saved_model test_exec test_minmax test_noop test_blas test_fpga test_vaccel test_arg_helpers
     PROPERTIES
     ENVIRONMENT "VACCEL_BACKENDS=${CMAKE_BINARY_DIR}/plugins/noop/libvaccel-noop.so"
     ARGS=--order rand --warn NoAssertions
