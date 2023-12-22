@@ -119,7 +119,7 @@ TEST_CASE("classify_generic")
     enum vaccel_op_type op_type = VACCEL_IMG_CLASS;
     struct vaccel_arg read[2] = {
         {.argtype=0, .size = sizeof(enum vaccel_op_type), .buf = &op_type },
-        { .size = image_size_uint32, .buf = image }
+        {.argtype=0,.size = image_size_uint32, .buf = image }
     };
 
     struct vaccel_arg write[2] = {
