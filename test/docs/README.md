@@ -21,6 +21,3 @@ In essence: as a start please read the following sections first:
 
 
 Do feel to add to this as you go :)
-
-Upon PR merge - the coverage should update which can serve as an indication of whether the source code/implemented code is being tested or not.
-
