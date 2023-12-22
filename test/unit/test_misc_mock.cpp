@@ -1,4 +1,4 @@
-#include "../catch2/catch.hpp"
+#include <catch.hpp>
 #include <fff.h>
 DEFINE_FFF_GLOBALS;
 

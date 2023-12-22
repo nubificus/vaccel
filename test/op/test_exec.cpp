@@ -7,7 +7,7 @@
  *
  */
 
-#include "../catch2/catch.hpp"
+#include <catch.hpp>
 
 #include <atomic>
 
@@ -30,7 +30,7 @@ extern "C" {
 
 TEST_CASE("due to vaccel_arg change - TODO: redo these tests")
 {
-    REQUIRE(1==1);
+    REQUIRE(1 == 1);
 }
 
 TEST_CASE("exec")
@@ -47,8 +47,8 @@ TEST_CASE("exec")
     ret = vaccel_sess_init(&sess, VACCEL_PLUGIN_DEBUG);
     REQUIRE(ret == VACCEL_OK);
 
-    struct vaccel_arg read[1] = { {.argtype=0, .size = sizeof(input), .buf = &input } };
-    struct vaccel_arg write[1] = { {.argtype=0, .size = sizeof(out_text), .buf = out_text } };
+    struct vaccel_arg read[1] = { { .argtype = 0, .size = sizeof(input), .buf = &input } };
+    struct vaccel_arg write[1] = { { .argtype = 0, .size = sizeof(out_text), .buf = out_text } };
 
     ret = vaccel_exec(&sess, "../plugins/noop/libvaccel-noop.so", "mytestfunc", read, 1, write, 1);
     REQUIRE(ret == VACCEL_OK);
@@ -81,14 +81,14 @@ TEST_CASE("exec_generic")
     const char function_name[] = "mytestfunc";
 
     struct vaccel_arg read[4] = {
-        {.argtype=0, .size = sizeof(uint8_t), .buf = &op_type },
-        {.argtype=0, .size = sizeof(plugin_path), .buf = (void*)plugin_path },
-        {.argtype=0, .size = sizeof(function_name), .buf = (void*)function_name },
-        {.argtype=0, .size = sizeof(input), .buf = &input }
+        { .argtype = 0, .size = sizeof(uint8_t), .buf = &op_type },
+        { .argtype = 0, .size = sizeof(plugin_path), .buf = (void*)plugin_path },
+        { .argtype = 0, .size = sizeof(function_name), .buf = (void*)function_name },
+        { .argtype = 0, .size = sizeof(input), .buf = &input }
     };
 
     struct vaccel_arg write[1] = {
-        {.argtype=0, .size = sizeof(out_text), .buf = out_text },
+        { .argtype = 0, .size = sizeof(out_text), .buf = out_text },
     };
 
     ret = vaccel_genop(&sess, read, 4, write, 1);
@@ -216,14 +216,14 @@ TEST_CASE("exec_with_resources")
     REQUIRE(sess2.priv == nullptr);
 
     input = 10;
-    struct vaccel_arg read[1] = { { .argtype=0, .size = sizeof(input), .buf = &input } };
+    struct vaccel_arg read[1] = { { .argtype = 0, .size = sizeof(input), .buf = &input } };
     struct vaccel_arg write[1] = {
-        { .argtype=0, .size = sizeof(out_text), .buf = out_text },
+        { .argtype = 0, .size = sizeof(out_text), .buf = out_text },
     };
 
-    struct vaccel_arg read_2[1] = { { .argtype=0, .size = sizeof(input), .buf = &input } };
+    struct vaccel_arg read_2[1] = { { .argtype = 0, .size = sizeof(input), .buf = &input } };
     struct vaccel_arg write_2[1] = {
-        { .argtype=0, .size = sizeof(out_text2), .buf = out_text2 },
+        { .argtype = 0, .size = sizeof(out_text2), .buf = out_text2 },
     };
 
     ret = vaccel_exec_with_resource(&sess, &object, "mytestfunc", read, 1, write, 1);

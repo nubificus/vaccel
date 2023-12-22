@@ -9,8 +9,7 @@
  *
  */
 
-
-#include "../catch2/catch.hpp"
+#include <catch.hpp>
 
 #include <atomic>
 
@@ -110,16 +109,16 @@ TEST_CASE("min_max_generic", "[minmax]")
 
     enum vaccel_op_type op_type = VACCEL_MINMAX;
     struct vaccel_arg read[5] = {
-        {.argtype=0, .size = sizeof(enum vaccel_op_type), .buf = &op_type },
-        {.argtype=0, .size = static_cast<uint32_t>(ndata * sizeof(double)), .buf = indata },
-        {.argtype=0, .size = sizeof(int), .buf = &ndata },
-        {.argtype=0, .size = sizeof(int), .buf = &low_threshold },
-        {.argtype=0, .size = sizeof(int), .buf = &high_threshold },
+        { .argtype = 0, .size = sizeof(enum vaccel_op_type), .buf = &op_type },
+        { .argtype = 0, .size = static_cast<uint32_t>(ndata * sizeof(double)), .buf = indata },
+        { .argtype = 0, .size = sizeof(int), .buf = &ndata },
+        { .argtype = 0, .size = sizeof(int), .buf = &low_threshold },
+        { .argtype = 0, .size = sizeof(int), .buf = &high_threshold },
     };
     struct vaccel_arg write[3] = {
-        {.argtype=0, .size = static_cast<uint32_t>(ndata * sizeof(double)), .buf = outdata },
-        {.argtype=0, .size = sizeof(double), .buf = &min },
-        {.argtype=0,.size = sizeof(double), .buf = &max },
+        { .argtype = 0, .size = static_cast<uint32_t>(ndata * sizeof(double)), .buf = outdata },
+        { .argtype = 0, .size = sizeof(double), .buf = &min },
+        { .argtype = 0, .size = sizeof(double), .buf = &max },
     };
     clock_gettime(CLOCK_MONOTONIC_RAW, &t0);
 

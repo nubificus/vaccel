@@ -1,5 +1,5 @@
 #include <atomic>
-#include "../catch2/catch.hpp"
+#include <catch.hpp>
 
 using atomic_int = std::atomic<int>;
 using atomic_uint = std::atomic<unsigned int>;

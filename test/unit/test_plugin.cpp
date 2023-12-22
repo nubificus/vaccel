@@ -1,4 +1,4 @@
-#include "../catch2/catch.hpp"
+#include <catch.hpp>
 
 extern "C" {
 #include "error.h"
@@ -24,7 +24,6 @@ static int init(void)
 }
 
 static int no_op() { return 2; }
-
 
 TEST_CASE("get_all_available_functions")
 {

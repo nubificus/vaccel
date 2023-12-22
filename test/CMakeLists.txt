@@ -1,15 +1,6 @@
 cmake_minimum_required(VERSION 3.15)
 project(VACCEL_TEST CXX)
 
-# Include(FetchContent)
-
-# FetchContent_Declare(
-#   Catch2
-#   GIT_REPOSITORY https://github.com/catchorg/Catch2.git
-#   GIT_TAG        v2.13.9 # or a later release
-# )
-
-# FetchContent_MakeAvailable(Catch2)
 set(COMMON_COMPILE_OPTIONS -Wall -Wextra -g -ggdb --coverage)
 add_library(tests-main STATIC main.cpp)
 
@@ -22,6 +13,7 @@ function(add_test_target_core TARGET_NAME SOURCE_FILE)
             ../src
             ../src/include
             ./fff
+            ./catch2
     )
     target_compile_options(${TARGET_NAME} PRIVATE ${COMMON_COMPILE_OPTIONS})
     target_link_libraries(${TARGET_NAME} PRIVATE vaccel tests-main gcov --coverage)
@@ -37,6 +29,7 @@ function(add_test_target_api TARGET_NAME SOURCE_FILE)
             ../src/include
             ../src/include/ops
             ./fff
+            ./catch2
             ../src/resources
     )
     target_compile_options(${TARGET_NAME} PRIVATE ${COMMON_COMPILE_OPTIONS})

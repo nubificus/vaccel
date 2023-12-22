@@ -5,8 +5,7 @@
  *
  */
 
-#include "resources/tf_saved_model.h"
-#include "../catch2/catch.hpp"
+#include <catch.hpp>
 
 #include <atomic>
 
@@ -20,6 +19,7 @@ extern "C" {
 #include <ops/tf.h>
 #include <vaccel.h>
 
+#include "resources/tf_saved_model.h"
 #include "session.h"
 #include "tf_saved_model.h"
 }

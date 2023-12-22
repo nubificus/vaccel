@@ -1,4 +1,5 @@
-#include "../catch2/catch.hpp"
+#include <catch.hpp>
+
 #include <fff.h>
 
 #include <atomic>
