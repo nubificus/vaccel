@@ -88,7 +88,7 @@ TEST_CASE("exec_generic")
     };
 
     struct vaccel_arg write[1] = {
-        { .size = sizeof(out_text), .buf = out_text },
+        {.argtype=0, .size = sizeof(out_text), .buf = out_text },
     };
 
     ret = vaccel_genop(&sess, read, 4, write, 1);
