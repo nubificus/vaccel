@@ -5,7 +5,7 @@ on:
 
 jobs:
   coverage_upload:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, "x86_64", gcc, lite, "2204"]
     outputs:
       commit_hash: ${{ steps.commit-and-push.outputs.commit_hash }}
 
@@ -24,7 +24,7 @@ jobs:
       - name: Install dependencies for tests
         id: install_dependencies
         run: |
-          sudo apt-get install -y lcov cmake gcc g++ libclang-dev gcovr valgrind
+          sudo apt update && sudo apt-get install -y lcov cmake gcc g++-12 libclang-dev valgrind gcovr
           pip install --upgrade gcovr
           pip install pycobertura
 
