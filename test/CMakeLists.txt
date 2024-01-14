@@ -7,6 +7,7 @@ set(MY_INCLUDE_DIRECTORIES
     ../third-party/slog/src
     ../src
     ../src/include
+    ../src/resources
     ./fff
     ./catch2
 )
@@ -50,7 +51,8 @@ set(TESTS_CORE
     test_misc_mock
     test_id_pool
     test_log
-    test_bootstrap_shutdown)
+    test_bootstrap_shutdown
+)
 
 set(TESTS_API
     test_fpga
@@ -63,6 +65,7 @@ set(TESTS_API
     test_minmax
     test_noop
     test_blas
+    test_arg_helpers
 )
 
 foreach(TEST_NAME ${TESTS_CORE})
@@ -104,10 +107,11 @@ target_link_libraries(test_vaccel PRIVATE vaccel tests-main gcov --coverage)
 target_compile_definitions(test_vaccel PRIVATE CATCH_CONFIG_FAST_COMPILE CATCH_CONFIG_DISABLE_MATCHERS)
 add_test(NAME test_vaccel COMMAND test_vaccel)
 
+
 # Set properties for specific tests
 
 set_tests_properties(
-    test_image test_image_generic test_tf_interference test_tf_model test_tf_saved_model test_exec test_minmax test_noop test_blas test_fpga test_vaccel
+    test_image test_image_generic test_tf_interference test_tf_model test_tf_saved_model test_exec test_minmax test_noop test_blas test_fpga test_vaccel test_arg_helpers
     PROPERTIES
     ENVIRONMENT "VACCEL_BACKENDS=${CMAKE_BINARY_DIR}/plugins/noop/libvaccel-noop.so"
     ARGS=--order rand --warn NoAssertions

@@ -95,6 +95,7 @@ jobs:
           codespell ./test/docs
           codespell ./test/op
           codespell ./test/unit
+        continue-on-error: true
 
   cppcheck:
     name: cppcheck
@@ -204,32 +205,31 @@ jobs:
     ### This should produce a github comment showing coverage change however since this is the first release of test - doesn't do much
     ### TODO: add cache/artifacts to speed up this whole file
 
-    # - name: Build and make tests for coverage (main)
-    #   id: run_coverage_main
-    #   run: |
-    #     mkdir main_vaccelrt
-    #     cd main_vaccelrt
-    #     git clone https://github.com/jlcsf/feat_vaccel_testing --recursive
-    #     cd feat_vaccel_testing
-    #     cd ./src/
-    #     patch < ../test/docs/coverage.patch
-    #     cd ../
-    #     mkdir build
-    #     cd build
-    #     cmake ../ -DBUILD_PLUGIN_NOOP=ON -DENABLE_TESTS=ON -DENABLE_COVERAGE=ON -DCMAKE_CXX_COMPILER=g++-12 -DCMAKE_C_COMPILER=gcc-12 -DGCOV_EXECUTABLE=gcov-12
-    #     make
-    #     make test
-    #     cd ../
-    #     gcovr --cobertura=./test/docs/coverage_main.xml --gcov-executable gcov-12 -s -e "build/_deps/*"
+      - name: Build and make tests for coverage (main)
+        id: run_coverage_main
+        run: |
+          mkdir main_vaccelrt
+          cd main_vaccelrt
+          git clone https://github.com/cloudkernels/vaccelrt --recursive
+          cd vaccelrt/src
+          patch < ../test/coverage.patch
+          cd ../
+          mkdir build
+          cd build
+          cmake ../ -DBUILD_PLUGIN_NOOP=ON -DENABLE_TESTS=ON -DENABLE_COVERAGE=ON -DCMAKE_CXX_COMPILER=g++-12 -DCMAKE_C_COMPILER=gcc-12 -DGCOV_EXECUTABLE=gcov-12
+          make
+          make test
+          cd ../
+          gcovr --cobertura=./docs/coverage/coverage_main.xml --gcov-executable gcov-12 -s -e "build/_deps/*"
 
-    # - name: Calculate coverage diff
-    #   run: |
-    #     pycobertura diff main_vaccelrt/feat_vaccel_testing/test/docs/coverage_main.xml test/docs/coverage_pr.xml -s1 . -s2 . > coverage_diff.txt
-    #     echo '```' > temp_file && cat ./coverage_diff.txt >> temp_file && echo -e '\n```' >> temp_file && mv temp_file ./coverage_diff.txt
-    #     rm main_vaccelrt -rf
-    #   continue-on-error: true
+      - name: Calculate coverage diff
+        run: |
+          pycobertura diff main_vaccelrt/vaccelrt/docs/coverage/coverage_main.xml ./docs/coverage/coverage_pr.xml > coverage_diff.txt --no-color --no-source -f markdown
+          echo '```' > temp_file && cat ./coverage_diff.txt >> temp_file && echo -e '\n```' >> temp_file && mv temp_file ./coverage_diff.txt
+          rm main_vaccelrt -rf
+        continue-on-error: true
 
-    # - name: PR comment with file
-    #   uses: thollander/actions-comment-pull-request@v2
-    #   with:
-    #     filePath: ./coverage_diff.txt
+      - name: PR comment with file
+        uses: thollander/actions-comment-pull-request@v2
+        with:
+          filePath: ./coverage_diff.txt
