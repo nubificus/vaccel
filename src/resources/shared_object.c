@@ -129,7 +129,7 @@ int vaccel_shared_object_destroy(struct vaccel_shared_object *object)
 	if (!object)
 		return VACCEL_EINVAL;
 
-	vaccel_debug("Destroying resource %u", object->resource->id);
+	vaccel_debug("Destroying resource %lld", object->resource->id);
 	/* This will destroy the underlying resource and call our
 	 * destructor callback */
 	int ret = resource_destroy(object->resource);

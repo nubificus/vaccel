@@ -62,14 +62,14 @@ int create_from_path(const char *path)
 	}
 
 	vaccel_id_t model_id = vaccel_single_model_get_id(model);
-	vaccel_info("Registered new resource: %ld", model_id);
+	vaccel_info("Registered new resource: %lld", model_id);
 
 	struct vaccel_session sess;
 	ret = create_session(&sess);
 	if (ret)
 		return ret;
 
-	vaccel_info("Registering model %ld with session %u", model_id,
+	vaccel_info("Registering model %lld with session %u", model_id,
 			sess.session_id);
 
 	ret = vaccel_sess_register(&sess, model->resource);
@@ -78,7 +78,7 @@ int create_from_path(const char *path)
 		return ret;
 	}
 
-	vaccel_info("Unregistering model %ld from session %u", model_id,
+	vaccel_info("Unregistering model %lld from session %u", model_id,
 			sess.session_id);
 
 	ret = vaccel_sess_unregister(&sess, model->resource);
@@ -87,7 +87,7 @@ int create_from_path(const char *path)
 		return ret;
 	}
 
-	vaccel_info("Destroying model %ld", model_id);
+	vaccel_info("Destroying model %lld", model_id);
 	ret = vaccel_single_model_destroy(model);
 	if (ret) {
 		vaccel_error("Could not destroy model");
@@ -129,14 +129,14 @@ int create_from_in_mem(const char *path)
 	}
 
 	vaccel_id_t model_id = vaccel_single_model_get_id(model);
-	vaccel_info("Registered new resource: %ld", model_id);
+	vaccel_info("Registered new resource: %lld", model_id);
 
 	struct vaccel_session sess;
 	ret = create_session(&sess);
 	if (ret)
 		return ret;
 
-	vaccel_info("Registering model %ld with session %u", model_id,
+	vaccel_info("Registering model %lld with session %u", model_id,
 			sess.session_id);
 
 	ret = vaccel_sess_register(&sess, model->resource);
@@ -145,7 +145,7 @@ int create_from_in_mem(const char *path)
 		return ret;
 	}
 
-	vaccel_info("Unregistering model %ld from session %u", model_id,
+	vaccel_info("Unregistering model %lld from session %u", model_id,
 			sess.session_id);
 
 	ret = vaccel_sess_unregister(&sess, model->resource);
@@ -154,7 +154,7 @@ int create_from_in_mem(const char *path)
 		return ret;
 	}
 
-	vaccel_info("Destroying model %ld", model_id);
+	vaccel_info("Destroying model %lld", model_id);
 	ret = vaccel_single_model_destroy(model);
 	if (ret) {
 		vaccel_error("Could not destroy model");
