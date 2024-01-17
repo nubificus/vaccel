@@ -199,7 +199,7 @@ int vaccel_single_model_register(struct vaccel_single_model *model)
 
 	model->path = res->rundir;
 out:
-	vaccel_debug("New resource %lu", res->id);
+	vaccel_debug("New resource %lld", res->id);
 	model->resource = res;
 
 	return VACCEL_OK;
@@ -222,7 +222,7 @@ int vaccel_single_model_destroy(struct vaccel_single_model *model)
 	if (!model)
 		return VACCEL_EINVAL;
 
-	vaccel_debug("Destroying resource %u", model->resource->id);
+	vaccel_debug("Destroying resource %lld", model->resource->id);
 	/* This will destroy the underlying resource and call our
 	 * destructor callback */
 	int ret = resource_destroy(model->resource);

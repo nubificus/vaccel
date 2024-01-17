@@ -134,7 +134,7 @@ int resource_destroy(struct vaccel_resource *res)
 	/* Check if this resources is currently registered to a session.
 	 * We do not destroy currently-used resources */
 	if (atomic_load(&res->refcount)) {
-		vaccel_warn("Cannot destroy used resource %u", res->id);
+		vaccel_warn("Cannot destroy used resource %lld", res->id);
 		return VACCEL_EBUSY;
 	}
 
@@ -142,7 +142,7 @@ int resource_destroy(struct vaccel_resource *res)
 	if (virtio) {
 		int err = virtio->info->resource_destroy(res->id);
 		if (err)
-			vaccel_warn("Could not destroy host-side resource %u",
+			vaccel_warn("Could not destroy host-side resource %lld",
 					res->id);
 	} else if (res->id) {
 		id_pool_release(&id_pool, res->id);
@@ -195,7 +195,7 @@ int resource_create_rundir(struct vaccel_resource *res)
 	int len = snprintf(rundir, MAX_RESOURCE_RUNDIR, "%s/resource.%lld",
 			root_rundir, res->id);
 	if (len == MAX_RESOURCE_RUNDIR) {
-		vaccel_error("rundir path '%s/resource.%lu' too long",
+		vaccel_error("rundir path '%s/resource.%lld' too long",
 				root_rundir, res->id);
 		return VACCEL_ENAMETOOLONG;
 	}
