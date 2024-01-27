@@ -7,12 +7,13 @@
  
 #include <catch.hpp>
 #include <fff.h>
+#include <utils.hpp>
+
 DEFINE_FFF_GLOBALS;
 
 extern "C" {
-#include "misc.h"
+#include <vaccel.h>
 }
-
 
 TEST_CASE("vaccel_get_plugins", "[vaccel_get_plugins]")
 {

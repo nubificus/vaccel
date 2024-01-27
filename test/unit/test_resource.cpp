@@ -10,27 +10,15 @@
  *
  */
  
-#include <atomic>
 #include <catch.hpp>
-
-using atomic_int = std::atomic<int>;
-using atomic_uint = std::atomic<unsigned int>;
+#include <utils.hpp>
 
 extern "C" {
-#include "error.h"
-#include "id_pool.h"
-#include "list.h"
-#include "log.h"
-#include "plugin.h"
-#include "utils.h"
-#include "vaccel.h"
+#include <vaccel.h>
 }
-
-#include "resources.c"
 
 // Mock cleanup function for resources
 int cleanup_resource_mock([[maybe_unused]] void* data) { return 0; }
-
 
 // Test case for resource destruction
 TEST_CASE("destroy_OK", "[Resources]")
@@ -88,7 +76,6 @@ TEST_CASE("destroy_OK", "[Resources]")
 // Test case for resource creation and rundir creation
 TEST_CASE("Resource Create Rundir", "[Resources]")
 {
-
     int ret;
     struct vaccel_resource res;
     vaccel_resource_t test_type = VACCEL_RES_TF_MODEL;
@@ -142,10 +129,17 @@ TEST_CASE("find_resource_by_id_fail", "[Resources]")
     struct vaccel_resource* test_res = nullptr;
     vaccel_id_t test_id = 0;
 
+    // Ensure that the resource system is initialized
+    int ret = resources_bootstrap();
+    REQUIRE(ret == VACCEL_OK);
+
     // Attempt to find a resource by ID which fails (ID of 0 doesn't exist -
     // starts at 1)
-    int ret = resource_get_by_id(&test_res, test_id);
+    ret = resource_get_by_id(&test_res, test_id);
     REQUIRE(ret == VACCEL_EINVAL);
+
+    ret = resources_cleanup();
+    REQUIRE(ret == VACCEL_OK);
 }
 
 // Test case for finding a resource by ID (success case)
@@ -200,7 +194,6 @@ TEST_CASE("find_resource_by_id", "[Resources]")
 
     ret = resources_cleanup();
     REQUIRE(ret == VACCEL_OK);
-
 }
 
 
@@ -213,8 +206,6 @@ TEST_CASE("initialising with no resources bootstrapped")
     int (*cleanup_res_test)(void*) = cleanup_resource_mock;
     struct vaccel_resource* result_resource = nullptr;
     vaccel_id_t id_to_find = 1;
-
-    initialized = false;
 
     ret = resource_new(&test_res, test_type, test_data, cleanup_res_test);
     REQUIRE(ret == VACCEL_EPERM);

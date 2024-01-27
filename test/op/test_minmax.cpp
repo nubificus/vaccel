@@ -10,21 +10,13 @@
  */
 
 #include <catch.hpp>
-
-#include <atomic>
-
-using atomic_int = std::atomic<int>;
-using atomic_uint = std::atomic<unsigned int>;
+#include <utils.hpp>
 
 extern "C" {
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 #include <vaccel.h>
-
-#include "minmax.h"
-#include "session.h"
 }
 
 #define timespec_usec(t) ((double)(t).tv_nsec / 10e3 + (double)(t).tv_sec * 10e6)
@@ -32,8 +24,7 @@ extern "C" {
 
 TEST_CASE("min_max", "[minmax]")
 {
-
-    const char* path = "../../examples/input/input_262144.csv";
+    const char* path = abs_path(SOURCE_ROOT, "examples/input/input_262144.csv");
     double min, max;
     int ret;
 
@@ -93,8 +84,7 @@ TEST_CASE("min_max", "[minmax]")
 
 TEST_CASE("min_max_generic", "[minmax]")
 {
-
-    const char* path = "../../examples/input/input_262144.csv";
+    const char* path = abs_path(SOURCE_ROOT, "examples/input/input_262144.csv");
     double min, max;
     int ret;
 

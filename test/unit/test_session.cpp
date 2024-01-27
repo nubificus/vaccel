@@ -12,26 +12,17 @@
  *
  */
  
-#include "fff.h"
 #include <catch.hpp>
-
-#include <atomic>
-
-using atomic_int = std::atomic<int>;
-using atomic_uint = std::atomic<unsigned int>;
+#include <fff.h>
+#include <utils.hpp>
 
 DEFINE_FFF_GLOBALS;
+
 extern "C" {
-#include "id_pool.h"
-#include "log.h"
-#include "plugin.h"
-#include "resources.h"
-#include "utils.h"
-#include "session.h"
+#include <vaccel.h>
 FAKE_VALUE_FUNC(struct vaccel_plugin*, get_virtio_plugin);
 FAKE_VALUE_FUNC(struct vaccel_session*, sess_free);
 }
-
 
 #define MAX_VACCEL_SESSIONS 1024
 
@@ -73,8 +64,9 @@ int mock_sess_unregister(uint32_t sess_id, vaccel_id_t resource_id)
 // Test case for session initialization
 TEST_CASE("session_init", "[session]")
 {
-
     int ret;
+
+    RESET_FAKE(get_virtio_plugin);
 
     // Ensure that the session system is initialized
     ret = sessions_bootstrap();
@@ -119,19 +111,18 @@ TEST_CASE("session_init", "[session]")
     
     ret = sessions_cleanup();
     REQUIRE(ret == VACCEL_OK);
-
-
 }
 
 // Test case for session update and cleanup
 TEST_CASE("vaccel_sess_update_and_free", "[session]")
 {
-
     struct vaccel_session sess;
     sess.session_id = 0;
     sess.resources = nullptr;
     sess.priv = nullptr;
     int ret;
+
+    RESET_FAKE(get_virtio_plugin);
 
     ret = sessions_bootstrap();
     REQUIRE(ret == VACCEL_OK);
@@ -180,6 +171,8 @@ TEST_CASE("vaccel_sess_update_and_free", "[session]")
 TEST_CASE("sess_unregister_null", "[session]")
 {
     int ret;
+
+    RESET_FAKE(get_virtio_plugin);
 
     ret = sessions_bootstrap();
     REQUIRE(VACCEL_OK == ret);
@@ -269,6 +262,8 @@ TEST_CASE("session_sess", "[session]")
     test_sess.priv = nullptr;
     struct vaccel_resource test_res;
     test_res.type = VACCEL_RES_SHARED_OBJ;
+
+    RESET_FAKE(get_virtio_plugin);
 
     ret = sessions_bootstrap();
     REQUIRE(VACCEL_OK == ret);

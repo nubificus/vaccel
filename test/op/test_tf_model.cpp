@@ -6,12 +6,8 @@
  */
 
 #include <catch.hpp>
-
-#include <atomic>
 #include <cstddef>
-
-using atomic_int = std::atomic<int>;
-using atomic_uint = std::atomic<unsigned int>;
+#include <utils.hpp>
 
 extern "C" {
 #include <fcntl.h>
@@ -21,55 +17,7 @@ extern "C" {
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
-
-#include "session.h"
-#include "tf_model.h"
 #include <vaccel.h>
-
-static unsigned char* read_file(const char* path, size_t* len)
-{
-    struct stat buffer;
-    int status, fd;
-
-    fd = open(path, O_RDONLY);
-    if (fd < 0) {
-        perror("Could not open file");
-        return NULL;
-    }
-
-    status = fstat(fd, &buffer);
-    if (status < 0) {
-        perror("Could not stat file");
-        return NULL;
-    }
-
-    unsigned char* buff = (unsigned char*)malloc(buffer.st_size);
-    if (!buff) {
-        close(fd);
-        perror("malloc");
-        return NULL;
-    }
-
-    size_t bytes = buffer.st_size;
-    ssize_t ptr = 0;
-    while (bytes) {
-        ssize_t ret = read(fd, &buff[ptr], bytes);
-        if (ret < 0) {
-            perror("read");
-            free(buff);
-            close(fd);
-            return NULL;
-        }
-
-        ptr += ret;
-        bytes -= ret;
-    }
-
-    close(fd);
-
-    *len = ptr;
-    return buff;
-}
 }
 
 TEST_CASE("tf_model")
@@ -84,13 +32,13 @@ TEST_CASE("tf_model")
     sess.resources = nullptr;
     sess.priv = nullptr;
 
-    const char* model_path = "../../examples/models/tf/lstm2/saved_model.pb";
+    const char* model_path =
+	    abs_path(SOURCE_ROOT, "examples/models/tf/lstm2/saved_model.pb");
 
     int ret = vaccel_tf_model_new(&model, model_path);
     REQUIRE(ret == VACCEL_OK);
     REQUIRE(model.resource);
     REQUIRE(model.plugin_data == nullptr);
-
 
     ret = vaccel_sess_init(&sess, 0);
     REQUIRE(ret == VACCEL_OK);
@@ -111,10 +59,13 @@ TEST_CASE("tf_model")
     model2.plugin_data = nullptr;
 
     size_t len = 0;
-    unsigned char* buff = read_file(model_path, &len);
+    char* buff;
+    ret = read_file(model_path, &buff, &len);
+    REQUIRE(ret == VACCEL_OK);
     REQUIRE(buff);
+    REQUIRE(len);
 
-    ret = vaccel_tf_model_new_from_buffer(&model2, buff, len);
+    ret = vaccel_tf_model_new_from_buffer(&model2, (unsigned char *)buff, len);
     REQUIRE(ret == VACCEL_OK);
     REQUIRE(model2.resource);
     REQUIRE(model2.plugin_data == nullptr);

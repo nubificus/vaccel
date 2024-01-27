@@ -7,11 +7,7 @@
  */
 
 #include <catch.hpp>
-
-#include <atomic>
-
-using atomic_int = std::atomic<int>;
-using atomic_uint = std::atomic<unsigned int>;
+#include <utils.hpp>
 
 extern "C" {
 #include <fcntl.h>
@@ -22,63 +18,13 @@ extern "C" {
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
-
-#include "log.h"
-#include "session.h"
-#include "tf_model.h"
-#include "tf_saved_model.h"
 #include <vaccel.h>
-}
-
-extern "C" {
-
-static unsigned char* read_file(const char* path, size_t* len)
-{
-    struct stat stat;
-    int status, fd;
-
-    fd = open(path, O_RDONLY);
-    if (fd < 0) {
-        perror("Could not open file");
-        return NULL;
-    }
-
-    status = fstat(fd, &stat);
-    if (status < 0) {
-        perror("Could not stat file");
-        return NULL;
-    }
-
-    unsigned char* ptr = static_cast<unsigned char*>(
-        mmap(NULL, stat.st_size, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0));
-    close(fd);
-
-    if (!ptr)
-        return NULL;
-
-    *len = stat.st_size;
-
-    return ptr;
-}
-
-static unsigned char* read_file_from_dir(const char* dir, const char* path,
-    size_t* len)
-{
-    char fpath[1024];
-
-    snprintf(fpath, 1024, "%s/%s", dir, path);
-    unsigned char* ptr = read_file(fpath, len);
-    if (!ptr)
-        vaccel_error("Could not mmap %s", fpath);
-
-    return ptr;
-}
 }
 
 TEST_CASE("saved_tf_model_from_memory")
 {
     int ret;
-    const char* path = "../../examples/models/tf/lstm2/";
+    const char* path = abs_path(SOURCE_ROOT, "examples/models/tf/lstm2/");
 
     struct vaccel_tf_saved_model* model = vaccel_tf_saved_model_new();
     REQUIRE(model);
@@ -86,18 +32,22 @@ TEST_CASE("saved_tf_model_from_memory")
     size_t len;
     unsigned char* ptr = read_file_from_dir(path, "saved_model.pb", &len);
     REQUIRE(ptr);
+    REQUIRE(len);
 
     ret = vaccel_tf_saved_model_set_model(model, ptr, len);
     REQUIRE(ret == VACCEL_OK);
 
     ptr = read_file_from_dir(path, "variables/variables.index", &len);
     REQUIRE(ptr);
+    REQUIRE(len);
 
     ret = vaccel_tf_saved_model_set_checkpoint(model, ptr, len);
     REQUIRE(ptr);
+    REQUIRE(len);
 
     ptr = read_file_from_dir(path, "variables/variables.index", &len);
     REQUIRE(ptr);
+    REQUIRE(len);
     ret = vaccel_tf_saved_model_set_var_index(model, ptr, len);
     REQUIRE(ret == VACCEL_OK);
 
@@ -129,9 +79,8 @@ TEST_CASE("saved_tf_model_from_memory")
 
 TEST_CASE("saved_model_from_file")
 {
-
     int ret;
-    const char* path = "../../examples/models/tf/lstm2/";
+    const char* path = abs_path(SOURCE_ROOT, "examples/models/tf/lstm2/");
 
     struct vaccel_tf_saved_model* model = vaccel_tf_saved_model_new();
     REQUIRE(model);

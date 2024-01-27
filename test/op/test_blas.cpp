@@ -8,11 +8,7 @@
  */
 
 #include <catch.hpp>
-
-#include <atomic>
-
-using atomic_int = std::atomic<int>;
-using atomic_uint = std::atomic<unsigned int>;
+#include <utils.hpp>
 
 extern "C" {
 #include <errno.h>
@@ -20,9 +16,6 @@ extern "C" {
 #include <stdio.h>
 #include <stdlib.h>
 #include <vaccel.h>
-
-#include "blas.h"
-#include "session.h"
 }
 
 extern "C" {
@@ -49,7 +42,6 @@ void init(int m, int n, int k, float* A, float* B, float* C)
 
 TEST_CASE("sgemm", "[blas]")
 {
-
     // Open a file stream for output data
     // FILE* data_fp = NULL;
 

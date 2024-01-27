@@ -1,0 +1,19 @@
+#pragma once
+
+#include <atomic>
+
+using atomic_int = std::atomic<int>;
+using atomic_uint = std::atomic<unsigned int>;
+
+extern "C" {
+
+#define SOURCE_ROOT "@SOURCE_ROOT@"
+#define BUILD_ROOT "@BUILD_ROOT@"
+
+char* abs_path(const char* root, const char* file);
+int read_file(const char* filename, char** file_buf, size_t* img_size);
+unsigned char* read_file_mmap(const char* path, size_t* len);
+unsigned char* read_file_from_dir(const char* dir, const char* path,
+    size_t* len);
+
+}

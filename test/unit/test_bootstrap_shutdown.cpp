@@ -6,27 +6,16 @@
  */
 
 #include <catch.hpp>
-#include <atomic>
-
-using atomic_int = std::atomic<int>;
-using atomic_uint = std::atomic<unsigned int>;
+#include <utils.hpp>
 
 extern "C" {
-#include "error.h"
-#include "id_pool.h"
-#include "list.h"
-#include "log.h"
-#include "plugin.h"
-#include "resources.h"
-#include "session.h"
-#include "utils.h"
-}
-
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <vaccel.h>
+}
 
 #define MAX_VACCEL_SESSIONS 1024
 #define MAX_RESOURCES 2048
@@ -34,7 +23,6 @@ extern "C" {
 
 TEST_CASE("plugin")
 {
-
     int ret;
     ret = plugins_bootstrap();
     REQUIRE(ret == VACCEL_OK);
@@ -65,7 +53,6 @@ TEST_CASE("resource")
 
 TEST_CASE("session")
 {
-
     struct {
         bool initialized;
         id_pool_t ids;

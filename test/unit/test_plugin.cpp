@@ -11,22 +11,19 @@
  * 7) get_plugin_op()
  */
 
-#include "ops/vaccel_ops.h"
 #include <catch.hpp>
 #include <cerrno>
+#include <utils.hpp>
 
 extern "C" {
-#include "error.h"
-#include "list.h"
-#include "plugin.h"
-}
-
 #include <dlfcn.h>
 #include <stdbool.h>
 #include <string.h>
-
+#include <vaccel.h>
+}
 
 static const char* pname = "mock_plugin_test";
+static const char* pversion = "0.0.0";
 
 static int fini(void)
 {
@@ -51,6 +48,7 @@ TEST_CASE("get_all_available_functions")
     list_init_entry(&plugin.ops);
 
     plugin.info->name = pname;
+    plugin.info->version = pversion;
     plugin.info->init = init;
     plugin.info->fini = fini;
     plugin.info->is_virtio = false;
@@ -93,6 +91,7 @@ TEST_CASE("register numerous function")
     list_init_entry(&plugin.ops);
 
     plugin.info->name = pname;
+    plugin.info->version = pversion;
     plugin.info->init = init;
     plugin.info->fini = fini;
     plugin.info->is_virtio = false;
@@ -153,7 +152,9 @@ TEST_CASE("register numerous function")
     REQUIRE(ret == VACCEL_OK);
 }
 
-TEST_CASE("register plugin functions") {
+
+TEST_CASE("register plugin functions")
+{
     int ret;
     vaccel_plugin plugin;
     vaccel_plugin_info pinfo;
@@ -163,6 +164,7 @@ TEST_CASE("register plugin functions") {
     list_init_entry(&plugin.ops);
 
     plugin.info->name = pname;
+    plugin.info->version = pversion;
     plugin.info->init = init;
     plugin.info->fini = fini;
     plugin.info->is_virtio = false;
@@ -184,7 +186,6 @@ TEST_CASE("register plugin functions") {
         
         ret = plugins_shutdown();
         REQUIRE(ret == VACCEL_OK);
-
     }
 
     SECTION("not bootstrapped yet") {
@@ -216,8 +217,12 @@ TEST_CASE("register plugin functions") {
         ret = register_plugin(&plugin);
         REQUIRE(ret == VACCEL_EINVAL);
         
+        pinfo.version = nullptr;
+        ret = register_plugin(&plugin);
+        REQUIRE(ret == VACCEL_EINVAL);
+
         ret = plugins_shutdown();
         REQUIRE(ret == VACCEL_OK);
     }
-
 }
+
