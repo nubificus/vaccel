@@ -64,6 +64,9 @@ int sessions_bootstrap(void)
 
 int sessions_cleanup(void)
 {
+	if (!sessions.initialized)
+		return VACCEL_OK;
+
 	id_pool_destroy(&sessions.ids);
 	sessions.initialized = false;
 
@@ -123,7 +126,7 @@ int vaccel_sess_unregister(struct vaccel_session *sess,
 	struct registered_resource *container =
 		find_registered_resource(sess, res);
 	if (!container) {
-		vaccel_warn("Resource %u not registered with session %u\n",
+		vaccel_error("Resource %u not registered with session %u\n",
 				res->id, sess->session_id);
 		return VACCEL_EINVAL;
 	}
@@ -132,7 +135,7 @@ int vaccel_sess_unregister(struct vaccel_session *sess,
 	if (plugin) {
 		int ret = plugin->info->sess_unregister(sess->session_id, res->id);
 		if (ret) {
-			vaccel_error("BUG: Could not unregister host-side resource %u",
+			vaccel_warn("BUG: Could not unregister host-side resource %u",
 					res->id);
 		}
 	}
@@ -195,8 +198,10 @@ static int cleanup_session_resources(struct vaccel_session *sess)
 		struct registered_resource *iter, *tmp;
 		for_each_session_resource_safe(iter, tmp, &resources->registered[i]) {
 			int ret = vaccel_sess_unregister(sess, iter->res);
-			if (ret)
+			if (ret) {
 				vaccel_error("Could not unregister resource from session");
+				return ret;
+			}
 		}
 	}
 
@@ -227,7 +232,7 @@ int vaccel_sess_init(struct vaccel_session *sess, uint32_t flags)
 	if (virtio) {
 		int ret = virtio->info->sess_init(sess, flags);
 		if (ret) {
-			vaccel_warn("Could not create host-side session");
+			vaccel_error("Could not create host-side session");
 			return ret;
 		}
 	} else {
@@ -255,7 +260,6 @@ cleanup_session:
 		int ret = virtio->info->sess_free(sess);
 		if (ret) {
 			vaccel_error("BUG: Could not cleanup host-side session");
-
 		}
 	} else {
 		put_sess_id(sess->session_id);
@@ -278,7 +282,8 @@ int vaccel_sess_update(struct vaccel_session *sess, uint32_t flags)
 	if (virtio) {
 		int ret = virtio->info->sess_update(sess, flags);
 		if (ret) {
-			vaccel_warn("Could not update host-side session");
+			vaccel_error("Could not update host-side session");
+			return ret;
 		}
 	} else {
 		sess->hint = flags;
@@ -300,8 +305,9 @@ int vaccel_sess_free(struct vaccel_session *sess)
 	/* if we're using virtio as a plugin offload the session cleanup to the
 	 * host */
 	struct vaccel_plugin *virtio = get_virtio_plugin();
+	int ret;
 	if (virtio) {
-		int ret = virtio->info->sess_free(sess);
+		ret = virtio->info->sess_free(sess);
 		if (ret) {
 			vaccel_warn("Could not cleanup host-side session");
 		}
@@ -309,7 +315,12 @@ int vaccel_sess_free(struct vaccel_session *sess)
 		put_sess_id(sess->session_id);
 	}
 
-	cleanup_session_resources(sess);
+	ret = cleanup_session_resources(sess);
+	if (ret) {
+		vaccel_error("Could not cleanup session resources");
+		return ret;
+	}
+
 	sessions.running_sessions[sess->session_id - 1] = NULL;
 
 	vaccel_debug("session:%u Free session", sess->session_id);

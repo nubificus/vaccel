@@ -64,6 +64,8 @@ int resources_cleanup(void)
 			resource_destroy(res);
 	}
 
+	initialized = false;
+
 	return id_pool_destroy(&id_pool);
 }
 

@@ -7,14 +7,13 @@
  */
 
 #include <catch.hpp>
+#include <utils.hpp>
 
 extern "C" {
-#include "error.h"
-#include "log.h"
-
 #include <slog.h>
 #include <stdlib.h>
 #include <string.h>
+#include <vaccel.h>
 }
 
 TEST_CASE("log level 1", "[log]")
@@ -26,6 +25,7 @@ TEST_CASE("log level 1", "[log]")
     ret = vaccel_log_shutdown();
     REQUIRE(ret == VACCEL_OK);
 }
+
 TEST_CASE("log level 2", "[log]")
 {
     char env_var[] = "VACCEL_DEBUG_LEVEL=2";
@@ -35,6 +35,7 @@ TEST_CASE("log level 2", "[log]")
     ret = vaccel_log_shutdown();
     REQUIRE(ret == VACCEL_OK);
 }
+
 TEST_CASE("log level 3", "[log]")
 {
     char env_var[] = "VACCEL_DEBUG_LEVEL=3";
@@ -44,6 +45,7 @@ TEST_CASE("log level 3", "[log]")
     ret = vaccel_log_shutdown();
     REQUIRE(ret == VACCEL_OK);
 }
+
 TEST_CASE("log level 4", "[log]")
 {
     char env_var[] = "VACCEL_DEBUG_LEVEL=4";

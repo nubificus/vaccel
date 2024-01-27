@@ -114,11 +114,10 @@ jobs:
             -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/artifacts/${{matrix.archconfig}}/${{matrix.build_type}}/opt \
             -DCMAKE_BUILD_TYPE=${{matrix.build_type}} \
             -DCMAKE_CXX_COMPILER=g++-12 \
-            -DBUILD_PLUGIN_NOOP=ON \
             -DENABLE_TESTS=ON && \
           cmake --build . --config ${{matrix.build_type}} && \
           make && \
-          make test
+          CTEST_OUTPUT_ON_FAILURE=1 make test
 
       - name: Clean-up
         run: sudo rm -rf artifacts build_${{ matrix.build_type }}

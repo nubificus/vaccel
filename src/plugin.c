@@ -47,6 +47,11 @@ static int check_plugin_info(const struct vaccel_plugin_info *pinfo)
 		return VACCEL_EINVAL;
 	}
 
+	if (!pinfo->version) {
+		vaccel_error("Plugin needs to have a version");
+		return VACCEL_EINVAL;
+	}
+
 	if (!pinfo->init) {
 		vaccel_error("Plugin needs to expose an init function");
 		return VACCEL_EINVAL;

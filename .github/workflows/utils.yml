@@ -21,7 +21,8 @@ jobs:
           mkdir build
           cd build
           cmake ../ -DBUILD_PLUGIN_NOOP=ON -DENABLE_TESTS=ON -DBUILD_EXAMPLES=ON -DCMAKE_CXX_COMPILER=g++-12
-          make && make test
+          make && \
+          CTEST_OUTPUT_ON_FAILURE=1 make test
 
       - name: Run valgrind tests (core)
         run: |
@@ -44,7 +45,7 @@ jobs:
           env VACCEL_BACKENDS=../plugins/noop/libvaccel-noop.so valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./test_image
           env VACCEL_BACKENDS=../plugins/noop/libvaccel-noop.so valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./test_minmax
           env VACCEL_BACKENDS=../plugins/noop/libvaccel-noop.so valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./test_noop
-          env VACCEL_BACKENDS=../plugins/noop/libvaccel-noop.so valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./test_tf_interference
+          env VACCEL_BACKENDS=../plugins/noop/libvaccel-noop.so valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./test_tf_inference
           env VACCEL_BACKENDS=../plugins/noop/libvaccel-noop.so valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./test_tf_model
           env VACCEL_BACKENDS=../plugins/noop/libvaccel-noop.so valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./test_tf_saved_model
 
@@ -192,9 +193,9 @@ jobs:
         run: |
           mkdir build
           cd build
-          cmake ${{github.workspace}} -DBUILD_PLUGIN_NOOP=ON -DENABLE_TESTS=ON -DENABLE_COVERAGE=ON -DCMAKE_CXX_COMPILER=g++-12 -DCMAKE_C_COMPILER=gcc-12 -DGCOV_EXECUTABLE=gcov-12
+          cmake ${{github.workspace}} -DENABLE_TESTS=ON -DENABLE_COVERAGE=ON -DCMAKE_CXX_COMPILER=g++-12 -DCMAKE_C_COMPILER=gcc-12 -DGCOV_EXECUTABLE=gcov-12
           make
-          make test ARGS="-V"
+          CTEST_OUTPUT_ON_FAILURE=1 make test ARGS="-V"
           cd ../
         shell: bash
 
@@ -218,7 +219,7 @@ jobs:
           cd build
           cmake ../ -DBUILD_PLUGIN_NOOP=ON -DENABLE_TESTS=ON -DENABLE_COVERAGE=ON -DCMAKE_CXX_COMPILER=g++-12 -DCMAKE_C_COMPILER=gcc-12 -DGCOV_EXECUTABLE=gcov-12
           make
-          make test
+          CTEST_OUTPUT_ON_FAILURE=1 make test
           cd ../
           gcovr --cobertura=./docs/coverage/coverage_main.xml --gcov-executable gcov-12 -s -e "build/_deps/*"
 

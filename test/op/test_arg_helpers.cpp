@@ -1,26 +1,17 @@
-#include "vaccel_args.h"
 #include <catch.hpp>
-#include <atomic>
 #include <cstdint>
-
-using atomic_int = std::atomic<int>;
-using atomic_uint = std::atomic<unsigned int>;
-
+#include <utils.hpp>
 
 extern "C"
 {
-#include "vaccel_args.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
-
-#include <vaccel.h>
-#include "session.h"
-#include "plugin.h"
 #include <string.h>
+#include <vaccel.h>
 }
 
 #include "vaccel_args.c"

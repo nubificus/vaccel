@@ -10,6 +10,12 @@ option(BUILD_PLUGIN_EXEC "Build the exec plugin" OFF)
 option(BUILD_PLUGIN_NOOP "Build the no-op debugging plugin" OFF)
 option(BUILD_EXAMPLES "Build the examples" OFF)
 option(ENABLE_TESTS "Enable testing" OFF)
+if (ENABLE_TESTS)
+	set(BUILD_PLUGIN_NOOP ON CACHE BOOL "Build the no-op debugging plugin" FORCE)
+	set(BUILD_EXAMPLES ON CACHE BOOL "Build the examples" FORCE)
+endif (ENABLE_TESTS)
+
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 # Export json with compile commands
 SET(CMAKE_EXPORT_COMPILE_COMMANDS ON)

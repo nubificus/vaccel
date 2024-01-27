@@ -12,13 +12,8 @@
  * checking, and session cleanup.
  */
 
-#include "image.h"
 #include <catch.hpp>
-
-#include <atomic>
-
-using atomic_int = std::atomic<int>;
-using atomic_uint = std::atomic<unsigned int>;
+#include <utils.hpp>
 
 extern "C" {
 #include <fcntl.h>
@@ -27,64 +22,12 @@ extern "C" {
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
-
-#include "session.h"
 #include <vaccel.h>
 }
 
-extern "C" {
-
-int read_file(const char* filename, char** img, size_t* img_size)
-{
-    int fd;
-    long bytes = 0;
-
-    fd = open(filename, O_RDONLY);
-    if (fd < 0) {
-        perror("open: ");
-        return 1;
-    }
-
-    struct stat info;
-    fstat(fd, &info);
-    fprintf(stdout, "Image size: %luB\n", info.st_size);
-
-    char* buf = (char*)malloc(info.st_size);
-    if (!buf) {
-        fprintf(stderr, "Could not allocate memory for image\n");
-        goto free_buff;
-    }
-
-    do {
-        int ret = read(fd, buf, info.st_size);
-        if (ret < 0) {
-            perror("Error while reading image: ");
-            goto close_file;
-        }
-        bytes += ret;
-    } while (bytes < info.st_size);
-
-    if (bytes < info.st_size) {
-        fprintf(stderr, "Could not read image\n");
-        goto close_file;
-    }
-
-    *img = buf;
-    *img_size = info.st_size;
-    close(fd);
-
-    return 0;
-
-close_file:
-    close(fd);
-free_buff:
-    free(buf);
-    return 1;
-}
-}
 TEST_CASE("classify")
 {
-    char file_path[] = "../../examples/images/example.jpg";
+    char* file_path = abs_path(SOURCE_ROOT, "examples/images/example.jpg");
     int ret;
     char* image;
     size_t image_size = 0;
@@ -120,8 +63,7 @@ TEST_CASE("classify")
 
 TEST_CASE("depth")
 {
-
-    char file_path[] = "../../examples/images/example.jpg";
+    char* file_path = abs_path(SOURCE_ROOT, "examples/images/example.jpg");
     int ret;
     char* image;
     size_t image_size = 0;
@@ -155,8 +97,7 @@ TEST_CASE("depth")
 }
 TEST_CASE("detect")
 {
-
-    char file_path[] = "../../examples/images/example.jpg";
+    char* file_path = abs_path(SOURCE_ROOT, "examples/images/example.jpg");
     int ret;
     char* image;
     size_t image_size = 0;
@@ -191,8 +132,7 @@ TEST_CASE("detect")
 
 TEST_CASE("pose")
 {
-
-    char file_path[] = "../../examples/images/example.jpg";
+    char* file_path = abs_path(SOURCE_ROOT, "examples/images/example.jpg");
     int ret;
     char* image;
     size_t image_size = 0;
@@ -231,8 +171,7 @@ TEST_CASE("pose")
 
 TEST_CASE("segmentation")
 {
-
-    char file_path[] = "../../examples/images/example.jpg";
+    char* file_path = abs_path(SOURCE_ROOT, "examples/images/example.jpg");
     int ret;
     char* image;
     size_t image_size = 0;

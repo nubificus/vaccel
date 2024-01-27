@@ -8,7 +8,7 @@
  */
 
 #include <catch.hpp>
-
+#include <utils.hpp>
 #include <atomic>
 
 using atomic_int = std::atomic<int>;
@@ -21,10 +21,6 @@ extern "C" {
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
-
-#include "plugin.h"
-#include "session.h"
-#include "shared_object.h"
 #include <vaccel.h>
 }
 
@@ -50,7 +46,8 @@ TEST_CASE("exec")
     struct vaccel_arg read[1] = { { .argtype = 0, .size = sizeof(input), .buf = &input } };
     struct vaccel_arg write[1] = { { .argtype = 0, .size = sizeof(out_text), .buf = out_text } };
 
-    ret = vaccel_exec(&sess, "../plugins/noop/libvaccel-noop.so", "mytestfunc", read, 1, write, 1);
+    ret = vaccel_exec(&sess, abs_path(BUILD_ROOT, "examples/libmytestlib.so"),
+		    "mytestfunc", read, 1, write, 1);
     REQUIRE(ret == VACCEL_OK);
     REQUIRE(sess.session_id);
     REQUIRE(sess.hint == VACCEL_PLUGIN_DEBUG);
@@ -77,7 +74,7 @@ TEST_CASE("exec_generic")
     input = 10;
     enum vaccel_op_type op_type = VACCEL_EXEC;
 
-    const char plugin_path[] = "../plugins/noop/libvaccel-noop.so";
+    const char* plugin_path = abs_path(BUILD_ROOT, "examples/libmytestlib.so");
     const char function_name[] = "mytestfunc";
 
     struct vaccel_arg read[4] = {
@@ -100,64 +97,20 @@ TEST_CASE("exec_generic")
     REQUIRE(sess.priv == nullptr);
 }
 
-extern "C" {
-static unsigned char* read_file(const char* path, size_t* len)
-{
-    struct stat buffer;
-    int status, fd;
-
-    fd = open(path, O_RDONLY);
-    if (fd < 0) {
-        perror("Could not open file");
-        return NULL;
-    }
-
-    status = fstat(fd, &buffer);
-    if (status < 0) {
-        perror("Could not stat file");
-        return NULL;
-    }
-
-    unsigned char* buff = static_cast<unsigned char*>(malloc(buffer.st_size));
-    if (!buff) {
-        close(fd);
-        perror("malloc");
-        return NULL;
-    }
-
-    size_t bytes = buffer.st_size;
-    ssize_t ptr = 0;
-    while (bytes) {
-        ssize_t ret = read(fd, &buff[ptr], bytes);
-        if (ret < 0) {
-            perror("read");
-            free(buff);
-            close(fd);
-            return NULL;
-        }
-
-        ptr += ret;
-        bytes -= ret;
-    }
-
-    close(fd);
-
-    *len = ptr;
-    return buff;
-}
-}
-
 TEST_CASE("exec_with_resources")
 {
 
     int input, ret;
     char out_text[512];
     char out_text2[512];
-    const char plugin_path[] = "../plugins/noop/libvaccel-noop.so";
+    const char* plugin_path = abs_path(BUILD_ROOT, "examples/libmytestlib.so");
 
     size_t len = 0;
-    unsigned char* buff = read_file(plugin_path, &len);
+    char* buff;
+    ret = read_file(plugin_path, &buff, &len);
+    REQUIRE(ret == VACCEL_OK);
     REQUIRE(buff);
+    REQUIRE(len);
 
     struct vaccel_shared_object object;
     object.resource = nullptr;
@@ -171,7 +124,7 @@ TEST_CASE("exec_with_resources")
     REQUIRE(ret == VACCEL_OK);
     REQUIRE(object.resource);
 
-    ret = vaccel_shared_object_new_from_buffer(&object2, buff, len);
+    ret = vaccel_shared_object_new_from_buffer(&object2, (unsigned char *)buff, len);
     REQUIRE(ret == VACCEL_OK);
     REQUIRE(object2.resource);
 

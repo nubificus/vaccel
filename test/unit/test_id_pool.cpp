@@ -9,16 +9,12 @@
 
 #include <catch.hpp>
 #include <fff.h>
-#include <atomic>
-
-using atomic_int = std::atomic<int>;
-using atomic_uint = std::atomic<unsigned int>;
+#include <utils.hpp>
 
 DEFINE_FFF_GLOBALS;
 
 extern "C" {
-#include "error.h"
-#include "id_pool.h"
+#include <vaccel.h>
 }
 
 // Test case for creating a new ID pool

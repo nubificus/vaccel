@@ -21,16 +21,27 @@
 #include <stddef.h>
 
 #include "error.h"
-
+#include "log.h"
+#include "plugin.h"
+#include "session.h"
+#include "vaccel_id.h"
+#include "ops/vaccel_ops.h"
 #include "ops/blas.h"
+#include "ops/minmax.h"
 #include "ops/exec.h"
 #include "ops/genop.h"
 #include "ops/image.h"
 #include "ops/noop.h"
+#include "ops/tf.h"
 #include "ops/fpga.h"
 #include "ops/opencv.h"
-#include "ops/vaccel_ops.h"
+#include "resources/tf_saved_model.h"
+#include "resources/shared_object.h"
+#include "resources/tf_model.h"
+#include "misc.h"
+#include "vaccel_prof.h"
 #include "ops/torch.h"
+#include "resources/torch_saved_model.h"
 
 const char *vaccel_rundir(void);
 

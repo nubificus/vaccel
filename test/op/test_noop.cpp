@@ -5,24 +5,16 @@
  */
 
 #include <catch.hpp>
-
-#include <atomic>
-
-using atomic_int = std::atomic<int>;
-using atomic_uint = std::atomic<unsigned int>;
+#include <utils.hpp>
 
 extern "C" {
 #include <stdio.h>
 #include <stdlib.h>
 #include <vaccel.h>
-
-#include "noop.h"
-#include "session.h"
 }
 
 TEST_CASE("noop", "[noop]")
 {
-
     int ret;
     struct vaccel_session sess;
 
