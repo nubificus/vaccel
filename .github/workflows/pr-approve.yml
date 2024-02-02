@@ -1,0 +1,53 @@
+name: Add Git trailers for PRs
+
+on:
+  pull_request_review:
+    types: [submitted]
+
+jobs:
+  git-trailers:
+    runs-on: [self-hosted, x86_64]
+    if: github.event.review.state == 'approved'
+
+    steps:
+      - name: Cleanup previous jobs
+        run: |
+          echo "Cleaning up previous runs"
+          sudo rm -rf ${{ github.workspace }}/*
+          sudo rm -rf ${{ github.workspace }}/.??*
+
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Do git trailers
+        uses: nubificus/git-trailers@main
+        with:
+          user_info: ${{ github.workspace }}/.contributors.yaml
+        #uses: nubificus/git-trailers@v1
+      - name: Update check status
+        run: |
+          PR_NUMBER=$(curl -s -X GET -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}" | jq -r '.number')
+  
+          COMMIT_SHA=$(curl -s -X GET -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/repos/${{ github.repository }}/pulls/${PR_NUMBER}/commits" | jq -r '.[0].sha')
+  
+          COMMIT_SHA=$(curl -s -X GET -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/repos/${{ github.repository }}/git/ref/heads/${{ github.event.pull_request.head.ref }}" | jq -r '.object.sha')
+
+          STATUS=$(curl -s -X GET -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/repos/${{ github.repository }}/commits/${COMMIT_SHA}/check-suites" | jq -r '.check_suites[0].status')
+  
+          curl -X POST \
+              -H "Accept: application/vnd.github.v3+json" \
+              -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+              "https://api.github.com/repos/${{ github.repository }}/statuses/${COMMIT_SHA}" \
+              -d '{
+                "state": "success",
+                "target_url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+                "description": "Trailers added to commits",
+                "context": "CI"
+              }'
+
