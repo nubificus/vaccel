@@ -20,16 +20,14 @@ extern "C"{
 ```cpp
 #include "../catch2/catch.hpp"
 
-#include <atomic>'
-
-using atomic_int = std::atomic<int>;
-using atomic_uint = std::atomic<unsigned int>;
+#include <utils.hpp>
 
 extern "C"{
 #include "test_header.h"
 #include ...
 }
 ```
+The ```#include <utils.hpp>``` contains the atomic workaround - have a look at the file for more information.
 
 ### Basic tests
 
@@ -49,10 +47,7 @@ So far in our test we also use ```SECTIONS``` for nesting test cases within a te
 ```cpp
 #include "../catch2/catch.hpp"
 
-#include <atomic>
-
-using atomic_int = std::atomic<int>;
-using atomic_uint = std::atomic<unsigned int>;
+#include <utils.hpp>
 
 extern "C"{
 #include "test_header.h"

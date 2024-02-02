@@ -1,9 +1,7 @@
 
 #include <catch.hpp>
-#include <atomic>
+#include <utils.hpp>
 
-using atomic_int = std::atomic<int>;
-using atomic_uint = std::atomic<unsigned int>;
 
 extern "C" {
 #include "error.h"
