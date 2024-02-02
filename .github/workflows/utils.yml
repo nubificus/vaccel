@@ -201,7 +201,7 @@ jobs:
 
       - name: Calculate coverage
         run: |
-          gcovr --cobertura=./docs/coverage/coverage_pr.xml --gcov-executable gcov-12 -s -e "build/_deps/*"
+          gcovr --filter src/ --filter plugins/ --cobertura=./docs/coverage/coverage_pr.xml --gcov-executable gcov-12 -s -e "build/_deps/*"
 
     ### This should produce a github comment showing coverage change however since this is the first release of test - doesn't do much
     ### TODO: add cache/artifacts to speed up this whole file
@@ -221,7 +221,7 @@ jobs:
           make
           CTEST_OUTPUT_ON_FAILURE=1 make test
           cd ../
-          gcovr --cobertura=./docs/coverage/coverage_main.xml --gcov-executable gcov-12 -s -e "build/_deps/*"
+          gcovr --filter src/ --filter plugins/ --cobertura=./docs/coverage/coverage_main.xml --gcov-executable gcov-12 -s -e "build/_deps/*"
 
       - name: Calculate coverage diff
         run: |
