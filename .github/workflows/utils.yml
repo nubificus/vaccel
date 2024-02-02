@@ -201,7 +201,7 @@ jobs:
 
       - name: Calculate coverage
         run: |
-          gcovr --filter src/ --filter plugins/ --cobertura=./docs/coverage/coverage_pr.xml --gcov-executable gcov-12 -s -e "build/_deps/*"
+          gcovr --filter src/ --filter plugins/ --cobertura=./docs/coverage/coverage_pr.xml --gcov-executable gcov-12 -s
 
     ### This should produce a github comment showing coverage change however since this is the first release of test - doesn't do much
     ### TODO: add cache/artifacts to speed up this whole file
@@ -209,25 +209,21 @@ jobs:
       - name: Build and make tests for coverage (main)
         id: run_coverage_main
         run: |
-          mkdir main_vaccelrt
-          cd main_vaccelrt
-          git clone https://github.com/cloudkernels/vaccelrt --recursive
-          cd vaccelrt/src
-          patch < ../test/coverage.patch
-          cd ../
+          git clone --recursive https://github.com/cloudkernels/vaccelrt vaccelrt_main
+          cd vaccelrt_main
           mkdir build
           cd build
           cmake ../ -DBUILD_PLUGIN_NOOP=ON -DENABLE_TESTS=ON -DENABLE_COVERAGE=ON -DCMAKE_CXX_COMPILER=g++-12 -DCMAKE_C_COMPILER=gcc-12 -DGCOV_EXECUTABLE=gcov-12
           make
           CTEST_OUTPUT_ON_FAILURE=1 make test
           cd ../
-          gcovr --filter src/ --filter plugins/ --cobertura=./docs/coverage/coverage_main.xml --gcov-executable gcov-12 -s -e "build/_deps/*"
+          gcovr --filter src/ --filter plugins/ --cobertura=./docs/coverage/coverage_main.xml --gcov-executable gcov-12 -s
 
       - name: Calculate coverage diff
         run: |
-          pycobertura diff main_vaccelrt/vaccelrt/docs/coverage/coverage_main.xml ./docs/coverage/coverage_pr.xml > coverage_diff.txt --no-color --no-source -f markdown
+          pycobertura diff vaccelrt_main/vaccelrt/docs/coverage/coverage_main.xml ./docs/coverage/coverage_pr.xml > coverage_diff.txt --no-color --no-source -f markdown
           echo '```' > temp_file && cat ./coverage_diff.txt >> temp_file && echo -e '\n```' >> temp_file && mv temp_file ./coverage_diff.txt
-          rm main_vaccelrt -rf
+          rm -rf vaccelrt_main
         continue-on-error: true
 
       - name: PR comment with file
