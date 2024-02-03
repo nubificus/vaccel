@@ -175,12 +175,6 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Apply coverage patch
-        id: coverage_patch
-        run: |
-          cd ${{github.workspace}}/src/
-          patch < ../test/coverage.patch
-
       - name: Install dependencies for tests
         id: install_dependencies
         run: |
@@ -221,10 +215,9 @@ jobs:
 
       - name: Calculate coverage diff
         run: |
-          pycobertura diff vaccelrt_main/vaccelrt/docs/coverage/coverage_main.xml ./docs/coverage/coverage_pr.xml > coverage_diff.txt --no-color --no-source -f markdown
+          pycobertura diff vaccelrt_main/docs/coverage/coverage_main.xml ./docs/coverage/coverage_pr.xml > coverage_diff.txt --no-color --no-source -f markdown
           echo '```' > temp_file && cat ./coverage_diff.txt >> temp_file && echo -e '\n```' >> temp_file && mv temp_file ./coverage_diff.txt
           rm -rf vaccelrt_main
-        continue-on-error: true
 
       - name: PR comment with file
         uses: thollander/actions-comment-pull-request@v2
