@@ -53,8 +53,8 @@ jobs:
         with:
           source_folder: "./docs/coverage/src_coverage"
           destination_repo: "nubificus/vaccel-docs"
-          destination_folder: "docs"
+          destination_folder: "docs/coverage"
           user_email: "jlima@nubificus.co.uk"
           user_name: "jlima"
           commit_msg: "[GHA] Update the coverage files"
-          destination_branch: "feat_coverage"
+          destination_branch: "main"
