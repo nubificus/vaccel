@@ -15,12 +15,6 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Apply coverage patch
-        id: coverage_patch
-        run: |
-          cd ${{github.workspace}}/src/
-          patch < ../test/coverage.patch
-
       - name: Install dependencies for tests
         id: install_dependencies
         run: |
@@ -59,7 +53,7 @@ jobs:
         with:
           source_folder: "./docs/coverage/src_coverage"
           destination_repo: "nubificus/vaccel-docs"
-          destination_folder: "docs/python"
+          destination_folder: "docs"
           user_email: "jlima@nubificus.co.uk"
           user_name: "jlima"
           commit_msg: "[GHA] Update the coverage files"
