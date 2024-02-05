@@ -37,16 +37,26 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Find SHA
+      - name: Determine SHA and Branch
         run: |
-          if [[ "${{github.event.pull_request.head.sha}}" != "" ]]
-          then
-            echo "ARTIFACT_SHA=$(echo ${{github.event.pull_request.head.sha}})" >> $GITHUB_ENV
-            echo "ARTIFACT_NAME=$(echo ${{ github.head_ref || github.ref_name }})" >> $GITHUB_ENV
+          if [ -n "${{ github.event.pull_request.head.sha }}" ]; then
+            SHA="${{ github.event.pull_request.head.sha }}"
+            BRANCH="${{ github.event.pull_request.head.ref }}"
+            echo "PR merged. SHA: $SHA, Branch: $BRANCH"
+          elif [ "${{ github.event_name }}" == "push" ]; then
+            SHA="${{ github.sha }}"
+            BRANCH="${{ github.ref }}"
+            BRANCH="${BRANCH#refs/heads/}" # Remove "refs/heads/" prefix
+            echo "Push to main branch. SHA: $SHA, Branch: $BRANCH"
           else
-            echo "ARTIFACT_NAME=$(echo ${GITHUB_REF##*/})" >> $GITHUB_ENV
-            echo "ARTIFACT_SHA=$(echo ${{github.sha}})" >> $GITHUB_ENV
+            echo "Event not supported."
+            exit 1
           fi
+          # Since we know this is a PR that just got merged, we ignore the 
+          # branch name, we just use main
+          echo "ARTIFACT_SHA=$(echo $SHA)" >> $GITHUB_ENV
+          #echo "ARTIFACT_NAME=$(echo $BRANCH)" >> $GITHUB_ENV
+          echo "ARTIFACT_NAME=$(echo main)" >> $GITHUB_ENV
 
       - name: Build project
         id: build_vaccelrt
