@@ -1,6 +1,6 @@
 # vAccelRT
 
-[![Build project](https://github.com/cloudkernels/vaccelrt/actions/workflows/test_vaccelrt.yml/badge.svg)](https://github.com/cloudkernels/vaccelrt/actions/workflows/release.yml)
+[![Build and upload](https://github.com/cloudkernels/vaccelrt/actions/workflows/release.yml/badge.svg)](https://github.com/cloudkernels/vaccelrt/actions/workflows/release.yml)
 
 vAccelRT is a runtime library for hardware acceleration. vAccelRT provides an
 API with a set of functions that the library is able to offload to hardware
