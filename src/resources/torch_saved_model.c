@@ -115,13 +115,15 @@ struct vaccel_torch_saved_model *vaccel_torch_saved_model_new(void)
  */
 int vaccel_torch_saved_model_set_path(
 	struct vaccel_torch_saved_model *model,
-	const char *path
+	const char *path,
+	const char *pattern
 ) {
 	char var_path[MAX_PATH];
 
 	if (!model)
 		return VACCEL_EINVAL;
 
+	vaccel_debug("%s", path);
 	if (!dir_exists(path))
 		return VACCEL_EINVAL;
 
@@ -131,7 +133,8 @@ int vaccel_torch_saved_model_set_path(
 	}
 
 	/* Find the pt trace file in the top-level directory */
-	int ret = file_from_regex(&model->model, path, "cnn_trace.pt");
+	// pattern should be the model name, e.g.: cnn_trace.pt
+	int ret = file_from_regex(&model->model, path, pattern);
 	if (ret) {
 		vaccel_warn("Could not find model file");
 		return VACCEL_ENOENT;
@@ -142,8 +145,14 @@ int vaccel_torch_saved_model_set_path(
 		ret = VACCEL_ENOMEM;
 	}
 
+	model->pattern = strdup(pattern);
+	if (!model->pattern) {
+		ret = VACCEL_ENOMEM;
+	}
+
 	model->resource = NULL;
 	vaccel_debug("Set Torch model path to %s", model->path);
+	vaccel_debug("Torch model name is %s", model->pattern);
 
 	return VACCEL_OK;
 
@@ -247,7 +256,7 @@ int vaccel_torch_saved_model_register(struct vaccel_torch_saved_model *model)
 		goto destroy_resource;
 
 	ret = vaccel_file_persist(&model->model, res->rundir,
-			"cnn_trace.pt", true);
+			model->pattern, true);
 	if (ret)
 		goto destroy_resource;
 

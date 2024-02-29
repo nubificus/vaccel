@@ -40,6 +40,9 @@ struct vaccel_torch_saved_model {
 	/* The path of the saved model in disk */
 	const char *path;
 
+	/* The model name in disk */
+	const char *pattern;
+
 	/* Model file */
 	struct vaccel_file model;
 
@@ -49,7 +52,8 @@ struct vaccel_torch_saved_model *vaccel_torch_saved_model_new(void);
 
 int vaccel_torch_saved_model_set_path(
 	struct vaccel_torch_saved_model *model,
-	const char *path
+	const char *path,
+	const char *pattern
 );
 
 const char *vaccel_torch_saved_model_get_path(struct vaccel_torch_saved_model *model);
