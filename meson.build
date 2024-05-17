@@ -52,6 +52,6 @@ meson.add_dist_script(
   'plugin-noop',
   opt_plugin_noop.enabled() ? 'enabled' : 'disabled',
   'examples',
-  opt_examples.enabled() ? 'enabled' : 'disabled',
-  'tests',
-  opt_tests.enabled() ? 'enabled' : 'disabled')
+  opt_examples.enabled() ? 'enabled' : 'disabled')
+#  'tests',
+#  opt_tests.enabled() ? 'enabled' : 'disabled')
