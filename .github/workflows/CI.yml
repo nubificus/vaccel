@@ -2,13 +2,17 @@ name: CI
 
 on:
   pull_request:
-    branches:
-      - main
+    branches: ["main"]
+    types:
+      - synchronize
+      - labeled
+
 
   workflow_dispatch:
 
 jobs:
   test:
+    if: ${{ contains(github.event.pull_request.labels.*.name, 'ok-to-test') }}
     runs-on: [self-hosted, "${{ matrix.archconfig }}", gcc, lite, "2204"]
 
     strategy:
@@ -123,5 +127,6 @@ jobs:
         run: sudo rm -rf artifacts build_${{ matrix.build_type }}
 
   utils:
+    if: ${{ contains(github.event.pull_request.labels.*.name, 'ok-to-test') }}
     uses: ./.github/workflows/utils.yml
     needs: [test]
