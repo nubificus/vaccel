@@ -39,6 +39,8 @@ do
 	fi                                                                          
 	c=$((c+1))                                                                  
 done
+echo "export DEB_LDFLAGS_MAINT_STRIP = -Wl,-Bsymbolic-functions\n" \
+	>> debian/rules
 echo "override_dh_auto_configure:\n\tdh_auto_configure --buildsystem=meson -- ${MESON_ARGS}" \
 	>> debian/rules
 
