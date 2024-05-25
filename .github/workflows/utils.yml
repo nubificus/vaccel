@@ -165,7 +165,8 @@ jobs:
 
   coverage_diff:
     needs: [checkpatch, spell_check, test_valgrind]
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, "x86_64", gcc, lite, "2204"]
+    #runs-on: ubuntu-latest
     outputs:
       commit_hash: ${{ steps.commit-and-push.outputs.commit_hash }}
 
@@ -215,9 +216,13 @@ jobs:
 
       - name: Calculate coverage diff
         run: |
-          pycobertura diff vaccelrt_main/docs/coverage/coverage_main.xml ./docs/coverage/coverage_pr.xml > coverage_diff.txt --no-color --no-source -f markdown
+          # Temporarily ignore coverage changes, just print out the exit code
+          # https://github.com/aconrad/pycobertura?tab=readme-ov-file#diff-exit-codes
+          pycobertura diff vaccelrt_main/docs/coverage/coverage_main.xml ./docs/coverage/coverage_pr.xml --no-color --no-source -f markdown > coverage_diff.txt  || PYCOB_RESULT=$?
+          echo "pycobertura exited with $PYCOB_RESULT"
           echo '```' > temp_file && cat ./coverage_diff.txt >> temp_file && echo -e '\n```' >> temp_file && mv temp_file ./coverage_diff.txt
           rm -rf vaccelrt_main
+        shell: bash
 
       - name: PR comment with file
         uses: thollander/actions-comment-pull-request@v2

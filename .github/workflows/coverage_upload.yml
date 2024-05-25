@@ -19,8 +19,8 @@ jobs:
         id: install_dependencies
         run: |
           sudo apt update && sudo apt-get install -y lcov cmake gcc g++-12 libclang-dev valgrind gcovr
-          pip install --upgrade gcovr
-          pip install pycobertura
+          sudo pip install --upgrade gcovr
+          sudo pip install pycobertura
 
       - name: Run Coverage
         id: run_coverage
