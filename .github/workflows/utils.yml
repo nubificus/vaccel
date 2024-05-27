@@ -45,9 +45,10 @@ jobs:
           env VACCEL_BACKENDS=../plugins/noop/libvaccel-noop.so valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./test_image
           env VACCEL_BACKENDS=../plugins/noop/libvaccel-noop.so valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./test_minmax
           env VACCEL_BACKENDS=../plugins/noop/libvaccel-noop.so valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./test_noop
-          env VACCEL_BACKENDS=../plugins/noop/libvaccel-noop.so valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./test_tf_inference
-          env VACCEL_BACKENDS=../plugins/noop/libvaccel-noop.so valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./test_tf_model
+          env VACCEL_BACKENDS=../plugins/noop/libvaccel-noop.so valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./test_single_model
           env VACCEL_BACKENDS=../plugins/noop/libvaccel-noop.so valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./test_tf_saved_model
+          env VACCEL_BACKENDS=../plugins/noop/libvaccel-noop.so valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./test_tf_inference
+          env VACCEL_BACKENDS=../plugins/noop/libvaccel-noop.so valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./test_tflite_inference
 
       - name: Run valgrind tests (examples)
         env:
@@ -74,9 +75,10 @@ jobs:
           valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./pynq_array_copy
           valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./pynq_parallel
           valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./torch_inference ../../examples/images/example.jpg ./../../examples/models/torch
-          valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./tf_model ../../examples/models/tf/frozen_graph.pb
+          valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./single_model ../../examples/models/tf/frozen_graph.pb
           valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./tf_saved_model ../../examples/models/tf/lstm2
           valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./tf_inference ../../examples/models/tf/lstm2
+          valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./tflite_inference ../../examples/models/tf/lstm2.tflite
 
   spell_check:
     name: spell check
