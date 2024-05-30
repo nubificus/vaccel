@@ -18,9 +18,12 @@ jobs:
     strategy:
       matrix:
         archconfig: [x86_64, aarch64, armv7l]
-        build_type: [Debug, Release]
+        build_type: [debug, release]
       fail-fast: false
 
+    env:
+      CC: gcc-12
+      CXX: g++-12
     steps:
       - name: Cleanup previous jobs
         run: |
@@ -28,9 +31,11 @@ jobs:
           sudo rm -rf ${{ github.workspace }}/*
           sudo rm -rf ${{ github.workspace }}/.??*
 
-      - name: Install dependencies for tests
+      - name: Install project dependencies
         id: install_dependencies
-        run: sudo apt update && sudo apt-get install -y lcov g++ valgrind
+        run: |
+          sudo apt update && sudo apt-get install -y lcov gcc-12 g++-12 ninja-build
+          sudo pip install meson
 
       - name: Checkout code
         uses: actions/checkout@v2
@@ -40,89 +45,83 @@ jobs:
       - name: Build project
         id: build_vaccelrt
         run: |
-          mkdir -p build_${{matrix.build_type}}
-          cd build_${{matrix.build_type}}
-          cmake ${{github.workspace}} \
-            -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/artifacts/${{matrix.archconfig}}/${{matrix.build_type}}/opt \
-            -DCMAKE_BUILD_TYPE=${{matrix.build_type}} \
-            -DBUILD_EXAMPLES=ON && \
-          cmake --build . --config ${{matrix.build_type}} && \
-          make && \
-          make install -C src && \
-          make install -C third-party && \
-          make install -C examples
+          meson setup \
+            --prefix=${{github.workspace}}/artifacts/${{matrix.archconfig}}/${{matrix.build_type}}/opt \
+            --buildtype=${{matrix.build_type}} \
+            -Dexamples=enabled \
+            build_${{matrix.build_type}}
+          meson compile -C build_${{matrix.build_type}}
+          meson install -C build_${{matrix.build_type}}
 
       - name: Build vAccel plugins
         id: build_plugins
         run: |
-          cd build_${{matrix.build_type}}
-          cmake ${{github.workspace}} \
-            -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/artifacts/${{matrix.archconfig}}/${{matrix.build_type}}/opt \
-            -DBUILD_PLUGIN_NOOP=ON \
-            -DBUILD_PLUGIN_EXEC=ON && \
-          make -C plugins && make install -C plugins
+          meson setup \
+            --reconfigure \
+            -Dplugins=enabled \
+            build_${{matrix.build_type}}
+          meson compile -C build_${{matrix.build_type}}
+          meson install -C build_${{matrix.build_type}}
 
       - name: Run examples
         id: run_examples
         env:
-          LD_LIBRARY_PATH: ${{github.workspace}}/artifacts/${{matrix.archconfig}}/${{matrix.build_type}}/opt/lib
-          VACCEL_BACKENDS: ${{github.workspace}}/artifacts/${{matrix.archconfig}}/${{matrix.build_type}}/opt/lib/libvaccel-noop.so
           VACCEL_DEBUG_LEVEL: 4
         run: |
+          export LD_LIBRARY_PATH=${{github.workspace}}/artifacts/${{matrix.archconfig}}/${{matrix.build_type}}/opt/lib/$($CC -print-multiarch)
+          export VACCEL_BACKENDS=${{github.workspace}}/artifacts/${{matrix.archconfig}}/${{matrix.build_type}}/opt/lib/$($CC -print-multiarch)/libvaccel-noop.so
           cd ${{github.workspace}}/artifacts/${{matrix.archconfig}}/${{matrix.build_type}}/opt
           sudo mkdir -p /run/user/1001
           sudo chown -R runner /run/user/1001
-          ./bin/classify share/images/example.jpg 1
-          ./bin/classify_generic share/images/example.jpg 1
-          ./bin/detect share/images/example.jpg 1
-          ./bin/detect_generic share/images/example.jpg 1
-          ./bin/pose share/images/example.jpg 1
-          ./bin/pose_generic share/images/example.jpg 1
-          ./bin/segment share/images/example.jpg 1
-          ./bin/segment_generic share/images/example.jpg 1
-          ./bin/depth share/images/example.jpg 1
-          ./bin/depth_generic share/images/example.jpg 1
+          ./bin/classify share/vaccel/images/example.jpg 1
+          ./bin/classify_generic share/vaccel/images/example.jpg 1
+          ./bin/detect share/vaccel/images/example.jpg 1
+          ./bin/detect_generic share/vaccel/images/example.jpg 1
+          ./bin/pose share/vaccel/images/example.jpg 1
+          ./bin/pose_generic share/vaccel/images/example.jpg 1
+          ./bin/segment share/vaccel/images/example.jpg 1
+          ./bin/segment_generic share/vaccel/images/example.jpg 1
+          ./bin/depth share/vaccel/images/example.jpg 1
+          ./bin/depth_generic share/vaccel/images/example.jpg 1
           ./bin/sgemm
           ./bin/sgemm_generic
-          ./bin/minmax 262144 ./share/input/input_262144.csv 5 100
-          ./bin/minmax_generic 262144 ./share/input/input_262144.csv 5 100
+          ./bin/minmax 262144 ./share/vaccel/input/input_262144.csv 5 100
+          ./bin/minmax_generic 262144 ./share/vaccel/input/input_262144.csv 5 100
           ./bin/pynq_vector_add
           ./bin/pynq_array_copy
           ./bin/pynq_parallel
-          ./bin/torch_inference ./share/images/example.jpg ./share/models/torch
-          ./bin/single_model share/models/tf/frozen_graph.pb
-          ./bin/tf_saved_model share/models/tf/lstm2
-          ./bin/tf_inference share/models/tf/lstm2
-          ./bin/tflite_inference share/models/tf/lstm2.tflite
+          ./bin/torch_inference ./share/vaccel/images/example.jpg ./share/vaccel/models/torch
+          ./bin/single_model share/vaccel/models/tf/frozen_graph.pb
+          ./bin/tf_saved_model share/vaccel/models/tf/lstm2
+          ./bin/tf_inference share/vaccel/models/tf/lstm2
+          ./bin/tflite_inference share/vaccel/models/tf/lstm2.tflite
+          ./bin/mbench 1 share/vaccel/images/example.jpg
 
       - name: Run exec examples
         id: run_exec_examples
         env:
-          LD_LIBRARY_PATH: ${{github.workspace}}/artifacts/${{matrix.archconfig}}/${{matrix.build_type}}/opt/lib
-          VACCEL_BACKENDS: ${{github.workspace}}/artifacts/${{matrix.archconfig}}/${{matrix.build_type}}/opt/lib/libvaccel-exec.so
           VACCEL_DEBUG_LEVEL: 4
         run: |
+          export LD_LIBRARY_PATH=${{github.workspace}}/artifacts/${{matrix.archconfig}}/${{matrix.build_type}}/opt/lib/$($CC -print-multiarch)
+          export VACCEL_BACKENDS=${{github.workspace}}/artifacts/${{matrix.archconfig}}/${{matrix.build_type}}/opt/lib/$($CC -print-multiarch)/libvaccel-exec.so
           cd ${{github.workspace}}/artifacts/${{matrix.archconfig}}/${{matrix.build_type}}/opt
           #sudo mkdir -p /run/user/1001
           #sudo chown -R runner /run/user/1001
-          ./bin/exec_with_res lib/libmytestlib.so 1
-          ./bin/exec_helpers lib/libmytestlib.so 1
-          ./bin/exec_helpers_nonser lib/libmytestlib.so 1
+          export TESTLIB_DIR=lib/$($CC -print-multiarch)
+          ./bin/exec_with_res $TESTLIB_DIR/libmytestlib.so 1
+          ./bin/exec_helpers $TESTLIB_DIR/libmytestlib.so 1
+          ./bin/exec_helpers_nonser $TESTLIB_DIR/libmytestlib.so 1
 
       - name: Run Tests
         id: run_tests
         run: |
-          rm ${{github.workspace}}/build_${{matrix.build_type}} -rf
-          mkdir -p ${{github.workspace}}/build_${{matrix.build_type}}
-          cd ${{github.workspace}}/build_${{matrix.build_type}}
-          cmake ${{github.workspace}} \
-            -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/artifacts/${{matrix.archconfig}}/${{matrix.build_type}}/opt \
-            -DCMAKE_BUILD_TYPE=${{matrix.build_type}} \
-            -DCMAKE_CXX_COMPILER=g++-12 \
-            -DENABLE_TESTS=ON && \
-          cmake --build . --config ${{matrix.build_type}} && \
-          make && \
-          CTEST_OUTPUT_ON_FAILURE=1 make test
+          cd ${{github.workspace}}
+          meson setup \
+            --reconfigure \
+            -Dtests=enabled \
+            build_${{matrix.build_type}}
+          meson compile -C build_${{matrix.build_type}}
+          meson test --print-errorlogs -C build_${{matrix.build_type}}
 
       - name: Clean-up
         run: sudo rm -rf artifacts build_${{ matrix.build_type }}
