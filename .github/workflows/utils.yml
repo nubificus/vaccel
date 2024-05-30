@@ -6,58 +6,43 @@ on:
 jobs:
   test_valgrind:
     runs-on: [self-hosted, "x86_64", gcc, lite, "2204"]
+    env:
+      CC: gcc-12
+      CXX: g++-12
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
         with:
           submodules: recursive
 
-      - name: Install dependencies
+      - name: Install project dependencies
         id: install_dependencies
-        run: sudo apt update && sudo apt-get install -y lcov cmake gcc g++-12 libclang-dev valgrind
+        run: |
+          sudo apt update && sudo apt-get install -y lcov gcc-12 g++-12 ninja-build valgrind
+          sudo pip install meson
 
       - name: Run tests
         run: |
-          mkdir build
-          cd build
-          cmake ../ -DBUILD_PLUGIN_NOOP=ON -DENABLE_TESTS=ON -DBUILD_EXAMPLES=ON -DCMAKE_CXX_COMPILER=g++-12
-          make && \
-          CTEST_OUTPUT_ON_FAILURE=1 make test
+          meson setup \
+            -Db_coverage=true \
+            -Dexamples=enabled \
+            -Dtests=enabled \
+            build
+          meson compile -C build
+          meson test --print-errorlogs -C build
 
-      - name: Run valgrind tests (core)
+      - name: Run tests with valgrind
         run: |
-          valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes  ./build/test/test_id_pool
-          valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes  ./build/test/test_log
-          valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes  ./build/test/test_misc_mock
-          valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes  ./build/test/test_misc
-          valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes  ./build/test/test_plugin
-          valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes  ./build/test/test_resource
-          valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes  ./build/test/test_session
-          valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes  ./build/test/test_vaccel
+          meson test --wrap='valgrind' -C build
 
-      - name: Run valgrind tests (ops)
-        run: |
-          cd build/test/
-          env VACCEL_BACKENDS=../plugins/noop/libvaccel-noop.so valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./test_blas
-          env VACCEL_BACKENDS=../plugins/noop/libvaccel-noop.so valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./test_exec
-          env VACCEL_BACKENDS=../plugins/noop/libvaccel-noop.so valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./test_image
-          env VACCEL_BACKENDS=../plugins/noop/libvaccel-noop.so valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./test_image_generic
-          env VACCEL_BACKENDS=../plugins/noop/libvaccel-noop.so valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./test_image
-          env VACCEL_BACKENDS=../plugins/noop/libvaccel-noop.so valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./test_minmax
-          env VACCEL_BACKENDS=../plugins/noop/libvaccel-noop.so valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./test_noop
-          env VACCEL_BACKENDS=../plugins/noop/libvaccel-noop.so valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./test_single_model
-          env VACCEL_BACKENDS=../plugins/noop/libvaccel-noop.so valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./test_tf_saved_model
-          env VACCEL_BACKENDS=../plugins/noop/libvaccel-noop.so valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./test_tf_inference
-          env VACCEL_BACKENDS=../plugins/noop/libvaccel-noop.so valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./test_tflite_inference
-
-      - name: Run valgrind tests (examples)
+      - name: Run examples with valgrind
         env:
-          LD_LIBRARY_PATH: ${{github.workspace}}/build/src/libvaccel.so
+          LD_LIBRARY_PATH: ${{github.workspace}}/build/src
           VACCEL_BACKENDS: ${{github.workspace}}/build/plugins/noop/libvaccel-noop.so
           VACCEL_DEBUG_LEVEL: 4
         run: |
           cd build/examples
-          valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./classify ../../examples/images/example.jpg 1 /
+          valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./classify ../../examples/images/example.jpg 1
           valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./classify_generic ../../examples/images/example.jpg 1
           valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./detect ../../examples/images/example.jpg 1
           valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./detect_generic ../../examples/images/example.jpg 1
@@ -79,6 +64,7 @@ jobs:
           valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./tf_saved_model ../../examples/models/tf/lstm2
           valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./tf_inference ../../examples/models/tf/lstm2
           valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./tflite_inference ../../examples/models/tf/lstm2.tflite
+          valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./mbench 1 ../../examples/images/example.jpg
 
   spell_check:
     name: spell check
@@ -172,6 +158,9 @@ jobs:
     outputs:
       commit_hash: ${{ steps.commit-and-push.outputs.commit_hash }}
 
+    env:
+      CC: gcc-12
+      CXX: g++-12
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -181,24 +170,26 @@ jobs:
       - name: Install dependencies for tests
         id: install_dependencies
         run: |
-          sudo apt-get install -y lcov cmake gcc g++ libclang-dev gcovr colordiff
-          pip install --upgrade gcovr
-          pip install pycobertura
+          sudo apt update && sudo apt-get install -y lcov gcc-12 g++-12 ninja-build libclang-dev
+          sudo pip install meson gcovr pycobertura
 
       - name: Build and make tests for coverage (PR)
         id: run_coverage_pr
         run: |
-          mkdir build
-          cd build
-          cmake ${{github.workspace}} -DENABLE_TESTS=ON -DENABLE_COVERAGE=ON -DCMAKE_CXX_COMPILER=g++-12 -DCMAKE_C_COMPILER=gcc-12 -DGCOV_EXECUTABLE=gcov-12
-          make
-          CTEST_OUTPUT_ON_FAILURE=1 make test ARGS="-V"
-          cd ../
+          meson setup \
+            -Db_coverage=true \
+            -Dtests=enabled \
+            build
+          meson compile -C build
+          meson test --print-errorlogs -C build
         shell: bash
 
       - name: Calculate coverage
         run: |
-          gcovr --filter src/ --filter plugins/ --cobertura=./docs/coverage/coverage_pr.xml --gcov-executable gcov-12 -s
+          echo "gcov-executable = gcov-12" > gcovr.cfg
+          echo -e "filter = ../src/\nfilter = ../plugins/" >> gcovr.cfg
+          ninja coverage-xml -C build
+          cp build/meson-logs/coverage.xml docs/coverage/coverage_pr.xml
 
     ### This should produce a github comment showing coverage change however since this is the first release of test - doesn't do much
     ### TODO: add cache/artifacts to speed up this whole file
@@ -208,13 +199,17 @@ jobs:
         run: |
           git clone --recursive https://github.com/cloudkernels/vaccelrt vaccelrt_main
           cd vaccelrt_main
-          mkdir build
-          cd build
-          cmake ../ -DBUILD_PLUGIN_NOOP=ON -DENABLE_TESTS=ON -DENABLE_COVERAGE=ON -DCMAKE_CXX_COMPILER=g++-12 -DCMAKE_C_COMPILER=gcc-12 -DGCOV_EXECUTABLE=gcov-12
-          make
-          CTEST_OUTPUT_ON_FAILURE=1 make test
-          cd ../
-          gcovr --filter src/ --filter plugins/ --cobertura=./docs/coverage/coverage_main.xml --gcov-executable gcov-12 -s
+          meson setup \
+            -Db_coverage=true \
+            -Dtests=enabled \
+            build
+          meson compile -C build
+          meson test --print-errorlogs -C build
+
+          echo "gcov-executable = gcov-12" > gcovr.cfg
+          echo -e "filter = ../src/\nfilter = ../plugins/" >> gcovr.cfg
+          ninja coverage-xml -C build
+          cp build/meson-logs/coverage.xml docs/coverage/coverage_main.xml
 
       - name: Calculate coverage diff
         run: |

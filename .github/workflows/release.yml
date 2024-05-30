@@ -22,9 +22,12 @@ jobs:
     strategy:
       matrix:
         archconfig: [x86_64, aarch64, armv7l]
-        build_type: [Debug, Release]
+        build_type: [debug, release]
       fail-fast: false
 
+    env:
+      CC: gcc-12
+      CXX: g++-12
     steps:
       - name: Cleanup previous jobs
         run: |
@@ -58,56 +61,53 @@ jobs:
           #echo "ARTIFACT_NAME=$(echo $BRANCH)" >> $GITHUB_ENV
           echo "ARTIFACT_NAME=$(echo main)" >> $GITHUB_ENV
 
+      - name: Install project dependencies
+        id: install_dependencies
+        run: |
+          sudo apt update && sudo apt-get install -y gcc-12 g++-12 ninja-build
+          sudo pip install meson
+
       - name: Build project
         id: build_vaccelrt
         run: |
-          mkdir -p build_${{matrix.build_type}}
-          cd build_${{matrix.build_type}}
-          cmake ${{github.workspace}} \
-            -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/artifacts/${{matrix.archconfig}}/${{matrix.build_type}}/opt \
-            -DCMAKE_BUILD_TYPE=${{matrix.build_type}} \
-            -DBUILD_EXAMPLES=ON && \
-          cmake --build . --config ${{matrix.build_type}} && \
-          make && \
-          make install -C src && \
-          make install -C third-party && \
-          make install -C examples
+          meson setup \
+            --prefix=${{github.workspace}}/artifacts/${{matrix.archconfig}}/${{matrix.build_type}}/opt \
+            --buildtype=${{matrix.build_type}} \
+            -Dexamples=enabled \
+            build_${{matrix.build_type}}
+          meson compile -C build_${{matrix.build_type}}
+          meson install -C build_${{matrix.build_type}}
 
       - name: Build vAccel plugins
         id: build_plugins
         run: |
-          cd build_${{matrix.build_type}}
-          cmake ${{github.workspace}} \
-            -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/artifacts/${{matrix.archconfig}}/${{matrix.build_type}}/opt \
-            -DBUILD_PLUGIN_NOOP=ON && \
-          make -C plugins && make install -C plugins
+          meson setup \
+            --reconfigure \
+            -Dplugin-noop=enabled \
+            build_${{matrix.build_type}}
+          meson compile -C build_${{matrix.build_type}}
+          meson install -C build_${{matrix.build_type}}
 
       - name: Build project for packages
         id: build_pkg_vaccelrt
         run: |
-          mkdir -p build_pkg_${{matrix.build_type}}
-          cd build_pkg_${{matrix.build_type}}
-          cmake ${{github.workspace}} \
-            -DCMAKE_INSTALL_PREFIX=/usr/local \
-            -DCMAKE_BUILD_TYPE=${{matrix.build_type}} \
-            -DBUILD_EXAMPLES=ON \
-            -DBUILD_PLUGIN_NOOP=ON \
-            -DBUILD_PLUGIN_EXEC=ON && \
-          cmake --build . --config ${{matrix.build_type}} && \
-          cpack -G TGZ
-          cpack
+          meson setup \
+            -Dexamples=enabled \
+            -Dplugins=enabled \
+            build_pkg_${{matrix.build_type}}
+          meson dist --formats gztar --include-subprojects -C build_pkg_${{matrix.build_type}}
 
       - name: Get package name
         shell: bash
         id: get_package_deb
         run: |
-          echo ::set-output name=NAME::$(basename build_pkg_${{ matrix.build_type }}/vaccel-*.deb)
+          echo ::set-output name=NAME::$(basename build_pkg_${{ matrix.build_type }}/meson-dist/vaccel-*.deb)
 
       - name: Get tar name
         shell: bash
         id: get_package_tar
         run: |
-          echo ::set-output name=NAME::$(basename build_pkg_${{ matrix.build_type }}/vaccel-*.tar.gz)
+          echo ::set-output name=NAME::$(basename build_pkg_${{ matrix.build_type }}/meson-dist/vaccel-*.tar.gz)
 
       - name: Upload deb artifact to s3 by name
         uses: cloudkernels/minio-upload@v4

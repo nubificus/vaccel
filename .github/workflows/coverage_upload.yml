@@ -9,6 +9,9 @@ jobs:
     outputs:
       commit_hash: ${{ steps.commit-and-push.outputs.commit_hash }}
 
+    env:
+      CC: gcc-12
+      CXX: g++-12
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -18,22 +21,25 @@ jobs:
       - name: Install dependencies for tests
         id: install_dependencies
         run: |
-          sudo apt update && sudo apt-get install -y lcov cmake gcc g++-12 libclang-dev valgrind gcovr
-          sudo pip install --upgrade gcovr
-          sudo pip install pycobertura
+          sudo apt update && sudo apt-get install -y lcov gcc-12 g++-12 ninja-build libclang-dev
+          sudo pip install meson gcovr pycobertura
 
-      - name: Run Coverage
-        id: run_coverage
+      - name: Run tests
+        id: run_tests
         run: |
-          mkdir build
-          cd build
-          cmake ${{github.workspace}} -DBUILD_PLUGIN_NOOP=ON -DENABLE_TESTS=ON -DENABLE_COVERAGE=ON -DCMAKE_CXX_COMPILER=g++-12 -DCMAKE_C_COMPILER=gcc-12 -DGCOV_EXECUTABLE=gcov-12
-          make
-          make test ARGS="-V"
-          cd ../
+          meson setup \
+            -Db_coverage=true \
+            -Dtests=enabled \
+            build
+          meson compile -C build
+          meson test --print-errorlogs -C build
 
       - name: Generate coverage report
-        run: gcovr --cobertura --gcov-executable gcov-12 -o ${{github.workspace}}/docs/coverage/coverage.xml --print-summary -e "build/_deps/*"
+        run: |
+          echo "gcov-executable = gcov-12" > gcovr.cfg
+          echo -e "filter = ../src/\nfilter = ../plugins/" >> gcovr.cfg
+          ninja coverage-xml -C build
+          cp build/meson-logs/coverage.xml ${{github.workspace}}/docs/coverage/coverage.xml
         shell: bash
 
       - name: Produce markdown file
