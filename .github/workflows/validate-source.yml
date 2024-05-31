@@ -1,0 +1,182 @@
+name: Validate Source Code
+
+on:
+  workflow_call:
+
+jobs:
+  spell_check:
+    name: spell check
+    runs-on: [self-hosted, "x86_64", gcc, lite, "2204"]
+
+    steps:
+      - name: Checkout .github directory
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: .github
+
+      - name: Initialize workspace
+        uses: ./.github/actions/initialize-workspace
+
+      - name: Run spell check
+        run: |
+          codespell ./src
+          codespell ./test/docs
+          codespell ./test/op
+          codespell ./test/unit
+        continue-on-error: true
+
+  cppcheck:
+    name: cppcheck
+    runs-on: [self-hosted, "x86_64", gcc, lite, "2204"]
+
+    steps:
+      - name: Checkout .github directory
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: .github
+
+      - name: Initialize workspace
+        uses: ./.github/actions/initialize-workspace
+
+      - name: Run cppcheck in src
+        run: cppcheck --enable=style src
+
+      - name: Run cppcheck in examples
+        run: cppcheck --enable=style examples
+
+      - name: Run cppcheck in test
+        run: cppcheck --enable=style test
+
+      - name: Run cppcheck in plugins
+        run: cppcheck --enable=style plugins
+
+  linter:
+    name: linter
+    runs-on: [self-hosted, "x86_64", gcc, lite, "2204"]
+
+    permissions:
+      contents: read
+      packages: read
+      statuses: write
+
+    steps:
+      - name: Checkout .github directory
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: .github
+
+      - name: Initialize workspace
+        uses: ./.github/actions/initialize-workspace
+
+      - name: linter
+        uses: super-linter/super-linter@v5
+        env:
+          DEFAULT_BRANCH: main
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DISABLE_ERRORS: true
+          VALIDATE_CLANG_FORMAT: false
+          FILTER_REGEX_EXCLUDE: .*(test|examples)/.*
+
+  checkpatch:
+    name: checkpatch review
+    runs-on: [self-hosted, "x86_64", gcc, lite, "2204"]
+
+    permissions:
+      contents: read
+      pull-requests: read
+
+    steps:
+      - name: "Calculate PR commits + 1"
+        run: echo "PR_FETCH_DEPTH=$(( ${{ github.event.pull_request.commits }} + 1 ))" >> $GITHUB_ENV
+
+      - name: Checkout .github directory
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: .github
+
+      - name: Initialize workspace
+        uses: ./.github/actions/initialize-workspace
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: ${{ env.PR_FETCH_DEPTH }}
+
+      - name: Run checkpatch review
+        uses: webispy/checkpatch-action@v9
+        continue-on-error: true
+
+  coverage_diff:
+    needs: [checkpatch, spell_check]
+    runs-on: [self-hosted, "x86_64", gcc, lite, "2204"]
+    outputs:
+      commit_hash: ${{ steps.commit-and-push.outputs.commit_hash }}
+
+    env:
+      CC: gcc-12
+      CXX: g++-12
+    steps:
+      - name: Checkout .github directory
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: .github
+
+      - name: Initialize workspace
+        uses: ./.github/actions/initialize-workspace
+
+      - name: Build project
+        id: build_vaccelrt
+        uses: ./.github/actions/build
+        with:
+          build-dir: build
+          coverage: 'true'
+          options: 'tests=enabled'
+
+      - name: Generate coverage report
+        id: generate_coverage
+        uses: ./.github/actions/run-tests
+        with:
+          build-dir: build
+          coverage: 'true'
+          gcov: 'gcov-12'
+
+      ### TODO: add cache/artifacts to speed up this whole file
+
+      - name: Clone project @main
+        id: clone_vaccelrt_main
+        run: git clone --recursive https://github.com/cloudkernels/vaccelrt vaccelrt_main
+
+      - name: Build project @main
+        id: build_vaccelrt_main
+        uses: ./.github/actions/build
+        with:
+          build-dir: build
+          source-dir: vaccelrt_main
+          coverage: 'true'
+          options: 'tests=enabled'
+
+      - name: Generate coverage report @main
+        id: generate_coverage_main
+        uses: ./.github/actions/run-tests
+        with:
+          build-dir: build
+          source-dir: vaccelrt_main
+          coverage: 'true'
+          gcov: 'gcov-12'
+
+      - name: Calculate coverage diff
+        id: calculate_coverage_diff
+        run: |
+          # Temporarily ignore coverage changes, just print out the exit code
+          # https://github.com/aconrad/pycobertura?tab=readme-ov-file#diff-exit-codes
+          pycobertura diff $(find vaccelrt_main/build -name "coverage*.xml") $(find build -name "coverage*.xml") --no-color --no-source -f markdown > coverage_diff.txt  || PYCOB_RESULT=$?
+          echo "pycobertura exited with $PYCOB_RESULT"
+          echo '```' > temp_file && cat ./coverage_diff.txt >> temp_file && echo -e '\n```' >> temp_file && mv temp_file ./coverage_diff.txt
+          rm -rf vaccelrt_main
+        shell: bash
+
+      - name: PR comment with file
+        uses: thollander/actions-comment-pull-request@v2
+        with:
+          filePath: ./coverage_diff.txt
+
+      - name: Clean-up
+        run: sudo rm -rf artifacts build

@@ -1,4 +1,4 @@
-name: coverage_upload
+name: Upload Coverage Report
 
 on:
   workflow_call:
@@ -13,37 +13,33 @@ jobs:
       CC: gcc-12
       CXX: g++-12
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+      - name: Checkout .github directory
+        uses: actions/checkout@v4
         with:
-          submodules: recursive
+          sparse-checkout: .github
 
-      - name: Install dependencies for tests
-        id: install_dependencies
-        run: |
-          sudo apt update && sudo apt-get install -y lcov gcc-12 g++-12 ninja-build libclang-dev
-          sudo pip install meson gcovr pycobertura
+      - name: Initialize workspace
+        uses: ./.github/actions/initialize-workspace
 
-      - name: Run tests
-        id: run_tests
-        run: |
-          meson setup \
-            -Db_coverage=true \
-            -Dtests=enabled \
-            build
-          meson compile -C build
-          meson test --print-errorlogs -C build
+      - name: Build project
+        id: build_vaccelrt
+        uses: ./.github/actions/build
+        with:
+          build-dir: build
+          coverage: 'true'
+          options: 'tests=enabled'
 
       - name: Generate coverage report
-        run: |
-          echo "gcov-executable = gcov-12" > gcovr.cfg
-          echo -e "filter = ../src/\nfilter = ../plugins/" >> gcovr.cfg
-          ninja coverage-xml -C build
-          cp build/meson-logs/coverage.xml ${{github.workspace}}/docs/coverage/coverage.xml
-        shell: bash
+        id: generate_coverage
+        uses: ./.github/actions/run-tests
+        with:
+          build-dir: build
+          coverage: 'true'
+          gcov: 'gcov-12'
 
       - name: Produce markdown file
-        run: pycobertura show ${{github.workspace}}/docs/coverage/coverage.xml --format markdown --output ${{github.workspace}}/docs/coverage/src_coverage/coverage.md
+        run: |
+          pycobertura show $(find build -name "coverage*.xml") --format markdown --output ${{github.workspace}}/docs/coverage/src_coverage/coverage.md
         shell: bash
 
       - name: Configure Git

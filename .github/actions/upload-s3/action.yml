@@ -1,0 +1,93 @@
+name: Upload to s3
+
+inputs:
+  arch:
+    default: 'x86_64'
+  build-type:
+    default: 'release'
+  build-dir:
+    default: 'build'
+  plugin:
+    default: ''
+
+runs:
+  using: composite
+  steps:
+    - name: Determine SHA, branch and remote paths
+      id: get_artifact_vars
+      run: |
+        if [ -n "${{ github.event.pull_request.head.sha }}" ]; then
+          SHA="${{ github.event.pull_request.head.sha }}"
+          BRANCH="${{ github.event.pull_request.head.ref }}"
+          echo "PR merged. SHA: $SHA, Branch: $BRANCH"
+        elif [ "${{ github.event_name }}" == "push" ]; then
+          SHA="${{ github.sha }}"
+          BRANCH="${{ github.ref }}"
+          BRANCH="${BRANCH#refs/heads/}" # Remove "refs/heads/" prefix
+          echo "Push to main branch. SHA: $SHA, Branch: $BRANCH"
+        else
+          echo "Event not supported."
+          exit 1
+        fi
+        # Since we know this is a PR that just got merged, we ignore the 
+        # branch name, we just use main
+        echo "ARTIFACT_SHA=$(echo $SHA)" >> $GITHUB_OUTPUT
+        echo "ARTIFACT_NAME=$(echo $BRANCH)" >> $GITHUB_OUTPUT
+        BASE_PATH="nbfc-assets/github/vaccelrt"
+        if [ -n "${{ inputs.plugin }}" ]; then
+          BASE_PATH="${BASE_PATH}/plugins/${{ inputs.plugin }}"
+        fi
+        echo "REMOTE_NAME_PATH=$(echo "${BASE_PATH}/${BRANCH}/${{ inputs.arch }}/${{ inputs.build-type }}")" >> $GITHUB_OUTPUT
+        echo "REMOTE_SHA_PATH=$(echo "${BASE_PATH}/${SHA}/${{ inputs.arch }}/${{ inputs.build-type }}")" >> $GITHUB_OUTPUT
+      shell: bash
+
+    - name: Get artifacts paths
+      id: get_artifact_paths
+      run: |
+        echo "DEB_PATH=$(find ${{ inputs.build-dir }} -name "vaccel*.deb")" >> $GITHUB_OUTPUT
+        echo "TAR_PATH=$(find ${{ inputs.build-dir }} -name "vaccel*.tar.*")" >> $GITHUB_OUTPUT
+      shell: bash
+
+    - name: Upload deb artifact to s3 by name
+      uses: cloudkernels/minio-upload@v4
+      with:
+        url: https://s3.nubificus.co.uk
+        access-key: ${{ secrets.AWS_ACCESS_KEY }}
+        secret-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        local-path: ${{ steps.get_artifact_paths.outputs.DEB_PATH }}
+        remote-path: ${{ steps.get_artifact_vars.outputs.REMOTE_NAME_PATH }}-deb/
+        policy: 1
+      shell: bash
+
+    - name: Upload deb artifact to s3
+      uses: cloudkernels/minio-upload@v4
+      with:
+        url: https://s3.nubificus.co.uk
+        access-key: ${{ secrets.AWS_ACCESS_KEY }}
+        secret-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        local-path: ${{ steps.get_artifact_paths.outputs.DEB_PATH }}
+        remote-path: ${{ steps.get_artifact_vars.outputs.REMOTE_SHA_PATH }}-deb/
+        policy: 1
+      shell: bash
+
+    - name: Upload tar artifact to s3 by name
+      uses: cloudkernels/minio-upload@v4
+      with:
+        url: https://s3.nubificus.co.uk
+        access-key: ${{ secrets.AWS_ACCESS_KEY }}
+        secret-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        local-path: ${{ steps.get_artifact_paths.outputs.TAR_PATH }}
+        remote-path: ${{ steps.get_artifact_vars.outputs.REMOTE_NAME_PATH }}-tar/
+        policy: 1
+      shell: bash
+
+    - name: Upload tar artifact to s3
+      uses: cloudkernels/minio-upload@v4
+      with:
+        url: https://s3.nubificus.co.uk
+        access-key: ${{ secrets.AWS_ACCESS_KEY }}
+        secret-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        local-path: ${{ steps.get_artifact_paths.outputs.TAR_PATH }}
+        remote-path: ${{ steps.get_artifact_vars.outputs.REMOTE_SHA_PATH }}-tar/
+        policy: 1
+      shell: bash

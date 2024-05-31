@@ -1,0 +1,27 @@
+name: Initialize Workspace
+
+inputs:
+  fetch-depth:
+    default: ''
+  ref:
+    default: ''
+  token:
+    default: ${{ github.token }}
+
+runs:
+  using: composite
+  steps:
+    - name: Cleanup previous jobs
+      run: |
+        echo "Cleaning up previous runs"
+        sudo rm -rf ${{ github.workspace }}/*
+        sudo rm -rf ${{ github.workspace }}/.??*
+      shell: bash
+
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        fetch-depth: ${{ inputs.fetch-depth }}
+        ref: ${{ inputs.ref }}
+        token: ${{ inputs.token }}
