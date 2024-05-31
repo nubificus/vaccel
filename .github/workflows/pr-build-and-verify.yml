@@ -1,0 +1,87 @@
+name: Build and Verify
+
+on:
+  pull_request:
+    branches: ["main"]
+    types:
+      - synchronize
+      - labeled
+
+  workflow_dispatch:
+
+jobs:
+  test_build:
+    if: ${{ contains(github.event.pull_request.labels.*.name, 'ok-to-test') }}
+    uses: ./.github/workflows/test-build.yml
+
+  verify_build:
+    if: ${{ contains(github.event.pull_request.labels.*.name, 'ok-to-test') }}
+    runs-on: [self-hosted, "${{ matrix.archconfig }}", gcc, lite, "2204"]
+
+    strategy:
+      matrix:
+        archconfig: [x86_64, aarch64, armv7l]
+        build_type: [debug, release]
+      fail-fast: false
+
+    env:
+      CC: gcc-12
+      CXX: g++-12
+    steps:
+      - name: Checkout .github directory
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: .github
+
+      - name: Initialize workspace
+        uses: ./.github/actions/initialize-workspace
+
+      - name: Build project
+        id: build_vaccelrt
+        uses: ./.github/actions/build
+        with:
+          prefix: ${{github.workspace}}/artifacts/${{matrix.archconfig}}/${{matrix.build_type}}/opt
+          build-dir: build_${{matrix.build_type}}
+          build-type: ${{matrix.build_type}}
+          options: 'examples=enabled,plugins=enabled,tests=enabled'
+          install: 'true'
+
+      - name: Run examples
+        id: run_examples
+        uses: ./.github/actions/run-examples
+        with:
+          prefix: ${{github.workspace}}/artifacts/${{matrix.archconfig}}/${{matrix.build_type}}/opt
+
+      - name: Run examples with valgrind
+        id: run_examples_valgrind
+        uses: ./.github/actions/run-examples
+        with:
+          prefix: ${{github.workspace}}/artifacts/${{matrix.archconfig}}/${{matrix.build_type}}/opt
+          valgrind: 'true'
+
+      - name: Build project (dist)
+        id: build_vaccelrt_dist
+        if: ${{ contains(github.event.pull_request.labels.*.name, 'ok-to-upload') }}
+        uses: ./.github/actions/build
+        with:
+          prefix: ${{github.workspace}}/artifacts/${{matrix.archconfig}}/${{matrix.build_type}}/opt
+          build-dir: build_${{matrix.build_type}}
+          build-type: ${{matrix.build_type}}
+          dist: 'true'
+
+      - name: Upload to s3
+        id: upload_s3
+        if: ${{ contains(github.event.pull_request.labels.*.name, 'ok-to-upload') }}
+        uses: ./.github/actions/upload-s3
+        with:
+          build-dir: build_${{matrix.build_type}}
+          build-type: ${{matrix.build_type}}
+          arch: ${{matrix.archconfig}}
+
+      - name: Clean-up
+        run: sudo rm -rf artifacts build_${{ matrix.build_type }}
+
+  validate_source:
+    if: ${{ contains(github.event.pull_request.labels.*.name, 'ok-to-test') }}
+    uses: ./.github/workflows/validate-source.yml
+    needs: [test_build, verify_build]

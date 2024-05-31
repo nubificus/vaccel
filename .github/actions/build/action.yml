@@ -1,0 +1,76 @@
+name: Build Project
+
+inputs:
+  coverage:
+    default: 'false'
+  options:
+    default: ''
+  prefix:
+    default: ${{ github.workspace }}/opt
+  pkgconfig-prefix:
+    default: ''
+  build-dir:
+    default: 'build'
+  source-dir:
+    default: '.'
+  build-type:
+    default: 'plain'
+  build:
+    default: 'true'
+  install:
+    default: 'false'
+  dist:
+    default: 'false'
+  install-deb:
+    default: 'false'
+
+runs:
+  using: composite
+  steps:
+    - name: Configure project
+      working-directory: ${{ inputs.source-dir }}
+      run: |
+        export OPTIONS=$(echo ${{ inputs.options }} | \
+          sed -E 's/[,]*([^,]+)[,]*/-D\1 /g')
+        [ -n "${{ inputs.pkgconfig-prefix }}" ] && \
+          PKGCONFIG_DIR=lib/$($CC -print-multiarch)/pkgconfig && \
+          export OPTIONS=$OPTIONS" --pkg-config-path=${{ inputs.pkgconfig-prefix }}/$PKGCONFIG_DIR"
+        meson setup \
+          --reconfigure \
+          --prefix=${{ inputs.prefix }} \
+          --buildtype=${{ inputs.build-type }} \
+          -Db_coverage=${{ inputs.coverage }} \
+          $OPTIONS \
+          ${{ inputs.build-dir }}
+      shell: bash
+
+    - name: Build project
+      working-directory: ${{ inputs.source-dir }}
+      if: ${{ inputs.build == 'true' || inputs.dist == 'true' || inputs.install == 'true' || inputs.install-deb == 'true' }}
+      run: meson compile -C ${{ inputs.build-dir }}
+      shell: bash
+
+    - name: Create run dir
+      working-directory: ${{ inputs.source-dir }}
+      run: |
+        sudo mkdir -p /run/user/1001
+        sudo chown -R runner /run/user/1001
+      shell: bash
+
+    - name: Install project
+      working-directory: ${{ inputs.source-dir }}
+      if: ${{ inputs.install == 'true' }}
+      run: meson install -C ${{ inputs.build-dir }}
+      shell: bash
+
+    - name: Generate distribution tar/deb
+      working-directory: ${{ inputs.source-dir }}
+      if: ${{ inputs.dist == 'true' || inputs.install-deb == 'true' }}
+      run: meson dist --formats gztar --include-subprojects --allow-dirty -C ${{ inputs.build-dir }}
+      shell: bash
+
+    - name: Install generated debs
+      working-directory: ${{ inputs.source-dir }}
+      if: ${{ inputs.install-deb == 'true' }}
+      run: sudo dpkg -i ${{ inputs.build-dir }}/meson-dist/vaccel*.deb
+      shell: bash

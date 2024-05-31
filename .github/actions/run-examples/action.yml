@@ -1,0 +1,62 @@
+name: Run Examples
+
+inputs:
+  prefix:
+    default: ${{ github.workspace }}/opt
+  valgrind:
+    default: 'false'
+
+runs:
+  using: composite
+  steps:
+    - name: Run examples
+      id: run_examples
+      env:
+        VACCEL_DEBUG_LEVEL: 4
+      run: |
+        export VACCEL_LIB_DIR=${{ inputs.prefix }}/lib/$($CC -print-multiarch)
+        export LD_LIBRARY_PATH=$VACCEL_LIB_DIR
+        export VACCEL_BACKENDS=$VACCEL_LIB_DIR/libvaccel-noop.so
+        cd ${{ inputs.prefix }}
+        ${{ inputs.valgrind == 'true' }} && \
+          export VALGRIND_CMD="valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes"
+        $VALGRIND_CMD ./bin/classify share/vaccel/images/example.jpg 1
+        $VALGRIND_CMD ./bin/classify_generic share/vaccel/images/example.jpg 1
+        $VALGRIND_CMD ./bin/detect share/vaccel/images/example.jpg 1
+        $VALGRIND_CMD ./bin/detect_generic share/vaccel/images/example.jpg 1
+        $VALGRIND_CMD ./bin/pose share/vaccel/images/example.jpg 1
+        $VALGRIND_CMD ./bin/pose_generic share/vaccel/images/example.jpg 1
+        $VALGRIND_CMD ./bin/segment share/vaccel/images/example.jpg 1
+        $VALGRIND_CMD ./bin/segment_generic share/vaccel/images/example.jpg 1
+        $VALGRIND_CMD ./bin/depth share/vaccel/images/example.jpg 1
+        $VALGRIND_CMD ./bin/depth_generic share/vaccel/images/example.jpg 1
+        $VALGRIND_CMD ./bin/sgemm
+        $VALGRIND_CMD ./bin/sgemm_generic
+        $VALGRIND_CMD ./bin/minmax 262144 ./share/vaccel/input/input_262144.csv 5 100
+        $VALGRIND_CMD ./bin/minmax_generic 262144 ./share/vaccel/input/input_262144.csv 5 100
+        $VALGRIND_CMD ./bin/pynq_vector_add
+        $VALGRIND_CMD ./bin/pynq_array_copy
+        $VALGRIND_CMD ./bin/pynq_parallel
+        $VALGRIND_CMD ./bin/torch_inference ./share/vaccel/images/example.jpg ./share/vaccel/models/torch
+        $VALGRIND_CMD ./bin/single_model share/vaccel/models/tf/frozen_graph.pb
+        $VALGRIND_CMD ./bin/tf_saved_model share/vaccel/models/tf/lstm2
+        $VALGRIND_CMD ./bin/tf_inference share/vaccel/models/tf/lstm2
+        $VALGRIND_CMD ./bin/tflite_inference share/vaccel/models/tf/lstm2.tflite
+        $VALGRIND_CMD ./bin/mbench 1 share/vaccel/images/example.jpg
+      shell: bash
+
+    - name: Run exec examples
+      id: run_exec_examples
+      env:
+        VACCEL_DEBUG_LEVEL: 4
+      run: |
+        export VACCEL_LIB_DIR=${{ inputs.prefix }}/lib/$($CC -print-multiarch)
+        export LD_LIBRARY_PATH=$VACCEL_LIB_DIR
+        export VACCEL_BACKENDS=$VACCEL_LIB_DIR/libvaccel-exec.so
+        cd ${{ inputs.prefix }}
+        ${{ inputs.valgrind == 'true' }} && \
+          export VALGRIND_CMD="valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes"
+        $VACLGRIND_CMD ./bin/exec_with_res $VACCEL_LIB_DIR/libmytestlib.so 1
+        $VACLGRIND_CMD ./bin/exec_helpers $VACCEL_LIB_DIR/libmytestlib.so 1
+        $VACLGRIND_CMD ./bin/exec_helpers_nonser $VACCEL_LIB_DIR/libmytestlib.so 1
+      shell: bash

@@ -82,6 +82,6 @@ fi
 head -n -6 debian/changelog > debian/changelog_ && rm debian/changelog && mv debian/changelog_ debian/changelog
 rm -rf "${MESON_DIST_ROOT}"/.git*
 
-rm -r debian/*.ex debian/*.EX debian/*.docs debian/README*
+rm -rf debian/*.ex debian/*.EX debian/*.docs debian/README*
 dpkg-buildpackage -us -uc
-rm -r obj-* debian
+rm -rf obj-* debian

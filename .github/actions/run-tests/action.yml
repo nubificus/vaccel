@@ -1,0 +1,44 @@
+name: Run Tests
+
+inputs:
+  build-dir:
+    default: 'build'
+  source-dir:
+    default: '.'
+  valgrind:
+    default: 'false'
+  coverage:
+    default: 'false'
+  gcov:
+    default: 'gcov'
+
+runs:
+  using: composite
+  steps:
+    - name: Run tests
+      id: run_tests
+      working-directory: ${{ inputs.source-dir }}
+      run: meson test --print-errorlogs -C ${{ inputs.build-dir }}
+      shell: bash
+
+    - name: Run tests with valgrind
+      id: run_tests_valgrind
+      working-directory: ${{ inputs.source-dir }}
+      if: ${{ inputs.valgrind == 'true' }}
+      run: |
+          meson test \
+            --wrap='valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes' \
+            -t 4 \
+            --print-errorlogs \
+            -C ${{ inputs.build-dir }}
+      shell: bash
+
+    - name: Calculate coverage
+      id: calculate_coverage
+      working-directory: ${{ inputs.source-dir }}
+      if: ${{ inputs.coverage == 'true' }}
+      run: |
+        echo "gcov-executable = ${{ inputs.gcov }}" > gcovr.cfg
+        echo -e "filter = ../src/\nfilter = ../plugins/" >> gcovr.cfg
+        ninja coverage-xml -C ${{ inputs.build-dir }}
+      shell: bash
