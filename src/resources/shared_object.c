@@ -52,6 +52,70 @@ free_resource:
 	return ret;
 }
 
+int vaccel_shared_object_new_with_deps(struct vaccel_shared_object *object,
+		const char *path, const char *dep_paths[], size_t nr_deps)
+{
+	if (!dep_paths || !nr_deps)
+		return VACCEL_EINVAL;
+
+	struct vaccel_resource *res = malloc(sizeof(*res));
+	if (!res)
+		return VACCEL_ENOMEM;
+
+	int ret = vaccel_file_new(&object->file, path);
+	if (ret)
+		goto free_resource;
+
+	ret = resource_new(res, VACCEL_RES_SHARED_OBJ, (void *)object,
+			shared_object_destructor);
+	if (ret)
+		goto destroy_file;
+
+	struct vaccel_shared_object *deps = malloc(nr_deps * sizeof(*deps));
+	if (!deps)
+		goto destroy_file;
+	struct vaccel_resource **deps_res = malloc(nr_deps * sizeof(*deps_res));
+	if (!deps_res)
+		goto free_deps;
+	// FIXME: Proper freeing
+	for (size_t i = 0; i < nr_deps; i++) {
+		int ret = vaccel_file_new(&deps[i].file, dep_paths[i]);
+		if (ret) {
+			vaccel_error("file_new: %s", dep_paths[i]);
+			return VACCEL_ENOMEM;
+		}
+
+		struct vaccel_resource *dep_res = malloc(sizeof(*res));
+		if (!dep_res)
+			return VACCEL_ENOMEM;
+
+		ret = resource_new(dep_res, VACCEL_RES_SHARED_OBJ,
+				(void *)&deps[i], shared_object_destructor);
+		if (ret) {
+			vaccel_error("resource_new: %s", dep_paths[i]);
+			return VACCEL_ENOMEM;
+		}
+
+		deps[i].resource = dep_res;
+		deps_res[i] = dep_res;
+	}
+	ret = resource_set_deps(res, deps_res, nr_deps);
+	if (ret)
+		goto destroy_file;
+
+	object->resource = res;
+
+	return VACCEL_OK;
+
+free_deps:
+	free(deps);
+destroy_file:
+	vaccel_file_destroy(&object->file);
+free_resource:
+	free(res);
+	return ret;
+}
+
 int vaccel_shared_object_new_from_buffer(struct vaccel_shared_object *object,
 					 const uint8_t *buff, size_t size)
 {
@@ -118,14 +182,32 @@ int vaccel_shared_object_destroy(struct vaccel_shared_object *object)
 	if (!object)
 		return VACCEL_EINVAL;
 
-	vaccel_debug("Destroying resource %lld", object->resource->id);
+	struct vaccel_resource *resource = object->resource;
+
 	/* This will destroy the underlying resource and call our
 	 * destructor callback */
-	int ret = resource_destroy(object->resource);
+	vaccel_debug("Destroying resource %lld", resource->id);
+	int ret = resource_destroy(resource);
 	if (ret)
 		vaccel_warn("Could not destroy resource");
 
-	free(object->resource);
+	// Do not explicitly cleanup deps created from buffer when on host
+	if (!resource->rundir) {
+		vaccel_debug("Destroying resource deps: %zu",
+				resource->nr_deps);
+		for (size_t i = 0; i < resource->nr_deps; i++) {
+			struct vaccel_resource *res = resource->deps[i];
+			vaccel_debug("Destroying dep resource %lld", res->id);
+
+			int ret = resource_destroy(res);
+			if (ret)
+				vaccel_warn("Could not destroy resource");
+
+			free(res);
+		}
+	}
+
+	free(resource);
 
 	return VACCEL_OK;
 }

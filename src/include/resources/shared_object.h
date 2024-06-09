@@ -21,6 +21,10 @@ struct vaccel_shared_object {
 	/* The protobuf file of the shared object */
 	struct vaccel_file file;
 
+	struct vaccel_shared_object *deps;
+
+	size_t nr_deps;
+
 	/* Plugin specific data */
 	void *plugin_data;
 };
@@ -38,6 +42,10 @@ vaccel_shared_object_get_id(const struct vaccel_shared_object *object);
 
 const uint8_t *vaccel_shared_object_get(struct vaccel_shared_object *object,
 					size_t *len);
+
+int vaccel_shared_object_new_with_deps(struct vaccel_shared_object *object,
+		const char *path, const char *dep_paths[], size_t nr_deps
+);
 
 #ifdef __cplusplus
 }
