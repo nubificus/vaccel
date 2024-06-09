@@ -37,7 +37,7 @@ foreach e : examples_sources
   exe = executable(fs.stem(e),
     sources : [e, vaccel_utils_c, vaccel_headers],
     c_args : vaccel_cargs,
-    cpp_args : vaccel_cargs,
+    cpp_args : vaccel_cargs + vaccel_cppargs,
     include_directories : vaccel_includes,
     dependencies : [libvaccel_private],
     install : true)

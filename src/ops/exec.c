@@ -113,18 +113,18 @@ int vaccel_exec_with_res_unpack(struct vaccel_session *sess,
 		vaccel_error("cannot find resource: %d", ret);
 		return ret;
 	}
+
 	object = (struct vaccel_shared_object *)resource->data;
 	if (!object) {
 		vaccel_error("resource is empty..");
 		return VACCEL_EINVAL;
 	}
 
-	char *library = object->file.path;
 	char *fn_symbol = (char *)read[1].buf;
 
 	/* Pass on the rest of the read and all write arguments */
-	return vaccel_exec(sess, library, fn_symbol, &read[2], nr_read - 2,
-			   write, nr_write);
+	return vaccel_exec_with_resource (sess, object, fn_symbol, &read[2],
+			nr_read - 2, write, nr_write);
 }
 
 __attribute__((constructor)) static void vaccel_ops_init(void)

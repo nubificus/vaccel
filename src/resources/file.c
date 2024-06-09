@@ -115,7 +115,7 @@ int vaccel_file_persist(struct vaccel_file *file, const char *dir,
 	}
 
 	if (fwrite(file->data, sizeof(char), file->size, fp) != file->size) {
-		vaccel_error("Could not persist file %s", file->path);
+		vaccel_error("Could not persist file %s: %s", file->path, strerror(errno));
 		ret = VACCEL_EIO;
 		goto remove_file;
 	}
@@ -209,7 +209,7 @@ int vaccel_file_destroy(struct vaccel_file *file)
 		vaccel_debug("Removing file %s", file->path);
 		if (remove(file->path))
 			vaccel_warn("Could not remove file from rundir: %s",
-				    file->path);
+					file->path, strerror(errno));
 	}
 
 	free(file->path);

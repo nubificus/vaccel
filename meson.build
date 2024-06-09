@@ -7,6 +7,7 @@ project('vaccel', 'c', 'cpp',
     '', '--no-dirty', check: false).stdout().strip())
 
 vaccel_cargs = ['-Wall','-Wextra','-Werror']
+vaccel_cppargs= ['-std=c++2b']
 plugins_cargs = vaccel_cargs + '-Wno-unused'
 
 vaccel_version = run_command('scripts/generate-version.sh',

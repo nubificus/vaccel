@@ -83,6 +83,8 @@ struct vaccel_plugin_info {
 	int (*sess_register)(uint32_t sess_id, vaccel_id_t resource_id);
 	int (*sess_unregister)(uint32_t sess_id, vaccel_id_t resource_id);
 	int (*resource_new)(vaccel_resource_t, void *data, vaccel_id_t *id);
+	int (*resource_set_deps)(struct vaccel_resource *res,
+			struct vaccel_resource **deps, size_t nr_deps);
 	int (*resource_destroy)(vaccel_id_t id);
 };
 
