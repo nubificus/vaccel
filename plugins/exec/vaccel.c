@@ -37,7 +37,7 @@ static int exec(struct vaccel_session *session, const char *library,
 	vaccel_debug("[exec] library: %s", library);
 	dl = dlopen(library, RTLD_NOW);
 	if (!dl) {
-		vaccel_error("%s", dlerror());
+		vaccel_error("dlopen: %s", dlerror());
 		return VACCEL_EINVAL;
 	}
 
@@ -59,7 +59,7 @@ static int exec(struct vaccel_session *session, const char *library,
 
 	fptr = (int (*)(void *, size_t, void *, size_t))dlsym(dl, fn_symbol);
 	if (!fptr) {
-		vaccel_error("%s", dlerror());
+		vaccel_error("dlsym: %s", dlerror());
 		return VACCEL_EINVAL;
 	}
 
@@ -83,7 +83,8 @@ static int exec_with_resource(struct vaccel_session *session,
 	void *dl, **ddl;
 	int (*fptr)(void *, size_t, void *, size_t);
 	int ret;
-	struct vaccel_resource *resource = object->resource;
+	struct vaccel_resource **deps, *resource = object->resource;
+	size_t nr_deps;
 	struct vaccel_file *file =  &object->file;
 	const char *library = file->path;
 	struct vaccel_arg *args;
@@ -95,16 +96,22 @@ static int exec_with_resource(struct vaccel_session *session,
 			session->session_id);
 >>>>>>> 151ab19 (resources: Enable addition of resource dependencies)
 
-	if (resource->nr_deps) {
-		vaccel_debug("[exec_with_resource] nr_deps: %zu", resource->nr_deps);
-		ddl = malloc(sizeof(*ddl) * resource->nr_deps);
+	ret = vaccel_resource_get_deps(&deps, &nr_deps, resource);
+	if (nr_deps) {
+		vaccel_debug("[exec_with_resource] nr_deps: %zu", nr_deps);
+		ddl = malloc(sizeof(*ddl) * nr_deps);
 		if (!ddl)
 			return VACCEL_ENOMEM;
 	}
-	for (size_t i = 0; i < resource->nr_deps; i++) {
-		struct vaccel_resource *res = resource->deps[i];
+	// FIXME: proper freeing
+	for (size_t i = 0; i < nr_deps; i++) {
+		struct vaccel_resource *res = deps[i];
 		struct vaccel_shared_object *object =
-			(struct vaccel_shared_object *)res->data;
+			vaccel_shared_object_from_resource(res);
+		if (!object) {
+			vaccel_error("Could not get shared_object from resource");
+			return VACCEL_EINVAL;
+		}
 		const char *fpath = object->file.path;
 
 		vaccel_debug("[exec_with_resource] dep library: %s", fpath);

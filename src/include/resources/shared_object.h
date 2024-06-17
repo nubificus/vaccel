@@ -47,6 +47,9 @@ int vaccel_shared_object_new_with_deps(struct vaccel_shared_object *object,
 		const char *path, const char *dep_paths[], size_t nr_deps
 );
 
+struct vaccel_shared_object *vaccel_shared_object_from_resource(
+		struct vaccel_resource *resource);
+
 #ifdef __cplusplus
 }
 #endif

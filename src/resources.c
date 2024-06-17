@@ -135,6 +135,18 @@ int resource_set_deps(struct vaccel_resource *res,
 	return VACCEL_OK;
 }
 
+int vaccel_resource_get_deps(struct vaccel_resource ***deps, size_t *nr_deps,
+		struct vaccel_resource *res)
+{
+	if  (!res)
+		return VACCEL_EINVAL;
+
+	*deps = res->deps;
+	*nr_deps = res->nr_deps;
+
+	return VACCEL_OK;
+}
+
 int vaccel_resource_deps_to_ids(vaccel_id_t *ids, struct vaccel_resource **deps,
 		size_t nr_deps)
 {
