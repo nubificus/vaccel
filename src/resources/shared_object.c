@@ -77,27 +77,34 @@ int vaccel_shared_object_new_with_deps(struct vaccel_shared_object *object,
 	struct vaccel_resource **deps_res = malloc(nr_deps * sizeof(*deps_res));
 	if (!deps_res)
 		goto free_deps;
-	// FIXME: Proper freeing
+	for (size_t i = 0; i < nr_deps; i++) {
+		deps_res[i] = NULL;
+		deps[i].resource = NULL;
+	}
 	for (size_t i = 0; i < nr_deps; i++) {
 		int ret = vaccel_file_new(&deps[i].file, dep_paths[i]);
 		if (ret) {
 			vaccel_error("file_new: %s", dep_paths[i]);
-			return VACCEL_ENOMEM;
+			ret =  VACCEL_ENOMEM;
+			goto free_deps_res;
 		}
 
 		struct vaccel_resource *dep_res = malloc(sizeof(*res));
-		if (!dep_res)
-			return VACCEL_ENOMEM;
+		if (!dep_res) {
+			ret =  VACCEL_ENOMEM;
+			goto free_deps_res;
+		}
+		deps_res[i] = dep_res;
 
 		ret = resource_new(dep_res, VACCEL_RES_SHARED_OBJ,
 				(void *)&deps[i], shared_object_destructor);
 		if (ret) {
 			vaccel_error("resource_new: %s", dep_paths[i]);
-			return VACCEL_ENOMEM;
+			ret =  VACCEL_ENOMEM;
+			goto free_deps_res;
 		}
 
-		deps[i].resource = dep_res;
-		deps_res[i] = dep_res;
+		deps[i].resource = deps_res[i];
 	}
 	ret = resource_set_deps(res, deps_res, nr_deps);
 	if (ret)
@@ -107,6 +114,16 @@ int vaccel_shared_object_new_with_deps(struct vaccel_shared_object *object,
 
 	return VACCEL_OK;
 
+free_deps_res:
+	for (size_t i = 0; i < nr_deps; i++) {
+		if (deps[i].resource) {
+			int r = vaccel_shared_object_destroy(&deps[i]);
+			if (r)
+				vaccel_warn("Could not destroy shared object");
+		} else if (deps_res[i]) {
+			free(deps_res[i]);
+		}
+	}
 free_deps:
 	free(deps);
 destroy_file:
