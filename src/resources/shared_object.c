@@ -220,3 +220,12 @@ vaccel_shared_object_get_id(const struct vaccel_shared_object *object)
 
 	return object->resource->id;
 }
+
+struct vaccel_shared_object *vaccel_shared_object_from_resource(
+		struct vaccel_resource *resource)
+{
+	if (!resource)
+		return NULL;
+
+	return resource->data;
+}

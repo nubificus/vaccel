@@ -8,6 +8,34 @@
 #include <stdatomic.h>
 #include <stdint.h>
 
+struct vaccel_resource {
+	/* resource id */
+	vaccel_id_t id;
+
+	/* type of the resource */
+	vaccel_resource_t type;
+
+	/* type-specific data of the resource */
+	void *data;
+
+	/* type-specific destructor */
+	int (*cleanup_resource)(void *data);
+
+	/* An entry to add this resource in a list */
+	list_entry_t entry;
+
+	/* Reference counter representing the number of sessions
+	 * to which this resource is registered to. */
+	atomic_uint refcount;
+
+	/* rundir for this resource if it needs it. It can be empty (NULL) */
+	char *rundir;
+
+	struct vaccel_resource **deps;
+
+	size_t nr_deps;
+};
+
 int resources_bootstrap(void);
 int resources_cleanup(void);
 int resource_new(struct vaccel_resource *res, vaccel_resource_t type, void *data,
