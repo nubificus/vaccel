@@ -201,13 +201,6 @@ int vaccel_shared_object_destroy(struct vaccel_shared_object *object)
 
 	struct vaccel_resource *resource = object->resource;
 
-	/* This will destroy the underlying resource and call our
-	 * destructor callback */
-	vaccel_debug("Destroying resource %lld", resource->id);
-	int ret = resource_destroy(resource);
-	if (ret)
-		vaccel_warn("Could not destroy resource");
-
 	// Do not explicitly cleanup deps created from buffer when on host
 	if (!resource->rundir) {
 		vaccel_debug("Destroying resource deps: %zu",
@@ -222,7 +215,24 @@ int vaccel_shared_object_destroy(struct vaccel_shared_object *object)
 
 			free(res);
 		}
+
+		free(resource->deps);
+
+		int ret = resource_unset_deps(resource);
+		if (ret)
+			vaccel_warn("Could not unset resource deps");
 	}
+
+	/* This will destroy the underlying resource and call our
+	 * destructor callback */
+	vaccel_debug("Destroying resource %lld", resource->id);
+	int ret = resource_unset_deps(resource);
+	if (ret)
+		vaccel_warn("Could not unset resource deps");
+
+	ret = resource_destroy(resource);
+	if (ret)
+		vaccel_warn("Could not destroy resource");
 
 	free(resource);
 

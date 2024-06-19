@@ -201,6 +201,143 @@ TEST_CASE("find_resource_by_id", "[Resources]")
 	REQUIRE(ret == VACCEL_OK);
 }
 
+TEST_CASE("with_deps", "[Resources]")
+{
+	int ret;
+	struct vaccel_resource test_res, test_dep_1, test_dep_2, **test_deps_g;
+	struct vaccel_resource *test_deps[2] = { &test_dep_1, &test_dep_2 };
+	size_t nr_deps;
+	vaccel_resource_t test_type = VACCEL_RES_SHARED_OBJ;
+	void *test_data = nullptr;
+	int (*cleanup_res_test)(void *) = cleanup_resource_mock;
+
+	// Ensure that the resource system is initialized
+	ret = resources_bootstrap();
+	REQUIRE(ret == VACCEL_OK);
+
+	// Create a test resource
+	ret = resource_new(&test_res, test_type, test_data, cleanup_res_test);
+	REQUIRE(ret == VACCEL_OK);
+
+	REQUIRE(test_res.id == 1);
+	REQUIRE(test_res.type == VACCEL_RES_SHARED_OBJ);
+	REQUIRE(test_res.data == nullptr);
+	REQUIRE_FALSE(list_empty(&test_res.entry));
+	REQUIRE(test_res.refcount == 0);
+	REQUIRE(test_res.rundir == NULL);
+
+	ret = resource_new(&test_dep_1, test_type, test_data, cleanup_res_test);
+	REQUIRE(ret == VACCEL_OK);
+
+	ret = resource_new(&test_dep_2, test_type, test_data, cleanup_res_test);
+	REQUIRE(ret == VACCEL_OK);
+
+	SECTION("valid_deps")
+	{
+		ret = resource_set_deps(&test_res, test_deps, 2);
+		REQUIRE(ret == VACCEL_OK);
+		REQUIRE(test_res.deps == test_deps);
+		REQUIRE(test_res.nr_deps == 2);
+
+		ret = vaccel_resource_get_deps(&test_deps_g, &nr_deps,
+					       &test_res);
+		REQUIRE(ret == VACCEL_OK);
+		REQUIRE(test_deps_g == test_deps);
+		REQUIRE(nr_deps == 2);
+
+		ret = resource_unset_deps(&test_res);
+		REQUIRE(ret == VACCEL_OK);
+		REQUIRE(test_res.deps == NULL);
+		REQUIRE(test_res.nr_deps == 0);
+
+		vaccel_id_t dep_ids[2];
+		ret = vaccel_resource_deps_to_ids(dep_ids, test_deps, 2);
+		REQUIRE(ret == VACCEL_OK);
+		REQUIRE(dep_ids[0] == 2);
+		REQUIRE(dep_ids[1] == 3);
+
+		ret = vaccel_resource_set_deps_from_ids(&test_res, dep_ids, 2);
+		REQUIRE(ret == VACCEL_OK);
+		REQUIRE(test_res.nr_deps == 2);
+	}
+
+	SECTION("null_values")
+	{
+		ret = resource_set_deps(&test_res, NULL, 2);
+		REQUIRE(ret == VACCEL_EINVAL);
+
+		ret = resource_set_deps(&test_res, test_deps, 0);
+		REQUIRE(ret == VACCEL_EINVAL);
+
+		ret = resource_set_deps(NULL, test_deps, 2);
+		REQUIRE(ret == VACCEL_EINVAL);
+
+		ret = vaccel_resource_get_deps(NULL, &nr_deps, &test_res);
+		REQUIRE(ret == VACCEL_EINVAL);
+
+		ret = vaccel_resource_get_deps(&test_deps_g, NULL, &test_res);
+		REQUIRE(ret == VACCEL_EINVAL);
+
+		ret = vaccel_resource_get_deps(&test_deps_g, &nr_deps, NULL);
+		REQUIRE(ret == VACCEL_EINVAL);
+
+		ret = resource_unset_deps(NULL);
+		REQUIRE(ret == VACCEL_EINVAL);
+
+		vaccel_id_t dep_ids[2];
+		ret = vaccel_resource_deps_to_ids(NULL, test_deps, 2);
+		REQUIRE(ret == VACCEL_EINVAL);
+
+		ret = vaccel_resource_deps_to_ids(dep_ids, NULL, 2);
+		REQUIRE(ret == VACCEL_EINVAL);
+
+		ret = vaccel_resource_deps_to_ids(dep_ids, test_deps, 0);
+		REQUIRE(ret == VACCEL_EINVAL);
+
+		ret = vaccel_resource_set_deps_from_ids(NULL, dep_ids, 2);
+		REQUIRE(ret == VACCEL_EINVAL);
+
+		ret = vaccel_resource_set_deps_from_ids(&test_res, NULL, 2);
+		REQUIRE(ret == VACCEL_EINVAL);
+
+		ret = vaccel_resource_set_deps_from_ids(&test_res, dep_ids, 0);
+		REQUIRE(ret == VACCEL_EINVAL);
+	}
+
+	// Cleanup the test resource
+	ret = resource_destroy(&test_dep_1);
+	REQUIRE(ret == VACCEL_OK);
+
+	REQUIRE(test_dep_1.data == nullptr);
+	REQUIRE(list_empty(&test_dep_1.entry));
+	REQUIRE(test_dep_1.refcount == 0);
+	REQUIRE(test_dep_1.rundir == NULL);
+
+	ret = resource_destroy(&test_dep_2);
+	REQUIRE(ret == VACCEL_OK);
+
+	REQUIRE(test_dep_2.data == nullptr);
+	REQUIRE(list_empty(&test_dep_2.entry));
+	REQUIRE(test_dep_2.refcount == 0);
+	REQUIRE(test_dep_2.rundir == NULL);
+
+	ret = resource_unset_deps(&test_res);
+	REQUIRE(ret == VACCEL_OK);
+	REQUIRE(test_res.deps == NULL);
+	REQUIRE(test_res.nr_deps == 0);
+
+	ret = resource_destroy(&test_res);
+	REQUIRE(ret == VACCEL_OK);
+
+	REQUIRE(test_res.data == nullptr);
+	REQUIRE(list_empty(&test_res.entry));
+	REQUIRE(test_res.refcount == 0);
+	REQUIRE(test_res.rundir == NULL);
+
+	ret = resources_cleanup();
+	REQUIRE(ret == VACCEL_OK);
+}
+
 TEST_CASE("initialising with no resources bootstrapped")
 {
 	int ret;
