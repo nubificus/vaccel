@@ -30,11 +30,13 @@ tests_args = [
 ]
 
 tests_env = [
-  'VACCEL_BACKENDS=' + libvaccel_noop.full_path(),
   'VACCEL_DEBUG_LEVEL=4',
 ]
 
-foreach t : tests_core_sources + tests_api_sources
+tests_env_noop = 'VACCEL_BACKENDS=' + libvaccel_noop.full_path()
+tests_env_exec = 'VACCEL_BACKENDS=' + libvaccel_exec.full_path()
+
+foreach t : tests_core_sources
   name = fs.stem(t)
   exe = executable(name,
     sources : t,
@@ -45,6 +47,29 @@ foreach t : tests_core_sources + tests_api_sources
     install : false)
 
   test(name, exe, args : tests_args, env : tests_env, is_parallel : false)
+endforeach
+
+foreach t : tests_api_sources
+  name = fs.stem(t)
+  exe = executable(name,
+    sources : t,
+    cpp_args : vaccel_cargs + '-std=c++2b',
+    include_directories : [tests_includes, vaccel_src_includes],
+    dependencies : libvaccel_private,
+    link_with : libtests_main,
+    install : false)
+
+  test(name + '+noop', exe,
+    args : tests_args,
+    env : tests_env + tests_env_noop,
+    is_parallel : false)
+
+  if name.contains('exec')
+    test(name + '+exec', exe,
+      args : tests_args,
+      env : tests_env + tests_env_exec,
+      is_parallel : false)
+  endif
 endforeach
 
 gcovr_cfg = '''

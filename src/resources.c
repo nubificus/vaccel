@@ -119,7 +119,7 @@ int resource_get_by_id(struct vaccel_resource **resource, vaccel_id_t id)
 int resource_set_deps(struct vaccel_resource *res,
 		struct vaccel_resource **deps, size_t nr_deps)
 {
-	if  (!deps || !nr_deps)
+	if  (!res || !deps || !nr_deps)
 		return VACCEL_EINVAL;
 
 	struct vaccel_plugin *virtio = get_virtio_plugin();
@@ -138,7 +138,7 @@ int resource_set_deps(struct vaccel_resource *res,
 int vaccel_resource_get_deps(struct vaccel_resource ***deps, size_t *nr_deps,
 		struct vaccel_resource *res)
 {
-	if  (!res)
+	if  (!deps || !nr_deps || !res)
 		return VACCEL_EINVAL;
 
 	*deps = res->deps;
@@ -200,6 +200,17 @@ int vaccel_resource_set_deps_from_ids(struct vaccel_resource *res,
 	return VACCEL_OK;
 }
 
+int resource_unset_deps(struct vaccel_resource *res)
+{
+	if (!res)
+		return VACCEL_EINVAL;
+
+	res->deps = NULL;
+	res->nr_deps = 0;
+
+	return VACCEL_OK;
+}
+
 int resource_destroy(struct vaccel_resource *res)
 {
 	if (!initialized)
@@ -236,15 +247,9 @@ int resource_destroy(struct vaccel_resource *res)
 		free(res->rundir);
 	}
 
-	/*
-	for (size_t i = 0; i < res->nr_deps; i++) {
-		int ret = resource_destroy(res->deps[i]);
-		if (ret)
-			vaccel_warn("Cannot destroy used resource %lld", res->deps[i]->id);
-	}
-	res->deps = NULL;
-	res->nr_deps = 0;
-	*/
+	if (res->deps || res->nr_deps) 
+		vaccel_warn("Resource %lld has deps that will not be destroyed",
+				res->id);
 
 	return VACCEL_OK;
 }
