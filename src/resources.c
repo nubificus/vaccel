@@ -301,3 +301,23 @@ int resource_create_rundir(struct vaccel_resource *res)
 
 	return VACCEL_OK;
 }
+
+void *vaccel_resource_get_data(struct vaccel_resource *res)
+{
+	if (!res) {
+		vaccel_error("Cannot get data of invalid resource");
+		return NULL;
+	}
+
+	return res->data;
+}
+
+vaccel_resource_t vaccel_resource_get_type(struct vaccel_resource *res)
+{
+	if (!res) {
+		vaccel_error("Cannot get type of invalid resource");
+		return VACCEL_RES_MAX;
+	}
+
+	return res->type;
+}

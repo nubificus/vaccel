@@ -28,6 +28,8 @@ int vaccel_resource_deps_from_ids(struct vaccel_resource **deps,
 				  vaccel_id_t *ids, size_t nr_ids);
 int vaccel_resource_set_deps_from_ids(struct vaccel_resource *res,
 				      vaccel_id_t *ids, size_t nr_ids);
+void *vaccel_resource_get_data(struct vaccel_resource *res);
+vaccel_resource_t vaccel_resource_get_type(struct vaccel_resource *res);
 
 #ifdef __cplusplus
 }
