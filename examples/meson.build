@@ -31,6 +31,7 @@ examples_sources = files([
   'exec_helpers.c',
   'exec_helpers_nonser.c',
   'mbench.c',
+  'local_and_virtio.c',
 ])
 
 foreach e : examples_sources

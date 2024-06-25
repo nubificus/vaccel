@@ -34,6 +34,9 @@ struct vaccel_resource {
 	struct vaccel_resource **deps;
 
 	size_t nr_deps;
+
+	/* resource id for the agent */
+	vaccel_id_t remote_id;
 };
 
 int resources_bootstrap(void);

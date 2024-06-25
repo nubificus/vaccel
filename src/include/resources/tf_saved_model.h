@@ -75,6 +75,9 @@ int vaccel_tf_saved_model_destroy(struct vaccel_tf_saved_model *model);
 
 vaccel_id_t vaccel_tf_saved_model_id(const struct vaccel_tf_saved_model *model);
 
+vaccel_id_t
+vaccel_tf_saved_model_remote_id(const struct vaccel_tf_saved_model *model);
+
 #ifdef __cplusplus
 }
 #endif

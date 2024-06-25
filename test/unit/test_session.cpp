@@ -63,6 +63,21 @@ auto mock_sess_unregister(uint32_t sess_id, vaccel_id_t resource_id) -> int
 	return 0;
 }
 
+auto mock_resource_new(vaccel_resource_t type, void *data,
+		       vaccel_id_t *id) -> int
+{
+	(void)type;
+	(void)data;
+	*id = 1;
+	return 0;
+}
+
+auto mock_resource_destroy(vaccel_id_t id) -> int
+{
+	(void)id;
+	return 0;
+}
+
 // Test case for session initialization
 TEST_CASE("session_init", "[session]")
 {
@@ -342,6 +357,8 @@ TEST_CASE("session_sess_virtio", "[session]")
 	v_mock_info.sess_update = mock_sess_update;
 	v_mock_info.sess_register = mock_sess_register;
 	v_mock_info.sess_unregister = mock_sess_unregister;
+	v_mock_info.resource_new = mock_resource_new;
+	v_mock_info.resource_destroy = mock_resource_destroy;
 
 	struct vaccel_plugin v_mock;
 	v_mock.info = &v_mock_info;
@@ -354,7 +371,7 @@ TEST_CASE("session_sess_virtio", "[session]")
 	ret = resources_bootstrap();
 	REQUIRE(VACCEL_OK == ret);
 
-	ret = vaccel_sess_init(&test_sess, 1);
+	ret = vaccel_sess_init(&test_sess, 1 | VACCEL_REMOTE);
 	REQUIRE(VACCEL_OK == ret);
 
 	ret = vaccel_sess_update(&test_sess, 2);
