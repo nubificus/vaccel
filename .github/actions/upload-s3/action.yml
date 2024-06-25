@@ -1,4 +1,5 @@
 name: Upload to s3
+description: Upload artifacts to s3
 
 inputs:
   arch:

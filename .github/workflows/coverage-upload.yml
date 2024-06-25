@@ -6,8 +6,6 @@ on:
 jobs:
   coverage_upload:
     runs-on: [self-hosted, "x86_64", gcc, lite, "2204"]
-    outputs:
-      commit_hash: ${{ steps.commit-and-push.outputs.commit_hash }}
 
     env:
       CC: gcc-12
@@ -39,7 +37,7 @@ jobs:
 
       - name: Produce markdown file
         run: |
-          pycobertura show $(find build -name "coverage*.xml") --format markdown --output ${{github.workspace}}/docs/coverage/src_coverage/coverage.md
+          pycobertura show "$(find build -name "coverage*.xml")" --format markdown --output "${{github.workspace}}/docs/coverage/src_coverage/coverage.md"
         shell: bash
 
       - name: Configure Git

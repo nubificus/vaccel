@@ -1,4 +1,5 @@
 name: Run Tests
+description: Run project tests and generate coverage report
 
 inputs:
   build-dir:
