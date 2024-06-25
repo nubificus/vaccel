@@ -1,4 +1,5 @@
 name: Initialize Workspace
+description: Cleanup runner and checkout project code
 
 inputs:
   fetch-depth:

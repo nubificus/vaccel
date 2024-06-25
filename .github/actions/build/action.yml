@@ -1,4 +1,5 @@
 name: Build Project
+description: Configure, build and install project
 
 inputs:
   coverage:

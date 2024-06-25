@@ -1,4 +1,5 @@
 name: Run Examples
+description: Run vaccelrt examples
 
 inputs:
   prefix:
