@@ -25,5 +25,5 @@ option('examples',
 
 option('tests',
   type : 'feature',
-  value : 'disabled',
+  value : 'auto',
   description : 'Enable testing')
