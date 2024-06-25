@@ -64,6 +64,8 @@ int sessions_cleanup(void)
 int vaccel_sess_register(struct vaccel_session *sess,
 			 struct vaccel_resource *res)
 {
+	int ret;
+
 	if (!sess || !sess->resources || !res || res->type >= VACCEL_RES_MAX)
 		return VACCEL_EINVAL;
 
@@ -72,19 +74,48 @@ int vaccel_sess_register(struct vaccel_session *sess,
 	if (!container)
 		return VACCEL_ENOMEM;
 
-	struct vaccel_plugin *plugin = get_virtio_plugin();
-	if (plugin) {
-		int ret =
-			plugin->info->sess_register(sess->session_id, res->id);
-		if (ret) {
+	if (sess->is_virtio) {
+		struct vaccel_plugin *virtio = get_virtio_plugin();
+		if (virtio) {
+			ret = virtio->info->resource_new(res->type, res->data,
+							 &res->remote_id);
+
+			if (res->remote_id <= 0) {
+				vaccel_error(
+					"Could not create remote resource, remote_id <= 0");
+				free(container);
+				return VACCEL_EUSERS;
+			}
+
+			if (ret) {
+				vaccel_error(
+					"Could not create remote resource");
+				free(container);
+				return ret;
+			}
+
+			ret = virtio->info->sess_register(sess->remote_id,
+							  res->remote_id);
+			if (ret) {
+				vaccel_error(
+					"Could not register remote resource");
+				free(container);
+				return ret;
+			}
+		} else {
+			vaccel_error(
+				"Could not register resource to virtio session, no VirtIO Plugin loaded yet");
 			free(container);
-			return ret;
+			return VACCEL_ENOTSUP;
 		}
 	}
 
 	container->res = res;
 	list_add_tail(&resources->registered[res->type], &container->entry);
 	resource_refcount_inc(res);
+
+	vaccel_debug("Registered resource %lld to session %lld", res->id,
+		     sess->session_id);
 
 	return VACCEL_OK;
 }
@@ -108,32 +139,52 @@ find_registered_resource(struct vaccel_session *sess,
 int vaccel_sess_unregister(struct vaccel_session *sess,
 			   struct vaccel_resource *res)
 {
+	int ret;
+
 	if (!sess || !res || res->type >= VACCEL_RES_MAX)
 		return VACCEL_EINVAL;
 
 	/* Check if resource is indeed registered to session */
 	struct registered_resource *container =
 		find_registered_resource(sess, res);
+
 	if (!container) {
 		vaccel_error("Resource %u not registered with session %u\n",
 			     res->id, sess->session_id);
 		return VACCEL_EINVAL;
 	}
 
-	struct vaccel_plugin *plugin = get_virtio_plugin();
-	if (plugin) {
-		int ret = plugin->info->sess_unregister(sess->session_id,
-							res->id);
-		if (ret) {
-			vaccel_warn(
-				"BUG: Could not unregister host-side resource %u",
-				res->id);
+	if (sess->is_virtio) {
+		struct vaccel_plugin *virtio = get_virtio_plugin();
+		if (virtio) {
+			ret = virtio->info->sess_unregister(sess->remote_id,
+							    res->remote_id);
+			if (ret) {
+				vaccel_error(
+					"BUG: Could not unregister host-side resource %u",
+					res->remote_id);
+				return ret;
+			}
+
+			ret = virtio->info->resource_destroy(res->remote_id);
+			if (ret) {
+				vaccel_warn(
+					"Could not destroy host-side resource %lld",
+					res->remote_id);
+			}
+		} else {
+			vaccel_error(
+				"Could not unregister resource for virtio session, no VirtIO Plugin loaded yet");
+			return VACCEL_ENOTSUP;
 		}
 	}
 
 	list_unlink_entry(&container->entry);
 	resource_refcount_dec(container->res);
 	free(container);
+
+	vaccel_debug("Unregistered resource %lld from session %lld", res->id,
+		     sess->session_id);
 
 	return VACCEL_OK;
 }
@@ -213,30 +264,44 @@ static int cleanup_session_resources(struct vaccel_session *sess)
 
 int vaccel_sess_init(struct vaccel_session *sess, uint32_t flags)
 {
+	int ret;
+	struct vaccel_plugin *virtio = NULL;
+
 	if (!sess)
 		return VACCEL_EINVAL;
 
 	if (!sessions.initialized)
 		return VACCEL_ESESS;
 
-	/* if we're using virtio as a plugin offload the session initialization
-	 * to the host */
-	struct vaccel_plugin *virtio = get_virtio_plugin();
-	if (virtio) {
-		int ret = virtio->info->sess_init(sess, flags);
+	if (flags & VACCEL_REMOTE) {
+		virtio = get_virtio_plugin();
+
+		if (!virtio) {
+			vaccel_error(
+				"Could not initialize VirtIO session, no VirtIO Plugin loaded yet");
+			return VACCEL_ENOTSUP;
+		}
+
+		ret = virtio->info->sess_init(sess, flags & (~VACCEL_REMOTE));
+
 		if (ret) {
 			vaccel_error("Could not create host-side session");
 			return ret;
 		}
-	} else {
-		uint32_t sess_id = get_sess_id();
-		if (!sess_id)
-			return VACCEL_ESESS;
 
-		sess->session_id = sess_id;
+		sess->is_virtio = true;
+	} else {
+		sess->is_virtio = false;
 	}
 
-	int ret = initialize_session_resources(sess);
+	uint32_t sess_id = get_sess_id();
+
+	if (!sess_id)
+		return VACCEL_ESESS;
+
+	sess->session_id = sess_id;
+
+	ret = initialize_session_resources(sess);
 	if (ret)
 		goto cleanup_session;
 
@@ -249,15 +314,14 @@ int vaccel_sess_init(struct vaccel_session *sess, uint32_t flags)
 	return VACCEL_OK;
 
 cleanup_session:
-	if (virtio) {
-		int ret = virtio->info->sess_free(sess);
-		if (ret) {
+	if (sess->is_virtio) {
+		if (virtio->info->sess_free(sess)) {
 			vaccel_error(
 				"BUG: Could not cleanup host-side session");
 		}
-	} else {
-		put_sess_id(sess->session_id);
 	}
+
+	put_sess_id(sess->session_id);
 
 	return ret;
 }
@@ -272,12 +336,20 @@ int vaccel_sess_update(struct vaccel_session *sess, uint32_t flags)
 
 	/* if we're using virtio as a plugin offload the session update to the
 	 * host */
-	struct vaccel_plugin *virtio = get_virtio_plugin();
-	if (virtio) {
-		int ret = virtio->info->sess_update(sess, flags);
-		if (ret) {
-			vaccel_error("Could not update host-side session");
-			return ret;
+	if (sess->is_virtio) {
+		struct vaccel_plugin *virtio = get_virtio_plugin();
+		if (virtio) {
+			int ret = virtio->info->sess_update(
+				sess, flags & (~VACCEL_REMOTE));
+			if (ret) {
+				vaccel_error(
+					"Could not update host-side session");
+				return ret;
+			}
+		} else {
+			vaccel_error(
+				"Could not update virtio session, no VirtIO Plugin loaded yet");
+			return VACCEL_ENOTSUP;
 		}
 	} else {
 		sess->hint = flags;
@@ -291,6 +363,8 @@ int vaccel_sess_update(struct vaccel_session *sess, uint32_t flags)
 
 int vaccel_sess_free(struct vaccel_session *sess)
 {
+	int ret;
+
 	if (!sess)
 		return VACCEL_EINVAL;
 
@@ -299,15 +373,19 @@ int vaccel_sess_free(struct vaccel_session *sess)
 
 	/* if we're using virtio as a plugin offload the session cleanup to the
 	 * host */
-	struct vaccel_plugin *virtio = get_virtio_plugin();
-	int ret;
-	if (virtio) {
-		ret = virtio->info->sess_free(sess);
-		if (ret) {
-			vaccel_warn("Could not cleanup host-side session");
+	if (sess->is_virtio) {
+		struct vaccel_plugin *virtio = get_virtio_plugin();
+		if (virtio) {
+			ret = virtio->info->sess_free(sess);
+			if (ret) {
+				vaccel_warn(
+					"Could not cleanup host-side session");
+			}
+		} else {
+			vaccel_error(
+				"Could not free VirtIO session, no VirtIO Plugin loaded yet");
+			return VACCEL_ENOTSUP;
 		}
-	} else {
-		put_sess_id(sess->session_id);
 	}
 
 	ret = cleanup_session_resources(sess);
@@ -315,6 +393,8 @@ int vaccel_sess_free(struct vaccel_session *sess)
 		vaccel_error("Could not cleanup session resources");
 		return ret;
 	}
+
+	put_sess_id(sess->session_id);
 
 	sessions.running_sessions[sess->session_id - 1] = NULL;
 

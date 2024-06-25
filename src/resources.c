@@ -68,16 +68,7 @@ int resource_new(struct vaccel_resource *res, vaccel_resource_t type,
 	if (!res || type >= VACCEL_RES_MAX)
 		return VACCEL_EINVAL;
 
-	/* If we 're working on top of VirtIO, the host side will provide
-	 * us with an id */
-	struct vaccel_plugin *virtio = get_virtio_plugin();
-	if (virtio) {
-		int err = virtio->info->resource_new(type, data, &res->id);
-		if (err)
-			return err;
-	} else {
-		res->id = id_pool_get(&id_pool);
-	}
+	res->id = id_pool_get(&id_pool);
 
 	if (res->id <= 0)
 		return VACCEL_EUSERS;
@@ -224,15 +215,7 @@ int resource_destroy(struct vaccel_resource *res)
 		return VACCEL_EBUSY;
 	}
 
-	struct vaccel_plugin *virtio = get_virtio_plugin();
-	if (virtio) {
-		int err = virtio->info->resource_destroy(res->id);
-		if (err)
-			vaccel_warn("Could not destroy host-side resource %lld",
-				    res->id);
-	} else if (res->id) {
-		id_pool_release(&id_pool, res->id);
-	}
+	id_pool_release(&id_pool, res->id);
 
 	list_unlink_entry(&res->entry);
 

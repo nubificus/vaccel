@@ -185,8 +185,9 @@ int register_plugin_functions(struct vaccel_op *plugin_ops, size_t nr_ops)
 
 void *get_plugin_op(enum vaccel_op_type op_type, unsigned int hint)
 {
-	unsigned int env_priority = hint;
+	unsigned int env_priority = hint & (~VACCEL_REMOTE);
 	struct vaccel_op *op = NULL;
+	struct vaccel_op *opiter, *tmp;
 
 	if (op_type >= VACCEL_FUNCTIONS_NR) {
 		vaccel_error("Trying to execute unknown function");
@@ -203,9 +204,24 @@ void *get_plugin_op(enum vaccel_op_type op_type, unsigned int hint)
 	 * and compare with the bitmap hint we got from the upper
 	 * layers. If we get a match, return this plugin operation
 	 */
+
+	if (VACCEL_REMOTE & hint) {
+		for_each_container_safe(opiter, tmp, &plugin_state.ops[op_type],
+					struct vaccel_op, func_entry) {
+			if (opiter->owner->info->is_virtio) {
+				op = opiter;
+				vaccel_debug(
+					"Returning func from hint plugin %s ",
+					opiter->owner->info->name);
+				goto out;
+			}
+		}
+		vaccel_error(
+			"Could not return func, no VirtIO plugin loaded yet");
+		return NULL;
+	}
+
 	if (env_priority) {
-		struct vaccel_op *opiter;
-		struct vaccel_op *tmp;
 		for_each_container_safe(opiter, tmp, &plugin_state.ops[op_type],
 					struct vaccel_op, func_entry) {
 			if ((env_priority & opiter->owner->info->type) != 0) {
@@ -213,17 +229,29 @@ void *get_plugin_op(enum vaccel_op_type op_type, unsigned int hint)
 				vaccel_debug(
 					"Returning func from hint plugin %s ",
 					opiter->owner->info->name);
-				break;
+				goto out;
 			}
 		}
 	}
 
-	/* If priority check fails, just return the first implementation we find */
+	/* If priority check fails, just return the first (local) implementation we find */
 	if (!op) {
-		op = get_container(plugin_state.ops[op_type].next,
-				   struct vaccel_op, func_entry);
+		for_each_container_safe(opiter, tmp, &plugin_state.ops[op_type],
+					struct vaccel_op, func_entry) {
+			if (!opiter->owner->info->is_virtio) {
+				op = opiter;
+				vaccel_debug(
+					"Returning func from hint plugin %s ",
+					opiter->owner->info->name);
+				goto out;
+			}
+		}
+		vaccel_error(
+			"Could not return func, no local plugin loaded yet");
+		return NULL;
 	}
 
+out:
 	vaccel_debug("Found implementation in %s plugin",
 		     op->owner->info->name);
 

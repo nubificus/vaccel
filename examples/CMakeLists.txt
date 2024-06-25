@@ -30,7 +30,8 @@ set(BIN_EXAMPLES
 	pynq_array_copy
 	pynq_array_copy_generic
 	exec_helpers
-	exec_helpers_nonser)
+	exec_helpers_nonser
+	local_and_virtio)
 
 foreach(T ${BIN_EXAMPLES})
 	add_executable(${T} "${T}.c" ../src/utils.c)

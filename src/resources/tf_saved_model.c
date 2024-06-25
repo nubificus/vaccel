@@ -418,3 +418,13 @@ vaccel_id_t vaccel_tf_saved_model_id(const struct vaccel_tf_saved_model *model)
 
 	return model->resource->id;
 }
+
+/* Get the remote id of the SavedModel */
+vaccel_id_t
+vaccel_tf_saved_model_remote_id(const struct vaccel_tf_saved_model *model)
+{
+	if (!model || !model->resource)
+		return -1;
+
+	return model->resource->remote_id;
+}

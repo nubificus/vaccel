@@ -24,6 +24,12 @@ struct vaccel_session {
 
 	/* backend private data */
 	void *priv;
+
+	/* local or virtio option */
+	bool is_virtio;
+
+	/* id of the remote session */
+	uint32_t remote_id;
 };
 
 /* Initialize a new session with the runtime */

@@ -50,6 +50,9 @@ int vaccel_shared_object_new_with_deps(struct vaccel_shared_object *object,
 struct vaccel_shared_object *
 vaccel_shared_object_from_resource(struct vaccel_resource *resource);
 
+vaccel_id_t
+vaccel_shared_object_get_remote_id(const struct vaccel_shared_object *object);
+
 #ifdef __cplusplus
 }
 #endif
