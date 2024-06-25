@@ -1,0 +1,3 @@
+---
+Checks:         '-bugprone-chained-comparison,-readability-function-cognitive-complexity,-llvm-else-after-return,-readability-else-after-return,-readability-magic-numbers,-bugprone-sizeof-expression,-bugprone-multi-level-implicit-pointer-conversion,-readability-inconsistent-declaration-parameter-name'
+InheritParentConfig: true

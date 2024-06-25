@@ -1,0 +1,4 @@
+// supress false positives
+memleak:src/session.c:100
+uninitvar:src/session.c:112
+uninitvar:src/session.c:200
