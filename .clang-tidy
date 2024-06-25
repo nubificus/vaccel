@@ -1,0 +1,18 @@
+---
+Checks:         'clang-diagnostic-*,clang-analyzer-*,bugprone-*,llvm-*,modernize-*,performance-*,portability-*,readability-*,-readability-braces-around-statements,-readability-identifier-length,-llvm-header-guard,-modernize-use-std-print'
+WarningsAsErrors: 'clang-analyzer-core.*,clang-analyzer-unix.*,readability-inconsistent-declaration-parameter-name,clang-analyzer-deadcode.*,bugprone-suspicious-include,clang-diagnostic-sometimes-uninitialized'
+HeaderFileExtensions:
+  - ''
+  - h
+  - hh
+  - hpp
+  - hxx
+ImplementationFileExtensions:
+  - c
+  - cc
+  - cpp
+  - cxx
+HeaderFilterRegex: ''
+FormatStyle:     file
+User:            clang-tidy
+SystemHeaders:   false

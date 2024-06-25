@@ -4,8 +4,8 @@ on:
   workflow_call:
 
 jobs:
-  spell_check:
-    name: spell check
+  linter_typos:
+    name: linter spell check
     runs-on: [self-hosted, "x86_64", gcc, lite, "2204"]
 
     steps:
@@ -17,18 +17,52 @@ jobs:
       - name: Initialize workspace
         uses: ./.github/actions/initialize-workspace
 
-      - name: Run spell check
+      - name: Spell check
+        uses: crate-ci/typos@master
+        with:
+          config: .github/linters/typos.toml
+
+  linter_cppcheck:
+    name: linter cppcheck
+    runs-on: [self-hosted, "x86_64", gcc, lite, "2204"]
+
+    env:
+      CC: gcc-12
+      CXX: g++-12
+    steps:
+      - name: Checkout .github directory
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: .github
+
+      - name: Initialize workspace
+        uses: ./.github/actions/initialize-workspace
+
+      - name: Configure project
+        uses: ./.github/actions/build
+        with:
+          build-dir: build
+          build: 'false'
+          options: 'auto_features=enabled'
+
+      - name: Run cppcheck
         run: |
-          codespell ./src
-          codespell ./test/docs
-          codespell ./test/op
-          codespell ./test/unit
-        continue-on-error: true
+          cppcheck --project=build/compile_commands.json \
+            -itest -ithird-party -isubprojects \
+            --suppressions-list=.github/linters/cppcheck.txt \
+            --error-exitcode=2
 
-  cppcheck:
-    name: cppcheck
+  linter_cpp_linter:
+    name: linter cpp-linter
     runs-on: [self-hosted, "x86_64", gcc, lite, "2204"]
 
+    permissions:
+      pull-requests: write
+      contents: read
+
+    env:
+      CC: gcc-12
+      CXX: g++-12
     steps:
       - name: Checkout .github directory
         uses: actions/checkout@v4
@@ -38,20 +72,32 @@ jobs:
       - name: Initialize workspace
         uses: ./.github/actions/initialize-workspace
 
-      - name: Run cppcheck in src
-        run: cppcheck --enable=style src
+      - name: Configure project
+        id: configure_vaccelrt
+        uses: ./.github/actions/build
+        with:
+          build-dir: build
+          build: 'false'
+          options: 'auto_features=enabled'
 
-      - name: Run cppcheck in examples
-        run: cppcheck --enable=style examples
+      - uses: cpp-linter/cpp-linter-action@v2
+        id: cpp_linter
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          style: 'file'  # Use .clang-format config file
+          tidy-checks: '' # Use .clang-tidy config file
+          database: build
+          thread-comments: ${{ github.event_name == 'pull_request' && 'true' }}
+          format-review: ${{ github.event_name == 'pull_request' && 'true' }}
+          version: 18
 
-      - name: Run cppcheck in test
-        run: cppcheck --enable=style test
+      - name: Fail on error
+        if: steps.cpp_linter.outputs.clang-format-checks-failed > 0
+        run: exit 1
 
-      - name: Run cppcheck in plugins
-        run: cppcheck --enable=style plugins
-
-  linter:
-    name: linter
+  linter_super_linter:
+    name: linter super-linter
     runs-on: [self-hosted, "x86_64", gcc, lite, "2204"]
 
     permissions:
@@ -67,45 +113,25 @@ jobs:
 
       - name: Initialize workspace
         uses: ./.github/actions/initialize-workspace
+        with:
+          fetch-depth: 0
 
       - name: linter
-        uses: super-linter/super-linter@v5
+        uses: super-linter/super-linter@v6
         env:
           DEFAULT_BRANCH: main
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          DISABLE_ERRORS: true
-          VALIDATE_CLANG_FORMAT: false
-          FILTER_REGEX_EXCLUDE: .*(test|examples)/.*
+          VALIDATE_ALL_CODEBASE: true
+          VALIDATE_PYTHON_BLACK: true
+          VALIDATE_BASH: true
+          VALIDATE_DOCKERFILE_HADOLINT: true
+          VALIDATE_GITHUB_ACTIONS: true
+          VALIDATE_MARKDOWN: true
+          VALIDATE_YAML: true
 
-  checkpatch:
-    name: checkpatch review
-    runs-on: [self-hosted, "x86_64", gcc, lite, "2204"]
-
-    permissions:
-      contents: read
-      pull-requests: read
-
-    steps:
-      - name: "Calculate PR commits + 1"
-        run: echo "PR_FETCH_DEPTH=$(( ${{ github.event.pull_request.commits }} + 1 ))" >> $GITHUB_ENV
-
-      - name: Checkout .github directory
-        uses: actions/checkout@v4
-        with:
-          sparse-checkout: .github
-
-      - name: Initialize workspace
-        uses: ./.github/actions/initialize-workspace
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          fetch-depth: ${{ env.PR_FETCH_DEPTH }}
-
-      - name: Run checkpatch review
-        uses: webispy/checkpatch-action@v9
-        continue-on-error: true
 
   coverage_diff:
-    needs: [checkpatch, spell_check]
+    needs: [linter_typos, linter_cppcheck, linter_cpp_linter, linter_super_linter]
     runs-on: [self-hosted, "x86_64", gcc, lite, "2204"]
     outputs:
       commit_hash: ${{ steps.commit-and-push.outputs.commit_hash }}
