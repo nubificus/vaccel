@@ -72,7 +72,7 @@ meson test <test_name> -C <build_dir>
 # w/ valgrind
 meson test --wrap='valgrind' -C <build_dir>
 
-# w/ coverage (will propably need to clear the build dir if already configured)
+# w/ coverage (will probably need to clear the build dir if already configured)
 meson setup -Db_coverage=true <build_dir>
 meson test -C <build_dir>
 ninja coverage-text -C <build_dir>
@@ -86,6 +86,6 @@ meson install -C <build_dir>
 
 Alternatively, to create a distribution tarball and generate debian packages:
 ```python
-# Note: uncommited changes won't be included
+# Note: uncommitted changes won't be included
 meson dist --include-subprojects --allow-dirty -C <build_dir>
 ```

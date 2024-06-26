@@ -2,9 +2,9 @@
  *
  * The code below performs unit testing to resources.
  *
- * 1) resource_bootsrap()
+ * 1) resource_bootstrap()
  * 2) resource_new()
- * 3) resource_destory()
+ * 3) resource_destroy()
  * 4) resource_create_rundir()
  * 5) resource_get_by_id()
  *

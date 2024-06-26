@@ -39,7 +39,7 @@ In the first case, we simply define the address in which our input is located. F
 int input = ...;
 ret = vaccel_add_serial_arg(read, &input, sizeof(input));
 if (ret != VACCEL_OK) {
-  /* A problem occured */
+  /* A problem occurred */
 }
 ```
 #### Non-serialized
@@ -89,7 +89,7 @@ struct mydata arg_mydata= init_mydata();
 uint32_t type = 0;
 ret = vaccel_add_nonserial_arg(read, &arg_mydata, type, serializer);
 if (ret != VACCEL_OK) {
-  /* A problem occured */
+  /* A problem occurred */
 }
 ```
 
@@ -102,18 +102,18 @@ In case we expect to get back a float, we simply add the following command:
 float out;
 ret = vaccel_expect_serial_arg(write, &out, sizeof(out));
 if (ret != VACCEL_OK) {
-  /* A problem occured */
+  /* A problem occurred */
 }
 ```
 #### Non-serialized
-Similarly, we call the corresponding function for non-serialized arguments. However we don't define any buffer, because the returned data will be meaningless after the operation ends, since it won't have been deserialized yet. Later (after calling the operation), we can ask for the output using their indeces, along with a deserializer function. We also provide the size of the expected output as a parameter.
+Similarly, we call the corresponding function for non-serialized arguments. However we don't define any buffer, because the returned data will be meaningless after the operation ends, since it won't have been deserialized yet. Later (after calling the operation), we can ask for the output using their indices, along with a deserializer function. We also provide the size of the expected output as a parameter.
 
 Let's assume that we expect an instance of ```struct mydata```. We just run:
 ```c
 uint32_t expected_size = ... ;
 ret = vaccel_expect_nonserial_arg(write, expected_size);
 if (ret != VACCEL_OK) {
-  /* A problem occured */
+  /* A problem occurred */
 }
 ```
 As you can see we did't define the type of the output, since it will be raw data, prior to its deserialization.
@@ -176,12 +176,12 @@ Finally, we can clean the memory that was allocated by the argument lists by run
 ```c
 ret = vaccel_delete_args(read);
 if (ret != VACCEL_OK) {
-  /* A problem occured */
+  /* A problem occurred */
 }
 
 ret = vaccel_delete_args(write);
 if (ret != VACCEL_OK) {
-  /* A problem occured */
+  /* A problem occurred */
 }
 ```
 ## Plugin
@@ -228,7 +228,7 @@ Since the user defined that expects to receive a float at index 0, we can provid
 float response = ...;
 ret = vaccel_write_serial_arg(write->list, 0, &response);
 if (ret != VACCEL_OK) {
-  /* A problem occured */
+  /* A problem occurred */
 }
 ...
 ```
@@ -240,7 +240,7 @@ Similarly, it was also defined that a non-serialized structure will be received 
 struct mydata out = ...;
 ret = vaccel_write_nonserial_arg(write->list, 1, &out, serializer);
 if (ret != VACCEL_OK) {
-  /* A problem occured */
+  /* A problem occurred */
 }
 ...
 ```
