@@ -155,7 +155,7 @@ vaccel_preprocess(): Time Taken: 4 milliseconds
 2024.06.24-17:49:46.98 - <info> [prof] torch_out: total_time: 31391 nsec nr_entries: 1
 ==========Show Result(vAccel)==========
 Prediction: offensive-language
-Legth: 27
+Length: 27
 Duration: 462
 vaccel_preprocess(): Time Taken: 8 milliseconds
 2024.06.24-17:49:47.43 - <info> [prof] torch_input: total_time: 162719 nsec nr_entries: 2
@@ -163,7 +163,7 @@ vaccel_preprocess(): Time Taken: 8 milliseconds
 2024.06.24-17:49:47.43 - <info> [prof] torch_out: total_time: 37025 nsec nr_entries: 2
 ==========Show Result(vAccel)==========
 Prediction: offensive-language
-Legth: 18
+Length: 18
 Duration: 438
 vaccel_preprocess(): Time Taken: 7 milliseconds
 2024.06.24-17:49:47.87 - <info> [prof] torch_input: total_time: 198476 nsec nr_entries: 3
@@ -171,7 +171,7 @@ vaccel_preprocess(): Time Taken: 7 milliseconds
 2024.06.24-17:49:47.87 - <info> [prof] torch_out: total_time: 42321 nsec nr_entries: 3
 ==========Show Result(vAccel)==========
 Prediction: offensive-language
-Legth: 23
+Length: 23
 Duration: 436
 vaccel_preprocess(): Time Taken: 7 milliseconds
 2024.06.24-17:49:48.30 - <info> [prof] torch_input: total_time: 233884 nsec nr_entries: 4
@@ -179,7 +179,7 @@ vaccel_preprocess(): Time Taken: 7 milliseconds
 2024.06.24-17:49:48.30 - <info> [prof] torch_out: total_time: 47551 nsec nr_entries: 4
 ==========Show Result(vAccel)==========
 Prediction: neither
-Legth: 11
+Length: 11
 Duration: 413
 vaccel_preprocess(): Time Taken: 7 milliseconds
 2024.06.24-17:49:48.64 - <info> [prof] torch_input: total_time: 269105 nsec nr_entries: 5
@@ -187,7 +187,7 @@ vaccel_preprocess(): Time Taken: 7 milliseconds
 2024.06.24-17:49:48.64 - <info> [prof] torch_out: total_time: 53077 nsec nr_entries: 5
 ==========Show Result(vAccel)==========
 Prediction: offensive-language
-Legth: 28
+Length: 28
 Duration: 333
 vaccel_preprocess(): Time Taken: 8 milliseconds
 2024.06.24-17:49:48.98 - <info> [prof] torch_input: total_time: 304956 nsec nr_entries: 6
@@ -195,7 +195,7 @@ vaccel_preprocess(): Time Taken: 8 milliseconds
 2024.06.24-17:49:48.98 - <info> [prof] torch_out: total_time: 58215 nsec nr_entries: 6
 ==========Show Result(vAccel)==========
 Prediction: offensive-language
-Legth: 21
+Length: 21
 Duration: 329
 vaccel_preprocess(): Time Taken: 7 milliseconds
 2024.06.24-17:49:49.29 - <info> [prof] torch_input: total_time: 340191 nsec nr_entries: 7
@@ -203,7 +203,7 @@ vaccel_preprocess(): Time Taken: 7 milliseconds
 2024.06.24-17:49:49.29 - <info> [prof] torch_out: total_time: 63358 nsec nr_entries: 7
 ==========Show Result(vAccel)==========
 Prediction: offensive-language
-Legth: 22
+Length: 22
 Duration: 310
 vaccel_preprocess(): Time Taken: 8 milliseconds
 2024.06.24-17:49:49.63 - <info> [prof] torch_input: total_time: 375959 nsec nr_entries: 8
@@ -211,7 +211,7 @@ vaccel_preprocess(): Time Taken: 8 milliseconds
 2024.06.24-17:49:49.63 - <info> [prof] torch_out: total_time: 68831 nsec nr_entries: 8
 ==========Show Result(vAccel)==========
 Prediction: offensive-language
-Legth: 15
+Length: 15
 Duration: 327
 vaccel_preprocess(): Time Taken: 7 milliseconds
 2024.06.24-17:49:49.94 - <info> [prof] torch_input: total_time: 412773 nsec nr_entries: 9
@@ -219,7 +219,7 @@ vaccel_preprocess(): Time Taken: 7 milliseconds
 2024.06.24-17:49:49.94 - <info> [prof] torch_out: total_time: 74032 nsec nr_entries: 9
 ==========Show Result(vAccel)==========
 Prediction: offensive-language
-Legth: 15
+Length: 15
 Duration: 303
 vaccel_preprocess(): Time Taken: 8 milliseconds
 2024.06.24-17:49:50.25 - <info> [prof] torch_input: total_time: 446881 nsec nr_entries: 10
@@ -227,11 +227,11 @@ vaccel_preprocess(): Time Taken: 8 milliseconds
 2024.06.24-17:49:50.25 - <info> [prof] torch_out: total_time: 79266 nsec nr_entries: 10
 ==========Show Result(vAccel)==========
 Prediction: neither
-Legth: 8
+Length: 8
 Duration: 301
 Total Time Taken: 3804 milliseconds
 Total nr of Inference invocations: 10
-Legth: 8
+Length: 8
 Average: 231
 
 real	0m4.228s

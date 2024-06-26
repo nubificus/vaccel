@@ -95,7 +95,7 @@ int vaccel_fpga_parallel(struct vaccel_session *sess, float A_array[], float B_a
 	if (!sess)
 		return VACCEL_EINVAL;
 
-	vaccel_debug("session:%u Looking for plugin implementing fpga_parellel operation",
+	vaccel_debug("session:%u Looking for plugin implementing fpga_parallel operation",
 			sess->session_id);
 
 	//Get implementation
