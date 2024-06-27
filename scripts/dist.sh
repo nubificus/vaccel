@@ -1,9 +1,9 @@
 #!/bin/sh
 
 # generate .version file
-cd ${MESON_SOURCE_ROOT} || exit 1
-VERSION=$(sh ./scripts/generate-version.sh "" --no-dirty)
-echo ${VERSION} > "${MESON_DIST_ROOT}/.version"
+cd "${MESON_SOURCE_ROOT}" || exit 1
+VERSION="$(sh ./scripts/generate-version.sh "" --no-dirty)"
+echo "${VERSION}" > "${MESON_DIST_ROOT}/.version"
 
 # build .deb packages
 # (needs: meson dist --include-subprojects)
@@ -14,7 +14,7 @@ do
 		return
 	fi
 done
-cd ${MESON_DIST_ROOT}
+cd "${MESON_DIST_ROOT}" || exit 1
 rm -f ../*"${VERSION}".orig.tar.xz
 rm -rf "${MESON_DIST_ROOT}"/.git*
 DEBFULLNAME="Anastassios Nanos"
@@ -27,21 +27,22 @@ USER="$(whoami)" \
 	dh_make -s -y -c apache -p "${PKG_NAME}_${VERSION}" --createorig
 
 # debian/rules
-MESON_ARGS=""                                                                   
-c=$((0))                                                                        
-for v in $@                                                                     
-do                                                                              
-	if [ $((c % 2)) -eq 0 ]                                                     
-	then                                                                        
-		MESON_ARGS="${MESON_ARGS}-D$v="                                         
-	else                                                                        
-		MESON_ARGS="${MESON_ARGS}$v "                                           
-	fi                                                                          
-	c=$((c+1))                                                                  
+MESON_ARGS=""
+c=$((0))
+for v in "$@"
+do
+	if [ $((c % 2)) -eq 0 ]
+	then
+		MESON_ARGS="${MESON_ARGS}-D$v="
+	else
+		MESON_ARGS="${MESON_ARGS}$v "
+	fi
+	c=$((c+1))
 done
-echo "export DEB_LDFLAGS_MAINT_STRIP = -Wl,-Bsymbolic-functions\n" \
+printf "%s\n" "export DEB_LDFLAGS_MAINT_STRIP = -Wl,-Bsymbolic-functions" \
 	>> debian/rules
-echo "override_dh_auto_configure:\n\tdh_auto_configure --buildsystem=meson -- ${MESON_ARGS}" \
+printf "%s\n\t%s" "override_dh_auto_configure:" \
+	"dh_auto_configure --buildsystem=meson -- ${MESON_ARGS}" \
 	>> debian/rules
 
 # debian/copyright
@@ -65,16 +66,16 @@ cp -r "${MESON_SOURCE_ROOT}"/.git* ./
 TAG=$(git describe --abbrev=0 --tags --match "v[0-9]*" 2>/dev/null)
 TAG_DIFF=$(git describe --abbrev=8 --tags --match "v[0-9]*" 2>/dev/null)
 ORIG_COMMIT=$(git rev-parse HEAD)
-for t in `git tag --sort=v:refname | grep v[0-9]*`
+for t in $(git tag --sort=v:refname | grep "v[0-9]*")
 do
-	CUR_VERSION="$(echo $t | cut -c 2-)-1"
-	git checkout $t 1>/dev/null 2>&1
+	CUR_VERSION="$(echo "$t" | cut -c 2-)-1"
+	git checkout "$t" 1>/dev/null 2>&1
 	PREV_TAG=$(git describe --abbrev=0 --tags --match "v[0-9]*" --exclude="$t" 2>/dev/null) || continue
 	gbp dch --since="${PREV_TAG}" --ignore-branch --release --spawn-editor=never --new-version="${CUR_VERSION}" --dch-opt="-b" --dch-opt="--check-dirname-level=0" --dch-opt="-p" 1>/dev/null 2>&1
 done
-if [ ${TAG} != ${TAG_DIFF} ]
+if [ "${TAG}" != "${TAG_DIFF}" ]
 then
-	git checkout ${ORIG_COMMIT} 1>/dev/null 2>&1
+	git checkout "${ORIG_COMMIT}" 1>/dev/null 2>&1
 	PREV_TAG=$(git describe --abbrev=0 --tags --match "v[0-9]*"  2>/dev/null)
 	CUR_VERSION="${VERSION}-1"
 	gbp dch --since="${PREV_TAG}" --ignore-branch --release --spawn-editor=never --new-version="${CUR_VERSION}" --dch-opt="-b" --dch-opt="--check-dirname-level=0" --dch-opt="-p" 1>/dev/null 2>&1
