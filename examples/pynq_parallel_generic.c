@@ -12,8 +12,8 @@ int main()
 	struct vaccel_session sess;
 	int N = 2;
 
-	float a[] = { 1, 2, 3, 4 };
-	float b[] = { 2, 3, 4, 5 };
+	float a[N * N] = { 1, 2, 3, 4 };
+	float b[N * N] = { 2, 3, 4, 5 };
 	float c[N * N];
 	float d[N * N];
 
