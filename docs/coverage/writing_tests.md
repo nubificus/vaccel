@@ -1,4 +1,4 @@
-## Writing tests
+# Writing tests
 
 To write basic tests:
 
@@ -29,7 +29,7 @@ extern "C"{
 ```
 The ```#include <utils.hpp>``` contains the atomic workaround - have a look at the file for more information.
 
-### Basic tests
+## Basic tests
 
 Writing a test is straight forward. The basic test can be written using a ```TEST_CASE``` and ```REQUIRE``` and ```CHECK``` being the only tests assertions you need. ```REQUIRE``` check aborts the test case when it fails whereas in ```CHECK``` continues the test even if fails
 ```cpp

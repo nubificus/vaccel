@@ -37,7 +37,13 @@ jobs:
 
       - name: Produce markdown file
         run: |
-          pycobertura show "$(find build -name "coverage*.xml")" --format markdown --output "${{github.workspace}}/docs/coverage/src_coverage/coverage.md"
+          pycobertura show "$(find build -name "coverage*.xml")" \
+              --format markdown --output "coverage.md"
+          printf "%s\n\n" "# Tests coverage report" \
+              > "${{github.workspace}}/docs/coverage/src_coverage/coverage.md"
+          cat coverage.md \
+              >> "${{github.workspace}}/docs/coverage/src_coverage/coverage.md"
+          rm -f coverage.md
         shell: bash
 
       - name: Configure Git
