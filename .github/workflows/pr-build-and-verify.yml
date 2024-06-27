@@ -11,13 +11,16 @@ on:
 
 jobs:
   test_build:
+    name: Test Build
     if: ${{ contains(github.event.pull_request.labels.*.name, 'ok-to-test') }}
     uses: ./.github/workflows/test-build.yml
 
   verify_build:
+    name: Verify Build
     if: ${{ contains(github.event.pull_request.labels.*.name, 'ok-to-test') }}
     uses: ./.github/workflows/verify-build.yml
 
-  validate_source:
+  validate_code_and_commits:
+    name: Validate Code and Commits
     if: ${{ contains(github.event.pull_request.labels.*.name, 'ok-to-test') }}
-    uses: ./.github/workflows/validate-source.yml
+    uses: ./.github/workflows/validate-code-and-commits.yml

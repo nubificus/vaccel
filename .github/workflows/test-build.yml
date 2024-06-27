@@ -5,6 +5,7 @@ on:
 
 jobs:
   test_build:
+    name: Test Build
     runs-on: [self-hosted, "${{ matrix.archconfig }}", gcc, lite, "2204"]
 
     strategy:
