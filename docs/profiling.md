@@ -1,4 +1,4 @@
-## Enable profiling
+# Enable profiling
 
 Profiling is an essential aspect of performance optimization in software
 development. By enabling profiling, we can instrument our code to identify and
@@ -7,16 +7,16 @@ code, improving performance, and ensuring efficient use of resources. In the
 context of the vAccel framework, profiling allows developers to track
 performance metrics of vAccel API operations and plugins.
 
-### Profiling Stack
+## Profiling Stack
 
 vAccel profiling is built around the concept of profiling regions. A region
 represents a specific part of the code where performance data is collected. The
 profiling stack includes various functions to manage these regions, from
 initialization to data collection and reporting.
 
-### Profiling Components
+## Profiling Components
 
-#### Region Initialization and Destruction
+### Region Initialization and Destruction
 
 **Initialization**: A profiling region is initialized using
 `vaccel_prof_region_init()`. This sets up the region with a specified name.
@@ -25,7 +25,7 @@ initialization to data collection and reporting.
 `vaccel_prof_region_destroy()` is used to clean up any resources associated
 with it.
 
-#### Start and Stop Profiling
+### Start and Stop Profiling
 
 **Start Profiling**: Use `vaccel_prof_region_start()` to begin collecting
 performance data for a region.
@@ -33,7 +33,7 @@ performance data for a region.
 **Stop Profiling**: To stop data collection, `vaccel_prof_region_stop()` is
 used.
 
-#### Data Collection and Reporting
+### Data Collection and Reporting
 
 **Sample Collection**: The profiling system collects samples of performance
 data during the execution of a region.
@@ -41,7 +41,7 @@ data during the execution of a region.
 **Reporting**: `vaccel_prof_region_print()` is used to output the collected
 data for analysis.
 
-#### Batch Operations
+### Batch Operations
 
 **Start by Name**: `vaccel_prof_regions_start_by_name()` allows starting
 multiple regions by their names.
@@ -55,7 +55,7 @@ regions.
 **Print All**: `vaccel_prof_regions_print_all()` prints profiling data for all
 regions.
 
-#### Enabling Profiling
+### Enabling Profiling
 
 Profiling in vAccel is enabled by setting an environment variable. To activate
 profiling, set the environment variable `VACCEL_PROF_ENABLED` to `enabled`.
@@ -64,11 +64,11 @@ profiling, set the environment variable `VACCEL_PROF_ENABLED` to `enabled`.
 export VACCEL_PROF_ENABLED=enabled
 ```
 
-### Adding Profiling to Your vAccel API Operation or Plugin
+## Adding Profiling to Your vAccel API Operation or Plugin
 
 To add profiling to your vaccel API operation or plugin, follow these steps:
 
-#### Include Profiling Headers
+### Include Profiling Headers
 
 Ensure that you include the necessary headers in your code:
 
@@ -76,7 +76,7 @@ Ensure that you include the necessary headers in your code:
 #include <vaccel_prof.h>
 ```
 
-#### Define and Initialize a Profiling Region
+### Define and Initialize a Profiling Region
 
 Define a `vaccel_prof_region` structure and initialize it:
 
@@ -85,7 +85,7 @@ struct vaccel_prof_region my_region = VACCEL_PROF_REGION_INIT("my_operation");
 vaccel_prof_region_init(&my_region, "my_operation");
 ```
 
-#### Start Profiling
+### Start Profiling
 
 Before the code section you want to profile, start profiling the region:
 
@@ -93,7 +93,7 @@ Before the code section you want to profile, start profiling the region:
 vaccel_prof_region_start(&my_region);
 ```
 
-#### Stop Profiling
+### Stop Profiling
 
 After the code section, stop profiling the region:
 
@@ -101,7 +101,7 @@ After the code section, stop profiling the region:
 vaccel_prof_region_stop(&my_region);
 ```
 
-#### Print Profiling Results
+### Print Profiling Results
 
 To output the profiling results, use:
 
@@ -109,7 +109,7 @@ To output the profiling results, use:
 vaccel_prof_region_print(&my_region);
 ```
 
-#### Destroy the Profiling Region
+### Destroy the Profiling Region
 
 Finally, clean up the profiling region:
 
@@ -117,7 +117,7 @@ Finally, clean up the profiling region:
 vaccel_prof_region_destroy(&my_region);
 ```
 
-### Example Code
+## Example Code
 ```c
 #include <vaccel_prof.h>
 
@@ -140,7 +140,7 @@ optimize your vAccel operations and plugins.
 
 Below you can find example output from a torch speech classification tool:
 
-```
+```bash
 $ time ./classifier ./cnn_trace.pt ../bert_cased_vocab.txt 0
 2024.06.24-17:49:46.45 - <info> vAccel v0.6.0
 2024.06.24-17:49:46.45 - <info> Registered plugin torch 0.1
@@ -234,9 +234,9 @@ Total nr of Inference invocations: 10
 Length: 8
 Average: 231
 
-real	0m4.228s
-user	0m4.578s
-sys	0m1.235s
+real    0m4.228s
+user    0m4.578s
+sys    0m1.235s
 ```
 
 and the respective code:
@@ -282,8 +282,8 @@ struct vaccel_prof_region torch_out_stats =
     float* data = static_cast<float*>((*out_tensors)->data);
     int64_t num_elements = output.numel();
 
-    vaccel_prof_region_stop(&torch_out_stats);	
-    
+    vaccel_prof_region_stop(&torch_out_stats);
+
     vaccel_prof_region_print(&torch_input_stats);
     vaccel_prof_region_print(&torch_model_stats);
     vaccel_prof_region_print(&torch_run_stats);

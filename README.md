@@ -19,7 +19,7 @@ plugin which just prints out debug parameters (input and output) for each API
 call.
 
 There is a [splash page](https://vaccel.org) for vAccel, along with more
-[elaborate documentation](https://docs.vaccel.org). 
+[elaborate documentation](https://docs.vaccel.org).
 
 For step-by-step tutorials, you can have a look at our
 [lab](https://github.com/nubificus/vaccel-tutorials) repo.

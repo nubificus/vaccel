@@ -1,4 +1,4 @@
-## Adding tests to the test runner
+# Adding tests to the test runner
 
 To include tests, modify the ```CMakeLists.txt``` file in the ```test``` directory.
 
@@ -6,7 +6,7 @@ Quickest way is to look at which ```set``` of ```include``` files you need, eith
 
 ```API``` enables a plugin backend when running the tests which is useful if you are testing operations implemented by a plugin.
 
-```
+```cmake
 set(TESTS_CORE
     test_example
     test_plugin
@@ -26,12 +26,12 @@ Alongside this:
 
 **Add to one of the ```set_tests_properties``` functions to enable the test to be ran.**
 
-#### For manual tests/more control over what you would like:
+## For manual tests/more control over what you would like
 
 Basic template to include tests:
 
 
-```
+```cmake
 add_executable(NAME_OF_TEST ${PROJECT_SOURCE_DIR}/test/TEST.cpp)
 target_include_directories(NAME_OF_TEST
     PRIVATE
@@ -46,15 +46,15 @@ We do not need to include a main function in our tests if we link our tests with
 
 To make sure the tests run, add the following lines below ```enable_testing()```
 
-```
+```cmake
 add_test(NAME OUTPUT_NAME COMMAND NAME_OF_TEST)
 ```
 
-### Adding additional environment properties
+## Adding additional environment properties
 
 If you would like to add some environment properties, i.e setting ```VACCEL_DEBUG_LEVEL``` etc. You can do so by:
 
-```
+```cmake
 set_tests_properties(
     OUTPUT_NAME
     PROPERTIES

@@ -6,9 +6,9 @@ ret = vaccel_op( ..., <read args>, <num_read>, <write args>, <num_write>);
 Each argument is passed to the operation using the following structure:
 ```c
 struct vaccel_arg {
-	uint32_t argtype;
-	uint32_t size;
-	void *buf;
+    uint32_t argtype;
+    uint32_t size;
+    void *buf;
 };
 ```
 
@@ -30,10 +30,10 @@ struct vaccel_arg_list* write  = vaccel_args_init(<NUM_ARGS>);
 ```
 
 ## Main Program
-### Add an input argument 
+### Add an input argument
 Let's say we want to call an operation with two input arguments. One integer and one other kind of structure which is not already serialized (eg a struct that contains pointers)
 
-#### Already serialized
+#### Add already serialized input argument
 In the first case, we simply define the address in which our input is located. For example:
 ```c
 int input = ...;
@@ -42,17 +42,17 @@ if (ret != VACCEL_OK) {
   /* A problem occurred */
 }
 ```
-#### Non-serialized
-However, in case that our argument is not serialized, we can't use the previous function. For example, we may need to pass as an argument a struct that contains pointers. For instance, the following structure:
+#### Add non-serialized input argument
+However, in case our argument is not serialized, we can't use the previous function. For example, we may need to pass as an argument a struct that contains pointers. For instance, the following structure:
  ```c
 struct mydata
 {
-	uint32_t size;
-	int* array;
+    uint32_t size;
+    int* array;
 };
  ```
- 
- Unfortunately, it's meaningless to transfer such data remotely, since the pointers won't have any sense to a **different address space**. For that reason, we have to serialize that data before it's used. Actually, we can use ```vaccel_add_nonserial_arg()``` and provide a function that will serialize the data. That function must have the following signature:
+
+Unfortunately, it's meaningless to transfer such data remotely, since the pointers won't have any sense to a **different address space**. For that reason, we have to serialize that data before it's used. Actually, we can use ```vaccel_add_nonserial_arg()``` and provide a function that will serialize the data. That function must have the following signature:
 ```c
 void* serializer(void*, uint32_t*);
 ```
@@ -93,10 +93,10 @@ if (ret != VACCEL_OK) {
 }
 ```
 
-### Add output arguments
+### Add an output argument
 Now, since we may expect by the operation to return some output, we should provide some space in which they will be written:
 
-#### Already serialized
+#### Add already serialized output argument
 In case we expect to get back a float, we simply add the following command:
 ```c
 float out;
@@ -105,7 +105,7 @@ if (ret != VACCEL_OK) {
   /* A problem occurred */
 }
 ```
-#### Non-serialized
+#### Add non-serialized output argument
 Similarly, we call the corresponding function for non-serialized arguments. However we don't define any buffer, because the returned data will be meaningless after the operation ends, since it won't have been deserialized yet. Later (after calling the operation), we can ask for the output using their indices, along with a deserializer function. We also provide the size of the expected output as a parameter.
 
 Let's assume that we expect an instance of ```struct mydata```. We just run:
@@ -126,7 +126,7 @@ ret = vaccel_op( ..., read->list, read->size, write->list, write->size);
 ### Read the output arguments
 After the operation returns, we can ask for the output using the "**extract**" functions.
 
-#### Already serialized
+#### Read already serialized output arguments
 For serialized data (i.e. the float we expect) we have direct access by the buffer we provided:
 ```c
 float ret_val = out;
@@ -137,7 +137,7 @@ float *outptr = vaccel_extract_serial_arg(write->list, 0);
 /* where 0 is the index of our output */
 ```
 
-#### Non-serialized
+#### Read non-serialized output arguments
 On the other hand, for non-serialized output, we cannot just ask for the value, since the returned data has been serialized. Thus, we provide a deserializer function to retrieve the structure. This deserializer must have the following signature:
 
 ```c
@@ -188,10 +188,10 @@ if (ret != VACCEL_OK) {
 
 Inside the plugin, we want to read the input, process it and return the result back to the main program.
 
-### Read the arguments 
+### Read the arguments
 The "**extract**" functions that were previously used, will be used again to receive the input. The rationale remains the same.
 
-#### Already serialized
+#### Read already serialized arguments
 ```c
 static int plugin_func(struct vaccel_arg *read,
         size_t nr_read, struct vaccel_arg *write, size_t nr_write){
@@ -203,7 +203,7 @@ static int plugin_func(struct vaccel_arg *read,
 }
 ```
 
-#### Non-serialized
+#### Read non-serialized arguments
 ```c
 static int plugin_func(struct vaccel_arg *read,
         size_t nr_read, struct vaccel_arg *write, size_t nr_write){
@@ -221,7 +221,7 @@ static int plugin_func(struct vaccel_arg *read,
 
 ### Write to output arguments
 Finally, we want to write the response of the plugin to the buffers that were previously defined. For that reason we use the "**write**" functions
-#### Already serialized
+#### Write already serialized arguments
 Since the user defined that expects to receive a float at index 0, we can provide the value with the following function:
 ```c
 ...
@@ -232,7 +232,7 @@ if (ret != VACCEL_OK) {
 }
 ...
 ```
-#### Non-serialized
+#### Write non-serialized arguments
 
 Similarly, it was also defined that a non-serialized structure will be received at index 1. So:
 ```c

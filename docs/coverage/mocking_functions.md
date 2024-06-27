@@ -1,4 +1,4 @@
-#### Mock functions
+# Mock functions
 
 For basic mock functions we use ```fff.h``` (fake function framework).
 As an example, in ```test_misc.cpp``` a function is mocked by:

@@ -1,4 +1,4 @@
-## Running tests
+# Running tests
 
 To run tests - ensure you have the following:
 
@@ -8,28 +8,30 @@ To run tests - ensure you have the following:
 We follow a similar set of instructions to building vAccel:
 
 Create a build directory:
-```
+```bash
 mkdir build
 cd build
 ```
+
 Run CMake with test support:
-```
+```bash
 cmake ../  -DENABLE_TESTS=ON
-``` 
-Build the project and execute the tests
 ```
+
+Build the project and execute the tests
+```bash
 make
 make test
 ```
 
 For tests requiring a plugin implementation of some operations, use the following command:
 
-```
+```bash
 cmake ../ -DBUILD_PLUGIN_NOOP=ON -DENABLE_TESTS=ON -DBUILD_EXAMPLES=ON
 ```
 
 After running the tests, you should see an output similar to:
-```
+```bash
     Start  1: test_example
  1/17 Test  #1: test_example .....................   Passed    0.01 sec
  .
@@ -41,11 +43,12 @@ After running the tests, you should see an output similar to:
 
 100% tests passed, 0 tests failed out of 17
 ```
-### Test failure
+
+## Test failure
 
 Suppose one of our tests fail, our output will look similar to this:
 
-```
+```bash
 94% tests passed, 1 tests failed out of 17
 
 Total Test time (real) =   0.20 sec
@@ -60,7 +63,7 @@ Output from these tests are in: /.../feat_vaccel_testing/build/Testing/Temporary
 In the log file, we can see where the test failed and what failed:
 
 
-```
+```bash
 .../test/test_blas.cpp:43
 ...............................................................................
 
@@ -77,11 +80,11 @@ Quite handy :)
 
 
 
-### Verbose tests
+## Verbose tests
 
 It is possible to also do the tests individually as well:
 
-```
+```bash
 .../build$ test/test_session
 
 Randomness seeded to: 985339580
@@ -95,7 +98,7 @@ NOTE: Do keep in mind, if your test needs a backend, you need to set that accord
 
 and get output similar to this:
 
-```
+```bash
 Start  8: test_log
 
 8: Test command: /path/to/test_log
