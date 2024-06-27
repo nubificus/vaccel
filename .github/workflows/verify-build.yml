@@ -5,6 +5,7 @@ on:
 
 jobs:
   verify_build:
+    name: Verify Build
     runs-on: [self-hosted, "${{ matrix.archconfig }}", gcc, lite, "2204"]
 
     strategy:

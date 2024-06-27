@@ -1,11 +1,11 @@
-name: Validate Source Code
+name: Validate Source Code and Commit Messages
 
 on:
   workflow_call:
 
 jobs:
   linter_typos:
-    name: linter spell check
+    name: Spell Check Repo
     runs-on: [self-hosted, "x86_64", gcc, lite, "2204"]
 
     steps:
@@ -23,7 +23,7 @@ jobs:
           config: .github/linters/typos.toml
 
   linter_cppcheck:
-    name: linter cppcheck
+    name: Lint C/C++ (cppcheck)
     runs-on: [self-hosted, "x86_64", gcc, lite, "2204"]
 
     env:
@@ -53,7 +53,7 @@ jobs:
             --error-exitcode=2
 
   linter_cpp_linter:
-    name: linter cpp-linter
+    name: Lint C/C++ (cpp-linter)
     runs-on: [self-hosted, "x86_64", gcc, lite, "2204"]
 
     permissions:
@@ -98,7 +98,7 @@ jobs:
         run: exit 1
 
   linter_super_linter:
-    name: linter super-linter
+    name: Lint Python/Shell/Dockerfiles/GHActions/Markdown/YAML
     runs-on: [self-hosted, "x86_64", gcc, lite, "2204"]
 
     permissions:
@@ -123,16 +123,30 @@ jobs:
           DEFAULT_BRANCH: main
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VALIDATE_ALL_CODEBASE: true
-          VALIDATE_PYTHON_BLACK: true
+          VALIDATE_PYTHON_RUFF: true
           VALIDATE_BASH: true
           VALIDATE_DOCKERFILE_HADOLINT: true
           VALIDATE_GITHUB_ACTIONS: true
           VALIDATE_MARKDOWN: true
           VALIDATE_YAML: true
 
+  linter_commitlint:
+    name: Lint Commit Messages
+    runs-on: [self-hosted, "x86_64", gcc, lite, "2204"]
+
+    steps:
+      - uses: wagoid/commitlint-github-action@v6
+        with:
+          configFile: .github/linters/commitlintrc.yml
 
   coverage_diff:
-    needs: [linter_typos, linter_cppcheck, linter_cpp_linter, linter_super_linter]
+    name: Generate Coverage Report
+    needs:
+      - linter_typos
+      - linter_cppcheck
+      - linter_cpp_linter
+      - linter_super_linter
+      - linter_commitlint
     runs-on: [self-hosted, "x86_64", gcc, lite, "2204"]
 
     env:
