@@ -46,37 +46,29 @@ int main(int argc, char *argv[])
 	//float B[K*N];
 	//float C[M*N];
 	float *A, *B, *C;
-	int64_t *m, *n, *k;
+	int m = M, n = N, k = K;
 
-	A = (float*) malloc(M * K * sizeof(float));
+	A = (float*) malloc(m * k * sizeof(float));
 	if (!A) {
 		fprintf(stderr, "Could not allocate memory for Input A matrix\n");
 		ret = VACCEL_ENOMEM;
 		goto free_out;
 	}
-	B = (float*) malloc(K * N * sizeof(float));
+	B = (float*) malloc(k * n * sizeof(float));
 	if (!B) {
 		fprintf(stderr, "Could not allocate memory for target matrix\n");
 		ret = VACCEL_ENOMEM;
 		goto free_out_1;
 	}
 
-	C = (float*) malloc(M * N * sizeof(float));
+	C = (float*) malloc(m * n * sizeof(float));
 	if (!C) {
 		fprintf(stderr, "Could not allocate memory for target matrix\n");
 		ret = VACCEL_ENOMEM;
 		goto free_out_2;
 	}
 
-	m = malloc(sizeof(int64_t));
-	n = malloc(sizeof(int64_t));
-	k = malloc(sizeof(int64_t));
-
-	*m = M;
-	*n = N;
-	*k = K;
-
-	init(M, N, K, A, B, C);
+	init(m, n, k, A, B, C);
 
 	struct vaccel_session session;
 
@@ -91,16 +83,16 @@ int main(int argc, char *argv[])
 	enum vaccel_op_type op_type = VACCEL_BLAS_SGEMM;
 	struct vaccel_arg read[8] = {
 		{ .size = sizeof(enum vaccel_op_type), .buf = &op_type},
-		{ .size = sizeof(int), .buf = m},
-		{ .size = sizeof(int), .buf = n},
-		{ .size = sizeof(int), .buf = k},
+		{ .size = sizeof(int), .buf = &m},
+		{ .size = sizeof(int), .buf = &n},
+		{ .size = sizeof(int), .buf = &k},
 		{ .size = sizeof(float), .buf = &alpha},
-		{ .size = sizeof(float) * M * K, .buf = A},
-		{ .size = sizeof(float) * N * K, .buf = B},
+		{ .size = sizeof(float) * m * k, .buf = A},
+		{ .size = sizeof(float) * n * k, .buf = B},
 		{ .size = sizeof(float), .buf = &beta},
 	};
 	struct vaccel_arg write[1] = {
-		{ .size = sizeof(float) * M * N, .buf = C},
+		{ .size = sizeof(float) * m * n, .buf = C},
 	};
 
 	clock_gettime(CLOCK_MONOTONIC_RAW, &t0);
@@ -114,7 +106,7 @@ int main(int argc, char *argv[])
 	fprintf(stdout, "Execution time: %lf msec\n",
 			time_diff_usec(t0, t1) / 10e3);
 	if (data_fp)
-		fwrite(C, sizeof(float), M * N, data_fp);
+		fwrite(C, sizeof(float), m * n, data_fp);
 
 out:
 	vaccel_sess_free(&session);
