@@ -10,6 +10,7 @@
 #include <utils.hpp>
 
 extern "C" {
+#include "utils.h"
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -19,7 +20,6 @@ extern "C" {
 #include <sys/types.h>
 #include <unistd.h>
 #include <vaccel.h>
-#include "utils.h"
 }
 
 TEST_CASE("saved_tf_model_from_memory")
@@ -45,10 +45,12 @@ TEST_CASE("saved_tf_model_from_memory")
     ret = vaccel_tf_saved_model_set_checkpoint(model, ptr, len);
     REQUIRE(ptr);
     REQUIRE(len);
+    REQUIRE(ret == VACCEL_OK);
 
     ptr = read_file_from_dir(path, "variables/variables.index", &len);
     REQUIRE(ptr);
     REQUIRE(len);
+
     ret = vaccel_tf_saved_model_set_var_index(model, ptr, len);
     REQUIRE(ret == VACCEL_OK);
 

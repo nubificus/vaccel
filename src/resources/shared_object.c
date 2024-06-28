@@ -13,16 +13,16 @@
  */
 
 #include "resources/shared_object.h"
-#include "resources.h"
-#include "log.h"
 #include "error.h"
+#include "log.h"
+#include "resources.h"
 #include "session.h"
 
+#include <errno.h>
 #include <stdio.h>
-#include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
+#include <unistd.h>
 
 static int shared_object_destructor(void *data)
 {

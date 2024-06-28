@@ -12,9 +12,6 @@
  * limitations under the License.
  */
 
-#ifndef __LOG_H__
-#define __LOG_H__
+#pragma once
 
 #include "include/log.h"
-
-#endif /* __LOG_H__ */

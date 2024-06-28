@@ -12,31 +12,29 @@
  * limitations under the License.
  */
 
-#ifndef __VACCEL_H__
-#define __VACCEL_H__
+#pragma once
 
 #define VACCELRT_VERSION "@VACCELRT_VERSION@"
 
 #include "error.h"
 #include "log.h"
-#include "plugin.h"
-#include "session.h"
-#include "vaccel_id.h"
-#include "ops/vaccel_ops.h"
+#include "misc.h"
 #include "ops/blas.h"
-#include "ops/minmax.h"
 #include "ops/exec.h"
+#include "ops/fpga.h"
 #include "ops/genop.h"
 #include "ops/image.h"
+#include "ops/minmax.h"
 #include "ops/noop.h"
+#include "ops/opencv.h"
 #include "ops/tf.h"
 #include "ops/tflite.h"
-#include "ops/fpga.h"
-#include "ops/opencv.h"
 #include "ops/torch.h"
+#include "ops/vaccel_ops.h"
+#include "plugin.h"
 #include "resources/shared_object.h"
 #include "resources/single_model.h"
 #include "resources/tf_saved_model.h"
-#include "misc.h"
+#include "session.h"
+#include "vaccel_id.h"
 #include "vaccel_prof.h"
-#endif /* __VACCEL_H__ */

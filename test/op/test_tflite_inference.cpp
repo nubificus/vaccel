@@ -9,9 +9,9 @@
 #include <utils.hpp>
 
 extern "C" {
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <inttypes.h>
 #include <vaccel.h>
 }
 
@@ -136,8 +136,8 @@ TEST_CASE("inference")
 
     int32_t dims[] = { 1, 30 };
     float data[30];
-    for (int i = 0; i < 30; ++i)
-        data[i] = 1.00;
+    for (float &i : data)
+	    i = 1.00;
 
     struct vaccel_tflite_tensor* in =
         vaccel_tflite_tensor_new(2, dims, VACCEL_TFLITE_FLOAT32);
@@ -158,7 +158,7 @@ TEST_CASE("inference")
         printf("dim[%d]: %" PRId32 "\n", i, out->dims[i]);
 
     printf("Result Tensor :\n");
-    float* offsets = (float*)out->data;
+    auto *offsets = (float *)out->data;
     for (unsigned int i = 0; i < min(10, out->size / sizeof(float)); ++i)
         printf("%f\n", offsets[i]);
 

@@ -12,14 +12,15 @@
  * limitations under the License.
  */
 
-#ifndef __VACCEL_ERROR_H__
-#define __VACCEL_ERROR_H__
+#pragma once
 
 #include <errno.h>
 
 /* vaccel return codes */
-#define VACCEL_OK           0             /* All Good :D */
-#define VACCEL_EINVAL       EINVAL        /* EINVAL: Invalid argument */
+enum {
+	VACCEL_OK = 0 /* All Good :D */
+};
+#define VACCEL_EINVAL EINVAL /* EINVAL: Invalid argument */
 #define VACCEL_ENOMEM       ENOMEM        /* ENOMEM: Out of memory */
 #define VACCEL_ENOTSUP      ENOTSUP       /* EOPNOTSUPP: Operation not supported */
 #define VACCEL_EINPROGRESS  EINPROGRESS   /* EINPROGRESS: Operation now in progress */
@@ -35,5 +36,3 @@
 #define VACCEL_ENAMETOOLONG ENAMETOOLONG  /* ENAMETOOLONG: File name too long */
 #define VACCEL_EUSERS       EUSERS        /* Too many users */
 #define VACCEL_EPERM        EPERM         /* Operation not permitted */
-
-#endif /* __VACCEL_ERROR_H__ */

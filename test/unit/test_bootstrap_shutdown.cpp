@@ -17,9 +17,11 @@ extern "C" {
 #include <vaccel.h>
 }
 
-#define MAX_VACCEL_SESSIONS 1024
-#define MAX_RESOURCES 2048
-#define MAX_RESOURCE_RUNDIR 1024
+enum {
+	MAX_VACCEL_SESSIONS = 1024,
+	MAX_RESOURCES = 2048,
+	MAX_RESOURCE_RUNDIR = 1024
+};
 
 TEST_CASE("plugin")
 {
@@ -39,13 +41,14 @@ TEST_CASE("resource")
     ret = id_pool_new(&id_pool, MAX_RESOURCES);
     REQUIRE(ret == VACCEL_OK);
 
-    for (int i = 0; i < VACCEL_RES_MAX; ++i)
-        list_init(&live_resources[i]);
+    for (auto &live_resource : live_resources)
+	    list_init(&live_resource);
 
-    for (int i = 0; i < VACCEL_RES_MAX; ++i) {
-        struct vaccel_resource *res, *tmp;
-        for_each_vaccel_resource_safe(res, tmp, &live_resources[i])
-            resource_destroy(res);
+    for (auto &live_resource : live_resources) {
+	    struct vaccel_resource *res;
+	    struct vaccel_resource *tmp;
+	    for_each_vaccel_resource_safe(res, tmp, &live_resource)
+		    resource_destroy(res);
     }
     ret = id_pool_destroy(&id_pool);
     REQUIRE(ret == VACCEL_OK);
@@ -63,8 +66,8 @@ TEST_CASE("session")
     ret = id_pool_new(&sessions.ids, MAX_VACCEL_SESSIONS);
     REQUIRE(ret == VACCEL_OK);
 
-    for (size_t i = 0; i < MAX_VACCEL_SESSIONS; ++i)
-        sessions.running_sessions[i] = NULL;
+    for (auto &running_session : sessions.running_sessions)
+	    running_session = nullptr;
 
     sessions.initialized = true;
 

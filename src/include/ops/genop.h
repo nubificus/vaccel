@@ -12,11 +12,10 @@
  * limitations under the License.
  */
 
-#ifndef __VACCEL_GENOP_H__
-#define __VACCEL_GENOP_H__
+#pragma once
 
-#include <stdint.h>
 #include "vaccel_args.h"
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -33,5 +32,3 @@ int vaccel_genop(struct vaccel_session *sess, struct vaccel_arg *read,
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* __VACCEL_GENOP_H__ */

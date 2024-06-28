@@ -14,15 +14,15 @@
 #define _POSIX_C_SOURCE 200809L
 
 #include "resources/single_model.h"
-#include "resources.h"
-#include "log.h"
 #include "error.h"
+#include "log.h"
+#include "resources.h"
 #include "session.h"
 
 #include <stdio.h>
-#include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 static int single_model_destructor(void *data)
 {

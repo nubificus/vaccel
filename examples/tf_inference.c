@@ -12,12 +12,12 @@
  * limitations under the License.
  */
 
-#include <stdlib.h>
-#include <stdio.h>
 #include <inttypes.h>
+#include <stdio.h>
+#include <stdlib.h>
 
-#include <vaccel.h>
 #include <ops/tf.h>
+#include <vaccel.h>
 
 #define min(a, b) ((a) < (b) ? (a) : (b))
 

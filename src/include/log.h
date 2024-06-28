@@ -12,14 +12,13 @@
  * limitations under the License.
  */
 
-#ifndef __VACCEL_LOG__
-#define __VACCEL_LOG__
+#pragma once
+
+#include <slog.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include <slog.h>
 
 int vaccel_log_init(void);
 int vaccel_log_shutdown(void);
@@ -34,5 +33,3 @@ int vaccel_log_shutdown(void);
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* __VACCEL_LOG__ */

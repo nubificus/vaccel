@@ -12,15 +12,15 @@
  * limitations under the License.
  */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <unistd.h>
 
-#include <vaccel.h>
 #include "../src/utils.h"
+#include <vaccel.h>
 
 int main(int argc, char *argv[])
 {

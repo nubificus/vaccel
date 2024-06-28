@@ -1,15 +1,17 @@
-#include <vaccel.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <time.h>
+#include <vaccel.h>
 
 #define timespec_usec(t) ((double)(t).tv_nsec / 10e3 + (double)(t).tv_sec * 10e6)
 #define time_diff_usec(t0, t1) (timespec_usec((t1)) - timespec_usec((t0)))
 
 int main(int argc, char *argv[])
 {
-	double min, max;
-	int low_threshold, high_threshold;
+	double min;
+	double max;
+	int low_threshold;
+	int high_threshold;
 	int ret;
 
 	if (argc != 5) {
@@ -62,7 +64,8 @@ int main(int argc, char *argv[])
 		goto free_out;
 	}
 
-	struct timespec t0, t1;
+	struct timespec t0;
+	struct timespec t1;
 
 	clock_gettime(CLOCK_MONOTONIC_RAW, &t0);
 	ret = vaccel_minmax(&session, indata, ndata, low_threshold,

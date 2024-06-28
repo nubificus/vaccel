@@ -18,7 +18,10 @@ extern "C" {
 }
 
 // Mock cleanup function for resources
-int cleanup_resource_mock([[maybe_unused]] void* data) { return 0; }
+auto cleanup_resource_mock([[maybe_unused]] void *data) -> int
+{
+	return 0;
+}
 
 // Test case for resource destruction
 TEST_CASE("destroy_OK", "[Resources]")
@@ -36,11 +39,11 @@ TEST_CASE("destroy_OK", "[Resources]")
     // Test handling of null resource
     SECTION("Null resource")
     {
-        ret = resource_new(NULL, test_type, test_data, cleanup_res_test);
-        REQUIRE(ret == VACCEL_EINVAL);
+	    ret = resource_new(nullptr, test_type, test_data, cleanup_res_test);
+	    REQUIRE(ret == VACCEL_EINVAL);
 
-        ret = resource_destroy(NULL);
-        REQUIRE(ret == VACCEL_EINVAL);
+	    ret = resource_destroy(nullptr);
+	    REQUIRE(ret == VACCEL_EINVAL);
     }
 
     // Test creation and destruction of a valid resource
@@ -216,7 +219,7 @@ TEST_CASE("initialising with no resources bootstrapped")
     ret = resource_destroy(&test_res);
     REQUIRE(ret == VACCEL_EPERM);
 
-    ret = resource_create_rundir(NULL);
+    ret = resource_create_rundir(nullptr);
     REQUIRE(ret == VACCEL_EINVAL);
 
     ret = resources_cleanup();

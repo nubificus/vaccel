@@ -14,18 +14,17 @@
 #define _POSIX_C_SOURCE 200809L
 
 #include "resources.h"
-#include "file.h"
 #include "error.h"
+#include "file.h"
 #include "log.h"
 #include "utils.h"
 
-#include <stdio.h>
-#include <unistd.h>
-#include <string.h>
-#include <stdio.h>
-#include <sys/mman.h>
 #include <errno.h>
 #include <stdbool.h>
+#include <stdio.h>
+#include <string.h>
+#include <sys/mman.h>
+#include <unistd.h>
 
 /* Create a file resource from an existing file in the filesystem
  *

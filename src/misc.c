@@ -16,8 +16,8 @@
 
 #include "misc.h"
 #include "error.h"
-#include "plugin.h"
 #include "log.h"
+#include "plugin.h"
 
 #include "session.h"
 

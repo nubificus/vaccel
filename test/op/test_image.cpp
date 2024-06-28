@@ -16,6 +16,7 @@
 #include <utils.hpp>
 
 extern "C" {
+#include "utils.h"
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -23,7 +24,6 @@ extern "C" {
 #include <sys/types.h>
 #include <unistd.h>
 #include <vaccel.h>
-#include "utils.h"
 }
 
 TEST_CASE("classify")
@@ -32,7 +32,8 @@ TEST_CASE("classify")
     int ret;
     char* image;
     size_t image_size = 0;
-    char out_text[512], out_imagename[512];
+    char out_text[512];
+    char out_imagename[512];
 
     struct vaccel_session sess;
     sess.session_id = 0;
@@ -55,6 +56,7 @@ TEST_CASE("classify")
     ret = vaccel_image_classification(
         &sess, image, (unsigned char*)out_text, (unsigned char*)out_imagename,
         image_size, sizeof(out_text), sizeof(out_imagename));
+    REQUIRE(ret == VACCEL_OK);
 
     printf("classification tags: %s\n", out_text);
 

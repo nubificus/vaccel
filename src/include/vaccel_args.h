@@ -12,13 +12,11 @@
  * limitations under the License.
  */
 
-#ifndef __INCLUDE_VACCEL_ARGS_H__
-#define __INCLUDE_VACCEL_ARGS_H__
-
-#include <stddef.h>
-#include <stdint.h>
+#pragma once
 
 #include "error.h"
+#include <stddef.h>
+#include <stdint.h>
 
 struct vaccel_arg {
 	uint32_t argtype;
@@ -116,5 +114,3 @@ int vaccel_write_nonserial_arg(
 
 /* Delete any allocated memory in the arg-list structure*/
 int vaccel_delete_args(struct vaccel_arg_list* args);
-
-#endif

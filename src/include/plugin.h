@@ -12,16 +12,15 @@
  * limitations under the License.
  */
 
-#ifndef __VACCEL_PLUGIN_H__
-#define __VACCEL_PLUGIN_H__
+#pragma once
 
-#include <stdio.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "session.h"
-#include "resources.h"
 #include "list.h"
+#include "resources.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -57,7 +56,8 @@ static const char *vaccel_plugin_type_name[] = {
 static inline const char *vaccel_plugin_type_str(enum vaccel_plugin_type type)
 {
 	int i = 0;
-	char *p, *plugin_type_str = (char*)malloc(100);
+	char *p;
+	char *plugin_type_str = (char *)malloc(100);
 	unsigned int tester = 1;
 	p = plugin_type_str;
 	for (i = 0; i < VACCEL_PLUGIN_TYPE_MAX>>9; i++) {
@@ -119,20 +119,20 @@ struct vaccel_plugin {
 	struct vaccel_plugin_info *info;
 };
 
-extern struct vaccel_plugin _vaccel_this_plugin;
-#define THIS_MODULE (&_vaccel_this_plugin)
+extern struct vaccel_plugin vaccel_this_plugin;
+#define THIS_MODULE (&vaccel_this_plugin)
 
 #define VACCEL_MODULE(...)                                                     \
 	static struct vaccel_plugin_info                                       \
 			_vaccel_plugin_info = { __VA_ARGS__ };                 \
 	__attribute__((visibility("hidden"))) struct vaccel_plugin             \
-		_vaccel_this_plugin = {                                        \
+		vaccel_this_plugin = {                                        \
 			.dl_handle = NULL,                                     \
-			.entry = LIST_ENTRY_INIT(_vaccel_this_plugin.entry),   \
-			.ops = LIST_ENTRY_INIT(_vaccel_this_plugin.ops),       \
+			.entry = LIST_ENTRY_INIT(vaccel_this_plugin.entry),   \
+			.ops = LIST_ENTRY_INIT(vaccel_this_plugin.ops),       \
 			.info = &_vaccel_plugin_info                           \
 		};                                                             \
-	const struct vaccel_plugin *vaccel_plugin = &_vaccel_this_plugin;
+	const struct vaccel_plugin *vaccel_plugin = &vaccel_this_plugin;
 
 struct vaccel_op {
 	/* operation type */
@@ -168,5 +168,3 @@ int register_plugin_functions(struct vaccel_op *plugin_ops, size_t nr_ops);
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* __VACCEL_PLUGIN_H__ */

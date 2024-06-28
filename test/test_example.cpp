@@ -8,7 +8,7 @@
 #include <catch.hpp>
 #include <cstdint>
 
-uint32_t factorial(uint32_t number)
+auto factorial(uint32_t number) -> uint32_t
 {
     return number <= 1 ? number : factorial(number - 1) * number;
 }
@@ -19,5 +19,5 @@ TEST_CASE("Factorials are computed", "[factorial]")
     REQUIRE(factorial(2) == 2);
     REQUIRE(factorial(3) == 6);
     REQUIRE(factorial(4) == 24);
-    REQUIRE(factorial(10) == 3'628'800);
+    REQUIRE(factorial(10) == 3628800);
 }

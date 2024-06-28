@@ -16,17 +16,17 @@
 #include "vaccel_ops.h"
 
 #include "blas.h"
-#include "minmax.h"
 #include "exec.h"
-#include "image.h"
-#include "noop.h"
 #include "fpga.h"
+#include "image.h"
+#include "minmax.h"
+#include "noop.h"
 #include "opencv.h"
 
-#include <session.h>
+#include "torch.h"
 #include <error.h>
 #include <log.h>
-#include "torch.h"
+#include <session.h>
 
 typedef int (*unpack_func_t)(
 	struct vaccel_session *sess,

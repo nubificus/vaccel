@@ -12,15 +12,13 @@
  * limitations under the License.
  */
 
-#ifndef __SESSION_H__
-#define __SESSION_H__
+#pragma once
 
 #include "include/session.h"
-
-#include "resources.h"
 #include "list.h"
+#include "resources.h"
 
-#define MAX_SESSION_RUNDIR_PATH 512
+enum { MAX_SESSION_RUNDIR_PATH = 512 };
 
 /* Struct used to represent a resource registered
  * to a session
@@ -54,5 +52,3 @@ struct session_resources {
 
 int sessions_bootstrap(void);
 int sessions_cleanup(void);
-
-#endif /* __VACCEL_SESSION_H__ */

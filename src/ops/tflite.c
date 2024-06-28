@@ -14,16 +14,16 @@
 #define _POSIX_C_SOURCE 200809L
 
 #include "error.h"
-#include "plugin.h"
-#include "log.h"
-#include "vaccel_ops.h"
 #include "genop.h"
-#include "tflite.h"
+#include "log.h"
+#include "plugin.h"
 #include "session.h"
+#include "tflite.h"
+#include "vaccel_ops.h"
 #include "vaccel_prof.h"
 
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 struct vaccel_tflite_tensor *

@@ -12,9 +12,6 @@
  * limitations under the License.
  */
 
-#ifndef __ERROR_H__
-#define __ERROR_H__
+#pragma once
 
 #include "include/error.h"
-
-#endif /* __ERROR_H__ */

@@ -12,12 +12,11 @@
  * limitations under the License.
  */
 
-#ifndef __VACCEL_LIST_H__
-#define __VACCEL_LIST_H__
+#pragma once
 
-#include <stdlib.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdlib.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -36,5 +35,3 @@ typedef list_entry_t list_t;
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* __VACCEL_LIST_H__ */

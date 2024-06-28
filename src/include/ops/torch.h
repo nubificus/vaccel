@@ -1,8 +1,7 @@
-#ifndef __VACCEL_TORCH_H__
-#define __VACCEL_TORCH_H__
+#pragma once
 
-#include <stdint.h>
 #include <stddef.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -142,5 +141,3 @@ struct vaccel_torch_buffer *vaccel_torch_buffer_new(char *data, size_t size);
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* __VACCEL_TORCH_H__ */

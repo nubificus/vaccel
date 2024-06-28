@@ -9,9 +9,9 @@
 #include <utils.hpp>
 
 extern "C" {
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <inttypes.h>
 #include <vaccel.h>
 }
 
@@ -66,15 +66,15 @@ TEST_CASE("main")
     ret = vaccel_tf_session_load(&vsess, &model, &status);
     REQUIRE(ret == VACCEL_OK);
 
-    struct vaccel_tf_buffer run_options = { NULL, 0 };
+    struct vaccel_tf_buffer run_options = { nullptr, 0 };
     const char* in_node_name = "serving_default_input_1";
 
     struct vaccel_tf_node in_node = { const_cast<char*>(in_node_name), 0 };
 
     int64_t dims[] = { 1, 30 };
     float data[30];
-    for (int i = 0; i < 30; ++i)
-        data[i] = 1.00;
+    for (float &i : data)
+	    i = 1.00;
 
     struct vaccel_tf_tensor* in = vaccel_tf_tensor_new(2, dims, VACCEL_TF_FLOAT);
     REQUIRE(in);
@@ -97,7 +97,7 @@ TEST_CASE("main")
         printf("dim[%d]: %" PRId64 "\n", i, out->dims[i]);
 
     printf("Result Tensor :\n");
-    float* offsets = (float*)out->data;
+    auto *offsets = (float *)out->data;
     for (unsigned int i = 0; i < min(10, out->size / sizeof(float)); ++i)
         printf("%f\n", offsets[i]);
 

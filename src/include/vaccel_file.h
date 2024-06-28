@@ -14,10 +14,9 @@
 
 #pragma once
 
-#include <stddef.h>
-#include <stdbool.h>
-
 #include "vaccel_id.h"
+#include <stdbool.h>
+#include <stddef.h>
 
 #ifdef __cplusplus
 extern "C" {

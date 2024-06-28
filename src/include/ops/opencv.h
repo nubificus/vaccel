@@ -1,9 +1,7 @@
-#ifndef __VACCEL_OPENCV_H__
-#define __VACCEL_OPENCV_H__
+#pragma once
 
-#include <stdint.h>
 #include <stddef.h>
-
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -15,6 +13,4 @@ int vaccel_opencv_unpack(struct vaccel_session *sess, struct vaccel_arg *read,
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* __VACCEL_OPENCV_H__ */
 

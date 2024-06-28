@@ -16,12 +16,12 @@
 
 #include "exec.h"
 #include "error.h"
-#include "plugin.h"
-#include "log.h"
-#include "vaccel_ops.h"
 #include "genop.h"
+#include "log.h"
+#include "plugin.h"
 #include "resources/shared_object.h"
 #include "session.h"
+#include "vaccel_ops.h"
 #include "vaccel_prof.h"
 
 struct vaccel_prof_region exec_op_stats =
@@ -29,7 +29,6 @@ struct vaccel_prof_region exec_op_stats =
 struct vaccel_prof_region exec_res_op_stats =
 	VACCEL_PROF_REGION_INIT("vaccel_exec_with_resource_op");
 
-#include <stdio.h>
 int vaccel_exec(struct vaccel_session *sess, const char *library,
 				const char *fn_symbol, struct vaccel_arg *read,
 				size_t nr_read, struct vaccel_arg *write, size_t nr_write)
@@ -129,7 +128,7 @@ int vaccel_exec_with_res_unpack(struct vaccel_session *sess,
 		return VACCEL_EINVAL;
 	}
 
-	char *library = (char*)object->file.path;
+	char *library = object->file.path;
 	char *fn_symbol = (char *)read[1].buf;
 
 	/* Pass on the rest of the read and all write arguments */

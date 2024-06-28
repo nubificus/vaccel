@@ -1,9 +1,9 @@
 #include "session.h"
-#include "vaccel_ops.h"
+#include "error.h"
 #include "genop.h"
 #include "log.h"
-#include "error.h"
 #include "plugin.h"
+#include "vaccel_ops.h"
 
 #include "minmax.h"
 

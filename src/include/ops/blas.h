@@ -12,11 +12,10 @@
  * limitations under the License.
  */
 
-#ifndef __VACCEL_BLAS_H__
-#define __VACCEL_BLAS_H__
+#pragma once
 
-#include <stdint.h>
 #include <stddef.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -38,5 +37,3 @@ int vaccel_sgemm(
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* __VACCEL_BLAS_H__ */

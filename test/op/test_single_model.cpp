@@ -10,6 +10,7 @@
 #include <utils.hpp>
 
 extern "C" {
+#include "utils.h"
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -19,7 +20,6 @@ extern "C" {
 #include <sys/types.h>
 #include <unistd.h>
 #include <vaccel.h>
-#include "utils.h"
 }
 
 TEST_CASE("single_model_from_memory")
@@ -36,7 +36,7 @@ TEST_CASE("single_model_from_memory")
     REQUIRE(ret == 0);
     REQUIRE(len);
 
-    ret = vaccel_single_model_set_file(model, NULL, ptr, len);
+    ret = vaccel_single_model_set_file(model, nullptr, ptr, len);
     REQUIRE(ret == VACCEL_OK);
 
     ret = vaccel_single_model_register(model);

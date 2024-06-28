@@ -13,13 +13,13 @@
  */
 
 #include <assert.h>
+#include <fcntl.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
+#include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <string.h>
-#include <fcntl.h>
 #include <unistd.h>
 
 #include <vaccel.h>
@@ -103,6 +103,8 @@ int mytestfunc_nonser(struct vaccel_arg *input, size_t nr_in,
 
 	/* Copy the numbers */
 	int *numbuf = malloc(input_data->size*sizeof(int));
+	if (!numbuf)
+		return 1;
 	memcpy(numbuf, input_data->array, input_data->size * sizeof(int));
 	
 	/* Reverse the numbers */
@@ -113,10 +115,9 @@ int mytestfunc_nonser(struct vaccel_arg *input, size_t nr_in,
 	/* Output */
 	struct mydata* output_data = input_data;
 	int ret = vaccel_write_nonserial_arg(output, 0, output_data, ser);
-	
 	if (ret != VACCEL_OK) {
 		printf("Could not write to non-serialized arg\n");
-		return 1;
+		ret = 1;
 	}
 
 	/* Free Memory */
@@ -124,5 +125,5 @@ int mytestfunc_nonser(struct vaccel_arg *input, size_t nr_in,
 	free(output_data);
 	free(numbuf);
 
-	return 0;
+	return ret;
 }

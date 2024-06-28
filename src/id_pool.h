@@ -12,13 +12,11 @@
  * limitations under the License.
  */
 
-#ifndef __GENID_H__
-#define __GENID_H__
-
-#include <stdatomic.h>
-#include <stdint.h>
+#pragma once
 
 #include "include/vaccel_id.h"
+#include <stdatomic.h>
+#include <stdint.h>
 
 typedef struct id_pool {
 	/* Pool of ids */
@@ -42,5 +40,3 @@ vaccel_id_t id_pool_get(id_pool_t *pool);
 
 /* Release an id back to the pool */
 void id_pool_release(id_pool_t *pool, vaccel_id_t id);
-
-#endif /* __GENID_H__ */

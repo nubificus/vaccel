@@ -4,17 +4,15 @@
 
 extern "C"
 {
-#include <stdlib.h>
-#include <stdio.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <fcntl.h>
-#include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
 #include <vaccel.h>
 }
-
-#include "vaccel_args.c"
 
 struct mydata
 {
@@ -22,8 +20,9 @@ struct mydata
 	int* array;
 };
 
-void* ser(void* buf, uint32_t* bytes){
-	struct mydata* non_ser = (struct mydata*)buf;
+auto ser(void *buf, uint32_t *bytes) -> void *
+{
+	auto *non_ser = (struct mydata *)buf;
 
 	uint32_t size = (non_ser->size + 1) * sizeof(int);
 	int* ser_buf = (int*)malloc(size);
@@ -38,14 +37,13 @@ void* ser(void* buf, uint32_t* bytes){
 	return ser_buf;
 }
 
-
-void* deser(void* buf, uint32_t bytes){
-    printf("bytes: %d\n", (int)bytes);
+auto deser(void *buf, uint32_t bytes) -> void *
+{
+	printf("bytes: %d\n", (int)bytes);
 	int *ser_buf = (int*)buf;
 	int size = ser_buf[0];
 
-	struct mydata* new_buf = 
-		(struct mydata*)malloc(sizeof(struct mydata));
+	auto *new_buf = (struct mydata *)malloc(sizeof(struct mydata));
 
 	new_buf->size = (uint32_t)size;
 	new_buf->array = (int*)malloc(new_buf->size * sizeof(int));
@@ -96,7 +94,7 @@ void* deser(void* buf, uint32_t bytes){
 
 TEST_CASE("exec_helpers")
 {
-    int ret;
+    int ret = 0;
     struct mydata mydata_instance;
     mydata_instance.size = 5;
 	mydata_instance.array = (int*)malloc(5*sizeof(int));
@@ -106,13 +104,12 @@ TEST_CASE("exec_helpers")
     uint32_t bytes;
     void* serbuf = ser(&mydata_instance, &bytes);
 
-
     // vaccel_args_init() Testing
     struct vaccel_arg_list* read  = vaccel_args_init(1);
     struct vaccel_arg_list* write = vaccel_args_init(1);
 
-    if (!read || !write){
-        ret = 1;
+    if ((read == nullptr) || (write == nullptr)) {
+	    ret = 1;
     }
     REQUIRE(ret != 1);
 

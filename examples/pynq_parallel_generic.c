@@ -1,16 +1,16 @@
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include <vaccel.h>
 
+enum { N = 2 };
+
 int main()
 {
-
 	/* Doesnt work unless HLS but the other repo has better implementation */
 
 	int ret;
 	struct vaccel_session sess;
-	int N = 2;
 
 	float a[N * N] = { 1, 2, 3, 4 };
 	float b[N * N] = { 2, 3, 4, 5 };
@@ -45,11 +45,11 @@ int main()
 		goto close_session;
 	}
 	printf("C: ");
-	for (int i = 0; i < (int)sizeof(a); i++) {
+	for (int i = 0; i < N * N; i++) {
 		printf("%f\n", c[i]);
 	}
 	printf("D: ");
-	for (int i = 0; i < (int)sizeof(a); i++) {
+	for (int i = 0; i < N * N; i++) {
 		printf("%f\n", d[i]);
 	}
 

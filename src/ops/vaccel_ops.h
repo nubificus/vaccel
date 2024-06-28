@@ -12,9 +12,6 @@
  * limitations under the License.
  */
 
-#ifndef __OPS_H__
-#define __OPS_H__
+#pragma once
 
 #include "include/ops/vaccel_ops.h"
-
-#endif /* __OPS_H__ */

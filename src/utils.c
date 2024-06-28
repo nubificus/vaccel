@@ -16,15 +16,15 @@
 #include "error.h"
 #include "log.h"
 
-#include <sys/stat.h>
-#include <fcntl.h>
 #include <dirent.h>
-#include <stdbool.h>
-#include <unistd.h>
 #include <errno.h>
-#include <string.h>
+#include <fcntl.h>
+#include <stdbool.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/mman.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 bool dir_exists(const char *path)
 {
@@ -48,7 +48,8 @@ int cleanup_rundir(const char *path)
 
 int read_file(const char *path, void **data, size_t *size)
 {
-	int fd, ret;
+	int fd;
+	int ret;
 
 	fd = open(path, O_RDONLY);
 	if (fd == -1) {
@@ -80,16 +81,16 @@ int read_file(const char *path, void **data, size_t *size)
 	size_t bytes = stat.st_size;
 	ssize_t ptr = 0;
 	while (bytes) {
-		ssize_t ret = read(fd, &buff[ptr], bytes);
-		if (ret < 0) {
+		ssize_t rret = read(fd, &buff[ptr], bytes);
+		if (rret < 0) {
 			vaccel_error("Could not read file %s: %s", path, strerror(errno));
 			free(buff);
 			ret = errno;
 			goto close_file;
 		}
 
-		ptr += ret;
-		bytes -= ret;
+		ptr += rret;
+		bytes -= rret;
 	}
 
 	*data = buff;
@@ -102,7 +103,8 @@ close_file:
 
 int read_file_mmap(const char *path, void **data, size_t *size)
 {
-	int fd, ret;
+	int fd;
+	int ret;
 
 	fd = open(path, O_RDONLY);
 	if (fd == -1) {

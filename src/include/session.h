@@ -12,11 +12,10 @@
  * limitations under the License.
  */
 
-#ifndef __VACCEL_SESSION_H__
-#define __VACCEL_SESSION_H__
+#pragma once
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -69,5 +68,3 @@ bool vaccel_sess_has_resource(
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* __VACCEL_SESSION_H__ */

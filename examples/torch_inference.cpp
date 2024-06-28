@@ -1,24 +1,24 @@
-#include <session.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <sys/types.h>
-#include <sys/stat.h>
+#include <cstdio>
+#include <cstdlib>
 #include <fcntl.h>
+#include <session.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <unistd.h>
 
 #include <vaccel.h>
 extern "C" {
 #include "../src/utils.h"
 }
-#include <iostream>
-#include <vector>
-#include <random>
+#include <cstddef>
 #include <cstring>
+#include <iostream>
+#include <random>
+#include <vector>
 
-std::vector < float >
-random_input_generator (int min_value = 1,
-		int max_value = 100,
-		size_t vector_size = 150528, bool is_print = true)
+auto random_input_generator(int min_value = 1, int max_value = 100,
+			    size_t vector_size = 150528,
+			    bool is_print = true) -> std::vector<float>
 {
 	// Create a random number generator engine
 	std::random_device rd;
@@ -42,22 +42,21 @@ random_input_generator (int min_value = 1,
 			std::cout << " " << value;
 			break;
 		}
-		std::cout << std::endl;
+		std::cout << '\n';
 	}
 	return res_data;
 }
 
-	int
-main (int argc, char **argv)
+auto main(int argc, char **argv) -> int
 {
 	struct vaccel_session sess;
 	struct vaccel_single_model model;
 	struct vaccel_torch_buffer run_options;
 	float *offsets;
 	int ret;
-	char *model_path;
+	char *model_path = argv[2];
 	std::vector < float >res_data = random_input_generator ();
-	res_data.resize (3 * 224 * 224);
+	res_data.resize(static_cast<size_t>(3 * 224 * 224));
 	int64_t dims[] = { 1, 224, 224, 3 };
 	struct vaccel_torch_tensor *in;
 	struct vaccel_torch_tensor *out;
@@ -68,17 +67,13 @@ main (int argc, char **argv)
 		exit (1);
 	}
 
-	model_path = strdup (argv[2]);
-
 	ret = vaccel_single_model_set_path (&model, model_path);
-	if (ret)
-	{
+	if (ret != 0) {
 		fprintf (stderr, "Could not set model path to Torch model %d\n", ret);
 		exit (1);
 	}
 	ret = vaccel_single_model_register (&model);
-	if (ret)
-	{
+	if (ret != 0) {
 		fprintf (stderr, "Could not register Torch model resource\n");
 		exit (1);
 	}
@@ -86,15 +81,13 @@ main (int argc, char **argv)
 
 	/* Read the image file */
 	ret = read_file (argv[1], (void **)&run_options.data, &run_options.size);
-	if (ret)
-	{
+	if (ret != 0) {
 		fprintf (stderr, "Could not load the image file: %d", ret);
 		goto close_session;
 	}
 
 	ret = vaccel_sess_init (&sess, 0);
-	if (ret)
-	{
+	if (ret != 0) {
 		fprintf (stderr, "Could not initialize vAccel session\n");
 		goto destroy_resource;
 	}
@@ -104,24 +97,21 @@ main (int argc, char **argv)
 	/* Take vaccel_session and vaccel_resource as inputs, 
 	 * register a resource with a session */
 	ret = vaccel_sess_register (&sess, model.resource);
-	if (ret)
-	{
+	if (ret != 0) {
 		fprintf (stderr, "Could not register model with session\n");
 		goto close_session;
 	}
 
-
 	in = vaccel_torch_tensor_new (4, dims, VACCEL_TORCH_FLOAT);
-	if (!in)
-	{
+	if (in == nullptr) {
 		fprintf (stderr, "Could not allocate memory\n");
 		goto close_session;
 	}
 	in->data = res_data.data ();
 	// memcpy(in->data, res_data.data(), res_data.size());
 	in->size = res_data.size () * sizeof (float);
-	std::cout << "The IN ADDRESS: " << in->data << std::endl;
-	std::cout << "size: " << in->size << std::endl;
+	std::cout << "The IN ADDRESS: " << in->data << '\n';
+	std::cout << "size: " << in->size << '\n';
 
 	/* Output tensor */
 	out =
@@ -132,8 +122,7 @@ main (int argc, char **argv)
 	ret = vaccel_torch_jitload_forward (&sess,
 			&model, &run_options, &in, 1, &out, 1);
 
-	if (ret)
-	{
+	if (ret != 0) {
 		fprintf (stderr, "Could not run op: %d\n", ret);
 		goto close_session;
 	}
@@ -154,8 +143,7 @@ main (int argc, char **argv)
 	   printf("Pred: %s\n", classes[int(offsets)])
 	   */
 	ret = vaccel_sess_unregister (&sess, model.resource);
-	if (ret)
-	{
+	if (ret != 0) {
 		fprintf (stderr, "Could not unregister model with session\n");
 		// goto close_session;
 		return vaccel_sess_free (&sess);

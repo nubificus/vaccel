@@ -15,20 +15,18 @@
 
 #include "vaccel_prof.h"
 
-#include "log.h"
 #include "error.h"
+#include "log.h"
 
 #include <malloc.h>
-#include <stdint.h>
-#include <stdlib.h>
 #include <stddef.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <stdio.h>
-#include <string.h>
 
-#define MIN_SAMPLES 1024
-#define MAX_NAME 256
+enum { MIN_SAMPLES = 1024, MAX_NAME = 256 };
 
 static uint64_t get_tstamp_nsec(void)
 {
@@ -367,7 +365,8 @@ int vaccel_prof_regions_print_all_to_buf(
 		struct vaccel_prof_region *regions,
 		int size
 ) {
-	int ssize = 0, tsize = 0;
+	int ssize = 0;
+	int tsize = 0;
 
 	if (!vaccel_prof_enabled())
 		return 0;

@@ -12,9 +12,6 @@
  * limitations under the License.
  */
 
-#ifndef __VACCEL_ARGS_H__
-#define __VACCEL_ARGS_H__
+#pragma once
 
 #include "include/vaccel_args.h"
-
-#endif

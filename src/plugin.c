@@ -13,16 +13,16 @@
  */
 
 #include <assert.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <string.h>
 #include <dlfcn.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "plugin.h"
 #include "error.h"
 #include "list.h"
-#include "ops/vaccel_ops.h"
 #include "log.h"
+#include "ops/vaccel_ops.h"
 
 static struct {
 	/* true if sub-system is initialized */
@@ -129,7 +129,8 @@ int unregister_plugin(struct vaccel_plugin *plugin)
 	}
 
 	/* unregister plugin's functions */
-	struct vaccel_op *op, *tmp;
+	struct vaccel_op *op;
+	struct vaccel_op *tmp;
 	for_each_container_safe(op, tmp, &plugin->ops, struct vaccel_op, plugin_entry) {
 		list_unlink_entry(&op->func_entry);
 		list_unlink_entry(&op->plugin_entry);
@@ -214,7 +215,8 @@ void *get_plugin_op(enum vaccel_op_type op_type, unsigned int hint)
 	 * layers. If we get a match, return this plugin operation
 	 */
 	if (env_priority) {
-		struct vaccel_op *opiter, *tmp;
+		struct vaccel_op *opiter;
+		struct vaccel_op *tmp;
 		for_each_container_safe(opiter, tmp, &plugin_state.ops[op_type],
 				struct vaccel_op, func_entry) {
 			if ((env_priority & opiter->owner->info->type) != 0) {
@@ -238,10 +240,10 @@ void *get_plugin_op(enum vaccel_op_type op_type, unsigned int hint)
 }
 
 int get_available_plugins(enum vaccel_op_type op_type) {
+	struct vaccel_op *opiter;
+	struct vaccel_op *tmp_op;
 
-        struct vaccel_op *opiter, *tmp_op;
-
-        for_each_container_safe(opiter, tmp_op, &plugin_state.ops[op_type],
+	for_each_container_safe(opiter, tmp_op, &plugin_state.ops[op_type],
 			struct vaccel_op, func_entry) {
 		vaccel_debug("Found implementation of %s in %s plugin type: %s",
 				vaccel_op_type_str(opiter->type),
@@ -275,7 +277,8 @@ int plugins_shutdown(void)
 
 	vaccel_debug("Cleaning up plugins");
 
-	struct vaccel_plugin *plugin, *tmp;
+	struct vaccel_plugin *plugin;
+	struct vaccel_plugin *tmp;
 	for_each_container_safe(plugin, tmp, &plugin_state.plugins, struct vaccel_plugin, entry) {
 		/* Unregister plugin from runtime */
 		int ret = unregister_plugin(plugin);

@@ -1,6 +1,5 @@
 #pragma once
 
-
 #include "include/ops/minmax.h"
 
 int vaccel_minmax_unpack(struct vaccel_session *sess, struct vaccel_arg *read,

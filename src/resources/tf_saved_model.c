@@ -14,20 +14,20 @@
 #define _POSIX_C_SOURCE 200809L
 
 #include "resources/tf_saved_model.h"
-#include "utils.h"
 #include "error.h"
 #include "log.h"
 #include "resources.h"
+#include "utils.h"
 
+#include <dirent.h>
+#include <regex.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <regex.h>
-#include <dirent.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
-#define MAX_PATH 1024
+enum { MAX_PATH = 1024 };
 
 static int tf_model_destructor(void *data)
 {

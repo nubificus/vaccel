@@ -10,8 +10,7 @@ extern "C" {
 #define SOURCE_ROOT "@SOURCE_ROOT@"
 #define BUILD_ROOT "@BUILD_ROOT@"
 
-char* abs_path(const char* root, const char* file);
-unsigned char* read_file_from_dir(const char* dir, const char* path,
-    size_t* len);
-
+auto abs_path(const char *root, const char *file) -> char *;
+auto read_file_from_dir(const char *dir, const char *path,
+			std::size_t *len) -> unsigned char *;
 }

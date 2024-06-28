@@ -7,11 +7,13 @@ HeaderFileExtensions:
   - hh
   - hpp
   - hxx
+  - in
 ImplementationFileExtensions:
   - c
   - cc
   - cpp
   - cxx
+  - in
 HeaderFilterRegex: ''
 FormatStyle:     file
 User:            clang-tidy

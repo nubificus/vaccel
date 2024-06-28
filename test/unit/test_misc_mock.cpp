@@ -31,6 +31,6 @@ TEST_CASE("vaccel_get_plugins", "[vaccel_get_plugins]")
 
     SECTION("no session available")
     {
-        REQUIRE(vaccel_get_plugins(NULL, VACCEL_NO_OP) == VACCEL_EINVAL);
+	    REQUIRE(vaccel_get_plugins(nullptr, VACCEL_NO_OP) == VACCEL_EINVAL);
     }
 }

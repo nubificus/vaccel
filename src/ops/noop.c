@@ -14,11 +14,11 @@
 
 #include "noop.h"
 #include "error.h"
-#include "plugin.h"
-#include "log.h"
-#include "vaccel_ops.h"
 #include "genop.h"
+#include "log.h"
+#include "plugin.h"
 #include "session.h"
+#include "vaccel_ops.h"
 #include "vaccel_prof.h"
 
 struct vaccel_prof_region noop_op_stats =

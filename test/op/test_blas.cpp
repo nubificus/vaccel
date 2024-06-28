@@ -22,7 +22,7 @@ extern "C" {
 #define M 512
 #define N 512
 #define K 512
-#define ELEM_2D(array, i, j, ld) (*((array) + i * ld + j))
+#define ELEM_2D(array, i, j, ld) (*((array) + (i) * (ld) + (j)))
 
 void init(int m, int n, int k, float* A, float* B, float* C)
 {
@@ -50,7 +50,8 @@ TEST_CASE("sgemm", "[blas]")
     // REQUIRE(data_fp);
 
     // Initialize matrices A, B, and C with specific values
-    float alpha = 32412.0, beta = 2123.0;
+    float alpha = 32412.0;
+    float beta = 2123.0;
     float A[M * K];
     float B[K * N];
     float C[M * N];

@@ -25,17 +25,23 @@ extern "C" {
 static const char* pname = "mock_plugin_test";
 static const char* pversion = "0.0.0";
 
-static int fini(void)
+static auto fini() -> int
 {
     return VACCEL_OK;
 }
-static int init(void)
+static auto init() -> int
 {
     return VACCEL_OK;
 }
 
-static int no_op() { return 2; }
-static int exec_op() { return 3; }
+static auto no_op() -> int
+{
+	return 2;
+}
+static auto exec_op() -> int
+{
+	return 3;
+}
 
 TEST_CASE("get_all_available_functions")
 {
@@ -131,18 +137,18 @@ TEST_CASE("register numerous function")
 
     operation = get_plugin_op(VACCEL_EXEC, 0);
     REQUIRE(operation != nullptr);
-    ret = reinterpret_cast<int (*)(void)>(operation)();
+    ret = reinterpret_cast<int (*)()>(operation)();
     REQUIRE(ret == 3);
 
     operation = get_plugin_op(VACCEL_NO_OP, 0);
     REQUIRE(operation !=  nullptr);
-    ret = reinterpret_cast<int (*)(void)>(operation)();
+    ret = reinterpret_cast<int (*)()>(operation)();
     REQUIRE(ret == 2);
 
     // search using hint 
     operation = get_plugin_op(VACCEL_NO_OP, VACCEL_PLUGIN_GENERIC);
     REQUIRE(operation !=  nullptr);
-    ret = reinterpret_cast<int (*)(void)>(operation)();
+    ret = reinterpret_cast<int (*)()>(operation)();
     REQUIRE(ret == 2);
 
     ret = unregister_plugin(&plugin);
@@ -180,9 +186,9 @@ TEST_CASE("register plugin functions")
     SECTION("invalid plugin") {
         ret = plugins_bootstrap();
         REQUIRE(ret == VACCEL_OK);
-        
-        ret = register_plugin(NULL);
-        REQUIRE(ret == VACCEL_EINVAL);
+
+	ret = register_plugin(nullptr);
+	REQUIRE(ret == VACCEL_EINVAL);
         
         ret = plugins_shutdown();
         REQUIRE(ret == VACCEL_OK);

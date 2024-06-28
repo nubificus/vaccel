@@ -1,15 +1,14 @@
-#include <vaccel.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdbool.h>
 #include <errno.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <time.h>
+#include <vaccel.h>
 
-#define M 512
-#define N 512
-#define K 512
+enum { M = 512, N = 512, K = 512 };
 
-#define ELEM_2D(array, i, j, ld) (*((array) + i*ld + j))
+#define ELEM_2D(array, i, j, ld) (*((array) + (i) * (ld) + (j)))
 
 #define timespec_usec(t) ((double)(t).tv_nsec / 10e3 + (double)(t).tv_sec * 10e6)
 #define time_diff_usec(t0, t1) (timespec_usec((t1)) - timespec_usec((t0)))
@@ -40,28 +39,33 @@ int main(int argc, char *argv[])
 			fprintf(stderr, "Could not open file for writing. Will not write results\n");
 	}
 
-	float alpha = 32412.0, beta = 2123.0;
+	float alpha = 32412.0;
+	float beta = 2123.0;
 
 	//float A[M*K];
 	//float B[K*N];
 	//float C[M*N];
-	float *A, *B, *C;
-	int m = M, n = N, k = K;
+	float *A;
+	float *B;
+	float *C;
+	int m = M;
+	int n = N;
+	int k = K;
 
-	A = (float*) malloc(m * k * sizeof(float));
+	A = (float *)malloc((unsigned long)(m * k) * sizeof(float));
 	if (!A) {
 		fprintf(stderr, "Could not allocate memory for Input A matrix\n");
 		ret = VACCEL_ENOMEM;
 		goto free_out;
 	}
-	B = (float*) malloc(k * n * sizeof(float));
+	B = (float *)malloc((unsigned long)(k * n) * sizeof(float));
 	if (!B) {
 		fprintf(stderr, "Could not allocate memory for target matrix\n");
 		ret = VACCEL_ENOMEM;
 		goto free_out_1;
 	}
 
-	C = (float*) malloc(m * n * sizeof(float));
+	C = (float *)malloc((unsigned long)(m * n) * sizeof(float));
 	if (!C) {
 		fprintf(stderr, "Could not allocate memory for target matrix\n");
 		ret = VACCEL_ENOMEM;
@@ -78,7 +82,8 @@ int main(int argc, char *argv[])
 		return ret;
 	}
 
-	struct timespec t0, t1;
+	struct timespec t0;
+	struct timespec t1;
 
 	enum vaccel_op_type op_type = VACCEL_BLAS_SGEMM;
 	struct vaccel_arg read[8] = {
@@ -106,15 +111,15 @@ int main(int argc, char *argv[])
 	fprintf(stdout, "Execution time: %lf msec\n",
 			time_diff_usec(t0, t1) / 10e3);
 	if (data_fp)
-		fwrite(C, sizeof(float), m * n, data_fp);
+		fwrite(C, sizeof(float), (unsigned long)(m * n), data_fp);
 
 out:
 	vaccel_sess_free(&session);
 	free(C);
 free_out_2:
-	free(A);
-free_out_1:
 	free(B);
+free_out_1:
+	free(A);
 free_out:
 	return ret;
 }

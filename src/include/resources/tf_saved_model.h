@@ -14,11 +14,11 @@
 
 #pragma once
 
-#include <vaccel_id.h>
 #include <vaccel_file.h>
+#include <vaccel_id.h>
 
-#include <stdint.h>
 #include <stddef.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
