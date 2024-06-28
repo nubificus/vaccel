@@ -21,11 +21,9 @@
 #include "../src/utils.h"
 #include <vaccel.h>
 
-static unsigned char *read_file_from_dir(
-	const char *dir,
-	const char *path,
-	size_t *len
-) {
+static unsigned char *read_file_from_dir(const char *dir, const char *path,
+					 size_t *len)
+{
 	char fpath[1024];
 
 	snprintf(fpath, 1024, "%s/%s", dir, path);
@@ -36,7 +34,6 @@ static unsigned char *read_file_from_dir(
 
 	return ptr;
 }
-
 
 int create_session(struct vaccel_session *sess)
 {
@@ -88,7 +85,7 @@ int create_from_path(const char *path)
 		return ret;
 
 	vaccel_info("Registering model %lld with session %u", model_id,
-			sess.session_id);
+		    sess.session_id);
 
 	ret = vaccel_sess_register(&sess, model->resource);
 	if (ret) {
@@ -97,7 +94,7 @@ int create_from_path(const char *path)
 	}
 
 	vaccel_info("Unregistering model %lld from session %u", model_id,
-			sess.session_id);
+		    sess.session_id);
 
 	ret = vaccel_sess_unregister(&sess, model->resource);
 	if (ret) {
@@ -166,14 +163,13 @@ int create_from_in_mem(const char *path)
 	vaccel_id_t model_id = vaccel_tf_saved_model_id(model);
 	vaccel_info("Registered new resource: %lld", model_id);
 
-
 	struct vaccel_session sess;
 	ret = create_session(&sess);
 	if (ret)
 		return ret;
 
 	vaccel_info("Registering model %lld with session %u", model_id,
-			sess.session_id);
+		    sess.session_id);
 
 	ret = vaccel_sess_register(&sess, model->resource);
 	if (ret) {
@@ -182,7 +178,7 @@ int create_from_in_mem(const char *path)
 	}
 
 	vaccel_info("Unregistering model %lld from session %u", model_id,
-			sess.session_id);
+		    sess.session_id);
 
 	ret = vaccel_sess_unregister(&sess, model->resource);
 	if (ret) {
@@ -198,8 +194,8 @@ int create_from_in_mem(const char *path)
 	}
 
 	vaccel_info("Destroying session %u", sess.session_id);
-	return destroy_session(&sess);}
-
+	return destroy_session(&sess);
+}
 
 int main(int argc, char *argv[])
 {

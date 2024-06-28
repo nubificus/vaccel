@@ -61,7 +61,7 @@ int vaccel_file_new(struct vaccel_file *file, const char *path)
  * path in the filesystem.
  */
 int vaccel_file_persist(struct vaccel_file *file, const char *dir,
-		const char *filename, bool randomize)
+			const char *filename, bool randomize)
 {
 	int ret;
 
@@ -84,7 +84,7 @@ int vaccel_file_persist(struct vaccel_file *file, const char *dir,
 
 	/* +1 for '\0' */
 	int path_len = 1;
-	
+
 	if (randomize) {
 		path_len += snprintf(NULL, 0, "%s/%s.XXXXXX", dir, filename);
 	} else {
@@ -158,7 +158,6 @@ free_path:
 	free(file->path);
 	file->path = NULL;
 	return ret;
-
 }
 
 /* Initialize a file from in-memory data.
@@ -170,13 +169,10 @@ free_path:
  * of making sure that the memory it points to outlives the `vaccel_file`
  * resource.
  */
-int vaccel_file_from_buffer(
-	struct vaccel_file *file,
-	const uint8_t *buff, size_t size,
-	const char *filename,
-	bool persist, const char *dir, 
-	bool randomize
-) {
+int vaccel_file_from_buffer(struct vaccel_file *file, const uint8_t *buff,
+			    size_t size, const char *filename, bool persist,
+			    const char *dir, bool randomize)
+{
 	if (!file || !buff || !size)
 		return VACCEL_EINVAL;
 
@@ -213,7 +209,7 @@ int vaccel_file_destroy(struct vaccel_file *file)
 		int ret = munmap(file->data, file->size);
 		if (ret) {
 			vaccel_debug("Failed to unmap file %s (size=%d): %s",
-					file->path, file->size, strerror(errno));
+				     file->path, file->size, strerror(errno));
 			return ret;
 		}
 	}
@@ -224,7 +220,7 @@ int vaccel_file_destroy(struct vaccel_file *file)
 		vaccel_debug("Removing file %s", file->path);
 		if (remove(file->path))
 			vaccel_warn("Could not remove file from rundir: %s",
-					file->path);
+				    file->path);
 	}
 
 	free(file->path);
@@ -257,7 +253,7 @@ int vaccel_file_read(struct vaccel_file *file)
 
 	if (!file->path)
 		return VACCEL_EINVAL;
-	
+
 	return read_file_mmap(file->path, (void **)&file->data, &file->size);
 }
 

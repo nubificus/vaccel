@@ -23,26 +23,26 @@ extern "C" {
 }
 
 TEST_CASE("constructor & destructor", "[vaccel]")
-{   
-    int ret; 
-    ret = vaccel_log_init();
-    REQUIRE(ret == VACCEL_OK);
+{
+	int ret;
+	ret = vaccel_log_init();
+	REQUIRE(ret == VACCEL_OK);
 
-    ret = sessions_bootstrap();
-    REQUIRE(ret == VACCEL_OK);
+	ret = sessions_bootstrap();
+	REQUIRE(ret == VACCEL_OK);
 
-    ret = resources_bootstrap();
-    REQUIRE(ret == VACCEL_OK);
+	ret = resources_bootstrap();
+	REQUIRE(ret == VACCEL_OK);
 
-    ret = plugins_bootstrap();
-    REQUIRE(ret == VACCEL_OK);
+	ret = plugins_bootstrap();
+	REQUIRE(ret == VACCEL_OK);
 
-    // ret = plugins_shutdown();
-    // REQUIRE(ret == VACCEL_OK);
+	// ret = plugins_shutdown();
+	// REQUIRE(ret == VACCEL_OK);
 
-    // ret = resources_cleanup();
-    // REQUIRE(ret == VACCEL_OK);
+	// ret = resources_cleanup();
+	// REQUIRE(ret == VACCEL_OK);
 
-    // ret = sessions_cleanup();
-    // REQUIRE(ret == VACCEL_OK);
+	// ret = sessions_cleanup();
+	// REQUIRE(ret == VACCEL_OK);
 }

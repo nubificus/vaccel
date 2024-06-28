@@ -35,20 +35,20 @@ static void set_debug_level(void)
 	int level = atoi(env);
 	int nEnabledLevels = 0;
 	switch (level) {
-		/* FALLTHRU */
-		case VACCEL_DEBUG_LVL_DEBUG:
-			nEnabledLevels |= SLOG_DEBUG;
-		/* FALLTHRU */
-		case VACCEL_DEBUG_LVL_INFO:
-			nEnabledLevels |= SLOG_INFO;
-		/* FALLTHRU */
-		case VACCEL_DEBUG_LVL_WARN:
-			nEnabledLevels |= SLOG_WARN;
-		/* FALLTHRU */
-		case VACCEL_DEBUG_LVL_ERROR:
-			nEnabledLevels |= SLOG_ERROR;
-		default:
-			break;
+	/* FALLTHRU */
+	case VACCEL_DEBUG_LVL_DEBUG:
+		nEnabledLevels |= SLOG_DEBUG;
+	/* FALLTHRU */
+	case VACCEL_DEBUG_LVL_INFO:
+		nEnabledLevels |= SLOG_INFO;
+	/* FALLTHRU */
+	case VACCEL_DEBUG_LVL_WARN:
+		nEnabledLevels |= SLOG_WARN;
+	/* FALLTHRU */
+	case VACCEL_DEBUG_LVL_ERROR:
+		nEnabledLevels |= SLOG_ERROR;
+	default:
+		break;
 	}
 
 	SLogConfig cfg;
@@ -66,7 +66,7 @@ static void set_log_file(void)
 		return;
 
 	slog_config_get(&cfg);
-	strncpy(cfg.sFileName, env, SLOG_NAME_MAX-1);
+	strncpy(cfg.sFileName, env, SLOG_NAME_MAX - 1);
 
 	if (strncmp(cfg.sFileName, "/dev/stdout", SLOG_NAME_MAX - 1) != 0 &&
 	    strncmp(cfg.sFileName, "/dev/stderr", SLOG_NAME_MAX - 1) != 0) {

@@ -23,13 +23,12 @@ int main()
 
 	printf("Initialized session with id: %u\n", sess.session_id);
 	enum vaccel_op_type op_type = VACCEL_F_VECTORADD;
-	struct vaccel_arg read[3] = {
-		{ .size = sizeof(enum vaccel_op_type), .buf = &op_type},
-		{ .size = sizeof(a), .buf = (char*)a},
-		{ .size = sizeof(b), .buf = (char*)b}
-	};
+	struct vaccel_arg read[3] = { { .size = sizeof(enum vaccel_op_type),
+					.buf = &op_type },
+				      { .size = sizeof(a), .buf = (char *)a },
+				      { .size = sizeof(b), .buf = (char *)b } };
 	struct vaccel_arg write[1] = {
-		{ .size = (len_a > len_b ? len_a : len_b), .buf = c},
+		{ .size = (len_a > len_b ? len_a : len_b), .buf = c },
 	};
 
 	//for (int i = 0; i < atoi(argv[2]); ++i) {
@@ -45,9 +44,9 @@ int main()
 		printf("%f\n", c[i]);
 	}
 
-	// works    
+	// works
 
- close_session:
+close_session:
 	if (vaccel_sess_free(&sess) != VACCEL_OK) {
 		fprintf(stderr, "Could not clear session\n");
 		return 1;

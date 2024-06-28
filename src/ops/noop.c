@@ -32,7 +32,7 @@ int vaccel_noop(struct vaccel_session *sess)
 		return VACCEL_EINVAL;
 
 	vaccel_debug("session:%u Looking for plugin implementing noop",
-			sess->session_id);
+		     sess->session_id);
 
 	vaccel_prof_region_start(&noop_op_stats);
 
@@ -48,32 +48,29 @@ int vaccel_noop(struct vaccel_session *sess)
 	return ret;
 }
 
-int vaccel_noop_unpack(struct vaccel_session *sess,
-		struct vaccel_arg *read, int nr_read,
-		struct vaccel_arg *write, int nr_write)
+int vaccel_noop_unpack(struct vaccel_session *sess, struct vaccel_arg *read,
+		       int nr_read, struct vaccel_arg *write, int nr_write)
 {
 	if (nr_read || read) {
 		vaccel_error("Wrong number of read arguments in noop: %d",
-				nr_read);
+			     nr_read);
 		return VACCEL_EINVAL;
 	}
 
 	if (nr_write || write) {
 		vaccel_error("Wrong number of write arguments in noop: %d",
-				nr_write);
+			     nr_write);
 		return VACCEL_EINVAL;
 	}
 
 	return vaccel_noop(sess);
 }
 
-__attribute__((constructor))
-static void vaccel_ops_init(void)
+__attribute__((constructor)) static void vaccel_ops_init(void)
 {
 }
 
-__attribute__((destructor))
-static void vaccel_ops_fini(void)
+__attribute__((destructor)) static void vaccel_ops_fini(void)
 {
 	vaccel_prof_region_print(&noop_op_stats);
 }

@@ -47,22 +47,17 @@ struct vaccel_single_model {
 
 struct vaccel_single_model *vaccel_single_model_new(void);
 
-int vaccel_single_model_set_path(
-	struct vaccel_single_model *model,
-	const char *path
-);
+int vaccel_single_model_set_path(struct vaccel_single_model *model,
+				 const char *path);
 
 const char *vaccel_single_model_get_path(struct vaccel_single_model *model);
 
-int vaccel_single_model_set_file(
-	struct vaccel_single_model *model, const char *filename,
-	const uint8_t *ptr, size_t len
-);
+int vaccel_single_model_set_file(struct vaccel_single_model *model,
+				 const char *filename, const uint8_t *ptr,
+				 size_t len);
 
-const uint8_t *vaccel_single_model_get_file(
-	struct vaccel_single_model *model,
-	size_t *len
-);
+const uint8_t *vaccel_single_model_get_file(struct vaccel_single_model *model,
+					    size_t *len);
 
 int vaccel_single_model_register(struct vaccel_single_model *model);
 

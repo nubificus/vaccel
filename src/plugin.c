@@ -38,7 +38,7 @@ static struct {
 	 * function
 	 */
 	list_t ops[VACCEL_FUNCTIONS_NR];
-} plugin_state = {0};
+} plugin_state = { 0 };
 
 static int check_plugin_info(const struct vaccel_plugin_info *pinfo)
 {
@@ -103,7 +103,8 @@ int register_plugin(struct vaccel_plugin *plugin)
 		vaccel_debug("%s is a VirtIO module", info->name);
 
 		if (plugin_state.virtio)
-			vaccel_debug("A VirtIO registered is already registered");
+			vaccel_debug(
+				"A VirtIO registered is already registered");
 		else {
 			plugin_state.virtio = plugin;
 		}
@@ -131,7 +132,8 @@ int unregister_plugin(struct vaccel_plugin *plugin)
 	/* unregister plugin's functions */
 	struct vaccel_op *op;
 	struct vaccel_op *tmp;
-	for_each_container_safe(op, tmp, &plugin->ops, struct vaccel_op, plugin_entry) {
+	for_each_container_safe(op, tmp, &plugin->ops, struct vaccel_op,
+				plugin_entry) {
 		list_unlink_entry(&op->func_entry);
 		list_unlink_entry(&op->plugin_entry);
 	}
@@ -174,11 +176,10 @@ int register_plugin_function(struct vaccel_op *plugin_op)
 
 	list_add_tail(&plugin->ops, &plugin_op->plugin_entry);
 	list_add_tail(&plugin_state.ops[plugin_op->type],
-			&plugin_op->func_entry);
+		      &plugin_op->func_entry);
 
 	vaccel_debug("Registered function %s from plugin %s",
-			vaccel_op_type_str(plugin_op->type),
-			plugin->info->name);
+		     vaccel_op_type_str(plugin_op->type), plugin->info->name);
 
 	return VACCEL_OK;
 }
@@ -206,7 +207,7 @@ void *get_plugin_op(enum vaccel_op_type op_type, unsigned int hint)
 
 	if (list_empty(&plugin_state.ops[op_type])) {
 		vaccel_warn("None of the loaded plugins implement %s",
-				vaccel_op_type_str(op_type));
+			    vaccel_op_type_str(op_type));
 		return NULL;
 	}
 
@@ -218,11 +219,12 @@ void *get_plugin_op(enum vaccel_op_type op_type, unsigned int hint)
 		struct vaccel_op *opiter;
 		struct vaccel_op *tmp;
 		for_each_container_safe(opiter, tmp, &plugin_state.ops[op_type],
-				struct vaccel_op, func_entry) {
+					struct vaccel_op, func_entry) {
 			if ((env_priority & opiter->owner->info->type) != 0) {
 				op = opiter;
-				vaccel_debug("Returning func from hint plugin %s ",
-						opiter->owner->info->name);
+				vaccel_debug(
+					"Returning func from hint plugin %s ",
+					opiter->owner->info->name);
 				break;
 			}
 		}
@@ -231,25 +233,27 @@ void *get_plugin_op(enum vaccel_op_type op_type, unsigned int hint)
 	/* If priority check fails, just return the first implementation we find */
 	if (!op) {
 		op = get_container(plugin_state.ops[op_type].next,
-				struct vaccel_op, func_entry);
+				   struct vaccel_op, func_entry);
 	}
 
-	vaccel_debug("Found implementation in %s plugin", op->owner->info->name);
+	vaccel_debug("Found implementation in %s plugin",
+		     op->owner->info->name);
 
 	return op->func;
 }
 
-int get_available_plugins(enum vaccel_op_type op_type) {
+int get_available_plugins(enum vaccel_op_type op_type)
+{
 	struct vaccel_op *opiter;
 	struct vaccel_op *tmp_op;
 
 	for_each_container_safe(opiter, tmp_op, &plugin_state.ops[op_type],
-			struct vaccel_op, func_entry) {
+				struct vaccel_op, func_entry) {
 		vaccel_debug("Found implementation of %s in %s plugin type: %s",
-				vaccel_op_type_str(opiter->type),
-				opiter->owner->info->name,
-				vaccel_plugin_type_str(opiter->owner->info->type));
-        }
+			     vaccel_op_type_str(opiter->type),
+			     opiter->owner->info->name,
+			     vaccel_plugin_type_str(opiter->owner->info->type));
+	}
 	return 0;
 }
 
@@ -279,7 +283,8 @@ int plugins_shutdown(void)
 
 	struct vaccel_plugin *plugin;
 	struct vaccel_plugin *tmp;
-	for_each_container_safe(plugin, tmp, &plugin_state.plugins, struct vaccel_plugin, entry) {
+	for_each_container_safe(plugin, tmp, &plugin_state.plugins,
+				struct vaccel_plugin, entry) {
 		/* Unregister plugin from runtime */
 		int ret = unregister_plugin(plugin);
 		if (ret != VACCEL_OK) {

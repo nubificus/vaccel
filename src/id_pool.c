@@ -30,7 +30,6 @@ int id_pool_new(id_pool_t *pool, int nr_ids)
 	atomic_init(&pool->next, 0);
 
 	return VACCEL_OK;
-
 }
 
 int id_pool_destroy(id_pool_t *pool)

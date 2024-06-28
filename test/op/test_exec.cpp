@@ -23,75 +23,85 @@ extern "C" {
 
 TEST_CASE("due to vaccel_arg change - TODO: redo these tests")
 {
-    REQUIRE(1 == 1);
+	REQUIRE(1 == 1);
 }
 
 TEST_CASE("exec")
 {
-    int ret;
-    int input = 10;
-    char out_text[512];
-    struct vaccel_session sess;
-    sess.session_id = 0;
-    sess.priv = nullptr;
-    sess.resources = nullptr;
-    sess.hint = 0;
+	int ret;
+	int input = 10;
+	char out_text[512];
+	struct vaccel_session sess;
+	sess.session_id = 0;
+	sess.priv = nullptr;
+	sess.resources = nullptr;
+	sess.hint = 0;
 
-    ret = vaccel_sess_init(&sess, VACCEL_PLUGIN_DEBUG);
-    REQUIRE(ret == VACCEL_OK);
+	ret = vaccel_sess_init(&sess, VACCEL_PLUGIN_DEBUG);
+	REQUIRE(ret == VACCEL_OK);
 
-    struct vaccel_arg read[1] = { { .argtype = 0, .size = sizeof(input), .buf = &input } };
-    struct vaccel_arg write[1] = { { .argtype = 0, .size = sizeof(out_text), .buf = out_text } };
+	struct vaccel_arg read[1] = {
+		{ .argtype = 0, .size = sizeof(input), .buf = &input }
+	};
+	struct vaccel_arg write[1] = {
+		{ .argtype = 0, .size = sizeof(out_text), .buf = out_text }
+	};
 
-    ret = vaccel_exec(&sess, abs_path(BUILD_ROOT, "examples/libmytestlib.so"),
-		    "mytestfunc", read, 1, write, 1);
-    REQUIRE(ret == VACCEL_OK);
-    REQUIRE(sess.session_id);
-    REQUIRE(sess.hint == VACCEL_PLUGIN_DEBUG);
-    REQUIRE(sess.resources);
-    REQUIRE(sess.priv == nullptr);
+	ret = vaccel_exec(&sess,
+			  abs_path(BUILD_ROOT, "examples/libmytestlib.so"),
+			  "mytestfunc", read, 1, write, 1);
+	REQUIRE(ret == VACCEL_OK);
+	REQUIRE(sess.session_id);
+	REQUIRE(sess.hint == VACCEL_PLUGIN_DEBUG);
+	REQUIRE(sess.resources);
+	REQUIRE(sess.priv == nullptr);
 }
 
 TEST_CASE("exec_generic")
 {
-    int ret;
+	int ret;
 
-    struct vaccel_session sess;
-    sess.session_id = 0;
-    sess.priv = nullptr;
-    sess.resources = nullptr;
-    sess.hint = 0;
+	struct vaccel_session sess;
+	sess.session_id = 0;
+	sess.priv = nullptr;
+	sess.resources = nullptr;
+	sess.hint = 0;
 
-    int input;
-    char out_text[512];
+	int input;
+	char out_text[512];
 
-    ret = vaccel_sess_init(&sess, 0);
-    REQUIRE(ret == VACCEL_OK);
+	ret = vaccel_sess_init(&sess, 0);
+	REQUIRE(ret == VACCEL_OK);
 
-    input = 10;
-    enum vaccel_op_type op_type = VACCEL_EXEC;
+	input = 10;
+	enum vaccel_op_type op_type = VACCEL_EXEC;
 
-    const char* plugin_path = abs_path(BUILD_ROOT, "examples/libmytestlib.so");
-    const char function_name[] = "mytestfunc";
+	const char *plugin_path =
+		abs_path(BUILD_ROOT, "examples/libmytestlib.so");
+	const char function_name[] = "mytestfunc";
 
-    struct vaccel_arg read[4] = {
-        { .argtype = 0, .size = sizeof(uint8_t), .buf = &op_type },
-        { .argtype = 0, .size = sizeof(plugin_path), .buf = (void*)plugin_path },
-        { .argtype = 0, .size = sizeof(function_name), .buf = (void*)function_name },
-        { .argtype = 0, .size = sizeof(input), .buf = &input }
-    };
+	struct vaccel_arg read[4] = {
+		{ .argtype = 0, .size = sizeof(uint8_t), .buf = &op_type },
+		{ .argtype = 0,
+		  .size = sizeof(plugin_path),
+		  .buf = (void *)plugin_path },
+		{ .argtype = 0,
+		  .size = sizeof(function_name),
+		  .buf = (void *)function_name },
+		{ .argtype = 0, .size = sizeof(input), .buf = &input }
+	};
 
-    struct vaccel_arg write[1] = {
-        { .argtype = 0, .size = sizeof(out_text), .buf = out_text },
-    };
+	struct vaccel_arg write[1] = {
+		{ .argtype = 0, .size = sizeof(out_text), .buf = out_text },
+	};
 
-    ret = vaccel_genop(&sess, read, 4, write, 1);
-    REQUIRE(ret == VACCEL_OK);
-    printf("output: %s\n", out_text);
-    REQUIRE(sess.session_id);
-    REQUIRE(sess.hint == 0);
-    REQUIRE(sess.resources);
-    REQUIRE(sess.priv == nullptr);
+	ret = vaccel_genop(&sess, read, 4, write, 1);
+	REQUIRE(ret == VACCEL_OK);
+	printf("output: %s\n", out_text);
+	REQUIRE(sess.session_id);
+	REQUIRE(sess.hint == 0);
+	REQUIRE(sess.resources);
+	REQUIRE(sess.priv == nullptr);
 }
 
 TEST_CASE("exec_with_resources")

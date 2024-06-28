@@ -54,10 +54,9 @@ struct vaccel_single_model *vaccel_single_model_new(void)
  * If the exported model is malformed this will not fail. We will
  * find that out when trying to actually load the model.
  */
-int vaccel_single_model_set_path(
-	struct vaccel_single_model *model,
-	const char *path
-) {
+int vaccel_single_model_set_path(struct vaccel_single_model *model,
+				 const char *path)
+{
 	if (!model)
 		return VACCEL_EINVAL;
 
@@ -102,10 +101,10 @@ const char *vaccel_single_model_get_path(struct vaccel_single_model *model)
  * Create the underlying file resource for the model file.
  * This will take ownership of the buffer passed as an argument.
  */
-int vaccel_single_model_set_file(
-	struct vaccel_single_model *model, const char *filename,
-	const uint8_t *ptr, size_t len
-) {
+int vaccel_single_model_set_file(struct vaccel_single_model *model,
+				 const char *filename, const uint8_t *ptr,
+				 size_t len)
+{
 	vaccel_debug("Setting file resource for single model");
 
 	if (!model) {
@@ -123,8 +122,8 @@ int vaccel_single_model_set_file(
 	else
 		model->filename = NULL;
 
-	int ret = vaccel_file_from_buffer(&model->file, ptr, len,
-			NULL, false, NULL, false);
+	int ret = vaccel_file_from_buffer(&model->file, ptr, len, NULL, false,
+					  NULL, false);
 	return ret;
 }
 
@@ -134,10 +133,9 @@ int vaccel_single_model_set_file(
  * If the data have not been read before, this will first try to
  * read the data (mmap them in memory) before returning.
  */
-const uint8_t *vaccel_single_model_get_file(
-	struct vaccel_single_model *model,
-	size_t *len
-) {
+const uint8_t *vaccel_single_model_get_file(struct vaccel_single_model *model,
+					    size_t *len)
+{
 	if (!model)
 		return NULL;
 
@@ -172,7 +170,7 @@ int vaccel_single_model_register(struct vaccel_single_model *model)
 	}
 
 	int ret = resource_new(res, VACCEL_RES_SINGLE_MODEL, (void *)model,
-			single_model_destructor);
+			       single_model_destructor);
 	if (ret)
 		goto free_resource;
 
@@ -192,8 +190,8 @@ int vaccel_single_model_register(struct vaccel_single_model *model)
 		random = true;
 	}
 
-	ret = vaccel_file_persist(&model->file, res->rundir,
-			model->filename, random);
+	ret = vaccel_file_persist(&model->file, res->rundir, model->filename,
+				  random);
 	if (ret)
 		goto destroy_resource;
 

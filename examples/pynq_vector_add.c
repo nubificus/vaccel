@@ -32,9 +32,9 @@ int main()
 		printf("%f\n", c[i]);
 	}
 
-	// works    
+	// works
 
- close_session:
+close_session:
 	if (vaccel_sess_free(&sess) != VACCEL_OK) {
 		fprintf(stderr, "Could not clear session\n");
 		return 1;

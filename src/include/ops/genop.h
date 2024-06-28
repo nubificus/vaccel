@@ -23,11 +23,10 @@ extern "C" {
 
 struct vaccel_session;
 
-
 /* Call one of the supported functions, given an op code and a set of arbitrary
  * arguments */
 int vaccel_genop(struct vaccel_session *sess, struct vaccel_arg *read,
-		int nr_read, struct vaccel_arg *write, int nr_write);
+		 int nr_read, struct vaccel_arg *write, int nr_write);
 
 #ifdef __cplusplus
 }

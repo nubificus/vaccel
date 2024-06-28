@@ -15,15 +15,15 @@ extern "C" {
 
 TEST_CASE("noop", "[noop]")
 {
-    int ret;
-    struct vaccel_session sess;
+	int ret;
+	struct vaccel_session sess;
 
-    ret = vaccel_sess_init(&sess, 0);
-    REQUIRE(ret == VACCEL_OK);
+	ret = vaccel_sess_init(&sess, 0);
+	REQUIRE(ret == VACCEL_OK);
 
-    ret = vaccel_noop(&sess);
-    REQUIRE(ret == VACCEL_OK);
+	ret = vaccel_noop(&sess);
+	REQUIRE(ret == VACCEL_OK);
 
-    ret = vaccel_sess_free(&sess);
-    REQUIRE(ret == VACCEL_OK);
+	ret = vaccel_sess_free(&sess);
+	REQUIRE(ret == VACCEL_OK);
 }

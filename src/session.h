@@ -32,12 +32,12 @@ struct registered_resource {
 	list_t entry;
 };
 
-#define for_each_session_resource(iter, list)                                 \
+#define for_each_session_resource(iter, list) \
 	for_each_container((iter), (list), struct registered_resource, entry)
 
-#define for_each_session_resource_safe(iter, tmp, list)                       \
-	for_each_container_safe((iter), (tmp), (list),		              \
-			struct registered_resource, entry)
+#define for_each_session_resource_safe(iter, tmp, list) \
+	for_each_container_safe((iter), (tmp), (list),  \
+				struct registered_resource, entry)
 
 struct session_resources {
 	/* Runtime directory for holding resources related with the

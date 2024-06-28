@@ -77,13 +77,12 @@ int load_backend_plugins(char *plugins)
 
 		plugin = strtok(NULL, ":");
 	}
-	
+
 	free(plugins_tmp);
 	return ret;
 }
 
-__attribute__((constructor))
-void load_vaccel(void)
+__attribute__((constructor)) void load_vaccel(void)
 {
 	/* Get a copy of the plugin env variable */
 	const char *pname_env = getenv("VACCEL_BACKENDS");
@@ -105,13 +104,11 @@ void load_vaccel(void)
 	/* Instead, load the plugins now */
 	printf("Loading plugins\n");
 	load_backend_plugins(pname);
-
 }
 
-__attribute__((destructor))
-static void unload_vaccel(void)
+__attribute__((destructor)) static void unload_vaccel(void)
 {
-        printf("Shutting down vAccel\n");
+	printf("Shutting down vAccel\n");
 	/* This will unregister and free resources of the plugins */
 	dlclose(vacceldl);
 	if (pname)

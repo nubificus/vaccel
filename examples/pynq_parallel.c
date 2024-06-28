@@ -5,7 +5,6 @@
 
 int main()
 {
-
 	/* Doesnt work unless HLS but the other repo has better implementation */
 
 	int ret;
@@ -41,7 +40,7 @@ int main()
 		printf("%f\n", d[i]);
 	}
 
- close_session:
+close_session:
 	if (vaccel_sess_free(&sess) != VACCEL_OK) {
 		fprintf(stderr, "Could not clear session\n");
 		return 1;

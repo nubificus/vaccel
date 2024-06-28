@@ -26,7 +26,7 @@ int main(int argc, char *argv[])
 {
 	int ret;
 	char *image;
-       	size_t image_size;
+	size_t image_size;
 	char out_imagename[512];
 	struct vaccel_session sess;
 
@@ -48,10 +48,9 @@ int main(int argc, char *argv[])
 		goto close_session;
 
 	enum vaccel_op_type op_type = VACCEL_IMG_SEGME;
-	struct vaccel_arg read[2] = {
-		{ .size = sizeof(enum vaccel_op_type), .buf = &op_type},
-		{ .size = image_size, .buf = image }
-	};
+	struct vaccel_arg read[2] = { { .size = sizeof(enum vaccel_op_type),
+					.buf = &op_type },
+				      { .size = image_size, .buf = image } };
 	struct vaccel_arg write[1] = {
 		{ .size = sizeof(out_imagename), .buf = out_imagename },
 	};
@@ -63,7 +62,6 @@ int main(int argc, char *argv[])
 			goto close_session;
 		}
 	}
-
 
 close_session:
 	free(image);

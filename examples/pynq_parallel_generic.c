@@ -29,13 +29,13 @@ int main()
 
 	enum vaccel_op_type op_type = VACCEL_F_PARALLEL;
 	struct vaccel_arg read[3] = {
-		{ .size = sizeof(enum vaccel_op_type), .buf = &op_type},
-		{ .size = sizeof(a), .buf = (char*)a},
-		{ .size = sizeof(b), .buf = (char*)b},
+		{ .size = sizeof(enum vaccel_op_type), .buf = &op_type },
+		{ .size = sizeof(a), .buf = (char *)a },
+		{ .size = sizeof(b), .buf = (char *)b },
 	};
 	struct vaccel_arg write[2] = {
-		{ .size = sizeof(a),  .buf = c},
-		{ .size = sizeof(a), .buf = d},
+		{ .size = sizeof(a), .buf = c },
+		{ .size = sizeof(a), .buf = d },
 	};
 
 	//for (int i = 0; i < atoi(argv[2]); ++i) {
@@ -67,7 +67,7 @@ int main()
 		printf("%f\n", d[i]);
 	}
 
- close_session:
+close_session:
 	if (vaccel_sess_free(&sess) != VACCEL_OK) {
 		fprintf(stderr, "Could not clear session\n");
 		return 1;

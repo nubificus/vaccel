@@ -71,7 +71,7 @@ int resources_cleanup(void)
 }
 
 int resource_new(struct vaccel_resource *res, vaccel_resource_t type,
-		void *data, int (*cleanup_resource)(void *))
+		 void *data, int (*cleanup_resource)(void *))
 {
 	if (!initialized)
 		return VACCEL_EPERM;
@@ -81,7 +81,7 @@ int resource_new(struct vaccel_resource *res, vaccel_resource_t type,
 
 	/* If we 're working on top of VirtIO, the host side will provide
 	 * us with an id */
-	struct vaccel_plugin *virtio = get_virtio_plugin(); 
+	struct vaccel_plugin *virtio = get_virtio_plugin();
 	if (virtio) {
 		int err = virtio->info->resource_new(type, data, &res->id);
 		if (err)
@@ -120,7 +120,8 @@ int resource_get_by_id(struct vaccel_resource **resource, vaccel_id_t id)
 		}
 	}
 
-	if (*resource != NULL) return VACCEL_OK;
+	if (*resource != NULL)
+		return VACCEL_OK;
 	return VACCEL_EINVAL;
 }
 
@@ -144,7 +145,7 @@ int resource_destroy(struct vaccel_resource *res)
 		int err = virtio->info->resource_destroy(res->id);
 		if (err)
 			vaccel_warn("Could not destroy host-side resource %lld",
-					res->id);
+				    res->id);
 	} else if (res->id) {
 		id_pool_release(&id_pool, res->id);
 	}
@@ -186,7 +187,8 @@ void resource_refcount_dec(struct vaccel_resource *res)
 int resource_create_rundir(struct vaccel_resource *res)
 {
 	if (!res) {
-		vaccel_error("BUG! Trying to create rundir for invalid resource");
+		vaccel_error(
+			"BUG! Trying to create rundir for invalid resource");
 		return VACCEL_EINVAL;
 	}
 
@@ -194,10 +196,10 @@ int resource_create_rundir(struct vaccel_resource *res)
 
 	char rundir[MAX_RESOURCE_RUNDIR];
 	int len = snprintf(rundir, MAX_RESOURCE_RUNDIR, "%s/resource.%lld",
-			root_rundir, res->id);
+			   root_rundir, res->id);
 	if (len == MAX_RESOURCE_RUNDIR) {
 		vaccel_error("rundir path '%s/resource.%lld' too long",
-				root_rundir, res->id);
+			     root_rundir, res->id);
 		return VACCEL_ENAMETOOLONG;
 	}
 

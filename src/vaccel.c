@@ -92,7 +92,7 @@ static int load_backend_plugins(char *plugins)
 
 		plugin = strtok(NULL, ":");
 	}
-	
+
 	free(plugins_tmp);
 	return ret;
 }
@@ -102,32 +102,34 @@ static int create_vaccel_rundir(void)
 	int ret = snprintf(rundir, MAX_RUNDIR_PATH, "/run/user/%u", getuid());
 	if (ret == MAX_RUNDIR_PATH) {
 		vaccel_fatal("rundir path '%s' too long", rundir);
-		return VACCEL_ENAMETOOLONG;	
+		return VACCEL_ENAMETOOLONG;
 	}
 
 	if (!dir_exists(rundir)) {
-		vaccel_debug("User rundir does not exist. Will try to create it");
+		vaccel_debug(
+			"User rundir does not exist. Will try to create it");
 		if (!dir_exists("/run/user")) {
-			vaccel_debug("/run/user dir does not exist. Will try to create it first");
+			vaccel_debug(
+				"/run/user dir does not exist. Will try to create it first");
 			ret = mkdir("/run/user", 0700);
 			if (ret) {
 				vaccel_fatal("Could not create user rundir: %s",
-						strerror(errno));
+					     strerror(errno));
 				return VACCEL_ENOENT;
 			}
 		}
 		ret = mkdir(rundir, 0700);
 		if (ret) {
 			vaccel_fatal("Could not create user rundir: %s",
-					strerror(errno));
+				     strerror(errno));
 			return VACCEL_ENOENT;
 		}
 
 		vaccel_debug("Created user rundir %s", rundir);
 	}
 
-	ret = snprintf(rundir, MAX_RUNDIR_PATH,
-			"/run/user/%u/vaccel.XXXXXX", getuid());
+	ret = snprintf(rundir, MAX_RUNDIR_PATH, "/run/user/%u/vaccel.XXXXXX",
+		       getuid());
 	if (ret == MAX_RUNDIR_PATH) {
 		vaccel_error("rundir path '%s' too big", rundir);
 		return VACCEL_ENAMETOOLONG;
@@ -140,7 +142,7 @@ static int create_vaccel_rundir(void)
 	}
 
 	vaccel_debug("Created top-level rundir: %s", rundir);
-	
+
 	return VACCEL_OK;
 }
 
@@ -159,8 +161,7 @@ const char *vaccel_rundir(void)
 	return rundir;
 }
 
-__attribute__((constructor))
-static void vaccel_init(void)
+__attribute__((constructor)) static void vaccel_init(void)
 {
 	int ret = VACCEL_EINVAL;
 
@@ -199,8 +200,7 @@ static void vaccel_init(void)
 	load_backend_plugins(plugins);
 }
 
-__attribute__((destructor))
-static void vaccel_fini(void)
+__attribute__((destructor)) static void vaccel_fini(void)
 {
 	vaccel_debug("Shutting down vAccel");
 	plugins_shutdown();

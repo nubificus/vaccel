@@ -20,44 +20,44 @@
 #include <unistd.h>
 #include <vaccel.h>
 
-struct mydata
-{
+struct mydata {
 	uint32_t size;
-	int* array;
+	int *array;
 };
 
 /* Serializer function for `struct mydata` */
-void* ser(void* buf, uint32_t* bytes){
-	struct mydata* non_ser = (struct mydata*)buf;
+void *ser(void *buf, uint32_t *bytes)
+{
+	struct mydata *non_ser = (struct mydata *)buf;
 
 	uint32_t size = (non_ser->size + 1) * sizeof(int);
-	int* ser_buf = malloc(size);
+	int *ser_buf = malloc(size);
 
-	memcpy(ser_buf, (int*)(&non_ser->size), sizeof(int));
+	memcpy(ser_buf, (int *)(&non_ser->size), sizeof(int));
 
 	uint32_t i;
-	for(i = 0; i < non_ser->size; i++)
-		memcpy(&ser_buf[i+1], &non_ser->array[i], sizeof(int));
+	for (i = 0; i < non_ser->size; i++)
+		memcpy(&ser_buf[i + 1], &non_ser->array[i], sizeof(int));
 
 	*bytes = size;
 	return ser_buf;
 }
 
 /* Deserializer function for `struct mydata` */
-void* deser(void* buf, uint32_t __attribute__((unused)) bytes){
-	int *ser_buf = (int*)buf;
+void *deser(void *buf, uint32_t __attribute__((unused)) bytes)
+{
+	int *ser_buf = (int *)buf;
 	int size = ser_buf[0];
 
 	if (!size)
 		return NULL;
 
-	struct mydata* new_buf = 
-		(struct mydata*)malloc(sizeof(struct mydata));
+	struct mydata *new_buf = (struct mydata *)malloc(sizeof(struct mydata));
 
 	new_buf->size = (uint32_t)size;
 	new_buf->array = malloc(new_buf->size * sizeof(int));
-	for(int i=0; i<size; i++)
-		memcpy(&new_buf->array[i], &ser_buf[i+1], sizeof(int));
+	for (int i = 0; i < size; i++)
+		memcpy(&new_buf->array[i], &ser_buf[i + 1], sizeof(int));
 
 	return new_buf;
 }
@@ -69,7 +69,7 @@ int main(int argc, char *argv[])
 	struct vaccel_shared_object object;
 
 	struct mydata input_data;
-	struct mydata* output_data = NULL;
+	struct mydata *output_data = NULL;
 
 	if (argc < 3) {
 		fprintf(stderr, "You must specify the number of iterations\n");
@@ -77,12 +77,11 @@ int main(int argc, char *argv[])
 	}
 
 	ret = vaccel_shared_object_new(&object, argv[1]);
-        if (ret)
-        {
-                fprintf(stderr, "Could not create shared object resource: %s",
-                                strerror(ret));
-                exit(1);
-        }
+	if (ret) {
+		fprintf(stderr, "Could not create shared object resource: %s",
+			strerror(ret));
+		exit(1);
+	}
 	sess.hint = VACCEL_PLUGIN_DEBUG;
 	ret = vaccel_sess_init(&sess, sess.hint);
 	if (ret != VACCEL_OK) {
@@ -93,14 +92,13 @@ int main(int argc, char *argv[])
 	printf("Initialized session with id: %u\n", sess.session_id);
 
 	ret = vaccel_sess_register(&sess, object.resource);
-	if (ret)
-	{
+	if (ret) {
 		fprintf(stderr, "Could register shared object to session\n");
 		exit(1);
 	}
 
-	struct vaccel_arg_list* read  = vaccel_args_init(1);
-	struct vaccel_arg_list* write = vaccel_args_init(1);
+	struct vaccel_arg_list *read = vaccel_args_init(1);
+	struct vaccel_arg_list *write = vaccel_args_init(1);
 
 	if (!read || !write) {
 		printf("Problem with creating arg-list\n");
@@ -108,14 +106,13 @@ int main(int argc, char *argv[])
 	}
 
 	input_data.size = 5;
-	input_data.array = malloc(5*sizeof(int));
+	input_data.array = malloc(5 * sizeof(int));
 	printf("Input: ");
-	for(int i=0; i<5; i++){
-		input_data.array[i] = 2*i;
+	for (int i = 0; i < 5; i++) {
+		input_data.array[i] = 2 * i;
 		printf("%d ", input_data.array[i]);
 	}
 	printf("\n");
-
 
 	ret = vaccel_add_nonserial_arg(read, &input_data, 0, ser);
 	if (ret != VACCEL_OK) {
@@ -131,11 +128,10 @@ int main(int argc, char *argv[])
 	}
 
 	for (int i = 0; i < atoi(argv[2]); ++i) {
-		ret =
-		    vaccel_exec_with_resource(&sess, &object,
-				"mytestfunc_nonser",
-				read->list, read->size,
-				write->list, write->size);
+		ret = vaccel_exec_with_resource(&sess, &object,
+						"mytestfunc_nonser", read->list,
+						read->size, write->list,
+						write->size);
 
 		if (ret) {
 			fprintf(stderr, "Could not run op: %d\n", ret);
@@ -151,19 +147,19 @@ int main(int argc, char *argv[])
 
 	printf("Output: ");
 	uint32_t i;
-	for(i = 0; i < output_data->size; i++){
+	for (i = 0; i < output_data->size; i++) {
 		printf("%d ", output_data->array[i]);
 	}
 	printf("\n");
 
- close_session:
+close_session:
 
-	/* Free non-serialised buffers */ 
+	/* Free non-serialised buffers */
 	free(input_data.array);
 	free(output_data->array);
 	free(output_data);
 
-	/* Delete arg-lists */ 
+	/* Delete arg-lists */
 	ret = vaccel_delete_args(read);
 	if (ret != VACCEL_OK) {
 		printf("Could not delete arg list\n");
