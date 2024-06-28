@@ -12,8 +12,7 @@
  * limitations under the License.
  */
 
-#ifndef __LIST_H__
-#define __LIST_H__
+#pragma once
 
 #include "include/list.h"
 
@@ -107,7 +106,7 @@ static inline list_entry_t *list_remove_tail(list_t *list)
  *
  */
 #define get_container(ptr, type, name) \
-	(type *)((char *)ptr - offsetof(type, name))
+	(type *)((char *)(ptr) - offsetof(type, name))
 
 /* Iterate through all the entries of a list
  *
@@ -116,7 +115,7 @@ static inline list_entry_t *list_remove_tail(list_t *list)
  * \param[in] list The list head of the list to iterate
  */
 #define for_each(iter, list) \
-	for (iter = (list)->next; iter != (list); iter = iter->next)
+	for ((iter) = (list)->next; (iter) != (list); (iter) = (iter)->next)
 
 /* Iterate through all the containers of a list
  *
@@ -125,10 +124,10 @@ static inline list_entry_t *list_remove_tail(list_t *list)
  * \param[in] list The head of the list to iterate
  * \param[in] member The name of list_entry_t field of the container
  */
-#define for_each_container(iter, list, type, member) \
-	for (iter = get_container((list)->next, type, member); \
-		&iter->member != (list); \
-	       iter = get_container(iter->member.next, type, member))
+#define for_each_container(iter, list, type, member)             \
+	for ((iter) = get_container((list)->next, type, member); \
+	     &(iter)->member != (list);                          \
+	     (iter) = get_container((iter)->member.next, type, member))
 
 /* Iterate through all the containers of a list safely
  *
@@ -142,12 +141,8 @@ static inline list_entry_t *list_remove_tail(list_t *list)
  * \param[in] list The head of the list to iterate
  * \param[in] member The name of list_entry_t field of the container
  */
-#define for_each_container_safe(iter, tmp_iter, list, type, member) \
-	for (iter = get_container((list)->next, type, member), \
-		tmp_iter = get_container(iter->member.next, type, member); \
-		&iter->member != (list); \
-		iter = tmp_iter, \
-		tmp_iter = get_container(tmp_iter->member.next, type, member))
-
-
-#endif /* __LIST_H__ */
+#define for_each_container_safe(iter, tmp_iter, list, type, member)        \
+	for ((iter) = get_container((list)->next, type, member),           \
+	    (tmp_iter) = get_container((iter)->member.next, type, member); \
+	     &(iter)->member != (list); (iter) = (tmp_iter),               \
+	    (tmp_iter) = get_container((tmp_iter)->member.next, type, member))

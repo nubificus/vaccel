@@ -12,8 +12,7 @@
  * limitations under the License.
  */
 
-#ifndef __VACCEL_EXEC_OPS_H__
-#define __VACCEL_EXEC_OPS_H__
+#pragma once
 
 #include <stddef.h>
 
@@ -36,5 +35,3 @@ int vaccel_exec_with_resource(struct vaccel_session *sess, struct vaccel_shared_
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* __VACCEL_EXEC_OPS_H__ */

@@ -25,13 +25,14 @@ extern "C" {
 TEST_CASE("min_max", "[minmax]")
 {
     const char* path = abs_path(SOURCE_ROOT, "examples/input/input_262144.csv");
-    double min, max;
+    double min;
+    double max;
     int ret;
 
     int ndata = 262144;
     REQUIRE(ndata > 0);
 
-    double* indata = (double*)malloc(ndata * sizeof(double));
+    auto *indata = (double *)malloc(ndata * sizeof(double));
     REQUIRE(indata != nullptr);
 
     FILE* fp = fopen(path, "r");
@@ -41,7 +42,7 @@ TEST_CASE("min_max", "[minmax]")
         REQUIRE(fscanf(fp, "%lf\n", &indata[i]) == 1);
     }
 
-    double* outdata = (double*)malloc(ndata * sizeof(double));
+    auto *outdata = (double *)malloc(ndata * sizeof(double));
     REQUIRE(outdata != nullptr);
 
     int low_threshold = 0;
@@ -59,7 +60,8 @@ TEST_CASE("min_max", "[minmax]")
     REQUIRE(session.resources);
     REQUIRE(session.priv == nullptr);
 
-    struct timespec t0, t1;
+    struct timespec t0;
+    struct timespec t1;
     clock_gettime(CLOCK_MONOTONIC_RAW, &t0);
 
     ret = vaccel_minmax(&session, indata, ndata, low_threshold, high_threshold,
@@ -85,13 +87,14 @@ TEST_CASE("min_max", "[minmax]")
 TEST_CASE("min_max_generic", "[minmax]")
 {
     const char* path = abs_path(SOURCE_ROOT, "examples/input/input_262144.csv");
-    double min, max;
+    double min;
+    double max;
     int ret;
 
     int ndata = 262144;
     REQUIRE(ndata > 0);
 
-    double* indata = (double*)malloc(ndata * sizeof(double));
+    auto *indata = (double *)malloc(ndata * sizeof(double));
     REQUIRE(indata != nullptr);
 
     FILE* fp = fopen(path, "r");
@@ -101,7 +104,7 @@ TEST_CASE("min_max_generic", "[minmax]")
         REQUIRE(fscanf(fp, "%lf\n", &indata[i]) == 1);
     }
 
-    double* outdata = (double*)malloc(ndata * sizeof(double));
+    auto *outdata = (double *)malloc(ndata * sizeof(double));
     REQUIRE(outdata != nullptr);
 
     int low_threshold = 0;
@@ -119,7 +122,8 @@ TEST_CASE("min_max_generic", "[minmax]")
     REQUIRE(session.resources);
     REQUIRE(session.priv == nullptr);
 
-    struct timespec t0, t1;
+    struct timespec t0;
+    struct timespec t1;
 
     enum vaccel_op_type op_type = VACCEL_MINMAX;
     struct vaccel_arg read[5] = {

@@ -12,14 +12,14 @@
  * limitations under the License.
  */
 
+#include <fcntl.h>
 #include <stdio.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
-#include <fcntl.h>
 #include <unistd.h>
 
-#include <vaccel.h>
 #include "../src/utils.h"
+#include <vaccel.h>
 
 static unsigned char *read_file_from_dir(
 	const char *dir,

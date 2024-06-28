@@ -13,19 +13,19 @@
  */
 
 #include "session.h"
-#include "plugin.h"
-#include "log.h"
-#include "utils.h"
 #include "id_pool.h"
+#include "log.h"
+#include "plugin.h"
+#include "utils.h"
 
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <unistd.h>
-#include <sys/stat.h>
 #include <string.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
-#define MAX_VACCEL_SESSIONS 1024
+enum { MAX_VACCEL_SESSIONS = 1024 };
 
 struct {
 	/* true if the sessions subsystem has been initialized */
@@ -195,7 +195,8 @@ static int cleanup_session_resources(struct vaccel_session *sess)
 
 	struct session_resources *resources = sess->resources;
 	for (int i = 0; i < VACCEL_RES_MAX; ++i) {
-		struct registered_resource *iter, *tmp;
+		struct registered_resource *iter;
+		struct registered_resource *tmp;
 		for_each_session_resource_safe(iter, tmp, &resources->registered[i]) {
 			int ret = vaccel_sess_unregister(sess, iter->res);
 			if (ret) {

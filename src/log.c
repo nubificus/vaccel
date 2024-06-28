@@ -15,14 +15,16 @@
 #include "error.h"
 #include "log.h"
 
+#include <slog.h>
 #include <stdlib.h>
 #include <string.h>
-#include <slog.h>
 
-#define VACCEL_DEBUG_LVL_ERROR 1
-#define VACCEL_DEBUG_LVL_WARN  2
-#define VACCEL_DEBUG_LVL_INFO  3
-#define VACCEL_DEBUG_LVL_DEBUG 4
+enum {
+	VACCEL_DEBUG_LVL_ERROR = 1,
+	VACCEL_DEBUG_LVL_WARN = 2,
+	VACCEL_DEBUG_LVL_INFO = 3,
+	VACCEL_DEBUG_LVL_DEBUG = 4
+};
 
 static void set_debug_level(void)
 {
@@ -66,8 +68,8 @@ static void set_log_file(void)
 	slog_config_get(&cfg);
 	strncpy(cfg.sFileName, env, SLOG_NAME_MAX-1);
 
-	if (strncmp(cfg.sFileName, "/dev/stdout", SLOG_NAME_MAX-1)
-			&& strncmp(cfg.sFileName, "/dev/stderr", SLOG_NAME_MAX-1)) {
+	if (strncmp(cfg.sFileName, "/dev/stdout", SLOG_NAME_MAX - 1) != 0 &&
+	    strncmp(cfg.sFileName, "/dev/stderr", SLOG_NAME_MAX - 1) != 0) {
 		cfg.nToFile = 1;
 		cfg.nToScreen = 0;
 	}

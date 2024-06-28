@@ -16,6 +16,7 @@
 #include <utils.hpp>
 
 extern "C" {
+#include "utils.h"
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -23,7 +24,6 @@ extern "C" {
 #include <sys/types.h>
 #include <unistd.h>
 #include <vaccel.h>
-#include "utils.h"
 }
 
 TEST_CASE("classify_generic")
@@ -32,7 +32,8 @@ TEST_CASE("classify_generic")
     int ret;
     char* image;
     size_t image_size = 0;
-    char out_text[512], out_imagename[512];
+    char out_text[512];
+    char out_imagename[512];
 
     struct vaccel_session sess;
     sess.session_id = 0;
@@ -71,6 +72,7 @@ TEST_CASE("classify_generic")
     };
 
     ret = vaccel_genop(&sess, read, 2, write, 2);
+    REQUIRE(ret == VACCEL_OK);
 
     printf("classification tags: %s\n", out_text);
 

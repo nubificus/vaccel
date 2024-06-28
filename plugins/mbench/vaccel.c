@@ -12,14 +12,14 @@
  * limitations under the License.
  */
 
-#include <stdio.h>
-#include <vaccel.h>
+#include "vaccel_prof.h"
 #include <signal.h>
-#include <sys/time.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/time.h>
 #include <time.h>
-#include "vaccel_prof.h"
+#include <vaccel.h>
 
 struct vaccel_prof_region mbench_plugin_stats =
 	VACCEL_PROF_REGION_INIT("vaccel_mbench_plugin");
@@ -28,9 +28,12 @@ struct vaccel_prof_region mbench_plugin_stats =
 
 static int mbench(int time)
 {
-	int ret, sec = 0, usec = 1;
+	int ret;
+	int sec = 0;
+	int usec = 1;
 	struct timespec t;
-	uint64_t sts, ets;
+	uint64_t sts;
+	uint64_t ets;
 
 	if (time > (int) MAX_TIME || time < 1)
 		return VACCEL_EINVAL;
@@ -54,8 +57,9 @@ static int mbench_unpack(struct vaccel_session *session,
 		size_t nr_read, void *write, size_t nr_write)
 {
 	struct vaccel_arg *read_args = (struct vaccel_arg*)read;
-	int time, ret;
-	void *buf;
+	int time;
+	int ret;
+	//void *buf;
 
 	vaccel_debug("Calling mbench for session %u", session->session_id);
 
@@ -66,7 +70,7 @@ static int mbench_unpack(struct vaccel_session *session,
 		return VACCEL_EINVAL;
 
 	time = atoi(read_args[0].buf);
-	buf = (void *)read_args[1].buf;
+	//buf = read_args[1].buf;
 
 	vaccel_prof_region_start(&mbench_plugin_stats);
 

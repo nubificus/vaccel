@@ -12,9 +12,6 @@
  * limitations under the License.
  */
 
-#ifndef __GENOP_H__
-#define __GENOP_H__
+#pragma once
 
 #include "include/ops/genop.h"
-
-#endif /* __GENOP_H__ */

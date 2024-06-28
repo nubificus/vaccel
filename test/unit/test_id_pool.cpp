@@ -70,7 +70,7 @@ TEST_CASE("id_pool_destroy", "[id_pool]")
     // Check handling when the pool doesn't exist
     SECTION("id_pool doesn't exist")
     {
-        REQUIRE(id_pool_destroy(NULL) == VACCEL_EINVAL);
+	    REQUIRE(id_pool_destroy(nullptr) == VACCEL_EINVAL);
     }
 }
 
@@ -121,7 +121,9 @@ TEST_CASE("id_pool_get", "[id_pool]")
     }
 
     // Check handling when there is no pool to get IDs from
-    SECTION("no pool to get ids from") { REQUIRE(id_pool_get(NULL) == 0); }
+    SECTION("no pool to get ids from") {
+	    REQUIRE(id_pool_get(nullptr) == 0);
+    }
 }
 
 // Test case for releasing IDs back into the pool

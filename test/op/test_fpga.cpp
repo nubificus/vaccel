@@ -37,15 +37,17 @@ TEST_CASE("vaccel_fpga_add", "[vaccel_fpga_plugins]")
 
     const char* vaccel_backends = std::getenv("VACCEL_BACKENDS");
 
-    if (vaccel_backends) {
-        std::cout << "VACCEL_BACKENDS: " << vaccel_backends << std::endl;
+    if (vaccel_backends != nullptr) {
+	    std::cout << "VACCEL_BACKENDS: " << vaccel_backends << '\n';
     } else {
-        std::cerr << "VACCEL_BACKENDS environment variable not set." << std::endl;
+	    std::cerr << "VACCEL_BACKENDS environment variable not set."
+		      << '\n';
     }
 
     SECTION("null session")
     {
-        REQUIRE(vaccel_fpga_vadd(NULL, A, B, C, len_A, len_B) == VACCEL_EINVAL);
+	    REQUIRE(vaccel_fpga_vadd(nullptr, A, B, C, len_A, len_B) ==
+		    VACCEL_EINVAL);
     }
 
     SECTION("valid session and inputs")
@@ -95,7 +97,8 @@ TEST_CASE("vaccel_fpga_copy", "[vaccel_fpga_plugins]")
 
     SECTION("null session")
     {
-        REQUIRE(vaccel_fpga_arraycopy(NULL, A, B, len_A) == VACCEL_EINVAL);
+	    REQUIRE(vaccel_fpga_arraycopy(nullptr, A, B, len_A) ==
+		    VACCEL_EINVAL);
     }
 
     SECTION("valid session and inputs")
@@ -140,7 +143,8 @@ TEST_CASE("vaccel_fpga_mmult", "[vaccel_fpga_plugins]")
 
     SECTION("null session")
     {
-        REQUIRE(vaccel_fpga_mmult(NULL, a, b, c, len_c) == VACCEL_EINVAL);
+	    REQUIRE(vaccel_fpga_mmult(nullptr, a, b, c, len_c) ==
+		    VACCEL_EINVAL);
     }
 
     SECTION("valid session and inputs")

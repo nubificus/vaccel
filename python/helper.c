@@ -1,12 +1,12 @@
 #define _POSIX_C_SOURCE 200809L
 
-#include <stdio.h>
-#include <dlfcn.h>
-#include <stdlib.h>
-#include <plugin.h>
-#include <vaccel.h>
-#include <string.h>
 #include <assert.h>
+#include <dlfcn.h>
+#include <plugin.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <vaccel.h>
 
 void *vacceldl = NULL;
 char *pname = NULL;
@@ -15,7 +15,8 @@ char *pname = NULL;
 static int load_backend_plugin(const char *path)
 {
 	int ret;
-	struct vaccel_plugin *plugin, **plugin_p;
+	struct vaccel_plugin *plugin;
+	struct vaccel_plugin **plugin_p;
 
 	void *dl = dlopen(path, RTLD_LAZY);
 	if (!dl) {
@@ -60,6 +61,7 @@ close_dl:
 int load_backend_plugins(char *plugins)
 {
 	char *plugin;
+	int ret = VACCEL_OK;
 
 	char *plugins_tmp = strdup(plugins);
 	if (!plugins_tmp)
@@ -69,22 +71,24 @@ int load_backend_plugins(char *plugins)
 	plugin = strtok(p, ":");
 	while (plugin) {
 		printf("Loading plugin: %s\n", plugin);
-		int ret = load_backend_plugin(plugin);
+		ret = load_backend_plugin(plugin);
 		if (ret != VACCEL_OK)
-			return ret;
+			break;
 
 		plugin = strtok(NULL, ":");
 	}
 	
 	free(plugins_tmp);
-	return VACCEL_OK;
+	return ret;
 }
 
 __attribute__((constructor))
 void load_vaccel(void)
 {
 	/* Get a copy of the plugin env variable */
-	pname = strdup(getenv("VACCEL_BACKENDS"));
+	const char *pname_env = getenv("VACCEL_BACKENDS");
+	if (pname_env)
+		pname = strdup(pname_env);
 
 	/* Do not allow libvaccel.so to load the plugins
 	   as we get unresolved symbols. See:

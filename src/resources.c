@@ -14,22 +14,21 @@
 #define _POSIX_C_SOURCE 200809L
 
 #include "resources.h"
-#include "id_pool.h"
 #include "error.h"
+#include "id_pool.h"
 #include "list.h"
 #include "log.h"
+#include "plugin.h"
 #include "utils.h"
 #include "vaccel.h"
-#include "plugin.h"
 
+#include <stdbool.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
-#include <stdbool.h>
 #include <sys/stat.h>
 
-#define MAX_RESOURCES 2048
-#define MAX_RESOURCE_RUNDIR 1024
+enum { MAX_RESOURCES = 2048, MAX_RESOURCE_RUNDIR = 1024 };
 
 static bool initialized = false;
 static id_pool_t id_pool;
@@ -60,7 +59,8 @@ int resources_cleanup(void)
 		return VACCEL_OK;
 
 	for (int i = 0; i < VACCEL_RES_MAX; ++i) {
-		struct vaccel_resource *res, *tmp;
+		struct vaccel_resource *res;
+		struct vaccel_resource *tmp;
 		for_each_vaccel_resource_safe(res, tmp, &live_resources[i])
 			resource_destroy(res);
 	}
@@ -110,7 +110,8 @@ int resource_get_by_id(struct vaccel_resource **resource, vaccel_id_t id)
 		return VACCEL_EPERM;
 
 	for (int i = 0; i < VACCEL_RES_MAX; ++i) {
-		struct vaccel_resource *res, *tmp;
+		struct vaccel_resource *res;
+		struct vaccel_resource *tmp;
 		for_each_vaccel_resource_safe(res, tmp, &live_resources[i]) {
 			if (id == res->id) {
 				*resource = res;

@@ -1,5 +1,4 @@
-#ifndef __VACCEL_FPGA_H__
-#define __VACCEL_FPGA_H__
+#pragma once
 
 #include <stddef.h>
 
@@ -17,9 +16,6 @@ int vaccel_fpga_parallel(struct vaccel_session *sess, float A[], float  B[], flo
 
 int vaccel_fpga_vadd(struct vaccel_session *sess, float A[], float B[], float C[], size_t len_a, size_t len_b);
 
-
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* __VACCEL_FPGA_H__ */

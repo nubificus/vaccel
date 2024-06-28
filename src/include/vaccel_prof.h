@@ -14,11 +14,10 @@
 
 #pragma once
 
-#include <stdbool.h>
-#include <stdint.h>
-#include <stddef.h>
-
 #include "error.h"
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -98,12 +97,9 @@ int vaccel_prof_regions_print_all(
 		int nregions
 );
 
-int vaccel_prof_regions_print_all_to_buf(
-		char **tbuf,
-		size_t tbuf_len,
-		struct vaccel_prof_region *regions,
-		int nregions
-);
+int vaccel_prof_regions_print_all_to_buf(char **tbuf, size_t tbuf_len,
+					 struct vaccel_prof_region *regions,
+					 int size);
 
 #ifdef __cplusplus
 }

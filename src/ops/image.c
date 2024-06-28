@@ -14,11 +14,11 @@
 
 #include "image.h"
 #include "error.h"
-#include "plugin.h"
-#include "log.h"
-#include "vaccel_ops.h"
 #include "genop.h"
+#include "log.h"
+#include "plugin.h"
 #include "session.h"
+#include "vaccel_ops.h"
 #include "vaccel_prof.h"
 
 struct vaccel_prof_region image_op_stats =
@@ -84,7 +84,7 @@ int vaccel_image_op_unpack(enum vaccel_op_type op_type,
 		return VACCEL_EINVAL;
 	}
 
-	void *img = (void *)read[0].buf;
+	void *img = read[0].buf;
 	size_t len_img = (size_t)read[0].size;
 
 	if (nr_write_req == 2) {
@@ -96,13 +96,12 @@ int vaccel_image_op_unpack(enum vaccel_op_type op_type,
 		return vaccel_image_op(op_type, sess, img, out_text,
 				out_imgname, len_img, len_out_text,
 				len_out_imgname);
-	} else {
-		unsigned char *out_imgname = (unsigned char *)write[0].buf;
-		size_t len_out_imgname = (size_t)write[0].size;
-
-		return vaccel_image_op_no_text(op_type, sess, img, out_imgname,
-				len_img, len_out_imgname);
 	}
+	unsigned char *out_imgname = (unsigned char *)write[0].buf;
+	size_t len_out_imgname = (size_t)write[0].size;
+
+	return vaccel_image_op_no_text(op_type, sess, img, out_imgname, len_img,
+				       len_out_imgname);
 }
 
 int vaccel_image_classification(struct vaccel_session *sess, const void *img,

@@ -12,8 +12,7 @@
  * limitations under the License.
  */
 
-#ifndef __VACCEL_IMAGE_OPS_H__
-#define __VACCEL_IMAGE_OPS_H__
+#pragma once
 
 #include <stddef.h>
 
@@ -46,5 +45,3 @@ int vaccel_image_depth(struct vaccel_session *sess, const void *img,
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* __VACCEL_IMAGE_OPS_H__ */

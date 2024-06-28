@@ -14,12 +14,12 @@
 #define _POSIX_C_SOURCE 200809L
 
 #include "ops/vaccel_ops.h"
+#include <inttypes.h>
 #include <stdio.h>
 #include <string.h>
-#include <inttypes.h>
 
-#include <vaccel.h>
 #include <ops/torch.h>
+#include <vaccel.h>
 
 #define noop_info(fmt, ...) \
 	fprintf(stdout, "[noop] " fmt, ##__VA_ARGS__)
@@ -99,7 +99,7 @@ static int noop_img_class(struct vaccel_session *sess, const void *img,
 	fprintf(stdout, "[noop] len_img: %zu\n", len_img);
 	fprintf(stdout, "[noop] will return a dummy result\n");
 	sprintf((char *)out_text, "This is a dummy classification tag!");
-	len_out_text = strlen("This is a dummy classification tag!");
+	//len_out_text = strlen("This is a dummy classification tag!");
 
 	return VACCEL_OK;
 }
@@ -397,7 +397,8 @@ static int noop_tflite_session_delete(
 	return VACCEL_OK;
 }
 
-static int v_arraycopy(struct vaccel_session *session, int *a, int *b, size_t c)
+static int v_arraycopy(struct vaccel_session *session, const int *a, int *b,
+		       size_t c)
 {
 	fprintf(stdout, "[noop] Calling v_arraycopy for session %u\n",
 		session->session_id);
@@ -414,8 +415,8 @@ static int v_arraycopy(struct vaccel_session *session, int *a, int *b, size_t c)
 	return VACCEL_OK;
 }
 
-static int v_vectoradd(struct vaccel_session *session, float *a, float *b,
-				                       float *c, size_t len_a, size_t len_b)
+static int v_vectoradd(struct vaccel_session *session, const float *a,
+		       const float *b, float *c, size_t len_a, size_t len_b)
 {
 	fprintf(stdout, "[noop] Calling v_vectoradd for session %u\n",
 		session->session_id);
@@ -431,8 +432,9 @@ static int v_vectoradd(struct vaccel_session *session, float *a, float *b,
 	return VACCEL_OK;
 }
 
-static int v_parallel(struct vaccel_session *session, float *a, float *b,
-				                      float *add_out, float *mult_out, size_t len_a)
+static int v_parallel(struct vaccel_session *session, const float *a,
+		      const float *b, float *add_out, float *mult_out,
+		      size_t len_a)
 {
 	fprintf(stdout, "[noop] Calling v_parallel for session %u\n",
 		session->session_id);

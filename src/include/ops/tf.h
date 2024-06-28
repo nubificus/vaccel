@@ -14,9 +14,9 @@
 
 #pragma once
 
-#include <stdint.h>
-#include <stddef.h>
 #include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
 
 struct vaccel_session;
 struct vaccel_tf_saved_model;

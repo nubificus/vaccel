@@ -1,9 +1,9 @@
 #include "fpga.h"
 #include "error.h"
-#include "plugin.h"
-#include "log.h"
-#include "vaccel_ops.h"
 #include "genop.h"
+#include "log.h"
+#include "plugin.h"
+#include "vaccel_ops.h"
 
 #include "session.h"
 int vaccel_fpga_arraycopy(struct vaccel_session *sess, int array[], int out_array[], size_t len_array)

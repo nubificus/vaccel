@@ -1,14 +1,12 @@
-#include <vaccel.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdbool.h>
 #include <errno.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <vaccel.h>
 
-#define M 512
-#define N 512
-#define K 512
+enum { M = 512, N = 512, K = 512 };
 
-#define ELEM_2D(array, i, j, ld) (*((array) + i*ld + j))
+#define ELEM_2D(array, i, j, ld) (*((array) + (i) * (ld) + (j)))
 
 void init(int m, int n, int k, float *A, float *B, float *C)
 {
@@ -35,7 +33,8 @@ int main(int argc, char *argv[])
 			fprintf(stderr, "Could not open file for writing. Will not write results\n");
 	}
 
-	float alpha = 32412.0, beta = 2123.0;
+	float alpha = 32412.0;
+	float beta = 2123.0;
 
 	float A[M*K];
 	float B[K*N];
@@ -64,7 +63,7 @@ int main(int argc, char *argv[])
 	}
 
 	if (data_fp)
-		fwrite(C, sizeof(float), M * N, data_fp);
+		fwrite(C, sizeof(float), (unsigned long)(M * N), data_fp);
 
 out:
 	vaccel_sess_free(&session);

@@ -14,21 +14,20 @@
 #define _POSIX_C_SOURCE 200809L
 
 #include "plugin.h"
-#include "session.h"
 #include "log.h"
-#include "vaccel.h"
 #include "resources.h"
+#include "session.h"
 #include "utils.h"
+#include "vaccel.h"
 
-#include <sys/stat.h>
-#include <unistd.h>
-#include <stdbool.h>
-#include <string.h>
 #include <dlfcn.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
-#define MAX_RUNDIR_PATH 1024
+enum { MAX_RUNDIR_PATH = 1024 };
 
 /* Runtime directory for holding resources related with the
  * runtime */
@@ -37,7 +36,8 @@ static char rundir[MAX_RUNDIR_PATH];
 static int load_backend_plugin(const char *path)
 {
 	int ret;
-	struct vaccel_plugin *plugin, **plugin_p;
+	struct vaccel_plugin *plugin;
+	struct vaccel_plugin **plugin_p;
 
 	void *dl = dlopen(path, RTLD_LAZY);
 	if (!dl) {
@@ -77,6 +77,7 @@ close_dl:
 static int load_backend_plugins(char *plugins)
 {
 	char *plugin;
+	int ret = VACCEL_OK;
 
 	char *plugins_tmp = strdup(plugins);
 	if (!plugins_tmp)
@@ -85,15 +86,15 @@ static int load_backend_plugins(char *plugins)
 	char *p = plugins_tmp;
 	plugin = strtok(p, ":");
 	while (plugin) {
-		int ret = load_backend_plugin(plugin);
+		ret = load_backend_plugin(plugin);
 		if (ret != VACCEL_OK)
-			return ret;
+			break;
 
 		plugin = strtok(NULL, ":");
 	}
 	
 	free(plugins_tmp);
-	return VACCEL_OK;
+	return ret;
 }
 
 static int create_vaccel_rundir(void)

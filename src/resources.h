@@ -12,15 +12,13 @@
  * limitations under the License.
  */
 
-#ifndef __RESOURCES_H__
-#define __RESOURCES_H__
-
-#include <stdint.h>
-#include <stdatomic.h>
+#pragma once
 
 #include "include/resources.h"
 #include "id_pool.h"
 #include "list.h"
+#include <stdatomic.h>
+#include <stdint.h>
 
 struct vaccel_resource {
 	/* resource id */
@@ -64,5 +62,3 @@ int resource_destroy_rundir(struct vaccel_resource *res);
 #define for_each_vaccel_resource_safe(iter, tmp, list)                        \
 	for_each_container_safe((iter), (tmp), (list), struct vaccel_resource,\
 			entry)
-
-#endif /* __RESOURCES_H__ */

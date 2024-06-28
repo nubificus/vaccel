@@ -12,11 +12,11 @@
  * limitations under the License.
  */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <unistd.h>
 
 #include <vaccel.h>
@@ -25,8 +25,8 @@ int main(int argc, char *argv[])
 {
 	int ret;
 	struct vaccel_session sess;
-	int input;
-	int output;
+	int input = 0;
+	int output = 0;
 
 	if (argc < 2) {
 		fprintf(stderr, "You must specify the number of iterations\n");
@@ -53,8 +53,7 @@ int main(int argc, char *argv[])
 	//vaccel_get_plugins(&sess, 7);
 
 	for (int i = 0; i < atoi(argv[1]); ++i) {
-		ret =
-		    vaccel_exec(&sess, "/usr/local/lib/libmytestlib.so",
+		ret = vaccel_exec(&sess, "/usr/local/lib/libmytestlib.so",
 				"mytestfunc", read, 1, write, 1);
 		if (ret) {
 			fprintf(stderr, "Could not run op: %d\n", ret);

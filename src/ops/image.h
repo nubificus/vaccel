@@ -12,8 +12,7 @@
  * limitations under the License.
  */
 
-#ifndef __IMAGE_OPS_H__
-#define __IMAGE_OPS_H__
+#pragma once
 
 #include "include/ops/image.h"
 #include "include/ops/vaccel_ops.h"
@@ -40,5 +39,3 @@ int vaccel_image_pose_unpack(struct vaccel_session *sess,
 int vaccel_image_depth_unpack(struct vaccel_session *sess,
 		struct vaccel_arg *read, int nr_read,
 		struct vaccel_arg *write, int nr_write);
-
-#endif /* __IMAGE_OPS_H__ */

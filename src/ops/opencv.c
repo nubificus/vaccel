@@ -1,8 +1,8 @@
 #include "error.h"
-#include "plugin.h"
-#include "log.h"
-#include "vaccel_ops.h"
 #include "genop.h"
+#include "log.h"
+#include "plugin.h"
+#include "vaccel_ops.h"
 //#include "opencv.h"
 
 #include "session.h"

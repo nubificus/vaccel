@@ -12,8 +12,7 @@
  * limitations under the License.
  */
 
-#ifndef __UTILS_H__
-#define __UTILS_H__
+#pragma once
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -33,5 +32,3 @@ int read_file(const char *path, void **data, size_t *size);
  * This will actually mmap the file with read and write access
  * and return the mapped memory and the size of the file */
 int read_file_mmap(const char *path, void **data, size_t *size);
-
-#endif /* __UTILS_H__ */

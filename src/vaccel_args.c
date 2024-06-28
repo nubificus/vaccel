@@ -14,8 +14,8 @@
 
 #include "vaccel_args.h"
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 
 struct vaccel_arg_list* vaccel_args_init(uint32_t size)
 {

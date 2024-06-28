@@ -12,10 +12,10 @@
  * limitations under the License.
  */
 
-#include <stdio.h>
-#include <vaccel.h>
 #include <byteswap.h>
 #include <dlfcn.h>
+#include <stdio.h>
+#include <vaccel.h>
 
 #if 0
 struct vector_arg {

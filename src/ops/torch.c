@@ -1,11 +1,11 @@
 #include "torch.h"
 #include "error.h"
+#include "genop.h"
+#include "log.h"
 #include "ops/genop.h"
 #include "ops/torch.h"
 #include "plugin.h"
-#include "log.h"
 #include "vaccel_ops.h"
-#include "genop.h"
 
 #include "session.h"
 #include <pthread.h>
@@ -71,15 +71,17 @@ vaccel_torch_tensor_new(int nr_dims, int64_t *dims, enum vaccel_torch_data_type 
 
     ret->data_type = type;
     ret->nr_dims = nr_dims;
-	// void *calloc(size_t numElements, size_t sizeOfElement);
-    ret->dims = calloc(nr_dims, sizeof(*dims));
+    ret->dims = calloc(nr_dims, sizeof(*ret->dims));
     if (!ret->dims) {
         free(ret);
         return NULL;
     }
 
-    if (dims)
-        memcpy(ret->dims, dims, nr_dims * sizeof(*dims));
+	if (dims) {
+		for (int i = 0; i < nr_dims; i++) {
+			ret->dims[i] = (int32_t)dims[i];
+		}
+	}
 
     return ret;
 }

@@ -12,16 +12,16 @@
  * limitations under the License.
  */
 
+#include <fcntl.h>
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <fcntl.h>
 #include <unistd.h>
 
-#include <vaccel.h>
 #include "../src/utils.h"
+#include <vaccel.h>
 
 int main(int argc, char *argv[])
 {
@@ -32,8 +32,8 @@ int main(int argc, char *argv[])
 	}
 
 	int input;
-	int output1;
-	int output2;
+	int output1 = 0;
+	int output2 = 0;
 
 	struct vaccel_shared_object object;
 
@@ -119,8 +119,8 @@ int main(int argc, char *argv[])
 			goto close_session;
 		}
 	}
-
 	printf("output1(2x%d): %d\n", input, output2);
+
 	ret = vaccel_sess_unregister(&sess, object.resource);
 	if (ret) {
 		fprintf(stderr, "Could not unregister object from session\n");

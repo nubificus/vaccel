@@ -12,8 +12,7 @@
  * limitations under the License.
  */
 
-#ifndef __VACCEL_NOOP_H__
-#define __VACCEL_NOOP_H__
+#pragma once
 
 #ifdef __cplusplus
 extern "C" {
@@ -26,5 +25,3 @@ int vaccel_noop(struct vaccel_session *sess);
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* __VACCEL_NOOP_H__ */

@@ -12,22 +12,23 @@
  * limitations under the License.
  */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <unistd.h>
 
-#include <vaccel.h>
 #include "../src/utils.h"
+#include <vaccel.h>
 
 int main(int argc, char *argv[])
 {
 	int ret;
 	char *image;
        	size_t image_size;
-	char out_text[512], out_imagename[512];
+	char out_text[512];
+	char out_imagename[512];
 	struct vaccel_session sess;
 
 	if (argc != 3) {

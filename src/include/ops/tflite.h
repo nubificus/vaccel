@@ -14,9 +14,10 @@
 
 #pragma once
 
-#include <stdint.h>
-#include <stddef.h>
+#include "session.h"
 #include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
 
 struct vaccel_single_model;
 

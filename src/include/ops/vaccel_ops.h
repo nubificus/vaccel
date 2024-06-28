@@ -12,8 +12,7 @@
  * limitations under the License.
  */
 
-#ifndef __VACCEL_OPS_H__
-#define __VACCEL_OPS_H__
+#pragma once
 
 #include <stddef.h>
 #include <stdint.h>
@@ -92,5 +91,3 @@ static inline const char *vaccel_op_type_str(enum vaccel_op_type op_type)
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* __VACCEL_OPS_H__ */

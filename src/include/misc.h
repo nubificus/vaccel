@@ -12,15 +12,10 @@
  * limitations under the License.
  */
 
-#ifndef __MISC_H__
-#define __MISC_H__
-
+#pragma once
 
 #include "plugin.h"
-#include "session.h"
 #include "ops/vaccel_ops.h"
+#include "session.h"
 
 int vaccel_get_plugins(struct vaccel_session *sess, enum vaccel_op_type op_type);
-
-#endif
-

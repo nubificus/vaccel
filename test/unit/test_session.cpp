@@ -24,37 +24,37 @@ FAKE_VALUE_FUNC(struct vaccel_plugin*, get_virtio_plugin);
 FAKE_VALUE_FUNC(struct vaccel_session*, sess_free);
 }
 
-#define MAX_VACCEL_SESSIONS 1024
+enum { MAX_VACCEL_SESSIONS = 1024 };
 
 // Mock functions for session initialization and cleanup
-int mock_sess_init(vaccel_session* sess, uint32_t flags)
+auto mock_sess_init(vaccel_session *sess, uint32_t flags) -> int
 {
     (void)sess;
     (void)flags;
     return 0;
 }
 
-int mock_sess_update(vaccel_session* sess, uint32_t flags)
+auto mock_sess_update(vaccel_session *sess, uint32_t flags) -> int
 {
     (void)sess;
     (void)flags;
     return 0;
 }
 
-int mock_sess_free(vaccel_session* sess)
+auto mock_sess_free(vaccel_session *sess) -> int
 {
     (void)sess;
     return 0;
 }
 
-int mock_sess_register(uint32_t sess_id, vaccel_id_t resource_id)
+auto mock_sess_register(uint32_t sess_id, vaccel_id_t resource_id) -> int
 {
     (void)sess_id;
     (void)resource_id;
     return 0;
 }
 
-int mock_sess_unregister(uint32_t sess_id, vaccel_id_t resource_id)
+auto mock_sess_unregister(uint32_t sess_id, vaccel_id_t resource_id) -> int
 {
     (void)sess_id;
     (void)resource_id;
@@ -78,7 +78,7 @@ TEST_CASE("session_init", "[session]")
     sess.priv = nullptr;
 
     // Test handling of null session
-    ret = vaccel_sess_init(NULL, 1);
+    ret = vaccel_sess_init(nullptr, 1);
     REQUIRE(ret == VACCEL_EINVAL);
     REQUIRE(sess.hint == 0);
     REQUIRE(sess.session_id == 0);
@@ -93,7 +93,7 @@ TEST_CASE("session_init", "[session]")
     REQUIRE(sess.resources);
     REQUIRE(sess.priv == nullptr);
 
-    ret = vaccel_sess_free(NULL);
+    ret = vaccel_sess_free(nullptr);
     REQUIRE(ret == VACCEL_EINVAL);
     REQUIRE(sess.hint == 1);
     REQUIRE(sess.session_id);
@@ -142,14 +142,14 @@ TEST_CASE("vaccel_sess_update_and_free", "[session]")
     REQUIRE(sess.resources);
     REQUIRE(sess.priv == nullptr);
 
-    ret = vaccel_sess_update(NULL, 2);
+    ret = vaccel_sess_update(nullptr, 2);
     REQUIRE(ret == VACCEL_EINVAL);
     REQUIRE(sess.session_id);
     REQUIRE(sess.hint == 2);
     REQUIRE(sess.resources);
     REQUIRE(sess.priv == nullptr);
 
-    ret = vaccel_sess_free(NULL);
+    ret = vaccel_sess_free(nullptr);
     REQUIRE(ret == EINVAL);
     REQUIRE(sess.session_id);
     REQUIRE(sess.hint == 2);
@@ -192,11 +192,11 @@ TEST_CASE("sess_unregister_null", "[session]")
     struct vaccel_resource res;
     res.type = VACCEL_RES_SHARED_OBJ;
 
-    ret = vaccel_sess_register(NULL, NULL);
+    ret = vaccel_sess_register(nullptr, nullptr);
     REQUIRE(ret == VACCEL_EINVAL);
-    ret = vaccel_sess_register(NULL, &res);
+    ret = vaccel_sess_register(nullptr, &res);
     REQUIRE(ret == VACCEL_EINVAL);
-    ret = vaccel_sess_register(&sess, NULL);
+    ret = vaccel_sess_register(&sess, nullptr);
     REQUIRE(ret == VACCEL_EINVAL);
 
     REQUIRE(sess.session_id);
@@ -214,9 +214,9 @@ TEST_CASE("sess_unregister_null", "[session]")
     bool check_bool = vaccel_sess_has_resource(&sess, &res);
     REQUIRE(check_bool);
 
-    ret = vaccel_sess_unregister(NULL, &res);
+    ret = vaccel_sess_unregister(nullptr, &res);
     REQUIRE(ret == VACCEL_EINVAL);
-    ret = vaccel_sess_unregister(&sess, NULL);
+    ret = vaccel_sess_unregister(&sess, nullptr);
     REQUIRE(ret == VACCEL_EINVAL);
 
     REQUIRE(sess.session_id);
