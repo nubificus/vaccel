@@ -12,15 +12,15 @@ void init(int m, int n, int k, float *A, float *B, float *C)
 {
 	for (int i = 0; i < m; ++i)
 		for (int j = 0; j < k; ++j)
-			ELEM_2D(A, i, j, k) = ((float) i * j) / m;
+			ELEM_2D(A, i, j, k) = ((float)i * j) / m;
 
 	for (int i = 0; i < k; ++i)
 		for (int j = 0; j < n; ++j)
-			ELEM_2D(B, i, j, n) = ((float) i * j) / m;
+			ELEM_2D(B, i, j, n) = ((float)i * j) / m;
 
 	for (int i = 0; i < m; ++i)
 		for (int j = 0; j < n; ++j)
-			ELEM_2D(C, i, j, n) = ((float) i * j) / m;
+			ELEM_2D(C, i, j, n) = ((float)i * j) / m;
 }
 
 int main(int argc, char *argv[])
@@ -30,15 +30,16 @@ int main(int argc, char *argv[])
 	if (argc == 2) {
 		data_fp = fopen(argv[1], "wb");
 		if (!data_fp)
-			fprintf(stderr, "Could not open file for writing. Will not write results\n");
+			fprintf(stderr,
+				"Could not open file for writing. Will not write results\n");
 	}
 
 	float alpha = 32412.0;
 	float beta = 2123.0;
 
-	float A[M*K];
-	float B[K*N];
-	float C[M*N];
+	float A[M * K];
+	float B[K * N];
+	float C[M * N];
 
 	init(M, N, K, A, B, C);
 
@@ -48,15 +49,8 @@ int main(int argc, char *argv[])
 	if (ret)
 		return ret;
 
-	ret = vaccel_sgemm(
-		&session,
-		M, N, K,
-		alpha,
-		(float *)A, K,
-		(float *)B, N,
-		beta,
-		(float *)C, N
-	);
+	ret = vaccel_sgemm(&session, M, N, K, alpha, (float *)A, K, (float *)B,
+			   N, beta, (float *)C, N);
 	if (ret) {
 		fprintf(stderr, "Could not run sgemm\n");
 		goto out;

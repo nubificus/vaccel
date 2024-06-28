@@ -35,12 +35,11 @@ int main(int argc, char *argv[])
 	}
 
 	ret = vaccel_shared_object_new(&object, argv[1]);
-        if (ret)
-        {
-                fprintf(stderr, "Could not create shared object resource: %s",
-                                strerror(ret));
-                exit(1);
-        }
+	if (ret) {
+		fprintf(stderr, "Could not create shared object resource: %s",
+			strerror(ret));
+		exit(1);
+	}
 	sess.hint = VACCEL_PLUGIN_DEBUG;
 	ret = vaccel_sess_init(&sess, sess.hint);
 	if (ret != VACCEL_OK) {
@@ -51,17 +50,15 @@ int main(int argc, char *argv[])
 	printf("Initialized session with id: %u\n", sess.session_id);
 
 	ret = vaccel_sess_register(&sess, object.resource);
-	if (ret)
-	{
+	if (ret) {
 		fprintf(stderr, "Could register shared object to session\n");
 		exit(1);
 	}
 
 	printf("Initialized session with id: %u\n", sess.session_id);
 
-	
-	struct vaccel_arg_list* read  = vaccel_args_init(1);
-	struct vaccel_arg_list* write = vaccel_args_init(1);
+	struct vaccel_arg_list *read = vaccel_args_init(1);
+	struct vaccel_arg_list *write = vaccel_args_init(1);
 
 	if (!read || !write) {
 		printf("Problem with creating arg-list\n");
@@ -82,12 +79,10 @@ int main(int argc, char *argv[])
 	}
 
 	for (int i = 0; i < atoi(argv[2]); ++i) {
-		ret =
-		    vaccel_exec_with_resource(&sess, &object,
-				"mytestfunc", 
-				read->list, read->size, 
-				write->list, write->size);
-		
+		ret = vaccel_exec_with_resource(&sess, &object, "mytestfunc",
+						read->list, read->size,
+						write->list, write->size);
+
 		if (ret) {
 			fprintf(stderr, "Could not run op: %d\n", ret);
 			goto close_session;
@@ -104,8 +99,8 @@ int main(int argc, char *argv[])
 	printf("output(2x): %d\n", *outptr);
 	printf("output(2x): %d\n", output_int);
 
- close_session:
-	
+close_session:
+
 	ret = vaccel_delete_args(read);
 	if (ret != VACCEL_OK) {
 		printf("Could not delete arg list\n");

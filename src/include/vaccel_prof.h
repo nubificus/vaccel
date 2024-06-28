@@ -62,40 +62,25 @@ int vaccel_prof_region_stop(const struct vaccel_prof_region *region);
 int vaccel_prof_region_print(const struct vaccel_prof_region *region);
 
 /* Initialize a profiling region */
-int vaccel_prof_region_init(
-		struct vaccel_prof_region *region,
-		const char *name
-);
+int vaccel_prof_region_init(struct vaccel_prof_region *region,
+			    const char *name);
 
 /* Destroy a profiling region */
 int vaccel_prof_region_destroy(struct vaccel_prof_region *region);
 
-int vaccel_prof_regions_start_by_name(
-		struct vaccel_prof_region *regions,
-		int nregions,
-		const char *name
-);
+int vaccel_prof_regions_start_by_name(struct vaccel_prof_region *regions,
+				      int nregions, const char *name);
 
-int vaccel_prof_regions_stop_by_name(
-		struct vaccel_prof_region *regions,
-		int nregions,
-		const char *name
-);
+int vaccel_prof_regions_stop_by_name(struct vaccel_prof_region *regions,
+				     int nregions, const char *name);
 
-void vaccel_prof_regions_clear(
-		struct vaccel_prof_region *regions,
-		int nregions
-);
+void vaccel_prof_regions_clear(struct vaccel_prof_region *regions,
+			       int nregions);
 
-int vaccel_prof_regions_init(
-		struct vaccel_prof_region *regions,
-		int nregions
-);
+int vaccel_prof_regions_init(struct vaccel_prof_region *regions, int nregions);
 
-int vaccel_prof_regions_print_all(
-		struct vaccel_prof_region *regions,
-		int nregions
-);
+int vaccel_prof_regions_print_all(struct vaccel_prof_region *regions,
+				  int nregions);
 
 int vaccel_prof_regions_print_all_to_buf(char **tbuf, size_t tbuf_len,
 					 struct vaccel_prof_region *regions,

@@ -74,7 +74,7 @@ int sessions_cleanup(void)
 }
 
 int vaccel_sess_register(struct vaccel_session *sess,
-		struct vaccel_resource *res)
+			 struct vaccel_resource *res)
 {
 	if (!sess || !sess->resources || !res || res->type >= VACCEL_RES_MAX)
 		return VACCEL_EINVAL;
@@ -86,7 +86,8 @@ int vaccel_sess_register(struct vaccel_session *sess,
 
 	struct vaccel_plugin *plugin = get_virtio_plugin();
 	if (plugin) {
-		int ret = plugin->info->sess_register(sess->session_id, res->id);
+		int ret =
+			plugin->info->sess_register(sess->session_id, res->id);
 		if (ret) {
 			free(container);
 			return ret;
@@ -102,7 +103,7 @@ int vaccel_sess_register(struct vaccel_session *sess,
 
 static struct registered_resource *
 find_registered_resource(struct vaccel_session *sess,
-		struct vaccel_resource *res)
+			 struct vaccel_resource *res)
 {
 	struct session_resources *resources = sess->resources;
 	list_t *list = &resources->registered[res->type];
@@ -117,7 +118,7 @@ find_registered_resource(struct vaccel_session *sess,
 }
 
 int vaccel_sess_unregister(struct vaccel_session *sess,
-		struct vaccel_resource *res)
+			   struct vaccel_resource *res)
 {
 	if (!sess || !res || res->type >= VACCEL_RES_MAX)
 		return VACCEL_EINVAL;
@@ -127,16 +128,18 @@ int vaccel_sess_unregister(struct vaccel_session *sess,
 		find_registered_resource(sess, res);
 	if (!container) {
 		vaccel_error("Resource %u not registered with session %u\n",
-				res->id, sess->session_id);
+			     res->id, sess->session_id);
 		return VACCEL_EINVAL;
 	}
 
 	struct vaccel_plugin *plugin = get_virtio_plugin();
 	if (plugin) {
-		int ret = plugin->info->sess_unregister(sess->session_id, res->id);
+		int ret = plugin->info->sess_unregister(sess->session_id,
+							res->id);
 		if (ret) {
-			vaccel_warn("BUG: Could not unregister host-side resource %u",
-					res->id);
+			vaccel_warn(
+				"BUG: Could not unregister host-side resource %u",
+				res->id);
 		}
 	}
 
@@ -147,10 +150,9 @@ int vaccel_sess_unregister(struct vaccel_session *sess,
 	return VACCEL_OK;
 }
 
-bool vaccel_sess_has_resource(
-	struct vaccel_session *sess,
-	struct vaccel_resource *res
-) {
+bool vaccel_sess_has_resource(struct vaccel_session *sess,
+			      struct vaccel_resource *res)
+{
 	return find_registered_resource(sess, res) != NULL;
 }
 
@@ -165,10 +167,10 @@ static int initialize_session_resources(struct vaccel_session *sess)
 
 	const char *root_rundir = vaccel_rundir();
 	int ret = snprintf(res->rundir, MAX_SESSION_RUNDIR_PATH,
-			"%s/session.%u", root_rundir, sess->session_id);
+			   "%s/session.%u", root_rundir, sess->session_id);
 	if (ret == MAX_SESSION_RUNDIR_PATH) {
-		vaccel_error("rundir path '%s/session.%u' too big",
-				root_rundir, sess->session_id);
+		vaccel_error("rundir path '%s/session.%u' too big", root_rundir,
+			     sess->session_id);
 		ret = VACCEL_ENAMETOOLONG;
 		goto cleanup_res;
 	}
@@ -197,10 +199,12 @@ static int cleanup_session_resources(struct vaccel_session *sess)
 	for (int i = 0; i < VACCEL_RES_MAX; ++i) {
 		struct registered_resource *iter;
 		struct registered_resource *tmp;
-		for_each_session_resource_safe(iter, tmp, &resources->registered[i]) {
+		for_each_session_resource_safe(iter, tmp,
+					       &resources->registered[i]) {
 			int ret = vaccel_sess_unregister(sess, iter->res);
 			if (ret) {
-				vaccel_error("Could not unregister resource from session");
+				vaccel_error(
+					"Could not unregister resource from session");
 				return ret;
 			}
 		}
@@ -211,7 +215,7 @@ static int cleanup_session_resources(struct vaccel_session *sess)
 	int ret = cleanup_rundir(sess->resources->rundir);
 	if (ret)
 		vaccel_warn("Could not cleanup rundir '%s' for session %u",
-				sess->resources->rundir, sess->session_id);
+			    sess->resources->rundir, sess->session_id);
 
 	free(sess->resources);
 	sess->resources = NULL;
@@ -260,7 +264,8 @@ cleanup_session:
 	if (virtio) {
 		int ret = virtio->info->sess_free(sess);
 		if (ret) {
-			vaccel_error("BUG: Could not cleanup host-side session");
+			vaccel_error(
+				"BUG: Could not cleanup host-side session");
 		}
 	} else {
 		put_sess_id(sess->session_id);
@@ -290,7 +295,8 @@ int vaccel_sess_update(struct vaccel_session *sess, uint32_t flags)
 		sess->hint = flags;
 	}
 
-	vaccel_debug("session:%u update with flags: %u", sess->session_id, flags);
+	vaccel_debug("session:%u update with flags: %u", sess->session_id,
+		     flags);
 
 	return VACCEL_OK;
 }

@@ -26,7 +26,7 @@ int main(int argc, char *argv[])
 {
 	int ret;
 	char *image;
-       	size_t image_size;
+	size_t image_size;
 	char out_imagename[512];
 	struct vaccel_session sess;
 
@@ -48,8 +48,9 @@ int main(int argc, char *argv[])
 		goto close_session;
 
 	for (int i = 0; i < atoi(argv[2]); ++i) {
-		ret = vaccel_image_depth(&sess, image, (unsigned char*)out_imagename,
-				image_size, sizeof(out_imagename));
+		ret = vaccel_image_depth(&sess, image,
+					 (unsigned char *)out_imagename,
+					 image_size, sizeof(out_imagename));
 
 		if (ret) {
 			fprintf(stderr, "Could not run op: %d\n", ret);
@@ -57,9 +58,9 @@ int main(int argc, char *argv[])
 		}
 
 		if (i == 0)
-			printf("depth estimation imagename: %s\n", out_imagename);
+			printf("depth estimation imagename: %s\n",
+			       out_imagename);
 	}
-
 
 close_session:
 	free(image);

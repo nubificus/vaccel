@@ -57,7 +57,7 @@ static int tf_model_destructor(void *data)
 }
 
 static int file_from_regex(struct vaccel_file *file, const char *dirpath,
-		const char *pattern)
+			   const char *pattern)
 {
 	regex_t r;
 	char path[MAX_PATH];
@@ -75,8 +75,8 @@ static int file_from_regex(struct vaccel_file *file, const char *dirpath,
 	struct dirent *dent;
 	while ((dent = readdir(dir))) {
 		if (!regexec(&r, dent->d_name, 0, 0, 0)) {
-			if (snprintf(path, MAX_PATH,
-				"%s/%s", dirpath, dent->d_name) >= MAX_PATH) {
+			if (snprintf(path, MAX_PATH, "%s/%s", dirpath,
+				     dent->d_name) >= MAX_PATH) {
 				ret = VACCEL_ENAMETOOLONG;
 				break;
 			}
@@ -103,7 +103,6 @@ struct vaccel_tf_saved_model *vaccel_tf_saved_model_new(void)
 	return new;
 }
 
-
 /* Set the export directory of a SavedModel
  *
  * Used to create a SavedModel from an export path. The call
@@ -116,10 +115,9 @@ struct vaccel_tf_saved_model *vaccel_tf_saved_model_new(void)
  * If the exported model is malformed this will not fail. We will
  * find that out when trying to actually load the model
  */
-int vaccel_tf_saved_model_set_path(
-	struct vaccel_tf_saved_model *model,
-	const char *path
-) {
+int vaccel_tf_saved_model_set_path(struct vaccel_tf_saved_model *model,
+				   const char *path)
+{
 	char var_path[MAX_PATH];
 
 	if (!model)
@@ -193,10 +191,9 @@ const char *vaccel_tf_saved_model_get_path(struct vaccel_tf_saved_model *model)
  * with the Graph description. This will take ownership of the
  * buffer passed as an argument.
  */
-int vaccel_tf_saved_model_set_model(
-	struct vaccel_tf_saved_model *model,
-	const uint8_t *ptr, size_t len
-) {
+int vaccel_tf_saved_model_set_model(struct vaccel_tf_saved_model *model,
+				    const uint8_t *ptr, size_t len)
+{
 	vaccel_debug("Setting protobuf file for model");
 
 	if (!model) {
@@ -209,8 +206,8 @@ int vaccel_tf_saved_model_set_model(
 		return VACCEL_EINVAL;
 	}
 
-	int ret = vaccel_file_from_buffer(&model->model, ptr, len,
-			NULL, false, NULL, false);
+	int ret = vaccel_file_from_buffer(&model->model, ptr, len, NULL, false,
+					  NULL, false);
 	return ret;
 }
 
@@ -220,10 +217,10 @@ int vaccel_tf_saved_model_set_model(
  * If the data have not been read before, this will first try to
  * read the data (mmap them in memory) before returning.
  */
-const uint8_t *vaccel_tf_saved_model_get_model(
-	struct vaccel_tf_saved_model *model,
-	size_t *len
-) {
+const uint8_t *
+vaccel_tf_saved_model_get_model(struct vaccel_tf_saved_model *model,
+				size_t *len)
+{
 	if (!model)
 		return NULL;
 
@@ -237,10 +234,9 @@ const uint8_t *vaccel_tf_saved_model_get_model(
  * Create the underlying file resource for the variables checkpoint
  * file. This will take ownership of the buffer passed as an argument.
  */
-int vaccel_tf_saved_model_set_checkpoint(
-	struct vaccel_tf_saved_model *model,
-	const uint8_t *ptr, size_t len
-) {
+int vaccel_tf_saved_model_set_checkpoint(struct vaccel_tf_saved_model *model,
+					 const uint8_t *ptr, size_t len)
+{
 	vaccel_debug("Setting checkpoint file for model");
 
 	if (!model) {
@@ -253,8 +249,8 @@ int vaccel_tf_saved_model_set_checkpoint(
 		return VACCEL_EINVAL;
 	}
 
-	int ret = vaccel_file_from_buffer(&model->checkpoint, ptr, len,
-			NULL, false, NULL, false);
+	int ret = vaccel_file_from_buffer(&model->checkpoint, ptr, len, NULL,
+					  false, NULL, false);
 	return ret;
 }
 
@@ -264,10 +260,10 @@ int vaccel_tf_saved_model_set_checkpoint(
  * If the data have not been read before, this will first try to
  * read the data (mmap them in memory) before returning.
  */
-const uint8_t *vaccel_tf_saved_model_get_checkpoint(
-	struct vaccel_tf_saved_model *model,
-	size_t *len
-) {
+const uint8_t *
+vaccel_tf_saved_model_get_checkpoint(struct vaccel_tf_saved_model *model,
+				     size_t *len)
+{
 	if (!model)
 		return NULL;
 
@@ -281,10 +277,9 @@ const uint8_t *vaccel_tf_saved_model_get_checkpoint(
  * Create the underlying file resource for the variables index
  * file. This will take ownership of the buffer passed as an argument.
  */
-int vaccel_tf_saved_model_set_var_index(
-	struct vaccel_tf_saved_model *model,
-	const uint8_t *ptr, size_t len
-) {
+int vaccel_tf_saved_model_set_var_index(struct vaccel_tf_saved_model *model,
+					const uint8_t *ptr, size_t len)
+{
 	vaccel_debug("Setting variables index file for model");
 
 	if (!model) {
@@ -297,8 +292,8 @@ int vaccel_tf_saved_model_set_var_index(
 		return VACCEL_EINVAL;
 	}
 
-	int ret = vaccel_file_from_buffer(&model->var_index, ptr, len,
-			NULL, false, NULL, false);
+	int ret = vaccel_file_from_buffer(&model->var_index, ptr, len, NULL,
+					  false, NULL, false);
 	return ret;
 }
 
@@ -308,10 +303,10 @@ int vaccel_tf_saved_model_set_var_index(
  * If the data have not been read before, this will first try to
  * read the data (mmap them in memory) before returning.
  */
-const uint8_t *vaccel_tf_saved_model_get_var_index(
-	struct vaccel_tf_saved_model *model,
-	size_t *len
-) {
+const uint8_t *
+vaccel_tf_saved_model_get_var_index(struct vaccel_tf_saved_model *model,
+				    size_t *len)
+{
 	if (!model)
 		return NULL;
 
@@ -332,9 +327,9 @@ int vaccel_tf_saved_model_register(struct vaccel_tf_saved_model *model)
 
 	vaccel_debug("Registering new vAccel TensorFlow model");
 
-	if (!(vaccel_file_initialized(&model->model)
-		&& vaccel_file_initialized(&model->checkpoint)
-		&& vaccel_file_initialized(&model->var_index))) {
+	if (!(vaccel_file_initialized(&model->model) &&
+	      vaccel_file_initialized(&model->checkpoint) &&
+	      vaccel_file_initialized(&model->var_index))) {
 		vaccel_warn("Will not register uninitialized resource");
 		return VACCEL_EINVAL;
 	}
@@ -346,7 +341,7 @@ int vaccel_tf_saved_model_register(struct vaccel_tf_saved_model *model)
 	}
 
 	int ret = resource_new(res, VACCEL_RES_TF_SAVED_MODEL, (void *)model,
-			tf_model_destructor);
+			       tf_model_destructor);
 	if (ret)
 		goto free_resource;
 
@@ -354,7 +349,7 @@ int vaccel_tf_saved_model_register(struct vaccel_tf_saved_model *model)
 	 * done here */
 	if (model->path)
 		goto out;
-	
+
 	/* Else we need to persist the files in the disk */
 	ret = resource_create_rundir(res);
 	if (ret)
@@ -373,18 +368,18 @@ int vaccel_tf_saved_model_register(struct vaccel_tf_saved_model *model)
 		goto destroy_resource;
 	}
 
-	ret = vaccel_file_persist(&model->model, res->rundir,
-			"saved_model.pb", false);
+	ret = vaccel_file_persist(&model->model, res->rundir, "saved_model.pb",
+				  false);
 	if (ret)
 		goto destroy_resource;
 
 	ret = vaccel_file_persist(&model->checkpoint, var_dir,
-			"variables.data-00000-of-00001", false);
+				  "variables.data-00000-of-00001", false);
 	if (ret)
 		goto destroy_resource;
 
-	ret = vaccel_file_persist(&model->var_index, var_dir,
-			"variables.index", false);
+	ret = vaccel_file_persist(&model->var_index, var_dir, "variables.index",
+				  false);
 	if (ret)
 		goto destroy_resource;
 

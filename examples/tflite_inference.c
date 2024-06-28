@@ -35,13 +35,15 @@ int main(int argc, char *argv[])
 
 	int ret = vaccel_single_model_set_path(&model, model_path);
 	if (ret) {
-		fprintf(stderr, "Could not set model path to TensorFlow Lite model\n");
+		fprintf(stderr,
+			"Could not set model path to TensorFlow Lite model\n");
 		exit(1);
 	}
 
 	ret = vaccel_single_model_register(&model);
 	if (ret) {
-		fprintf(stderr, "Could not register TensorFlow Lite model resource\n");
+		fprintf(stderr,
+			"Could not register TensorFlow Lite model resource\n");
 		exit(1);
 	}
 
@@ -69,7 +71,7 @@ int main(int argc, char *argv[])
 	}
 
 	/* Input tensors */
-	int32_t dims[] = {1, 30};
+	int32_t dims[] = { 1, 30 };
 	float data[30];
 	for (int i = 0; i < 30; ++i)
 		data[i] = 1.00;
@@ -87,22 +89,22 @@ int main(int argc, char *argv[])
 	/* Output tensors */
 	struct vaccel_tflite_tensor *out;
 
-	ret = vaccel_tflite_session_run(&vsess, &model,
-			&in, 1, &out, 1,
-			&status);
+	ret = vaccel_tflite_session_run(&vsess, &model, &in, 1, &out, 1,
+					&status);
 	if (ret) {
 		fprintf(stderr, "Could not run model: %d\n", ret);
 		goto unload_session;
 	}
 
 	printf("Success!\n");
-	printf("Output tensor => type:%u nr_dims:%u\n", out->data_type, out->nr_dims);
+	printf("Output tensor => type:%u nr_dims:%u\n", out->data_type,
+	       out->nr_dims);
 	for (int i = 0; i < out->nr_dims; ++i)
 		printf("dim[%d]: %" PRId32 "\n", i, out->dims[i]);
 
 	printf("Result Tensor :\n");
 	float *offsets = (float *)out->data;
-	for (unsigned int i = 0; i < min(10, out->size / sizeof(float)) ; ++i)
+	for (unsigned int i = 0; i < min(10, out->size / sizeof(float)); ++i)
 		printf("%f\n", offsets[i]);
 
 unload_session:

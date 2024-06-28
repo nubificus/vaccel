@@ -70,7 +70,7 @@ int create_from_path(const char *path)
 		return ret;
 
 	vaccel_info("Registering model %lld with session %u", model_id,
-			sess.session_id);
+		    sess.session_id);
 
 	ret = vaccel_sess_register(&sess, model->resource);
 	if (ret) {
@@ -79,7 +79,7 @@ int create_from_path(const char *path)
 	}
 
 	vaccel_info("Unregistering model %lld from session %u", model_id,
-			sess.session_id);
+		    sess.session_id);
 
 	ret = vaccel_sess_unregister(&sess, model->resource);
 	if (ret) {
@@ -137,7 +137,7 @@ int create_from_in_mem(const char *path)
 		return ret;
 
 	vaccel_info("Registering model %lld with session %u", model_id,
-			sess.session_id);
+		    sess.session_id);
 
 	ret = vaccel_sess_register(&sess, model->resource);
 	if (ret) {
@@ -146,7 +146,7 @@ int create_from_in_mem(const char *path)
 	}
 
 	vaccel_info("Unregistering model %lld from session %u", model_id,
-			sess.session_id);
+		    sess.session_id);
 
 	ret = vaccel_sess_unregister(&sess, model->resource);
 	if (ret) {
@@ -162,8 +162,8 @@ int create_from_in_mem(const char *path)
 	}
 
 	vaccel_info("Destroying session %u", sess.session_id);
-	return destroy_session(&sess);}
-
+	return destroy_session(&sess);
+}
 
 int main(int argc, char *argv[])
 {

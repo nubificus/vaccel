@@ -26,7 +26,7 @@ int main(int argc, char *argv[])
 {
 	int ret;
 	char *image;
-       	size_t image_size;
+	size_t image_size;
 	char out_text[512];
 	char out_imagename[512];
 	struct vaccel_session sess;
@@ -49,8 +49,10 @@ int main(int argc, char *argv[])
 		goto close_session;
 
 	for (int i = 0; i < atoi(argv[2]); ++i) {
-		ret = vaccel_image_classification(&sess, image, (unsigned char*)out_text, (unsigned char*)out_imagename,
-				image_size, sizeof(out_text), sizeof(out_imagename));
+		ret = vaccel_image_classification(
+			&sess, image, (unsigned char *)out_text,
+			(unsigned char *)out_imagename, image_size,
+			sizeof(out_text), sizeof(out_imagename));
 		if (ret) {
 			fprintf(stderr, "Could not run op: %d\n", ret);
 			goto close_session;
@@ -59,7 +61,6 @@ int main(int argc, char *argv[])
 		if (i == 0)
 			printf("classification tags: %s\n", out_text);
 	}
-
 
 close_session:
 	free(image);

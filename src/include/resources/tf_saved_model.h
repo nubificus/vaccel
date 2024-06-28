@@ -55,42 +55,31 @@ struct vaccel_tf_saved_model {
 
 struct vaccel_tf_saved_model *vaccel_tf_saved_model_new(void);
 
-int vaccel_tf_saved_model_set_path(
-	struct vaccel_tf_saved_model *model,
-	const char *path
-);
+int vaccel_tf_saved_model_set_path(struct vaccel_tf_saved_model *model,
+				   const char *path);
 
 const char *vaccel_tf_saved_model_get_path(struct vaccel_tf_saved_model *model);
 
-int vaccel_tf_saved_model_set_model(
-	struct vaccel_tf_saved_model *model,
-	const uint8_t *ptr, size_t len
-);
+int vaccel_tf_saved_model_set_model(struct vaccel_tf_saved_model *model,
+				    const uint8_t *ptr, size_t len);
 
-const uint8_t *vaccel_tf_saved_model_get_model(
-	struct vaccel_tf_saved_model *model,
-	size_t *len
-);
+const uint8_t *
+vaccel_tf_saved_model_get_model(struct vaccel_tf_saved_model *model,
+				size_t *len);
 
-int vaccel_tf_saved_model_set_checkpoint(
-	struct vaccel_tf_saved_model *model,
-	const uint8_t *ptr, size_t len
-);
+int vaccel_tf_saved_model_set_checkpoint(struct vaccel_tf_saved_model *model,
+					 const uint8_t *ptr, size_t len);
 
-const uint8_t *vaccel_tf_saved_model_get_checkpoint(
-	struct vaccel_tf_saved_model *model,
-	size_t *len
-);
+const uint8_t *
+vaccel_tf_saved_model_get_checkpoint(struct vaccel_tf_saved_model *model,
+				     size_t *len);
 
-int vaccel_tf_saved_model_set_var_index(
-	struct vaccel_tf_saved_model *model,
-	const uint8_t *ptr, size_t len
-);
+int vaccel_tf_saved_model_set_var_index(struct vaccel_tf_saved_model *model,
+					const uint8_t *ptr, size_t len);
 
-const uint8_t *vaccel_tf_saved_model_get_var_index(
-	struct vaccel_tf_saved_model *model,
-	size_t *len
-);
+const uint8_t *
+vaccel_tf_saved_model_get_var_index(struct vaccel_tf_saved_model *model,
+				    size_t *len);
 
 int vaccel_tf_saved_model_register(struct vaccel_tf_saved_model *model);
 

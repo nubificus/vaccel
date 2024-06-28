@@ -37,26 +37,19 @@ struct vaccel_shared_object {
 	void *plugin_data;
 };
 
-int vaccel_shared_object_new(
-	struct vaccel_shared_object *object,
-	const char *path
-);
+int vaccel_shared_object_new(struct vaccel_shared_object *object,
+			     const char *path);
 
-int vaccel_shared_object_new_from_buffer(
-	struct vaccel_shared_object *object,
-	const uint8_t *buff,
-	size_t size
-);
+int vaccel_shared_object_new_from_buffer(struct vaccel_shared_object *object,
+					 const uint8_t *buff, size_t size);
 
 int vaccel_shared_object_destroy(struct vaccel_shared_object *object);
 
-vaccel_id_t vaccel_shared_object_get_id(
-	const struct vaccel_shared_object *object
-);
+vaccel_id_t
+vaccel_shared_object_get_id(const struct vaccel_shared_object *object);
 
-const uint8_t *vaccel_shared_object_get(
-	struct vaccel_shared_object *object, size_t *len
-);
+const uint8_t *vaccel_shared_object_get(struct vaccel_shared_object *object,
+					size_t *len);
 
 #ifdef __cplusplus
 }

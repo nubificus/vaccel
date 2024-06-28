@@ -41,7 +41,7 @@ static inline void list_init(list_t *list)
 
 /* Link an entry between two other entries in the list */
 static inline void list_link_entry(list_entry_t *entry, list_entry_t *prev,
-		list_entry_t *next)
+				   list_entry_t *next)
 {
 	entry->next = next;
 	next->prev = entry;

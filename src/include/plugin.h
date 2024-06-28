@@ -41,15 +41,8 @@ enum vaccel_plugin_type {
 };
 
 static const char *vaccel_plugin_type_name[] = {
-	"CPU",
-	"GPU",
-	"FPGA",
-	"SOFTWARE",
-	"TENSORFLOW",
-	"TORCH",
-	"JETSON",
-	"GENERIC",
-	"DEBUG",
+	"CPU",	 "GPU",	   "FPGA",    "SOFTWARE", "TENSORFLOW",
+	"TORCH", "JETSON", "GENERIC", "DEBUG",
 };
 
 /* Dummy type to str function for debug */
@@ -60,14 +53,14 @@ static inline const char *vaccel_plugin_type_str(enum vaccel_plugin_type type)
 	char *plugin_type_str = (char *)malloc(100);
 	unsigned int tester = 1;
 	p = plugin_type_str;
-	for (i = 0; i < VACCEL_PLUGIN_TYPE_MAX>>9; i++) {
+	for (i = 0; i < VACCEL_PLUGIN_TYPE_MAX >> 9; i++) {
 		if (tester & type) {
 			if (p != plugin_type_str) {
 				sprintf(p, " ");
-				p+=strlen(" ");
+				p += strlen(" ");
 			}
 			sprintf(p, "%s", vaccel_plugin_type_name[i]);
-			p+=strlen(vaccel_plugin_type_name[i]);
+			p += strlen(vaccel_plugin_type_name[i]);
 		}
 		tester <<= 1;
 	}
@@ -122,16 +115,15 @@ struct vaccel_plugin {
 extern struct vaccel_plugin vaccel_this_plugin;
 #define THIS_MODULE (&vaccel_this_plugin)
 
-#define VACCEL_MODULE(...)                                                     \
-	static struct vaccel_plugin_info                                       \
-			_vaccel_plugin_info = { __VA_ARGS__ };                 \
-	__attribute__((visibility("hidden"))) struct vaccel_plugin             \
-		vaccel_this_plugin = {                                        \
-			.dl_handle = NULL,                                     \
-			.entry = LIST_ENTRY_INIT(vaccel_this_plugin.entry),   \
-			.ops = LIST_ENTRY_INIT(vaccel_this_plugin.ops),       \
-			.info = &_vaccel_plugin_info                           \
-		};                                                             \
+#define VACCEL_MODULE(...)                                                      \
+	static struct vaccel_plugin_info _vaccel_plugin_info = { __VA_ARGS__ }; \
+	__attribute__((visibility(                                              \
+		"hidden"))) struct vaccel_plugin vaccel_this_plugin = {         \
+		.dl_handle = NULL,                                              \
+		.entry = LIST_ENTRY_INIT(vaccel_this_plugin.entry),             \
+		.ops = LIST_ENTRY_INIT(vaccel_this_plugin.ops),                 \
+		.info = &_vaccel_plugin_info                                    \
+	};                                                                      \
 	const struct vaccel_plugin *vaccel_plugin = &vaccel_this_plugin;
 
 struct vaccel_op {
@@ -151,14 +143,9 @@ struct vaccel_op {
 	list_entry_t func_entry;
 };
 
-#define VACCEL_OP_INIT(name, type, func)                                       \
-	{                                                                      \
-		(type),                                                        \
-		(func),                                                        \
-		THIS_MODULE,                                                   \
-		LIST_ENTRY_INIT((name).plugin_entry),                          \
-		LIST_ENTRY_INIT((name).func_entry)                             \
-	}
+#define VACCEL_OP_INIT(name, type, func)                                     \
+	{ (type), (func), THIS_MODULE, LIST_ENTRY_INIT((name).plugin_entry), \
+	  LIST_ENTRY_INIT((name).func_entry) }
 
 int register_plugin(struct vaccel_plugin *plugin);
 int unregister_plugin(struct vaccel_plugin *plugin);

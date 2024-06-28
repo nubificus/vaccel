@@ -35,7 +35,7 @@ static int mbench(int time)
 	uint64_t sts;
 	uint64_t ets;
 
-	if (time > (int) MAX_TIME || time < 1)
+	if (time > (int)MAX_TIME || time < 1)
 		return VACCEL_EINVAL;
 
 	clock_gettime(CLOCK_MONOTONIC_RAW, &t);
@@ -43,7 +43,7 @@ static int mbench(int time)
 	while (1) {
 		clock_gettime(CLOCK_MONOTONIC_RAW, &t);
 		ets = t.tv_sec * 1e9 + t.tv_nsec; // nsec
-		if ((ets-sts)/1000000 >= (uint64_t)time)
+		if ((ets - sts) / 1000000 >= (uint64_t)time)
 			break;
 	}
 
@@ -52,11 +52,11 @@ static int mbench(int time)
 	return VACCEL_OK;
 }
 
-static int mbench_unpack(struct vaccel_session *session,
-		const char *library, const char *fn_symbol, void *read,
-		size_t nr_read, void *write, size_t nr_write)
+static int mbench_unpack(struct vaccel_session *session, const char *library,
+			 const char *fn_symbol, void *read, size_t nr_read,
+			 void *write, size_t nr_write)
 {
-	struct vaccel_arg *read_args = (struct vaccel_arg*)read;
+	struct vaccel_arg *read_args = (struct vaccel_arg *)read;
 	int time;
 	int ret;
 	//void *buf;
@@ -96,9 +96,4 @@ static int fini(void)
 	return VACCEL_OK;
 }
 
-VACCEL_MODULE(
-	.name = "mbench",
-	.version = "0.1",
-	.init = init,
-	.fini = fini
-)
+VACCEL_MODULE(.name = "mbench", .version = "0.1", .init = init, .fini = fini)

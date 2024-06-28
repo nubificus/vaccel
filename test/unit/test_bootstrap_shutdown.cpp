@@ -25,53 +25,53 @@ enum {
 
 TEST_CASE("plugin")
 {
-    int ret;
-    ret = plugins_bootstrap();
-    REQUIRE(ret == VACCEL_OK);
+	int ret;
+	ret = plugins_bootstrap();
+	REQUIRE(ret == VACCEL_OK);
 
-    ret = plugins_shutdown();
-    REQUIRE(ret == VACCEL_OK);
+	ret = plugins_shutdown();
+	REQUIRE(ret == VACCEL_OK);
 }
 
 TEST_CASE("resource")
 {
-    id_pool_t id_pool;
-    list_t live_resources[VACCEL_RES_MAX];
-    int ret;
-    ret = id_pool_new(&id_pool, MAX_RESOURCES);
-    REQUIRE(ret == VACCEL_OK);
+	id_pool_t id_pool;
+	list_t live_resources[VACCEL_RES_MAX];
+	int ret;
+	ret = id_pool_new(&id_pool, MAX_RESOURCES);
+	REQUIRE(ret == VACCEL_OK);
 
-    for (auto &live_resource : live_resources)
-	    list_init(&live_resource);
+	for (auto &live_resource : live_resources)
+		list_init(&live_resource);
 
-    for (auto &live_resource : live_resources) {
-	    struct vaccel_resource *res;
-	    struct vaccel_resource *tmp;
-	    for_each_vaccel_resource_safe(res, tmp, &live_resource)
-		    resource_destroy(res);
-    }
-    ret = id_pool_destroy(&id_pool);
-    REQUIRE(ret == VACCEL_OK);
+	for (auto &live_resource : live_resources) {
+		struct vaccel_resource *res;
+		struct vaccel_resource *tmp;
+		for_each_vaccel_resource_safe(res, tmp, &live_resource)
+			resource_destroy(res);
+	}
+	ret = id_pool_destroy(&id_pool);
+	REQUIRE(ret == VACCEL_OK);
 }
 
 TEST_CASE("session")
 {
-    struct {
-        bool initialized;
-        id_pool_t ids;
-        struct vaccel_session* running_sessions[MAX_VACCEL_SESSIONS];
-    } sessions;
+	struct {
+		bool initialized;
+		id_pool_t ids;
+		struct vaccel_session *running_sessions[MAX_VACCEL_SESSIONS];
+	} sessions;
 
-    int ret;
-    ret = id_pool_new(&sessions.ids, MAX_VACCEL_SESSIONS);
-    REQUIRE(ret == VACCEL_OK);
+	int ret;
+	ret = id_pool_new(&sessions.ids, MAX_VACCEL_SESSIONS);
+	REQUIRE(ret == VACCEL_OK);
 
-    for (auto &running_session : sessions.running_sessions)
-	    running_session = nullptr;
+	for (auto &running_session : sessions.running_sessions)
+		running_session = nullptr;
 
-    sessions.initialized = true;
+	sessions.initialized = true;
 
-    ret = id_pool_destroy(&sessions.ids);
-    REQUIRE(ret == VACCEL_OK);
-    sessions.initialized = false;
+	ret = id_pool_destroy(&sessions.ids);
+	REQUIRE(ret == VACCEL_OK);
+	sessions.initialized = false;
 }

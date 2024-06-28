@@ -3,7 +3,8 @@
 #include <time.h>
 #include <vaccel.h>
 
-#define timespec_usec(t) ((double)(t).tv_nsec / 10e3 + (double)(t).tv_sec * 10e6)
+#define timespec_usec(t) \
+	((double)(t).tv_nsec / 10e3 + (double)(t).tv_sec * 10e6)
 #define time_diff_usec(t0, t1) (timespec_usec((t1)) - timespec_usec((t0)))
 
 int main(int argc, char *argv[])
@@ -15,8 +16,9 @@ int main(int argc, char *argv[])
 	int ret;
 
 	if (argc != 5) {
-		fprintf(stderr, "Usage: %s data_length indata_file low_threshold high_threshold\n",
-				argv[0]);
+		fprintf(stderr,
+			"Usage: %s data_length indata_file low_threshold high_threshold\n",
+			argv[0]);
 		return 0;
 	}
 
@@ -69,15 +71,15 @@ int main(int argc, char *argv[])
 
 	clock_gettime(CLOCK_MONOTONIC_RAW, &t0);
 	ret = vaccel_minmax(&session, indata, ndata, low_threshold,
-			high_threshold, outdata, &min, &max);
+			    high_threshold, outdata, &min, &max);
 	clock_gettime(CLOCK_MONOTONIC_RAW, &t1);
 	if (ret) {
 		fprintf(stderr, "Could not run kernel: %d\n", ret);
 		goto close_sess;
 	}
 
-	fprintf(stdout, "min: %lf max: %lf Execution time: %lf msec\n",
-			min, max, time_diff_usec(t0, t1) / 10e3);
+	fprintf(stdout, "min: %lf max: %lf Execution time: %lf msec\n", min,
+		max, time_diff_usec(t0, t1) / 10e3);
 
 close_sess:
 	vaccel_sess_free(&session);

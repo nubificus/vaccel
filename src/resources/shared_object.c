@@ -26,7 +26,8 @@
 
 static int shared_object_destructor(void *data)
 {
-	struct vaccel_shared_object *object = (struct vaccel_shared_object *)data;
+	struct vaccel_shared_object *object =
+		(struct vaccel_shared_object *)data;
 
 	if (!object)
 		return VACCEL_EINVAL;
@@ -36,7 +37,8 @@ static int shared_object_destructor(void *data)
 	return VACCEL_OK;
 }
 
-int vaccel_shared_object_new(struct vaccel_shared_object *object, const char *path)
+int vaccel_shared_object_new(struct vaccel_shared_object *object,
+			     const char *path)
 {
 	struct vaccel_resource *res = malloc(sizeof(*res));
 	if (!res)
@@ -47,7 +49,7 @@ int vaccel_shared_object_new(struct vaccel_shared_object *object, const char *pa
 		goto free_resource;
 
 	ret = resource_new(res, VACCEL_RES_SHARED_OBJ, (void *)object,
-			shared_object_destructor);
+			   shared_object_destructor);
 	if (ret)
 		goto destroy_file;
 
@@ -63,7 +65,7 @@ free_resource:
 }
 
 int vaccel_shared_object_new_from_buffer(struct vaccel_shared_object *object,
-		const uint8_t *buff, size_t size)
+					 const uint8_t *buff, size_t size)
 {
 	if (!object || !buff || !size)
 		return VACCEL_EINVAL;
@@ -72,13 +74,13 @@ int vaccel_shared_object_new_from_buffer(struct vaccel_shared_object *object,
 	if (!res)
 		return VACCEL_ENOMEM;
 
-	int ret = vaccel_file_from_buffer(&object->file, buff, size, NULL,
-			NULL, false, false);
+	int ret = vaccel_file_from_buffer(&object->file, buff, size, NULL, NULL,
+					  false, false);
 	if (ret)
 		goto free_resource;
 
 	ret = resource_new(res, VACCEL_RES_SHARED_OBJ, (void *)object,
-			shared_object_destructor);
+			   shared_object_destructor);
 	if (ret)
 		goto destroy_file;
 
@@ -112,10 +114,9 @@ free_resource:
  * If the data have not been read before, this will first try to
  * read the data (mmap them in memory) before returning.
  */
-const uint8_t *vaccel_shared_object_get(
-	struct vaccel_shared_object *object,
-	size_t *len
-) {
+const uint8_t *vaccel_shared_object_get(struct vaccel_shared_object *object,
+					size_t *len)
+{
 	if (!object)
 		return NULL;
 
@@ -141,7 +142,8 @@ int vaccel_shared_object_destroy(struct vaccel_shared_object *object)
 	return VACCEL_OK;
 }
 
-vaccel_id_t vaccel_shared_object_get_id(const struct vaccel_shared_object *object)
+vaccel_id_t
+vaccel_shared_object_get_id(const struct vaccel_shared_object *object)
 {
 	if (!object || !object->resource)
 		return -1;

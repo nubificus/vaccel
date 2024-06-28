@@ -75,10 +75,9 @@ void *vaccel_tf_buffer_take_data(struct vaccel_tf_buffer *buffer, size_t *size)
 }
 
 /* Get a read-only pointer to the buffer's data */
-void *vaccel_tf_buffer_get_data(
-	const struct vaccel_tf_buffer *buffer,
-	size_t *size
-) {
+void *vaccel_tf_buffer_get_data(const struct vaccel_tf_buffer *buffer,
+				size_t *size)
+{
 	if (!buffer)
 		return NULL;
 
@@ -90,7 +89,8 @@ void *vaccel_tf_buffer_get_data(
  *
  * The name will be copied inside the node
  */
-struct vaccel_tf_node *vaccel_tf_node_new(const char *name, int id) {
+struct vaccel_tf_node *vaccel_tf_node_new(const char *name, int id)
+{
 	struct vaccel_tf_node *ret = malloc(sizeof(*ret));
 	if (!ret)
 		return NULL;
@@ -141,8 +141,8 @@ int vaccel_tf_node_get_id(struct vaccel_tf_node *node)
 	return node->id;
 }
 
-struct vaccel_tf_tensor *
-vaccel_tf_tensor_new(int nr_dims, int64_t *dims, enum vaccel_tf_data_type type)
+struct vaccel_tf_tensor *vaccel_tf_tensor_new(int nr_dims, int64_t *dims,
+					      enum vaccel_tf_data_type type)
 {
 	struct vaccel_tf_tensor *ret;
 
@@ -165,11 +165,9 @@ vaccel_tf_tensor_new(int nr_dims, int64_t *dims, enum vaccel_tf_data_type type)
 }
 
 struct vaccel_tf_tensor *
-vaccel_tf_tensor_allocate(
-	int nr_dims, int64_t *dims,
-	enum vaccel_tf_data_type type,
-	size_t total_size
-) {
+vaccel_tf_tensor_allocate(int nr_dims, int64_t *dims,
+			  enum vaccel_tf_data_type type, size_t total_size)
+{
 	struct vaccel_tf_tensor *ret =
 		vaccel_tf_tensor_new(nr_dims, dims, type);
 	if (!ret)
@@ -206,11 +204,9 @@ int vaccel_tf_tensor_destroy(struct vaccel_tf_tensor *tensor)
 	return VACCEL_OK;
 }
 
-int vaccel_tf_tensor_set_data(
-	struct vaccel_tf_tensor *tensor,
-	void *data,
-	size_t size
-) {
+int vaccel_tf_tensor_set_data(struct vaccel_tf_tensor *tensor, void *data,
+			      size_t size)
+{
 	if (!tensor)
 		return VACCEL_EINVAL;
 
@@ -234,10 +230,9 @@ void *vaccel_tf_tensor_get_data(struct vaccel_tf_tensor *tensor)
 struct vaccel_prof_region tf_load_stats =
 	VACCEL_PROF_REGION_INIT("vaccel_tf_session_load");
 
-int vaccel_tf_session_load(
-	struct vaccel_session *sess,
-	struct vaccel_tf_saved_model *model,
-	struct vaccel_tf_status *status)
+int vaccel_tf_session_load(struct vaccel_session *sess,
+			   struct vaccel_tf_saved_model *model,
+			   struct vaccel_tf_status *status)
 {
 	int ret;
 
@@ -246,18 +241,17 @@ int vaccel_tf_session_load(
 		return VACCEL_EINVAL;
 	}
 
-	vaccel_debug("session:%u Looking for plugin implementing tf_session_load operation",
-				 sess->session_id);
-
+	vaccel_debug(
+		"session:%u Looking for plugin implementing tf_session_load operation",
+		sess->session_id);
 
 	vaccel_prof_region_start(&tf_load_stats);
 
 	// Get implementation
-	int (*plugin_op)(
-		struct vaccel_session *,
-		struct vaccel_tf_saved_model *,
-		struct vaccel_tf_status *
-	) = get_plugin_op(VACCEL_TF_SESSION_LOAD, sess->hint);
+	int (*plugin_op)(struct vaccel_session *,
+			 struct vaccel_tf_saved_model *,
+			 struct vaccel_tf_status *) =
+		get_plugin_op(VACCEL_TF_SESSION_LOAD, sess->hint);
 	if (!plugin_op) {
 		ret = VACCEL_ENOTSUP;
 		goto out;
@@ -273,12 +267,14 @@ out:
 struct vaccel_prof_region tf_session_run_stats =
 	VACCEL_PROF_REGION_INIT("vaccel_tf_session_run");
 
-int vaccel_tf_session_run(
-	struct vaccel_session *sess,
-        const struct vaccel_tf_saved_model *model, const struct vaccel_tf_buffer *run_options,
-        const struct vaccel_tf_node *in_nodes, struct vaccel_tf_tensor *const *in, int nr_inputs,
-        const struct vaccel_tf_node *out_nodes, struct vaccel_tf_tensor **out, int nr_outputs,
-        struct vaccel_tf_status *status)
+int vaccel_tf_session_run(struct vaccel_session *sess,
+			  const struct vaccel_tf_saved_model *model,
+			  const struct vaccel_tf_buffer *run_options,
+			  const struct vaccel_tf_node *in_nodes,
+			  struct vaccel_tf_tensor *const *in, int nr_inputs,
+			  const struct vaccel_tf_node *out_nodes,
+			  struct vaccel_tf_tensor **out, int nr_outputs,
+			  struct vaccel_tf_status *status)
 {
 	int ret;
 
@@ -287,19 +283,20 @@ int vaccel_tf_session_run(
 		return VACCEL_EINVAL;
 	}
 
-	vaccel_debug("session:%u Looking for plugin implementing tf_session_run operation",
-				 sess->session_id);
+	vaccel_debug(
+		"session:%u Looking for plugin implementing tf_session_run operation",
+		sess->session_id);
 
 	vaccel_prof_region_start(&tf_session_run_stats);
 
 	// Get implementation
 	int (*plugin_op)(
-		struct vaccel_session *,
-		const struct vaccel_tf_saved_model *, const struct vaccel_tf_buffer *,
-		const struct vaccel_tf_node *, struct vaccel_tf_tensor *const *, int,
+		struct vaccel_session *, const struct vaccel_tf_saved_model *,
+		const struct vaccel_tf_buffer *, const struct vaccel_tf_node *,
+		struct vaccel_tf_tensor *const *, int,
 		const struct vaccel_tf_node *, struct vaccel_tf_tensor **, int,
-		struct vaccel_tf_status *
-	) = get_plugin_op(VACCEL_TF_SESSION_RUN, sess->hint);
+		struct vaccel_tf_status *) =
+		get_plugin_op(VACCEL_TF_SESSION_RUN, sess->hint);
 	if (!plugin_op) {
 		ret = VACCEL_ENOTSUP;
 		goto out;
@@ -316,11 +313,10 @@ out:
 struct vaccel_prof_region tf_session_delete_stats =
 	VACCEL_PROF_REGION_INIT("vaccel_tf_session_delete");
 
-int vaccel_tf_session_delete(
-	struct vaccel_session *sess,
-	struct vaccel_tf_saved_model *model,
-	struct vaccel_tf_status *status
-) {
+int vaccel_tf_session_delete(struct vaccel_session *sess,
+			     struct vaccel_tf_saved_model *model,
+			     struct vaccel_tf_status *status)
+{
 	int ret;
 
 	if (!sess) {
@@ -328,13 +324,14 @@ int vaccel_tf_session_delete(
 		return VACCEL_EINVAL;
 	}
 
-	vaccel_debug("session:%u Looking for plugin implementing tf_session_delete operation",
-				 sess->session_id);
+	vaccel_debug(
+		"session:%u Looking for plugin implementing tf_session_delete operation",
+		sess->session_id);
 
-	int (*plugin_op)(
-		struct vaccel_session *, struct vaccel_tf_saved_model *,
-		struct vaccel_tf_status *
-	) = get_plugin_op(VACCEL_TF_SESSION_DELETE, sess->hint);
+	int (*plugin_op)(struct vaccel_session *,
+			 struct vaccel_tf_saved_model *,
+			 struct vaccel_tf_status *) =
+		get_plugin_op(VACCEL_TF_SESSION_DELETE, sess->hint);
 	if (!plugin_op) {
 		ret = VACCEL_ENOTSUP;
 		goto out;
@@ -347,13 +344,11 @@ out:
 	return ret;
 }
 
-__attribute__((constructor))
-static void vaccel_tf_ops_init(void)
+__attribute__((constructor)) static void vaccel_tf_ops_init(void)
 {
 }
 
-__attribute__((destructor))
-static void vaccel_tf_ops_fini(void)
+__attribute__((destructor)) static void vaccel_tf_ops_fini(void)
 {
 	vaccel_prof_region_print(&tf_load_stats);
 	vaccel_prof_region_print(&tf_session_run_stats);

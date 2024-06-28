@@ -33,8 +33,8 @@ static int noop(struct vaccel_session *session)
 	return VACCEL_OK;
 }
 
-static int exec(struct vaccel_session *session, const char *library, const char
-		*fn_symbol, void *read, size_t nr_read, void *write,
+static int exec(struct vaccel_session *session, const char *library,
+		const char *fn_symbol, void *read, size_t nr_read, void *write,
 		size_t nr_write)
 {
 	void *dl;
@@ -54,18 +54,20 @@ static int exec(struct vaccel_session *session, const char *library, const char
 	/* Get the function pointer based on the relevant symbol */
 	vaccel_debug("[exec] symbol: %s", fn_symbol);
 
-	args = (struct vaccel_arg*) read;
+	args = (struct vaccel_arg *)read;
 	for (size_t i = 0; i < nr_read; i++) {
 		vaccel_debug("[exec]: read[%d].size: %u\n", i, args[i].size);
-		vaccel_debug("[exec]: read[%d].argtype: %u\n", i, args[i].argtype);
+		vaccel_debug("[exec]: read[%d].argtype: %u\n", i,
+			     args[i].argtype);
 	}
-	args = (struct vaccel_arg*) write;
+	args = (struct vaccel_arg *)write;
 	for (size_t i = 0; i < nr_write; i++) {
 		vaccel_debug("[exec]: write[%d].size: %u\n", i, args[i].size);
-		vaccel_debug("[exec]: write[%d].argtype: %u\n", i, args[i].argtype);
+		vaccel_debug("[exec]: write[%d].argtype: %u\n", i,
+			     args[i].argtype);
 	}
 
-	fptr = (int (*)(void*, size_t, void*,size_t))dlsym(dl, fn_symbol);
+	fptr = (int (*)(void *, size_t, void *, size_t))dlsym(dl, fn_symbol);
 	if (!fptr) {
 		vaccel_error("%s", dlerror());
 		return VACCEL_EINVAL;
@@ -78,8 +80,10 @@ static int exec(struct vaccel_session *session, const char *library, const char
 	return VACCEL_OK;
 }
 
-static int exec_with_resource(struct vaccel_session *session, struct vaccel_shared_object *object, const char *fn_symbol, void *read, size_t nr_read, void *write,
-							  size_t nr_write)
+static int exec_with_resource(struct vaccel_session *session,
+			      struct vaccel_shared_object *object,
+			      const char *fn_symbol, void *read, size_t nr_read,
+			      void *write, size_t nr_write)
 {
 	void *dl;
 	int (*fptr)(void *, size_t, void *, size_t);
@@ -87,15 +91,15 @@ static int exec_with_resource(struct vaccel_session *session, struct vaccel_shar
 	struct vaccel_file *file;
 	struct vaccel_arg *args;
 
-	vaccel_debug("Calling exec_with_resource for session %u", session->session_id);
+	vaccel_debug("Calling exec_with_resource for session %u",
+		     session->session_id);
 
 	file = &object->file;
 	const char *library = file->path;
 
 	vaccel_debug("[exec_with_resource] library: %s", library);
 	dl = dlopen(library, RTLD_NOW);
-	if (!dl)
-	{
+	if (!dl) {
 		vaccel_error("%s", dlerror());
 		return VACCEL_EINVAL;
 	}
@@ -103,21 +107,21 @@ static int exec_with_resource(struct vaccel_session *session, struct vaccel_shar
 	/* Get the function pointer based on the relevant symbol */
 	vaccel_debug("[exec] symbol: %s", fn_symbol);
 	fptr = (int (*)(void *, size_t, void *, size_t))dlsym(dl, fn_symbol);
-	if (!fptr)
-	{
+	if (!fptr) {
 		vaccel_error("%s", dlerror());
 		return VACCEL_EINVAL;
 	}
 
-	args = (struct vaccel_arg*) read;
+	args = (struct vaccel_arg *)read;
 	for (size_t i = 0; i < nr_read; i++) {
 		vaccel_debug("[exec]: read[%d].size: %u\n", args[i].size);
 		vaccel_debug("[exec]: read[%d].argtype: %u\n", args[i].argtype);
 	}
-	args = (struct vaccel_arg*) write;
+	args = (struct vaccel_arg *)write;
 	for (size_t i = 0; i < nr_write; i++) {
 		vaccel_debug("[exec]: write[%d].size: %u\n", args[i].size);
-		vaccel_debug("[exec]: write[%d].argtype: %u\n", args[i].argtype);
+		vaccel_debug("[exec]: write[%d].argtype: %u\n",
+			     args[i].argtype);
 	}
 	ret = (*fptr)(read, nr_read, write, nr_write);
 	if (ret)
@@ -142,9 +146,7 @@ static int fini(void)
 	return VACCEL_OK;
 }
 
-VACCEL_MODULE(
-		.name = "exec",
-		.version = VACCELRT_VERSION,
-		.type = VACCEL_PLUGIN_SOFTWARE | VACCEL_PLUGIN_GENERIC | VACCEL_PLUGIN_CPU,
-		.init = init,
-		.fini = fini)
+VACCEL_MODULE(.name = "exec", .version = VACCELRT_VERSION,
+	      .type = VACCEL_PLUGIN_SOFTWARE | VACCEL_PLUGIN_GENERIC |
+		      VACCEL_PLUGIN_CPU,
+	      .init = init, .fini = fini)

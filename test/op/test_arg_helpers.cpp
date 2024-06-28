@@ -2,8 +2,7 @@
 #include <cstdint>
 #include <utils.hpp>
 
-extern "C"
-{
+extern "C" {
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,10 +13,9 @@ extern "C"
 #include <vaccel.h>
 }
 
-struct mydata
-{
+struct mydata {
 	uint32_t size;
-	int* array;
+	int *array;
 };
 
 auto ser(void *buf, uint32_t *bytes) -> void *
@@ -25,13 +23,12 @@ auto ser(void *buf, uint32_t *bytes) -> void *
 	auto *non_ser = (struct mydata *)buf;
 
 	uint32_t size = (non_ser->size + 1) * sizeof(int);
-	int* ser_buf = (int*)malloc(size);
+	int *ser_buf = (int *)malloc(size);
 
-	memcpy(ser_buf, (int*)(&non_ser->size), sizeof(int));
+	memcpy(ser_buf, (int *)(&non_ser->size), sizeof(int));
 
-	for(int i=0; i<(int)non_ser->size; i++)
-		memcpy(&ser_buf[i+1], &non_ser->array[i], sizeof(int));
-
+	for (int i = 0; i < (int)non_ser->size; i++)
+		memcpy(&ser_buf[i + 1], &non_ser->array[i], sizeof(int));
 
 	*bytes = size;
 	return ser_buf;
@@ -40,20 +37,20 @@ auto ser(void *buf, uint32_t *bytes) -> void *
 auto deser(void *buf, uint32_t bytes) -> void *
 {
 	printf("bytes: %d\n", (int)bytes);
-	int *ser_buf = (int*)buf;
+	int *ser_buf = (int *)buf;
 	int size = ser_buf[0];
 
 	auto *new_buf = (struct mydata *)malloc(sizeof(struct mydata));
 
 	new_buf->size = (uint32_t)size;
-	new_buf->array = (int*)malloc(new_buf->size * sizeof(int));
-	for(int i=0; i<size; i++)
-		memcpy(&new_buf->array[i], &ser_buf[i+1], sizeof(int));
+	new_buf->array = (int *)malloc(new_buf->size * sizeof(int));
+	for (int i = 0; i < size; i++)
+		memcpy(&new_buf->array[i], &ser_buf[i + 1], sizeof(int));
 
 	return new_buf;
 }
 
-   /*
+/*
     *
     * The code below performs Unit Testing to vaccel arguments 
     * helpers. More specifally, the functions that are getting 
@@ -91,57 +88,55 @@ auto deser(void *buf, uint32_t bytes) -> void *
     *  
     */
 
-
 TEST_CASE("exec_helpers")
 {
-    int ret = 0;
-    struct mydata mydata_instance;
-    mydata_instance.size = 5;
-	mydata_instance.array = (int*)malloc(5*sizeof(int));
-	for(int i=0; i<5; i++)
-        mydata_instance.array[i] = i+1;
+	int ret = 0;
+	struct mydata mydata_instance;
+	mydata_instance.size = 5;
+	mydata_instance.array = (int *)malloc(5 * sizeof(int));
+	for (int i = 0; i < 5; i++)
+		mydata_instance.array[i] = i + 1;
 
-    uint32_t bytes;
-    void* serbuf = ser(&mydata_instance, &bytes);
+	uint32_t bytes;
+	void *serbuf = ser(&mydata_instance, &bytes);
 
-    // vaccel_args_init() Testing
-    struct vaccel_arg_list* read  = vaccel_args_init(1);
-    struct vaccel_arg_list* write = vaccel_args_init(1);
+	// vaccel_args_init() Testing
+	struct vaccel_arg_list *read = vaccel_args_init(1);
+	struct vaccel_arg_list *write = vaccel_args_init(1);
 
-    if ((read == nullptr) || (write == nullptr)) {
-	    ret = 1;
-    }
-    REQUIRE(ret != 1);
+	if ((read == nullptr) || (write == nullptr)) {
+		ret = 1;
+	}
+	REQUIRE(ret != 1);
 
-    REQUIRE(read != NULL);
-    REQUIRE(read->size == 1);
-    REQUIRE(read->list != NULL);
+	REQUIRE(read != NULL);
+	REQUIRE(read->size == 1);
+	REQUIRE(read->list != NULL);
 
-    REQUIRE(write != NULL);
-    REQUIRE(write->size == 1);
-    REQUIRE(write->list != NULL);
+	REQUIRE(write != NULL);
+	REQUIRE(write->size == 1);
+	REQUIRE(write->list != NULL);
 
+	// vaccel_add_ser_arg() Testing
+	int input_int = 15;
+	ret = vaccel_add_serial_arg(read, &input_int, sizeof(int));
+	REQUIRE(ret == VACCEL_OK);
+	REQUIRE(read->size == 1);
+	REQUIRE(read->list[0].size == sizeof(int));
+	REQUIRE(read->list[0].argtype == 0);
+	REQUIRE(read->list[0].buf == &input_int);
 
-    // vaccel_add_ser_arg() Testing
-    int input_int = 15;
-    ret = vaccel_add_serial_arg(read, &input_int, sizeof(int));
-    REQUIRE(ret == VACCEL_OK);
-    REQUIRE(read->size == 1);
-    REQUIRE(read->list[0].size == sizeof(int));
-    REQUIRE(read->list[0].argtype == 0);
-    REQUIRE(read->list[0].buf == &input_int);
+	int output_int;
+	ret = vaccel_expect_serial_arg(write, &output_int, sizeof(output_int));
+	REQUIRE(ret == VACCEL_OK);
+	REQUIRE(write->size == 1);
+	REQUIRE(write->list[0].size == sizeof(int));
+	REQUIRE(write->list[0].argtype == 0);
+	REQUIRE(write->list[0].buf == &output_int);
 
-    int output_int;
-    ret = vaccel_expect_serial_arg(write, &output_int, sizeof(output_int));
-    REQUIRE(ret == VACCEL_OK);
-    REQUIRE(write->size == 1);
-    REQUIRE(write->list[0].size == sizeof(int));
-    REQUIRE(write->list[0].argtype == 0);
-    REQUIRE(write->list[0].buf == &output_int);
-
-    ret = vaccel_delete_args(write);
-    REQUIRE(ret == VACCEL_OK);
-    ret = vaccel_delete_args(read);
-    REQUIRE(ret == VACCEL_OK);
-    free(serbuf);
+	ret = vaccel_delete_args(write);
+	REQUIRE(ret == VACCEL_OK);
+	ret = vaccel_delete_args(read);
+	REQUIRE(ret == VACCEL_OK);
+	free(serbuf);
 }

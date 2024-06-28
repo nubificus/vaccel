@@ -11,7 +11,7 @@ int main()
 	int a[6] = { 12, 15, 12, 15, 12, 15 };
 	int b[6];
 	size_t len_a = sizeof(a) / sizeof(a[0]);
-	//size_t len_b = sizeof(b)/sizeof(b[1]); 
+	//size_t len_b = sizeof(b)/sizeof(b[1]);
 
 	ret = vaccel_sess_init(&sess, 0);
 	if (ret != VACCEL_OK) {
@@ -31,7 +31,7 @@ int main()
 		printf("%i\n", b[i]);
 	}
 
- close_session:
+close_session:
 	if (vaccel_sess_free(&sess) != VACCEL_OK) {
 		fprintf(stderr, "Could not clear session\n");
 		return 1;

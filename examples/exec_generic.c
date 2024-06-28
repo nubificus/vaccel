@@ -41,17 +41,17 @@ int main(int argc, char **argv)
 
 	printf("Initialized session with id: %u\n", sess.session_id);
 
-	input = 10;             /* some random input value */
+	input = 10; /* some random input value */
 	enum vaccel_op_type op_type = VACCEL_EXEC;
 	struct vaccel_arg read[4] = {
-		{.size = sizeof(uint8_t),.buf = &op_type},
-		{.size = strlen("/usr/local/lib/libmytestlib.so"),.buf =
-		 "/usr/local/lib/libmytestlib.so"},
-		{.size = strlen("mytestfunc"),.buf = "mytestfunc"},
-		{.size = sizeof(input),.buf = &input}
+		{ .size = sizeof(uint8_t), .buf = &op_type },
+		{ .size = strlen("/usr/local/lib/libmytestlib.so"),
+		  .buf = "/usr/local/lib/libmytestlib.so" },
+		{ .size = strlen("mytestfunc"), .buf = "mytestfunc" },
+		{ .size = sizeof(input), .buf = &input }
 	};
 	struct vaccel_arg write[1] = {
-		{.size = sizeof(output),.buf = &output},
+		{ .size = sizeof(output), .buf = &output },
 	};
 
 	for (int i = 0; i < atoi(argv[1]); ++i) {
@@ -61,10 +61,10 @@ int main(int argc, char **argv)
 			goto close_session;
 		}
 	}
-	
+
 	printf("output(2x%d): %d\n", input, output);
 
- close_session:
+close_session:
 	if (vaccel_sess_free(&sess) != VACCEL_OK) {
 		fprintf(stderr, "Could not clear session\n");
 		return 1;

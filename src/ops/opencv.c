@@ -7,13 +7,14 @@
 
 #include "session.h"
 int vaccel_opencv(struct vaccel_session *sess, struct vaccel_arg *read,
-		int nr_read, struct vaccel_arg *write, int nr_write)
+		  int nr_read, struct vaccel_arg *write, int nr_write)
 {
 	if (!sess)
 		return VACCEL_EINVAL;
 
-	vaccel_debug("session:%u Looking for plugin implementing the Optical Flow operation",
-			sess->session_id);
+	vaccel_debug(
+		"session:%u Looking for plugin implementing the Optical Flow operation",
+		sess->session_id);
 
 	//Get implementation
 	int (*plugin_op)() = get_plugin_op(VACCEL_OPENCV, sess->hint);
@@ -24,7 +25,7 @@ int vaccel_opencv(struct vaccel_session *sess, struct vaccel_arg *read,
 }
 
 int vaccel_opencv_unpack(struct vaccel_session *sess, struct vaccel_arg *read,
-		int nr_read, struct vaccel_arg *write, int nr_write)
+			 int nr_read, struct vaccel_arg *write, int nr_write)
 {
 //TODO: sanity check args
 #if 0
@@ -42,4 +43,3 @@ int vaccel_opencv_unpack(struct vaccel_session *sess, struct vaccel_arg *read,
 #endif
 	return vaccel_opencv(sess, read, nr_read, write, nr_write);
 }
-

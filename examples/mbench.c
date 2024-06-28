@@ -33,7 +33,8 @@ int main(int argc, char *argv[])
 	struct vaccel_arg args[2];
 
 	if (argc < 3) {
-		fprintf(stderr, "Usage: %s <time (ms)> <file> [<iterations>]\n", argv[0]);
+		fprintf(stderr, "Usage: %s <time (ms)> <file> [<iterations>]\n",
+			argv[0]);
 		return 0;
 	}
 	if (argc == 4)
@@ -66,7 +67,6 @@ int main(int argc, char *argv[])
 			goto close_session;
 		}
 	}
-
 
 close_session:
 	free(file);

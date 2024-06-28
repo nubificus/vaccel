@@ -47,61 +47,46 @@ enum vaccel_tflite_type {
 };
 
 struct vaccel_tflite_tensor {
-        /* Tensor's data */
-        void *data;
+	/* Tensor's data */
+	void *data;
 
-        /* Size of the data */
-        size_t size;
+	/* Size of the data */
+	size_t size;
 
 	/* Do we own the data */
 	bool owned;
 
-        /* Dimensions of the data */
-        int nr_dims;
-        int32_t *dims;
+	/* Dimensions of the data */
+	int nr_dims;
+	int32_t *dims;
 
-        /* Data type */
-        enum vaccel_tflite_type data_type;
+	/* Data type */
+	enum vaccel_tflite_type data_type;
 };
 
 struct vaccel_tflite_tensor *
-vaccel_tflite_tensor_new(
-	int nr_dims,
-	int32_t *dims,
-	enum vaccel_tflite_type type
-);
+vaccel_tflite_tensor_new(int nr_dims, int32_t *dims,
+			 enum vaccel_tflite_type type);
 
 struct vaccel_tflite_tensor *
-vaccel_tflite_tensor_allocate(
-	int nr_dims, int32_t *dims,
-	enum vaccel_tflite_type type,
-	size_t total_size
-);
+vaccel_tflite_tensor_allocate(int nr_dims, int32_t *dims,
+			      enum vaccel_tflite_type type, size_t total_size);
 
 int vaccel_tflite_tensor_destroy(struct vaccel_tflite_tensor *tensor);
 
-int vaccel_tflite_tensor_set_data(
-	struct vaccel_tflite_tensor *tensor,
-	void *data,
-	size_t size
-);
+int vaccel_tflite_tensor_set_data(struct vaccel_tflite_tensor *tensor,
+				  void *data, size_t size);
 
 void *vaccel_tflite_tensor_get_data(struct vaccel_tflite_tensor *tensor);
 
-int vaccel_tflite_session_load(
-	struct vaccel_session *session,
-	struct vaccel_single_model *model
-);
+int vaccel_tflite_session_load(struct vaccel_session *session,
+			       struct vaccel_single_model *model);
 
-int vaccel_tflite_session_run(
-	struct vaccel_session *session,
-        const struct vaccel_single_model *model,
-        struct vaccel_tflite_tensor *const *in, int nr_inputs,
-        struct vaccel_tflite_tensor **out, int nr_outputs,
-        uint8_t *status
-);
+int vaccel_tflite_session_run(struct vaccel_session *session,
+			      const struct vaccel_single_model *model,
+			      struct vaccel_tflite_tensor *const *in,
+			      int nr_inputs, struct vaccel_tflite_tensor **out,
+			      int nr_outputs, uint8_t *status);
 
-int vaccel_tflite_session_delete(
-	struct vaccel_session *session,
-	struct vaccel_single_model *model
-);
+int vaccel_tflite_session_delete(struct vaccel_session *session,
+				 struct vaccel_single_model *model);
