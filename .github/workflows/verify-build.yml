@@ -25,6 +25,8 @@ jobs:
 
       - name: Initialize workspace
         uses: ./.github/actions/initialize-workspace
+        with:
+          fetch-depth: 0
 
       - name: Build project
         id: build_vaccelrt
@@ -67,6 +69,8 @@ jobs:
           build-dir: build_${{matrix.build_type}}
           build-type: ${{matrix.build_type}}
           arch: ${{matrix.archconfig}}
+          access-key: ${{ secrets.AWS_ACCESS_KEY }}
+          secret-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
       - name: Clean-up
         run: sudo rm -rf artifacts build_${{ matrix.build_type }}

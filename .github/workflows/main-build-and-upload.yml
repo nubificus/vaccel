@@ -56,6 +56,8 @@ jobs:
           build-dir: build_pkg_${{matrix.build_type}}
           build-type: ${{matrix.build_type}}
           arch: ${{matrix.archconfig}}
+          access-key: ${{ secrets.AWS_ACCESS_KEY }}
+          secret-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
       - name: Clean-up
         run: sudo rm -rf artifacts build_pkg_${{ matrix.build_type }}
