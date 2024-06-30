@@ -1,4 +1,5 @@
 #!/bin/sh
+# SPDX-License-Identifier: Apache-2.0
 
 # generate .version file
 cd "${MESON_SOURCE_ROOT}" || exit 1
