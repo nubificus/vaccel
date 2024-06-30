@@ -1,4 +1,5 @@
 #!/bin/sh
+# SPDX-License-Identifier: Apache-2.0
 
 SRC_DIR=$1
 DEFAULT_VERSION="v0.0.0"

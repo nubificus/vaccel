@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 /*
  * The code below performs unit testing to misc with the usage of a mocked function
  *

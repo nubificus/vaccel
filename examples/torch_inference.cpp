@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 #include <cstdio>
 #include <cstdlib>
 #include <fcntl.h>

@@ -80,7 +80,8 @@ jobs:
           build: 'false'
           options: 'auto_features=enabled'
 
-      - uses: cpp-linter/cpp-linter-action@v2
+      - name: Run cpp-linter
+        uses: cpp-linter/cpp-linter-action@v2
         id: cpp_linter
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -117,7 +118,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: linter
+      - name: Run super-linter
         uses: super-linter/super-linter@v6
         env:
           DEFAULT_BRANCH: main
@@ -135,9 +136,34 @@ jobs:
     runs-on: [self-hosted, "x86_64", gcc, lite, "2204"]
 
     steps:
-      - uses: wagoid/commitlint-github-action@v6
+      - name: Checkout .github directory
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: .github
+
+      - name: Run commitlint
+        uses: wagoid/commitlint-github-action@v6
         with:
           configFile: .github/linters/commitlintrc.yml
+
+  linter_license_eye:
+    name: Check License Headers
+    runs-on: [self-hosted, "x86_64", gcc, lite, "2204"]
+
+    steps:
+      - name: Checkout .github directory
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: .github
+
+      - name: Initialize workspace
+        uses: ./.github/actions/initialize-workspace
+
+      - name: Run license-eye
+        uses: apache/skywalking-eyes/header@main
+        with:
+          config: .github/linters/licenserc.yml
+          token: ${{ secrets.GITHUB_TOKEN }}
 
   coverage_diff:
     name: Generate Coverage Report
@@ -147,6 +173,7 @@ jobs:
       - linter_cpp_linter
       - linter_super_linter
       - linter_commitlint
+      - linter_license_eye
     runs-on: [self-hosted, "x86_64", gcc, lite, "2204"]
 
     env:

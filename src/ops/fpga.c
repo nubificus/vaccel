@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 #include "fpga.h"
 #include "error.h"
 #include "genop.h"
