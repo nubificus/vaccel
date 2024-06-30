@@ -65,4 +65,3 @@ jobs:
   coverage_docs:
     uses: ./.github/workflows/coverage-upload.yml
     needs: [build_dist]
-    secrets: inherit

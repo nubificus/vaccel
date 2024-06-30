@@ -19,6 +19,7 @@ jobs:
     name: Verify Build
     if: ${{ contains(github.event.pull_request.labels.*.name, 'ok-to-test') }}
     uses: ./.github/workflows/verify-build.yml
+    secrets: inherit
 
   validate_code_and_commits:
     name: Validate Code and Commits
