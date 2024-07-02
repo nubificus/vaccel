@@ -123,8 +123,8 @@ int vaccel_exec_with_res_unpack(struct vaccel_session *sess,
 	char *fn_symbol = (char *)read[1].buf;
 
 	/* Pass on the rest of the read and all write arguments */
-	return vaccel_exec_with_resource (sess, object, fn_symbol, &read[2],
-			nr_read - 2, write, nr_write);
+	return vaccel_exec_with_resource(sess, object, fn_symbol, &read[2],
+					 nr_read - 2, write, nr_write);
 }
 
 __attribute__((constructor)) static void vaccel_ops_init(void)

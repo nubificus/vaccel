@@ -117,9 +117,9 @@ int resource_get_by_id(struct vaccel_resource **resource, vaccel_id_t id)
 }
 
 int resource_set_deps(struct vaccel_resource *res,
-		struct vaccel_resource **deps, size_t nr_deps)
+		      struct vaccel_resource **deps, size_t nr_deps)
 {
-	if  (!res || !deps || !nr_deps)
+	if (!res || !deps || !nr_deps)
 		return VACCEL_EINVAL;
 
 	struct vaccel_plugin *virtio = get_virtio_plugin();
@@ -136,9 +136,9 @@ int resource_set_deps(struct vaccel_resource *res,
 }
 
 int vaccel_resource_get_deps(struct vaccel_resource ***deps, size_t *nr_deps,
-		struct vaccel_resource *res)
+			     struct vaccel_resource *res)
 {
-	if  (!deps || !nr_deps || !res)
+	if (!deps || !nr_deps || !res)
 		return VACCEL_EINVAL;
 
 	*deps = res->deps;
@@ -148,12 +148,12 @@ int vaccel_resource_get_deps(struct vaccel_resource ***deps, size_t *nr_deps,
 }
 
 int vaccel_resource_deps_to_ids(vaccel_id_t *ids, struct vaccel_resource **deps,
-		size_t nr_deps)
+				size_t nr_deps)
 {
 	if (!ids || !deps || !nr_deps)
 		return VACCEL_EINVAL;
 
-	for (size_t i = 0; i <  nr_deps; i++) {
+	for (size_t i = 0; i < nr_deps; i++) {
 		ids[i] = deps[i]->id;
 	}
 
@@ -161,7 +161,7 @@ int vaccel_resource_deps_to_ids(vaccel_id_t *ids, struct vaccel_resource **deps,
 }
 
 int vaccel_resource_deps_from_ids(struct vaccel_resource **deps,
-		vaccel_id_t *ids, size_t nr_ids)
+				  vaccel_id_t *ids, size_t nr_ids)
 {
 	if (!deps || !ids || !nr_ids)
 		return VACCEL_EINVAL;
@@ -178,7 +178,7 @@ int vaccel_resource_deps_from_ids(struct vaccel_resource **deps,
 }
 
 int vaccel_resource_set_deps_from_ids(struct vaccel_resource *res,
-		vaccel_id_t *ids, size_t nr_ids)
+				      vaccel_id_t *ids, size_t nr_ids)
 {
 	if (!res || !ids || !nr_ids)
 		return VACCEL_EINVAL;
@@ -247,9 +247,9 @@ int resource_destroy(struct vaccel_resource *res)
 		free(res->rundir);
 	}
 
-	if (res->deps || res->nr_deps) 
+	if (res->deps || res->nr_deps)
 		vaccel_warn("Resource %lld has deps that will not be destroyed",
-				res->id);
+			    res->id);
 
 	return VACCEL_OK;
 }

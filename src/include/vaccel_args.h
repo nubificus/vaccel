@@ -77,7 +77,7 @@ int vaccel_write_nonserial_arg(struct vaccel_arg *args, int idx, void *buf,
 			       void *(*serializer)(void *, uint32_t *));
 
 /* Delete any allocated memory in the arg-list structure*/
-int vaccel_delete_args(struct vaccel_arg_list* args);
+int vaccel_delete_args(struct vaccel_arg_list *args);
 
 #ifdef __cplusplus
 }
