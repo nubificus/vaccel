@@ -183,8 +183,8 @@ static int noop_exec_with_resource(struct vaccel_session *sess,
 		nr_write);
 
 	if (nr_write > 0) {
-		sprintf(write[0].buf, "I got this input: %d\n",
-			*(int *)read[0].buf);
+		int out = 2 * (*(int *)read[0].buf);
+		memcpy(write[0].buf, &out, sizeof(int));
 	}
 
 	return VACCEL_OK;

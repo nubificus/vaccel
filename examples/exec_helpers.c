@@ -17,33 +17,33 @@ int main(int argc, char *argv[])
 	int output_int;
 	struct vaccel_shared_object object;
 
-	if (argc < 2) {
-		fprintf(stderr, "You must specify the number of iterations\n");
+	if (argc < 3) {
+		vaccel_error(
+			"You must specify path to shared object and the number of iterations");
 		return 1;
 	}
 
 	ret = vaccel_shared_object_new(&object, argv[1]);
 	if (ret) {
-		fprintf(stderr, "Could not create shared object resource: %s",
-			strerror(ret));
-		exit(1);
+		vaccel_error("Could not create shared object resource: %s",
+			     strerror(ret));
+		return 1;
 	}
-	sess.hint = VACCEL_PLUGIN_DEBUG;
-	ret = vaccel_sess_init(&sess, sess.hint);
+	ret = vaccel_sess_init(&sess, VACCEL_PLUGIN_DEBUG);
+
 	if (ret != VACCEL_OK) {
-		fprintf(stderr, "Could not initialize session\n");
+		vaccel_error("Could not initialize session");
+		return 1;
+	}
+	printf("Initialized session with id: %u\n", sess.session_id);
+	ret = vaccel_sess_register(&sess, object.resource);
+	if (ret) {
+		vaccel_error("Could register shared object to session");
 		return 1;
 	}
 
-	printf("Initialized session with id: %u\n", sess.session_id);
-
-	ret = vaccel_sess_register(&sess, object.resource);
-	if (ret) {
-		fprintf(stderr, "Could register shared object to session\n");
-		exit(1);
-	}
-
-	printf("Initialized session with id: %u\n", sess.session_id);
+	printf("Registered resource %llu to session %u\n",
+	       vaccel_shared_object_get_id(&object), sess.session_id);
 
 	struct vaccel_arg_list *read = vaccel_args_init(1);
 	struct vaccel_arg_list *write = vaccel_args_init(1);
@@ -72,7 +72,7 @@ int main(int argc, char *argv[])
 						write->list, write->size);
 
 		if (ret) {
-			fprintf(stderr, "Could not run op: %d\n", ret);
+			vaccel_error("Could not run op: %d", ret);
 			goto close_session;
 		}
 	}
@@ -103,19 +103,19 @@ close_session:
 
 	ret = vaccel_sess_unregister(&sess, object.resource);
 	if (ret) {
-		fprintf(stderr, "Could not unregister object from session\n");
-		exit(1);
+		vaccel_error("Could not unregister object from session");
+		return 1;
 	}
 
 	if (vaccel_sess_free(&sess) != VACCEL_OK) {
-		fprintf(stderr, "Could not clear session\n");
+		vaccel_error("Could not clear session");
 		return 1;
 	}
 
 	ret = vaccel_shared_object_destroy(&object);
 	if (ret) {
-		fprintf(stderr, "Could not destroy object\n");
-		exit(1);
+		vaccel_error("Could not destroy object");
+		return 1;
 	}
 
 	return ret;
