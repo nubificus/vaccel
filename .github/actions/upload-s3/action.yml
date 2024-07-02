@@ -30,6 +30,10 @@ runs:
           BRANCH="${{ github.ref }}"
           BRANCH="${BRANCH#refs/heads/}" # Remove "refs/heads/" prefix
           echo "Push to main branch. SHA: $SHA, Branch: $BRANCH"
+        elif [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+          SHA="${{ github.sha }}"
+          BRANCH="${{ github.event.inputs.branch }}"
+          echo "Workflow dispatch event. SHA: $SHA, Branch: $BRANCH"
         else
           echo "Event not supported."
           exit 1
