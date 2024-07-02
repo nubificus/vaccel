@@ -83,7 +83,7 @@ int vaccel_shared_object_new_with_deps(struct vaccel_shared_object *object,
 		deps[i].resource = NULL;
 	}
 	for (size_t i = 0; i < nr_deps; i++) {
-		int ret = vaccel_file_new(&deps[i].file, dep_paths[i]);
+		ret = vaccel_file_new(&deps[i].file, dep_paths[i]);
 		if (ret) {
 			vaccel_error("file_new: %s", dep_paths[i]);
 			ret = VACCEL_ENOMEM;
@@ -121,10 +121,12 @@ free_deps_res:
 			int r = vaccel_shared_object_destroy(&deps[i]);
 			if (r)
 				vaccel_warn("Could not destroy shared object");
-		} else if (deps_res[i]) {
+		}
+		if (deps_res[i]) {
 			free(deps_res[i]);
 		}
 	}
+	free(deps_res);
 free_deps:
 	free(deps);
 destroy_file:

@@ -22,8 +22,8 @@ struct vaccel_resource;
 
 int vaccel_resource_get_deps(struct vaccel_resource ***deps, size_t *nr_deps,
 			     struct vaccel_resource *res);
-int vaccel_resource_deps_to_ids(vaccel_id_t *ids, struct vaccel_resource **res,
-				size_t nr_ids);
+int vaccel_resource_deps_to_ids(vaccel_id_t *ids, struct vaccel_resource **deps,
+				size_t nr_deps);
 int vaccel_resource_deps_from_ids(struct vaccel_resource **deps,
 				  vaccel_id_t *ids, size_t nr_ids);
 int vaccel_resource_set_deps_from_ids(struct vaccel_resource *res,
