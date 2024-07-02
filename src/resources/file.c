@@ -209,7 +209,7 @@ int vaccel_file_destroy(struct vaccel_file *file)
 	if (file->path_owned) {
 		vaccel_debug("Removing file %s", file->path);
 		if (remove(file->path))
-			vaccel_warn("Could not remove file from rundir: %s",
+			vaccel_warn("Could not remove file %s from rundir: %s",
 				    file->path, strerror(errno));
 	}
 

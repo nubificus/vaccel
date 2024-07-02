@@ -111,8 +111,6 @@ int resource_get_by_id(struct vaccel_resource **resource, vaccel_id_t id)
 		}
 	}
 
-	if (*resource != NULL)
-		return VACCEL_OK;
 	return VACCEL_EINVAL;
 }
 

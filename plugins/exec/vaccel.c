@@ -84,10 +84,12 @@ static int exec_with_resource(struct vaccel_session *session,
 			      const char *fn_symbol, void *read, size_t nr_read,
 			      void *write, size_t nr_write)
 {
-	void *dl, **ddl = NULL;
+	void *dl;
+	void **ddl = NULL;
 	int (*fptr)(void *, size_t, void *, size_t);
 	int ret;
-	struct vaccel_resource **deps, *resource = object->resource;
+	struct vaccel_resource **deps;
+	struct vaccel_resource *resource = object->resource;
 	size_t nr_deps;
 	struct vaccel_file *file = &object->file;
 	const char *library = file->path;
@@ -97,13 +99,15 @@ static int exec_with_resource(struct vaccel_session *session,
 		     session->session_id);
 
 	ret = vaccel_resource_get_deps(&deps, &nr_deps, resource);
+	if (ret)
+		return VACCEL_EINVAL;
+
 	if (nr_deps) {
 		vaccel_debug("[exec_with_resource] nr_deps: %zu", nr_deps);
 		ddl = malloc(sizeof(*ddl) * nr_deps);
 		if (!ddl)
 			return VACCEL_ENOMEM;
 	}
-	// FIXME: proper freeing
 	for (size_t i = 0; i < nr_deps; i++) {
 		struct vaccel_resource *res = deps[i];
 		struct vaccel_shared_object *object =

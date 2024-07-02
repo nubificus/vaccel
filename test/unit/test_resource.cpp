@@ -204,7 +204,10 @@ TEST_CASE("find_resource_by_id", "[Resources]")
 TEST_CASE("with_deps", "[Resources]")
 {
 	int ret;
-	struct vaccel_resource test_res, test_dep_1, test_dep_2, **test_deps_g;
+	struct vaccel_resource test_res;
+	struct vaccel_resource test_dep_1;
+	struct vaccel_resource test_dep_2;
+	struct vaccel_resource **test_deps_g;
 	struct vaccel_resource *test_deps[2] = { &test_dep_1, &test_dep_2 };
 	size_t nr_deps;
 	vaccel_resource_t test_type = VACCEL_RES_SHARED_OBJ;
@@ -263,41 +266,42 @@ TEST_CASE("with_deps", "[Resources]")
 
 	SECTION("null_values")
 	{
-		ret = resource_set_deps(&test_res, NULL, 2);
+		ret = resource_set_deps(&test_res, nullptr, 2);
 		REQUIRE(ret == VACCEL_EINVAL);
 
 		ret = resource_set_deps(&test_res, test_deps, 0);
 		REQUIRE(ret == VACCEL_EINVAL);
 
-		ret = resource_set_deps(NULL, test_deps, 2);
+		ret = resource_set_deps(nullptr, test_deps, 2);
 		REQUIRE(ret == VACCEL_EINVAL);
 
-		ret = vaccel_resource_get_deps(NULL, &nr_deps, &test_res);
+		ret = vaccel_resource_get_deps(nullptr, &nr_deps, &test_res);
 		REQUIRE(ret == VACCEL_EINVAL);
 
-		ret = vaccel_resource_get_deps(&test_deps_g, NULL, &test_res);
+		ret = vaccel_resource_get_deps(&test_deps_g, nullptr,
+					       &test_res);
 		REQUIRE(ret == VACCEL_EINVAL);
 
-		ret = vaccel_resource_get_deps(&test_deps_g, &nr_deps, NULL);
+		ret = vaccel_resource_get_deps(&test_deps_g, &nr_deps, nullptr);
 		REQUIRE(ret == VACCEL_EINVAL);
 
-		ret = resource_unset_deps(NULL);
+		ret = resource_unset_deps(nullptr);
 		REQUIRE(ret == VACCEL_EINVAL);
 
 		vaccel_id_t dep_ids[2];
-		ret = vaccel_resource_deps_to_ids(NULL, test_deps, 2);
+		ret = vaccel_resource_deps_to_ids(nullptr, test_deps, 2);
 		REQUIRE(ret == VACCEL_EINVAL);
 
-		ret = vaccel_resource_deps_to_ids(dep_ids, NULL, 2);
+		ret = vaccel_resource_deps_to_ids(dep_ids, nullptr, 2);
 		REQUIRE(ret == VACCEL_EINVAL);
 
 		ret = vaccel_resource_deps_to_ids(dep_ids, test_deps, 0);
 		REQUIRE(ret == VACCEL_EINVAL);
 
-		ret = vaccel_resource_set_deps_from_ids(NULL, dep_ids, 2);
+		ret = vaccel_resource_set_deps_from_ids(nullptr, dep_ids, 2);
 		REQUIRE(ret == VACCEL_EINVAL);
 
-		ret = vaccel_resource_set_deps_from_ids(&test_res, NULL, 2);
+		ret = vaccel_resource_set_deps_from_ids(&test_res, nullptr, 2);
 		REQUIRE(ret == VACCEL_EINVAL);
 
 		ret = vaccel_resource_set_deps_from_ids(&test_res, dep_ids, 0);
