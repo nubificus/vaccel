@@ -38,11 +38,11 @@ struct vaccel_resource {
 
 int resources_bootstrap(void);
 int resources_cleanup(void);
-int resource_new(struct vaccel_resource *res, vaccel_resource_t type, void *data,
-		int (*cleanup_resource)(void *));
+int resource_new(struct vaccel_resource *res, vaccel_resource_t type,
+		 void *data, int (*cleanup_resource)(void *));
 int resource_get_by_id(struct vaccel_resource **resource, vaccel_id_t id);
 int resource_set_deps(struct vaccel_resource *res,
-		struct vaccel_resource **deps, size_t nr_deps);
+		      struct vaccel_resource **deps, size_t nr_deps);
 int resource_unset_deps(struct vaccel_resource *res);
 int resource_destroy(struct vaccel_resource *res);
 void resource_refcount_inc(struct vaccel_resource *res);

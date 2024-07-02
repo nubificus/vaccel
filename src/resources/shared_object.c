@@ -53,7 +53,8 @@ free_resource:
 }
 
 int vaccel_shared_object_new_with_deps(struct vaccel_shared_object *object,
-		const char *path, const char *dep_paths[], size_t nr_deps)
+				       const char *path,
+				       const char *dep_paths[], size_t nr_deps)
 {
 	if (!dep_paths || !nr_deps)
 		return VACCEL_EINVAL;
@@ -67,7 +68,7 @@ int vaccel_shared_object_new_with_deps(struct vaccel_shared_object *object,
 		goto free_resource;
 
 	ret = resource_new(res, VACCEL_RES_SHARED_OBJ, (void *)object,
-			shared_object_destructor);
+			   shared_object_destructor);
 	if (ret)
 		goto destroy_file;
 
@@ -85,22 +86,22 @@ int vaccel_shared_object_new_with_deps(struct vaccel_shared_object *object,
 		int ret = vaccel_file_new(&deps[i].file, dep_paths[i]);
 		if (ret) {
 			vaccel_error("file_new: %s", dep_paths[i]);
-			ret =  VACCEL_ENOMEM;
+			ret = VACCEL_ENOMEM;
 			goto free_deps_res;
 		}
 
 		struct vaccel_resource *dep_res = malloc(sizeof(*res));
 		if (!dep_res) {
-			ret =  VACCEL_ENOMEM;
+			ret = VACCEL_ENOMEM;
 			goto free_deps_res;
 		}
 		deps_res[i] = dep_res;
 
 		ret = resource_new(dep_res, VACCEL_RES_SHARED_OBJ,
-				(void *)&deps[i], shared_object_destructor);
+				   (void *)&deps[i], shared_object_destructor);
 		if (ret) {
 			vaccel_error("resource_new: %s", dep_paths[i]);
-			ret =  VACCEL_ENOMEM;
+			ret = VACCEL_ENOMEM;
 			goto free_deps_res;
 		}
 
@@ -204,7 +205,7 @@ int vaccel_shared_object_destroy(struct vaccel_shared_object *object)
 	// Do not explicitly cleanup deps created from buffer when on host
 	if (!resource->rundir) {
 		vaccel_debug("Destroying resource deps: %zu",
-				resource->nr_deps);
+			     resource->nr_deps);
 		for (size_t i = 0; i < resource->nr_deps; i++) {
 			struct vaccel_resource *res = resource->deps[i];
 			vaccel_debug("Destroying dep resource %lld", res->id);
@@ -248,8 +249,8 @@ vaccel_shared_object_get_id(const struct vaccel_shared_object *object)
 	return object->resource->id;
 }
 
-struct vaccel_shared_object *vaccel_shared_object_from_resource(
-		struct vaccel_resource *resource)
+struct vaccel_shared_object *
+vaccel_shared_object_from_resource(struct vaccel_resource *resource)
 {
 	if (!resource)
 		return NULL;

@@ -68,8 +68,8 @@ static int exec(struct vaccel_session *session, const char *library,
 		return VACCEL_ENOEXEC;
 
 	char *do_dlclose = getenv("VACCEL_EXEC_DLCLOSE");
-	if (do_dlclose && (strcmp(do_dlclose, "1") == 0 ||
-				strcmp(do_dlclose, "true") == 0)) {
+	if (do_dlclose &&
+	    (strcmp(do_dlclose, "1") == 0 || strcmp(do_dlclose, "true") == 0)) {
 		if (dlclose(dl)) {
 			vaccel_error("dlclose: %s", dlerror());
 			return VACCEL_EINVAL;
@@ -89,7 +89,7 @@ static int exec_with_resource(struct vaccel_session *session,
 	int ret;
 	struct vaccel_resource **deps, *resource = object->resource;
 	size_t nr_deps;
-	struct vaccel_file *file =  &object->file;
+	struct vaccel_file *file = &object->file;
 	const char *library = file->path;
 	struct vaccel_arg *args;
 
@@ -109,14 +109,15 @@ static int exec_with_resource(struct vaccel_session *session,
 		struct vaccel_shared_object *object =
 			vaccel_shared_object_from_resource(res);
 		if (!object) {
-			vaccel_error("Could not get shared_object from resource");
+			vaccel_error(
+				"Could not get shared_object from resource");
 			ret = VACCEL_EINVAL;
 			goto free;
 		}
 		const char *fpath = object->file.path;
 
 		vaccel_debug("[exec_with_resource] dep library: %s", fpath);
-		ddl[i] = dlopen(fpath, RTLD_NOW|RTLD_GLOBAL);
+		ddl[i] = dlopen(fpath, RTLD_NOW | RTLD_GLOBAL);
 		if (!ddl[i]) {
 			vaccel_error("dlopen: %s", dlerror());
 			ret = VACCEL_EINVAL;
@@ -145,20 +146,20 @@ static int exec_with_resource(struct vaccel_session *session,
 	for (size_t i = 0; i < nr_read; i++) {
 		vaccel_debug("[exec]: read[%d].size: %u\n", i, args[i].size);
 		vaccel_debug("[exec]: read[%d].argtype: %u\n", i,
-				args[i].argtype);
+			     args[i].argtype);
 	}
 	args = (struct vaccel_arg *)write;
 	for (size_t i = 0; i < nr_write; i++) {
 		vaccel_debug("[exec]: write[%d].size: %u\n", i, args[i].size);
 		vaccel_debug("[exec]: write[%d].argtype: %u\n", i,
-				args[i].argtype);
+			     args[i].argtype);
 	}
 
 	ret = (*fptr)(read, nr_read, write, nr_write);
 
 	char *do_dlclose = getenv("VACCEL_EXEC_DLCLOSE");
-	if (do_dlclose && (strcmp(do_dlclose, "1") == 0 ||
-				strcmp(do_dlclose, "true") == 0)) {
+	if (do_dlclose &&
+	    (strcmp(do_dlclose, "1") == 0 || strcmp(do_dlclose, "true") == 0)) {
 		if (dlclose(dl)) {
 			vaccel_error("dlclose: %s", dlerror());
 			ret = VACCEL_EINVAL;
@@ -166,7 +167,7 @@ static int exec_with_resource(struct vaccel_session *session,
 		}
 
 		for (size_t i = nr_deps; i > 0; i--) {
-			if (dlclose(ddl[i-1])) {
+			if (dlclose(ddl[i - 1])) {
 				vaccel_error("dlclose: %s", dlerror());
 				ret = VACCEL_EINVAL;
 				goto free;
