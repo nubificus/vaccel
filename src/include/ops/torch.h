@@ -131,6 +131,7 @@ int vaccel_torch_tensor_set_data(struct vaccel_torch_tensor *tensor, void *data,
 
 void *vaccel_torch_tensor_get_data(struct vaccel_torch_tensor *tensor);
 struct vaccel_torch_buffer *vaccel_torch_buffer_new(char *data, size_t size);
+
 #ifdef __cplusplus
 }
 #endif
