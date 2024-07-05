@@ -4,4 +4,9 @@ ser = "ser"
 nd = "nd"
 
 [files]
-extend-exclude = ["subprojects/*", "third-party/*"]
+extend-exclude = [
+  "subprojects/*",
+  "third-party/*",
+  "test/catch2/*",
+  "test/fff/*"
+]
