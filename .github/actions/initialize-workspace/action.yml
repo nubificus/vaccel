@@ -6,8 +6,16 @@ inputs:
     default: ''
   ref:
     default: ''
+  submodules:
+    default: 'recursive'
   token:
     default: ${{ github.token }}
+  remote-actions-repo:
+    default: ''
+
+outputs:
+  remote-branch:
+    value: ${{ steps.get_remote_branch.outputs.branch }}
 
 runs:
   using: composite
@@ -22,7 +30,37 @@ runs:
     - name: Checkout code
       uses: actions/checkout@v4
       with:
-        submodules: recursive
+        submodules: ${{ inputs.submodules }}
         fetch-depth: ${{ inputs.fetch-depth }}
         ref: ${{ inputs.ref }}
         token: ${{ inputs.token }}
+
+    - name: Determince remote actions branch
+      id: get_remote_branch
+      if: ${{ inputs.remote-actions-repo != '' }}
+      run: |
+        for b in "${{ github.head_ref || github.ref_name }}" main master; do
+          LS_REMOTE="$(git ls-remote --heads "https://github.com/${{ inputs.remote-actions-repo }}" refs/heads/"$b")"
+          if [ -n "${LS_REMOTE}" ]; then
+            echo "branch=$b" >> "$GITHUB_OUTPUT"
+            break
+          fi
+        done
+        echo "Remote actions branch is '$b'"
+      shell: bash
+
+    - name: Checkout remote actions repo
+      if: ${{ inputs.remote-actions-repo != '' }}
+      uses: actions/checkout@v4
+      with:
+        repository: ${{ inputs.remote-actions-repo }}
+        ref: ${{ steps.get_remote_branch.outputs.branch }}
+        sparse-checkout: '.github'
+        path: '.github/remote-actions-repo/'
+
+    - name: Copy remote actions (without overwriting local ones)
+      if: ${{ inputs.remote-actions-repo != '' }}
+      run: |
+        cp -rn .github/remote-actions-repo/.github ./
+        rm -rf .github/remote-actions-repo
+      shell: bash

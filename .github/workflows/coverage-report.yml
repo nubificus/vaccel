@@ -1,0 +1,145 @@
+name: Coverage Report
+
+on:
+  workflow_call:
+    inputs:
+      runner:
+        type: string
+        default: '["gcc", "lite", "2204"]'
+      options:
+        type: string
+        default: 'auto_features=enabled'
+      plugin:
+        type: string
+        default: ''
+      upload:
+        type: boolean
+        default: false
+      comment-diff:
+        type: boolean
+        default: false
+    secrets:
+      GIT_CLONE_PAT:
+        required: false
+
+jobs:
+  coverage_report:
+    runs-on: [self-hosted, x86_64, "${{ fromJSON(inputs.runner) }}"]
+
+    env:
+      CC: gcc-12
+      CXX: g++-12
+    steps:
+      - name: Checkout .github directory
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: .github
+          repository: ${{ (inputs.plugin != '' && 'nubificus/vaccel') || '' }}
+          ref: ${{ (inputs.plugin != '' && 'ci_rework_plugin') || '' }}
+
+      - name: Initialize workspace
+        uses: ./.github/actions/initialize-workspace
+        with:
+          remote-actions-repo: ${{ (inputs.plugin != '' && 'nubificus/vaccel') || '' }}
+          token: ${{ secrets.GIT_CLONE_PAT || github.token }}
+
+      - name: Build project
+        uses: ./.github/actions/build
+        with:
+          build-dir: build
+          coverage: 'true'
+          options: ${{ inputs.options }}
+
+      - name: Generate coverage report
+        uses: ./.github/actions/run-tests
+        with:
+          build-dir: build
+          coverage: 'true'
+          gcov: 'gcov-12'
+
+      - name: Clone project @default_branch
+        id: clone_project
+        if: ${{ inputs.comment-diff == true }}
+        run: |
+          DEFAULT_BRANCH_DIR="${{ github.event.repository.name }}_${{ github.event.repository.default_branch }}"
+          git clone --recursive \
+            "${{ github.event.repository.html_url }}" \
+            "${DEFAULT_BRANCH_DIR}"
+          echo "default-branch-dir=${DEFAULT_BRANCH_DIR}" >> "$GITHUB_OUTPUT"
+
+      - name: Build project @default_branch
+        if: ${{ inputs.comment-diff == true }}
+        uses: ./.github/actions/build
+        with:
+          build-dir: build
+          source-dir: "${{ steps.clone_project.outputs.default-branch-dir }}"
+          coverage: 'true'
+          options: ${{ inputs.options }}
+
+      - name: Generate coverage report @default_branch
+        if: ${{ inputs.comment-diff == true }}
+        uses: ./.github/actions/run-tests
+        with:
+          build-dir: build
+          source-dir: "${{ steps.clone_project.outputs.default-branch-dir }}"
+          coverage: 'true'
+          gcov: 'gcov-12'
+
+      - name: Calculate coverage diff
+        if: ${{ inputs.comment-diff == true }}
+        run: |
+          # Temporarily ignore coverage changes, just print out the exit code
+          # https://github.com/aconrad/pycobertura?tab=readme-ov-file#diff-exit-codes
+          pycobertura diff \
+            "$(find "${{ steps.clone_project.outputs.default-branch-dir }}"/build -name "coverage*.xml")" \
+            "$(find build -name "coverage*.xml")" \
+            --no-color --no-source -f markdown > coverage_diff.txt  || PYCOB_RESULT="$?"
+          echo "pycobertura exited with $PYCOB_RESULT"
+          echo '```' > temp_file && \
+            cat ./coverage_diff.txt >> temp_file && \
+            echo -e '\n```' >> temp_file && \
+            mv temp_file ./coverage_diff.txt
+          rm -rf "${{ steps.clone_project.outputs.default-branch-dir }}"
+        shell: bash
+
+      - name: PR comment with file
+        if: ${{ inputs.comment-diff == true }}
+        uses: thollander/actions-comment-pull-request@v2
+        with:
+          filePath: ./coverage_diff.txt
+
+      - name: Produce markdown file
+        if: ${{ inputs.upload == true }}
+        run: |
+          pycobertura show "$(find build -name "coverage*.xml")" \
+              --format markdown --output "coverage.md"
+          printf "%s\n\n" "# Tests coverage report" \
+              > "${{github.workspace}}/docs/coverage/src_coverage/coverage.md"
+          cat coverage.md \
+              >> "${{github.workspace}}/docs/coverage/src_coverage/coverage.md"
+          rm -f coverage.md
+        shell: bash
+
+      - name: Configure Git
+        if: ${{ inputs.upload == true }}
+        run: |
+          echo "Setting up git configuration..."
+          git config --local user.email "actions@github.com"
+          git config --local user.name "GitHub Actions"
+
+      - name: Push to vaccel-docs
+        if: ${{ inputs.upload == true }}
+        uses: datalbry/copy_folder_to_another_repo_action@1.0.0
+        env:
+          API_TOKEN_GITHUB: ${{ secrets.NBFC_BUILDER_TOKEN }}
+        with:
+          source_folder: "./docs/coverage/src_coverage"
+          destination_repo: "nubificus/vaccel-docs"
+          destination_folder: "docs/coverage"
+          user_email: "jlima@nubificus.co.uk"
+          user_name: "jlima"
+          commit_msg: "[GHA] Update the coverage files"
+          destination_branch: "${{ github.event.repository.default_branch }}"
+
+      - name: Clean-up
+        run: sudo rm -rf build

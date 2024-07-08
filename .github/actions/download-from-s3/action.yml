@@ -1,0 +1,62 @@
+name: Download from s3
+description: Download artifacts from s3
+
+inputs:
+  branch:
+    default: 'main'
+  arch:
+    default: 'x86_64'
+  build-type:
+    default: 'release'
+  output-dir:
+    default: './'
+  plugin:
+    default: ''
+  access-key:
+    required: true
+  secret-key:
+    required: true
+  install:
+    default: 'false'
+
+runs:
+  using: composite
+  steps:
+    - name: Set required variables and verify output dir exists
+      id: get_artifact_vars
+      run: |
+        BASE_PATH="nbfc-assets/github/vaccel"
+        if [ -n "${{ inputs.plugin }}" ]; then
+          BASE_PATH="${BASE_PATH}/plugins/${{ inputs.plugin }}"
+        fi
+        echo "remote-name-path=$(echo "${BASE_PATH}/${{ inputs.branch }}/${{ inputs.arch }}/${{ inputs.build-type }}")" >> "$GITHUB_OUTPUT"
+        echo "REMOTE_SHA_PATH=$(echo "${BASE_PATH}/${{ inputs.branch }}/${{ inputs.arch }}/${{ inputs.build-type }}")" >> "$GITHUB_OUTPUT"
+        echo "uid=$(id -u)" >> "$GITHUB_OUTPUT"
+        echo "gid=$(id -g)" >> "$GITHUB_OUTPUT"
+        mkdir -p "${{ inputs.output-dir }}"
+      shell: bash
+
+    - name: Download deb artifact from s3 by name
+      uses: cloudkernels/minio-download@v4
+      with:
+        url: https://s3.nubificus.co.uk
+        access-key: ${{ inputs.access-key }}
+        secret-key: ${{ inputs.secret-key }}
+        local-path: ${{ inputs.output-dir }}
+        remote-path: ${{ steps.get_artifact_vars.outputs.remote-name-path }}-deb/
+
+    - name: Download tar artifact from s3 by name
+      uses: cloudkernels/minio-download@v4
+      with:
+        url: https://s3.nubificus.co.uk
+        access-key: ${{ inputs.access-key }}
+        secret-key: ${{ inputs.secret-key }}
+        local-path: ${{ inputs.output-dir }}
+        remote-path: ${{ steps.get_artifact_vars.outputs.remote-name-path }}-tar/
+
+    - name: Install deb artifact
+      if: ${{ inputs.install == 'true' }} 
+      run: |
+        LATEST_DEB=$(ls -1 "${{ inputs.output-dir }}"/*.deb | sort -r | head -1)
+        sudo dpkg -i "$LATEST_DEB"
+      shell: bash

@@ -2,67 +2,29 @@ name: Build and Upload
 
 on:
   pull_request:
-    types:
-      - closed
+    types: [closed]
 
   workflow_dispatch:
 
 jobs:
   check_merged:
-    if: ${{ github.event.pull_request.merged == true || github.event_name  == 'workflow_dispatch' }}
-    runs-on: ubuntu-latest
-    steps:
-      - run: |
-          echo The PR was merged - running upload workflows
+    name: Check PR is merged
+    uses: ./.github/workflows/check-merged.yml
+    secrets: inherit
 
   build_dist:
     needs: [check_merged]
-    runs-on: [self-hosted, "${{ matrix.archconfig }}", gcc, lite, "2204"]
-
-    strategy:
-      matrix:
-        archconfig: [x86_64, aarch64, armv7l]
-        build_type: [debug, release]
-      fail-fast: false
-
-    env:
-      CC: gcc-12
-      CXX: g++-12
-    steps:
-      - name: Checkout .github directory
-        uses: actions/checkout@v4
-        with:
-          sparse-checkout: .github
-
-      - name: Initialize workspace
-        uses: ./.github/actions/initialize-workspace
-        with:
-          fetch-depth: 0
-
-      - name: Build project
-        id: build_vaccelrt
-        uses: ./.github/actions/build
-        with:
-          prefix: ${{github.workspace}}/artifacts/${{matrix.archconfig}}/${{matrix.build_type}}/opt
-          build-dir: build_pkg_${{matrix.build_type}}
-          build-type: ${{matrix.build_type}}
-          options: 'examples=enabled,plugins=enabled'
-          dist: 'true'
-
-      - name: Upload to s3
-        id: upload_s3
-        uses: ./.github/actions/upload-s3
-        with:
-          build-dir: build_pkg_${{matrix.build_type}}
-          build-type: ${{matrix.build_type}}
-          arch: ${{matrix.archconfig}}
-          access-key: ${{ secrets.AWS_ACCESS_KEY }}
-          secret-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-
-      - name: Clean-up
-        run: sudo rm -rf artifacts build_pkg_${{ matrix.build_type }}
+    name: Build and Upload
+    if: ${{ needs.check_merged.outputs.is_merged == 'true' }}
+    uses: ./.github/workflows/verify-build.yml
+    with:
+      release: true
+    secrets: inherit
 
   coverage_docs:
-    uses: ./.github/workflows/coverage-upload.yml
     needs: [build_dist]
+    name: Upload coverage report
+    uses: ./.github/workflows/coverage-report.yml
+    with:
+      upload: true
     secrets: inherit

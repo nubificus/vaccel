@@ -1,0 +1,187 @@
+name: Validate Source Code
+
+on:
+  workflow_call:
+    inputs:
+      runner:
+        type: string
+        default: '["gcc", "lite", "2204"]'
+      options:
+        type: string
+        default: 'auto_features=enabled'
+      plugin:
+        type: string
+        default: ''
+    secrets:
+      GIT_CLONE_PAT:
+        required: false
+      AWS_ACCESS_KEY:
+        required: false
+      AWS_SECRET_ACCESS_KEY:
+        required: false
+
+jobs:
+  linter_cppcheck:
+    name: Lint C/C++ (cppcheck)
+    runs-on: [self-hosted, x86_64, "${{ fromJSON(inputs.runner) }}"]
+
+    env:
+      CC: gcc-12
+      CXX: g++-12
+    steps:
+      - name: Checkout .github directory
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: .github
+          repository: ${{ (inputs.plugin != '' && 'nubificus/vaccel') || '' }}
+          ref: ${{ (inputs.plugin != '' && 'ci_rework_plugin') || '' }}
+
+      - name: Initialize workspace
+        id: initialize_workspace
+        uses: ./.github/actions/initialize-workspace
+        with:
+          remote-actions-repo: ${{ (inputs.plugin != '' && 'nubificus/vaccel') || '' }}
+          token: ${{ secrets.GIT_CLONE_PAT || github.token }}
+
+      - name: Download artifacts from s3
+        if: ${{ inputs.plugin != '' }} 
+        uses: ./.github/actions/download-from-s3
+        with:
+          branch: ${{ steps.initialize_workspace.outputs.remote-branch }}
+          build-type: 'release'
+          arch: 'x86_64'
+          access-key: ${{ secrets.AWS_ACCESS_KEY }}
+          secret-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          output-dir: ./artifacts/downloads/x86_64/release
+          install: 'true'
+
+      - name: Configure project
+        uses: ./.github/actions/build
+        with:
+          build-dir: build
+          build: 'false'
+          options: ${{ inputs.options }}
+
+      - name: Run cppcheck
+        run: |
+          cppcheck --project=build/compile_commands.json \
+            -itest -ithird-party -isubprojects \
+            --suppressions-list=.github/linters/cppcheck.txt \
+            --error-exitcode=2
+
+      - name: Clean-up
+        run: |
+          sudo rm -rf build
+          [ -n "$(dpkg -l vaccel 2> /dev/null)" ] && \
+            sudo apt-get purge -y vaccel || echo
+        shell: bash
+
+  linter_cpp_linter:
+    name: Lint C/C++ (cpp-linter)
+    runs-on: [self-hosted, x86_64, "${{ fromJSON(inputs.runner) }}"]
+
+    permissions:
+      pull-requests: write
+      contents: read
+
+    env:
+      CC: gcc-12
+      CXX: g++-12
+    steps:
+      - name: Checkout .github directory
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: .github
+          repository: ${{ (inputs.plugin != '' && 'nubificus/vaccel') || '' }}
+          ref: ${{ (inputs.plugin != '' && 'ci_rework_plugin') || '' }}
+
+      - name: Initialize workspace
+        id: initialize_workspace
+        uses: ./.github/actions/initialize-workspace
+        with:
+          remote-actions-repo: ${{ (inputs.plugin != '' && 'nubificus/vaccel') || '' }}
+          token: ${{ secrets.GIT_CLONE_PAT || github.token }}
+
+      - name: Download artifacts from s3
+        if: ${{ inputs.plugin != '' }} 
+        uses: ./.github/actions/download-from-s3
+        with:
+          branch: ${{ steps.initialize_workspace.outputs.remote-branch }}
+          build-type: 'release'
+          arch: 'x86_64'
+          access-key: ${{ secrets.AWS_ACCESS_KEY }}
+          secret-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          output-dir: ./artifacts/downloads/x86_64/release
+          install: 'true'
+
+      - name: Configure project
+        uses: ./.github/actions/build
+        with:
+          build-dir: build
+          build: 'false'
+          options: ${{ inputs.options }}
+
+      - name: Run cpp-linter
+        uses: cpp-linter/cpp-linter-action@v2
+        id: cpp_linter
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          style: 'file'  # Use .clang-format config file
+          tidy-checks: '' # Use .clang-tidy config file
+          ignore: 'build|subprojects'
+          database: build
+          thread-comments: ${{ github.event_name == 'pull_request' && 'true' }}
+          format-review: ${{ github.event_name == 'pull_request' && 'true' }}
+          version: 18
+
+      - name: Clean-up
+        run: |
+          sudo rm -rf build
+          [ -n "$(dpkg -l vaccel 2> /dev/null)" ] && \
+            sudo apt-get purge -y vaccel || echo
+        shell: bash
+
+      - name: Fail on error
+        if: steps.cpp_linter.outputs.clang-format-checks-failed > 0
+        run: exit 1
+
+  linter_super_linter:
+    name: Lint Python/Shell/Dockerfiles/GHActions/Markdown/YAML/JS
+    runs-on: [self-hosted, x86_64, "${{ fromJSON(inputs.runner) }}"]
+
+    permissions:
+      contents: read
+      packages: read
+      statuses: write
+
+    steps:
+      - name: Checkout .github directory
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: .github
+          repository: ${{ (inputs.plugin != '' && 'nubificus/vaccel') || '' }}
+          ref: ${{ (inputs.plugin != '' && 'ci_rework_plugin') || '' }}
+
+      - name: Initialize workspace
+        id: initialize_workspace
+        uses: ./.github/actions/initialize-workspace
+        with:
+          fetch-depth: 0
+          remote-actions-repo: ${{ (inputs.plugin != '' && 'nubificus/vaccel') || '' }}
+          token: ${{ secrets.GIT_CLONE_PAT || github.token }}
+
+      - name: Run super-linter
+        uses: super-linter/super-linter@v6
+        env:
+          DEFAULT_BRANCH: main
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VALIDATE_ALL_CODEBASE: true
+          VALIDATE_PYTHON_RUFF: true
+          VALIDATE_BASH: true
+          VALIDATE_SHELL_SHFMT: true
+          VALIDATE_DOCKERFILE_HADOLINT: true
+          VALIDATE_GITHUB_ACTIONS: true
+          VALIDATE_MARKDOWN: true
+          VALIDATE_YAML: true
+          VALIDATE_JAVASCRIPT_ES: true

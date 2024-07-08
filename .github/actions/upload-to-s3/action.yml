@@ -40,21 +40,21 @@ runs:
         fi
         # Since we know this is a PR that just got merged, we ignore the 
         # branch name, we just use main
-        echo "ARTIFACT_SHA=$(echo $SHA)" >> $GITHUB_OUTPUT
-        echo "ARTIFACT_NAME=$(echo $BRANCH)" >> $GITHUB_OUTPUT
-        BASE_PATH="nbfc-assets/github/vaccelrt"
+        echo "ARTIFACT_SHA=$(echo $SHA)" >> "$GITHUB_OUTPUT"
+        echo "ARTIFACT_NAME=$(echo $BRANCH)" >> "$GITHUB_OUTPUT"
+        BASE_PATH="nbfc-assets/github/vaccel"
         if [ -n "${{ inputs.plugin }}" ]; then
           BASE_PATH="${BASE_PATH}/plugins/${{ inputs.plugin }}"
         fi
-        echo "REMOTE_NAME_PATH=$(echo "${BASE_PATH}/${BRANCH}/${{ inputs.arch }}/${{ inputs.build-type }}")" >> $GITHUB_OUTPUT
-        echo "REMOTE_SHA_PATH=$(echo "${BASE_PATH}/${SHA}/${{ inputs.arch }}/${{ inputs.build-type }}")" >> $GITHUB_OUTPUT
+        echo "remote-name-path=$(echo "${BASE_PATH}/${BRANCH}/${{ inputs.arch }}/${{ inputs.build-type }}")" >> "$GITHUB_OUTPUT"
+        echo "remote-sha-path=$(echo "${BASE_PATH}/${SHA}/${{ inputs.arch }}/${{ inputs.build-type }}")" >> "$GITHUB_OUTPUT"
       shell: bash
 
     - name: Get artifacts paths
       id: get_artifact_paths
       run: |
-        echo "DEB_PATH=$(find ${{ inputs.build-dir }} -name "vaccel*.deb")" >> $GITHUB_OUTPUT
-        echo "TAR_PATH=$(find ${{ inputs.build-dir }} -name "vaccel*.tar.gz")" >> $GITHUB_OUTPUT
+        echo "deb-path=$(find ${{ inputs.build-dir }} -name "vaccel*.deb")" >> "$GITHUB_OUTPUT"
+        echo "tar-path=$(find ${{ inputs.build-dir }} -name "vaccel*.tar.gz")" >> "$GITHUB_OUTPUT"
       shell: bash
 
     - name: Upload deb artifact to s3 by name
@@ -63,8 +63,8 @@ runs:
         url: https://s3.nubificus.co.uk
         access-key: ${{ inputs.access-key }}
         secret-key: ${{ inputs.secret-key }}
-        local-path: ${{ steps.get_artifact_paths.outputs.DEB_PATH }}
-        remote-path: ${{ steps.get_artifact_vars.outputs.REMOTE_NAME_PATH }}-deb/
+        local-path: ${{ steps.get_artifact_paths.outputs.deb-path }}
+        remote-path: ${{ steps.get_artifact_vars.outputs.remote-name-path }}-deb/
         policy: 1
 
     - name: Upload deb artifact to s3
@@ -73,8 +73,8 @@ runs:
         url: https://s3.nubificus.co.uk
         access-key: ${{ inputs.access-key }}
         secret-key: ${{ inputs.secret-key }}
-        local-path: ${{ steps.get_artifact_paths.outputs.DEB_PATH }}
-        remote-path: ${{ steps.get_artifact_vars.outputs.REMOTE_SHA_PATH }}-deb/
+        local-path: ${{ steps.get_artifact_paths.outputs.deb-path }}
+        remote-path: ${{ steps.get_artifact_vars.outputs.remote-sha-path }}-deb/
         policy: 1
 
     - name: Upload tar artifact to s3 by name
@@ -83,8 +83,8 @@ runs:
         url: https://s3.nubificus.co.uk
         access-key: ${{ inputs.access-key }}
         secret-key: ${{ inputs.secret-key }}
-        local-path: ${{ steps.get_artifact_paths.outputs.TAR_PATH }}
-        remote-path: ${{ steps.get_artifact_vars.outputs.REMOTE_NAME_PATH }}-tar/
+        local-path: ${{ steps.get_artifact_paths.outputs.tar-path }}
+        remote-path: ${{ steps.get_artifact_vars.outputs.remote-name-path }}-tar/
         policy: 1
 
     - name: Upload tar artifact to s3
@@ -93,6 +93,6 @@ runs:
         url: https://s3.nubificus.co.uk
         access-key: ${{ inputs.access-key }}
         secret-key: ${{ inputs.secret-key }}
-        local-path: ${{ steps.get_artifact_paths.outputs.TAR_PATH }}
-        remote-path: ${{ steps.get_artifact_vars.outputs.REMOTE_SHA_PATH }}-tar/
+        local-path: ${{ steps.get_artifact_paths.outputs.tar-path }}
+        remote-path: ${{ steps.get_artifact_vars.outputs.remote-sha-path }}-tar/
         policy: 1

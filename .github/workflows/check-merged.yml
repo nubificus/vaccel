@@ -1,0 +1,49 @@
+name: Check PR is merged
+
+on:
+  workflow_call:
+    inputs:
+      plugin:
+        type: string
+        default: ''
+    outputs:
+      is_merged:
+        value: ${{ jobs.check_merged.outputs.is_merged }}
+    secrets:
+      GIT_CLONE_PAT:
+        required: false
+
+jobs:
+  check_merged:
+    name: Check PR is merged
+    runs-on: [self-hosted, x86_64]
+    outputs:
+      is_merged: ${{ steps.check.outputs.is_merged }}
+
+    steps:
+      - name: Checkout .github directory
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: .github
+          repository: ${{ (inputs.plugin != '' && 'nubificus/vaccel') || '' }}
+          ref: ${{ (inputs.plugin != '' && 'ci_rework_plugin') || '' }}
+
+      - name: Initialize workspace
+        uses: ./.github/actions/initialize-workspace
+        with:
+          fetch-depth: 0
+          remote-actions-repo: ${{ (inputs.plugin != '' && 'nubificus/vaccel') || '' }}
+          token: ${{ secrets.GIT_CLONE_PAT || github.token }}
+
+      - name: Check merged
+        id: check
+        run: |
+          if [ "${{ github.event.pull_request.merged }}" == "true" ] || \
+            [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "The PR was merged - running upload workflows"
+            echo "is_merged=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "The PR is not merged. Exiting..."
+            echo "is_merged=false" >> "$GITHUB_OUTPUT"
+          fi
+        shell: bash
