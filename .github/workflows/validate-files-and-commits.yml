@@ -1,0 +1,91 @@
+name: Validate Files and Commit Messages
+
+on:
+  workflow_call:
+    inputs:
+      runner:
+        type: string
+        default: '[]'
+      plugin:
+        type: string
+        default: ''
+    secrets:
+      GIT_CLONE_PAT:
+        required: false
+
+jobs:
+  linter_commitlint:
+    name: Lint Commit Messages
+    runs-on: [self-hosted, x86_64, "${{ fromJSON(inputs.runner) }}"]
+
+    steps:
+      - name: Checkout .github directory
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: .github
+          repository: ${{ (inputs.plugin != '' && 'nubificus/vaccel') || '' }}
+          ref: ${{ (inputs.plugin != '' && 'ci_rework_plugin') || '' }}
+
+      - name: Initialize workspace
+        id: initialize_workspace
+        uses: ./.github/actions/initialize-workspace
+        with:
+          submodules: 'false'
+          remote-actions-repo: ${{ (inputs.plugin != '' && 'nubificus/vaccel') || '' }}
+          token: ${{ secrets.GIT_CLONE_PAT || github.token }}
+
+      - name: Run commitlint
+        uses: wagoid/commitlint-github-action@v6
+        with:
+          configFile: .github/linters/commitlint.config.mjs
+
+  linter_typos:
+    name: Spell Check Repo
+    runs-on: [self-hosted, x86_64, "${{ fromJSON(inputs.runner) }}"]
+
+    steps:
+      - name: Checkout .github directory
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: .github
+          repository: ${{ (inputs.plugin != '' && 'nubificus/vaccel') || '' }}
+          ref: ${{ (inputs.plugin != '' && 'ci_rework_plugin') || '' }}
+
+      - name: Initialize workspace
+        id: initialize_workspace
+        uses: ./.github/actions/initialize-workspace
+        with:
+          submodules: 'false'
+          remote-actions-repo: ${{ (inputs.plugin != '' && 'nubificus/vaccel') || '' }}
+          token: ${{ secrets.GIT_CLONE_PAT || github.token }}
+
+      - name: Spell check
+        uses: crate-ci/typos@master
+        with:
+          config: .github/linters/typos.toml
+
+  linter_license_eye:
+    name: Check License Headers
+    runs-on: [self-hosted, x86_64, "${{ fromJSON(inputs.runner) }}"]
+
+    steps:
+      - name: Checkout .github directory
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: .github
+          repository: ${{ (inputs.plugin != '' && 'nubificus/vaccel') || '' }}
+          ref: ${{ (inputs.plugin != '' && 'ci_rework_plugin') || '' }}
+
+      - name: Initialize workspace
+        id: initialize_workspace
+        uses: ./.github/actions/initialize-workspace
+        with:
+          submodules: 'false'
+          remote-actions-repo: ${{ (inputs.plugin != '' && 'nubificus/vaccel') || '' }}
+          token: ${{ secrets.GIT_CLONE_PAT || github.token }}
+
+      - name: Run license-eye
+        uses: apache/skywalking-eyes/header@main
+        with:
+          config: .github/linters/licenserc.yml
+          token: ${{ secrets.GITHUB_TOKEN }}

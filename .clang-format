@@ -1,9 +1,12 @@
-# clang-format configuration file. Intended for clang-format >= 11.
+# clang-format configuration file. Intended for clang-format >= 18.
+#
+# To get consistent results with the Github Actions' checks use clang-format
+# from the official llvm repos.
 #
 # For more information, see:
-#   Documentation/process/clang-format.rst
 #   https://clang.llvm.org/docs/ClangFormat.html
 #   https://clang.llvm.org/docs/ClangFormatStyleOptions.html
+#   https://apt.llvm.org/
 #
 ---
 AccessModifierOffset: -4

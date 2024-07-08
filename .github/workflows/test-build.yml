@@ -2,11 +2,31 @@ name: Test Build
 
 on:
   workflow_call:
+    inputs:
+      runner:
+        type: string
+        default: '["gcc", "lite", "2204"]'
+      options:
+        type: string
+        default: 'auto_features=enabled'
+      valgrind:
+        type: boolean
+        default: true
+      plugin:
+        type: string
+        default: ''
+    secrets:
+      GIT_CLONE_PAT:
+        required: false
+      AWS_ACCESS_KEY:
+        required: false
+      AWS_SECRET_ACCESS_KEY:
+        required: false
 
 jobs:
   test_build:
     name: Test Build
-    runs-on: [self-hosted, "${{ matrix.archconfig }}", gcc, lite, "2204"]
+    runs-on: [self-hosted, "${{ matrix.archconfig }}", "${{ fromJSON(inputs.runner) }}"]
 
     strategy:
       matrix:
@@ -22,25 +42,45 @@ jobs:
         uses: actions/checkout@v4
         with:
           sparse-checkout: .github
+          repository: ${{ (inputs.plugin != '' && 'nubificus/vaccel') || '' }}
+          ref: ${{ (inputs.plugin != '' && 'ci_rework_plugin') || '' }}
 
       - name: Initialize workspace
+        id: initialize_workspace
         uses: ./.github/actions/initialize-workspace
+        with:
+          remote-actions-repo: ${{ (inputs.plugin != '' && 'nubificus/vaccel') || '' }}
+          token: ${{ secrets.GIT_CLONE_PAT || github.token }}
+
+      - name: Download artifacts from s3
+        if: ${{ inputs.plugin != '' }} 
+        uses: ./.github/actions/download-from-s3
+        with:
+          branch: ${{ steps.initialize_workspace.outputs.remote-branch }}
+          build-type: ${{matrix.build_type}}
+          arch: ${{matrix.archconfig}}
+          access-key: ${{ secrets.AWS_ACCESS_KEY }}
+          secret-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          output-dir: ./artifacts/downloads/${{matrix.archconfig}}/${{matrix.build_type}}
+          install: 'true'
 
       - name: Build project
-        id: build_vaccelrt
         uses: ./.github/actions/build
         with:
           prefix: ${{github.workspace}}/artifacts/${{matrix.archconfig}}/${{matrix.build_type}}/opt
           build-dir: build_${{matrix.build_type}}
           build-type: ${{matrix.build_type}}
-          options: 'tests=enabled'
+          options: ${{ inputs.options }}
 
       - name: Run tests
-        id: run_tests
         uses: ./.github/actions/run-tests
         with:
-          valgrind: 'true'
+          valgrind: ${{ inputs.valgrind }}
           build-dir: build_${{matrix.build_type}}
 
       - name: Clean-up
-        run: sudo rm -rf artifacts build_${{ matrix.build_type }}
+        run: |
+          sudo rm -rf artifacts build_${{ matrix.build_type }}
+          [ -n "$(dpkg -l vaccel 2> /dev/null)" ] && \
+            sudo apt-get purge -y vaccel || echo
+        shell: bash
