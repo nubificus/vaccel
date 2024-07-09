@@ -99,7 +99,7 @@ jobs:
         run: exit 1
 
   linter_super_linter:
-    name: Lint Python/Shell/Dockerfiles/GHActions/Markdown/YAML
+    name: Lint Python/Shell/Dockerfiles/GHActions/Markdown/YAML/JS
     runs-on: [self-hosted, "x86_64", gcc, lite, "2204"]
 
     permissions:
@@ -130,6 +130,7 @@ jobs:
           VALIDATE_GITHUB_ACTIONS: true
           VALIDATE_MARKDOWN: true
           VALIDATE_YAML: true
+          VALIDATE_JAVASCRIPT_ES: true
 
   linter_commitlint:
     name: Lint Commit Messages
@@ -144,7 +145,7 @@ jobs:
       - name: Run commitlint
         uses: wagoid/commitlint-github-action@v6
         with:
-          configFile: .github/linters/commitlintrc.yml
+          configFile: .github/linters/commitlint.config.mjs
 
   linter_license_eye:
     name: Check License Headers
