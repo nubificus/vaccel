@@ -220,10 +220,6 @@ int vaccel_shared_object_destroy(struct vaccel_shared_object *object)
 		}
 
 		free(resource->deps);
-
-		int ret = resource_unset_deps(resource);
-		if (ret)
-			vaccel_warn("Could not unset resource deps");
 	}
 
 	/* This will destroy the underlying resource and call our
