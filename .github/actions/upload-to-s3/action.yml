@@ -21,18 +21,19 @@ runs:
     - name: Determine SHA, branch and remote paths
       id: get_artifact_vars
       run: |
-        if [ -n "${{ github.event.pull_request.head.sha }}" ]; then
-          SHA="${{ github.event.pull_request.head.sha }}"
-          BRANCH="${{ github.event.pull_request.head.ref }}"
-          echo "PR merged. SHA: $SHA, Branch: $BRANCH"
-        elif [ "${{ github.event_name }}" == "push" ]; then
-          SHA="${{ github.sha }}"
-          BRANCH="${{ github.ref }}"
-          BRANCH="${BRANCH#refs/heads/}" # Remove "refs/heads/" prefix
-          echo "Push to main branch. SHA: $SHA, Branch: $BRANCH"
+        if [ "${{ github.event_name }}" == "pull_request" ]; then
+          if [ "${{ github.event.pull_request.merged }}" == true ]; then
+            SHA="${{ github.sha }}"
+            BRANCH="${{ github.base_ref }}"
+            echo "PR merged. SHA: $SHA, Branch: $BRANCH"
+          else
+            SHA="${{ github.event.pull_request.head.sha }}"
+            BRANCH="${{ github.event.pull_request.head.ref }}"
+            echo "PR not yet merged. SHA: $SHA, Branch: $BRANCH"
+          fi
         elif [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
           SHA="${{ github.sha }}"
-          BRANCH="${{ github.event.inputs.branch }}"
+          BRANCH="${{ github.event.ref_name }}"
           echo "Workflow dispatch event. SHA: $SHA, Branch: $BRANCH"
         else
           echo "Event not supported."
