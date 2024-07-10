@@ -122,26 +122,18 @@ jobs:
           rm -f coverage.md
         shell: bash
 
-      - name: Configure Git
-        if: ${{ inputs.upload == true }}
-        run: |
-          echo "Setting up git configuration..."
-          git config --local user.email "actions@github.com"
-          git config --local user.name "GitHub Actions"
-
       - name: Push to vaccel-docs
         if: ${{ inputs.upload == true }}
-        uses: datalbry/copy_folder_to_another_repo_action@1.0.0
-        env:
-          API_TOKEN_GITHUB: ${{ secrets.NBFC_BUILDER_TOKEN }}
+        uses: cpina/github-action-push-to-another-repository@v1
         with:
-          source_folder: "./docs/coverage/src_coverage"
-          destination_repo: "nubificus/vaccel-docs"
-          destination_folder: "docs/coverage"
-          user_email: "jlima@nubificus.co.uk"
-          user_name: "jlima"
-          commit_msg: "[GHA] Update the coverage files"
-          destination_branch: "${{ github.event.repository.default_branch }}"
+          source-directory: "./docs/coverage/src_coverage"
+          target-directory: "docs/coverage"
+          destination-github-username: "nubificus"
+          destination-repository-name: "vaccel-docs"
+          user-email: "github-actions[bot]@users.noreply.github.com"
+          user-name: "github-actions[bot]"
+          commit-message: "[GHA] Update coverage report"
+          target-branch: "main"
 
       - name: Clean-up
         run: sudo rm -rf build
