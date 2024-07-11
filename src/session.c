@@ -273,9 +273,8 @@ int vaccel_sess_init(struct vaccel_session *sess, uint32_t flags)
 	if (!sessions.initialized)
 		return VACCEL_ESESS;
 
-	if (flags & VACCEL_REMOTE) {
-		virtio = get_virtio_plugin();
-
+	virtio = get_virtio_plugin();
+	if ((flags & VACCEL_REMOTE) || (get_nr_plugins() == 1 && virtio)) {
 		if (!virtio) {
 			vaccel_error(
 				"Could not initialize VirtIO session, no VirtIO Plugin loaded yet");
@@ -283,7 +282,6 @@ int vaccel_sess_init(struct vaccel_session *sess, uint32_t flags)
 		}
 
 		ret = virtio->info->sess_init(sess, flags & (~VACCEL_REMOTE));
-
 		if (ret) {
 			vaccel_error("Could not create host-side session");
 			return ret;

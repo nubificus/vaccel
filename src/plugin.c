@@ -19,6 +19,9 @@ static struct {
 	/* list holding plugin descriptors */
 	list_t plugins;
 
+	/* number of registered plugins */
+	size_t nr_plugins;
+
 	/* virtio plugin */
 	struct vaccel_plugin *virtio;
 
@@ -84,6 +87,7 @@ int register_plugin(struct vaccel_plugin *plugin)
 	const struct vaccel_plugin_info *info = plugin->info;
 
 	list_add_tail(&plugin_state.plugins, &plugin->entry);
+	plugin_state.nr_plugins++;
 
 	vaccel_info("Registered plugin %s %s", info->name, info->version);
 
@@ -127,6 +131,7 @@ int unregister_plugin(struct vaccel_plugin *plugin)
 	}
 
 	list_unlink_entry(&plugin->entry);
+	plugin_state.nr_plugins--;
 
 	if (!plugin->info) {
 		vaccel_error("Plugin is missing info entry");
@@ -234,11 +239,13 @@ void *get_plugin_op(enum vaccel_op_type op_type, unsigned int hint)
 		}
 	}
 
-	/* If priority check fails, just return the first (local) implementation we find */
+	// If priority check fails, just return the first (local) implementation we find
+	// or any implementation if it's a single one
 	if (!op) {
 		for_each_container_safe(opiter, tmp, &plugin_state.ops[op_type],
 					struct vaccel_op, func_entry) {
-			if (!opiter->owner->info->is_virtio) {
+			if (!opiter->owner->info->is_virtio ||
+			    plugin_state.nr_plugins == 1) {
 				op = opiter;
 				vaccel_debug(
 					"Returning func from hint plugin %s ",
@@ -273,7 +280,12 @@ int get_available_plugins(enum vaccel_op_type op_type)
 	return 0;
 }
 
-struct vaccel_plugin *get_virtio_plugin(void)
+size_t get_nr_plugins()
+{
+	return plugin_state.nr_plugins;
+}
+
+struct vaccel_plugin *get_virtio_plugin()
 {
 	return plugin_state.virtio;
 }
@@ -290,7 +302,7 @@ int plugins_bootstrap()
 	return VACCEL_OK;
 }
 
-int plugins_shutdown(void)
+int plugins_shutdown()
 {
 	if (!plugin_state.initialized)
 		return VACCEL_OK;
