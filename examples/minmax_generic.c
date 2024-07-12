@@ -40,7 +40,7 @@ int main(int argc, char *argv[])
 	if (!fp) {
 		fprintf(stderr, "Could not open input data file\n");
 		ret = VACCEL_EIO;
-		goto free_in;
+		goto free_in_data;
 	}
 
 	for (int i = 0; i < ndata; ++i) {
@@ -103,6 +103,10 @@ close_sess:
 free_out:
 	free(outdata);
 free_in:
+	if (fclose(fp)) {
+		fprintf(stderr, "Could not close input data file\n");
+	}
+free_in_data:
 	free(indata);
 
 	return ret;

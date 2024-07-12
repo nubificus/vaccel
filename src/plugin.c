@@ -192,7 +192,8 @@ void *get_plugin_op(enum vaccel_op_type op_type, unsigned int hint)
 {
 	unsigned int env_priority = hint & (~VACCEL_REMOTE);
 	struct vaccel_op *op = NULL;
-	struct vaccel_op *opiter, *tmp;
+	struct vaccel_op *opiter;
+	struct vaccel_op *tmp;
 
 	if (op_type >= VACCEL_FUNCTIONS_NR) {
 		vaccel_error("Trying to execute unknown function");

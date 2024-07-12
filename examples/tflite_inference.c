@@ -95,15 +95,20 @@ int main(int argc, char *argv[])
 	for (unsigned int i = 0; i < min(10, out->size / sizeof(float)); ++i)
 		printf("%f\n", offsets[i]);
 
+	if (vaccel_tflite_tensor_destroy(out))
+		fprintf(stderr, "Could not destroy out tensor\n");
 unload_session:
-	vaccel_tflite_session_delete(&vsess, &model);
+	if (vaccel_tflite_tensor_destroy(in))
+		fprintf(stderr, "Could not destroy in tensor\n");
 
+	if (vaccel_tflite_session_delete(&vsess, &model))
+		fprintf(stderr, "Could not delete tf session\n");
 unregister_resource:
-	vaccel_sess_unregister(&vsess, model.resource);
-
+	if (vaccel_sess_unregister(&vsess, model.resource))
+		fprintf(stderr, "Could not unregister model with session\n");
 close_session:
-	vaccel_sess_free(&vsess);
-
+	if (vaccel_sess_free(&vsess))
+		fprintf(stderr, "Could not clear session\n");
 destroy_resource:
 	vaccel_single_model_destroy(&model);
 

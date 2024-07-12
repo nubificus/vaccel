@@ -82,6 +82,8 @@ int create_from_path(const char *path)
 		return ret;
 	}
 
+	free(model);
+
 	vaccel_info("Destroying session %u", sess.session_id);
 	return destroy_session(&sess);
 }
@@ -95,7 +97,7 @@ int create_from_in_mem(const char *path)
 		return VACCEL_ENOMEM;
 	}
 
-	unsigned char *ptr;
+	unsigned char *ptr = NULL;
 	size_t len;
 	int ret = read_file(path, (void **)&ptr, &len);
 	if (ret) {
@@ -148,6 +150,9 @@ int create_from_in_mem(const char *path)
 		vaccel_error("Could not destroy model");
 		return ret;
 	}
+
+	free(model);
+	free(ptr);
 
 	vaccel_info("Destroying session %u", sess.session_id);
 	return destroy_session(&sess);

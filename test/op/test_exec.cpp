@@ -108,10 +108,8 @@ TEST_CASE("exec_generic")
 
 TEST_CASE("exec_with_resources")
 {
-	int input;
+	int input, output1, output2;
 	int ret;
-	char out_text[512];
-	char out_text2[512];
 	const char *plugin_path =
 		abs_path(BUILD_ROOT, "examples/libmytestlib.so");
 
@@ -186,14 +184,14 @@ TEST_CASE("exec_with_resources")
 		{ .argtype = 0, .size = sizeof(input), .buf = &input }
 	};
 	struct vaccel_arg write[1] = {
-		{ .argtype = 0, .size = sizeof(out_text), .buf = out_text },
+		{ .argtype = 0, .size = sizeof(output1), .buf = &output1 },
 	};
 
 	struct vaccel_arg read_2[1] = {
 		{ .argtype = 0, .size = sizeof(input), .buf = &input }
 	};
 	struct vaccel_arg write_2[1] = {
-		{ .argtype = 0, .size = sizeof(out_text2), .buf = out_text2 },
+		{ .argtype = 0, .size = sizeof(output2), .buf = &output2 },
 	};
 
 	ret = vaccel_exec_with_resource(&sess, &object, "mytestfunc", read, 1,

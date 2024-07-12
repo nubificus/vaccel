@@ -86,7 +86,7 @@ int main(int argc, char *argv[])
 	ret = vaccel_sess_init(&session, 0);
 	if (ret) {
 		fprintf(stderr, "Could not initialize vAccel session\n");
-		return ret;
+		goto free_out_3;
 	}
 
 	struct timespec t0;
@@ -122,11 +122,15 @@ int main(int argc, char *argv[])
 
 out:
 	vaccel_sess_free(&session);
+free_out_3:
 	free(C);
 free_out_2:
 	free(B);
 free_out_1:
 	free(A);
 free_out:
+	if (data_fp)
+		fclose(data_fp);
+
 	return ret;
 }

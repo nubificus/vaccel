@@ -49,7 +49,7 @@ int main(int argc, char *argv[])
 
 	int ret = vaccel_sess_init(&session, 0);
 	if (ret)
-		return ret;
+		goto out_close;
 
 	ret = vaccel_sgemm(&session, M, N, K, alpha, (float *)A, K, (float *)B,
 			   N, beta, (float *)C, N);
@@ -63,6 +63,9 @@ int main(int argc, char *argv[])
 
 out:
 	vaccel_sess_free(&session);
+out_close:
+	if (data_fp)
+		fclose(data_fp);
 
 	return ret;
 }
