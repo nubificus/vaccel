@@ -29,6 +29,9 @@ static int tf_model_destructor(void *data)
 	vaccel_file_destroy(&model->checkpoint);
 	vaccel_file_destroy(&model->var_index);
 
+	if (model->path)
+		free((char *)model->path);
+
 	struct vaccel_resource *res = model->resource;
 	if (!res || !res->rundir)
 		return VACCEL_OK;
@@ -86,8 +89,12 @@ cleanup_regex:
 struct vaccel_tf_saved_model *vaccel_tf_saved_model_new(void)
 {
 	struct vaccel_tf_saved_model *new = calloc(1, sizeof(*new));
-	if (!new)
+	if (!new) {
 		vaccel_warn("Could not allocate memory");
+		return NULL;
+	}
+	new->path = NULL;
+	new->priv = NULL;
 
 	return new;
 }
@@ -372,7 +379,7 @@ int vaccel_tf_saved_model_register(struct vaccel_tf_saved_model *model)
 	if (ret)
 		goto destroy_resource;
 
-	model->path = res->rundir;
+	model->path = strdup(res->rundir);
 out:
 	vaccel_debug("New resource %lld", res->id);
 	model->resource = res;

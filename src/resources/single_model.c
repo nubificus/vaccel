@@ -20,16 +20,26 @@ static int single_model_destructor(void *data)
 	if (!model)
 		return VACCEL_EINVAL;
 
+	if (model->path)
+		free((char *)model->path);
+	if (model->filename)
+		free((char *)model->filename);
 	vaccel_file_destroy(&model->file);
 
 	return VACCEL_OK;
 }
 
-struct vaccel_single_model *vaccel_single_model_new(void)
+struct vaccel_single_model *vaccel_single_model_new()
 {
 	struct vaccel_single_model *new = calloc(1, sizeof(*new));
-	if (!new)
+	if (!new) {
 		vaccel_error("Could not allocate memory");
+		return NULL;
+	}
+
+	new->path = NULL;
+	new->filename = NULL;
+	new->plugin_data = NULL;
 
 	return new;
 }
@@ -63,6 +73,7 @@ int vaccel_single_model_set_path(struct vaccel_single_model *model,
 	}
 
 	model->resource = NULL;
+	model->filename = NULL;
 	vaccel_debug("Set single model path to %s", model->path);
 
 	return VACCEL_OK;
@@ -184,7 +195,14 @@ int vaccel_single_model_register(struct vaccel_single_model *model)
 	if (ret)
 		goto destroy_resource;
 
-	model->path = res->rundir;
+	size_t path_size = strlen(model->filename) + strlen(res->rundir) + 2;
+	char *path = calloc(1, path_size);
+	if (!path)
+		return VACCEL_ENOMEM;
+	strncpy(path, res->rundir, path_size);
+	strncpy(path, "/", path_size);
+	strncpy(path, model->filename, path_size);
+	model->path = path;
 out:
 	vaccel_debug("New resource %lld", res->id);
 	model->resource = res;

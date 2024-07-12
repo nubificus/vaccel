@@ -69,7 +69,7 @@ struct vaccel_torch_tensor {
 };
 
 struct vaccel_torch_tensor *
-vaccel_torch_tensor_new(int nr_dims, int64_t *dims,
+vaccel_torch_tensor_new(int nr_dims, const int64_t *dims,
 			enum vaccel_torch_data_type type);
 
 struct vaccel_torch_tensor *

@@ -2,22 +2,18 @@
 
 #define _POSIX_C_SOURCE 200809L
 
-#include "ops/vaccel_ops.h"
 #include <inttypes.h>
 #include <stdio.h>
 #include <string.h>
 
-#include <ops/torch.h>
 #include <vaccel.h>
 
-#define noop_info(fmt, ...) fprintf(stdout, "[noop] " fmt, ##__VA_ARGS__)
-
-#define noop_error(fmt, ...) fprintf(stderr, "[noop] " fmt, ##__VA_ARGS__)
+#define noop_debug(fmt, ...) vaccel_debug("[noop] " fmt, ##__VA_ARGS__)
+#define noop_error(fmt, ...) vaccel_error("[noop] " fmt, ##__VA_ARGS__)
 
 static int noop_noop(struct vaccel_session *sess)
 {
-	fprintf(stdout, "[noop] Calling no-op for session %u\n",
-		sess->session_id);
+	noop_debug("Calling no-op for session %u", sess->session_id);
 
 	return VACCEL_OK;
 }
@@ -27,16 +23,15 @@ static int noop_sgemm(struct vaccel_session *sess, long long int m,
 		      long long int lda, float *b, long long int ldb,
 		      float beta, float *c, long long int ldc)
 {
-	fprintf(stdout, "[noop] Calling sgemm for session %u\n",
-		sess->session_id);
+	noop_debug("Calling sgemm for session %u", sess->session_id);
 
-	fprintf(stdout, "[noop] Dumping arguments for sgemm:\n");
-	fprintf(stdout, "[noop] m: %lld n: %lld k: %lld\n", m, n, k);
-	fprintf(stdout, "[noop] alpha: %f\n", alpha);
-	fprintf(stdout, "[noop] A: %p lda: %lld\n", a, lda);
-	fprintf(stdout, "[noop] B: %p ldb: %lld\n", b, ldb);
-	fprintf(stdout, "[noop] beta: %f\n", beta);
-	fprintf(stdout, "[noop] C: %p ldc: %lld\n", c, ldc);
+	noop_debug("Dumping arguments for sgemm:");
+	noop_debug("m: %lld n: %lld k: %lld", m, n, k);
+	noop_debug("alpha: %f", alpha);
+	noop_debug("A: %p lda: %lld", a, lda);
+	noop_debug("B: %p ldb: %lld", b, ldb);
+	noop_debug("beta: %f", beta);
+	noop_debug("C: %p ldc: %lld", c, ldc);
 
 	return VACCEL_OK;
 }
@@ -51,13 +46,10 @@ int noop_minmax(struct vaccel_session *sess, const double *indata, int ndata,
 	if (!sess)
 		return VACCEL_EINVAL;
 
-	fprintf(stdout, "[noop] Calling minmax for session %u\n",
-		sess->session_id);
+	noop_debug("Calling minmax for session %u", sess->session_id);
 
-	fprintf(stdout, "[noop] Dumping arguments for minmax: ndata:%d\n",
-		ndata);
-	fprintf(stdout, "[noop] low: %d high: %d \n", low_threshold,
-		high_threshold);
+	noop_debug("Dumping arguments for minmax: ndata:%d", ndata);
+	noop_debug("low: %d high: %d ", low_threshold, high_threshold);
 
 	//*outdata = tmp_min;
 	memcpy(outdata, indata, ndata * sizeof(double));
@@ -72,14 +64,34 @@ static int noop_img_class(struct vaccel_session *sess, const void *img,
 			  size_t len_img, size_t len_out_text,
 			  size_t len_out_imgname)
 {
-	fprintf(stdout, "[noop] Calling Image classification for session %u\n",
-		sess->session_id);
+	if (!sess || !img) {
+		noop_error("Invalid input arguments\n");
+		return VACCEL_EINVAL;
+	}
+	int ret;
 
-	fprintf(stdout, "[noop] Dumping arguments for Image classification:\n");
-	fprintf(stdout, "[noop] len_img: %zu\n", len_img);
-	fprintf(stdout, "[noop] will return a dummy result\n");
-	sprintf((char *)out_text, "This is a dummy classification tag!");
-	//len_out_text = strlen("This is a dummy classification tag!");
+	noop_debug("Calling Image classification for session %u",
+		   sess->session_id);
+
+	noop_debug("Dumping arguments for Image classification:");
+	noop_debug("len_img: %zu", len_img);
+	noop_debug("len_out_text: %zu", len_out_text);
+	if (len_out_imgname)
+		noop_debug("len_out_imgname: %zu", len_out_imgname);
+	if (out_text) {
+		noop_debug("will return a dummy result");
+		ret = snprintf((char *)out_text, len_out_text,
+			       "This is a dummy classification tag!");
+		if (ret <= 0)
+			return VACCEL_EINVAL;
+	}
+	if (out_imgname) {
+		noop_debug("will return a dummy result");
+		ret = snprintf((char *)out_imgname, len_out_imgname,
+			       "This is a dummy imgname!");
+		if (ret <= 0)
+			return VACCEL_EINVAL;
+	}
 
 	return VACCEL_OK;
 }
@@ -88,11 +100,25 @@ static int noop_img_detect(struct vaccel_session *sess, const void *img,
 			   const unsigned char *out_imgname, size_t len_img,
 			   size_t len_out_imgname)
 {
-	fprintf(stdout, "[noop] Calling Image detection for session %u\n",
-		sess->session_id);
+	if (!sess || !img) {
+		noop_error("Invalid input arguments\n");
+		return VACCEL_EINVAL;
+	}
+	int ret;
 
-	fprintf(stdout, "[noop] Dumping arguments for Image detection:\n");
-	fprintf(stdout, "[noop] len_img: %zu\n", len_img);
+	noop_debug("Calling Image detection for session %u", sess->session_id);
+
+	noop_debug("Dumping arguments for Image detection:");
+	noop_debug("len_img: %zu", len_img);
+	if (len_out_imgname)
+		noop_debug("len_out_imgname: %zu", len_out_imgname);
+	if (out_imgname) {
+		noop_debug("will return a dummy result");
+		ret = snprintf((char *)out_imgname, len_out_imgname,
+			       "This is a dummy imgname!");
+		if (ret <= 0)
+			return VACCEL_EINVAL;
+	}
 
 	return VACCEL_OK;
 }
@@ -101,11 +127,26 @@ static int noop_img_segme(struct vaccel_session *sess, const void *img,
 			  const unsigned char *out_imgname, size_t len_img,
 			  size_t len_out_imgname)
 {
-	fprintf(stdout, "[noop] Calling Image segmentation for session %u\n",
-		sess->session_id);
+	if (!sess || !img) {
+		noop_error("Invalid input arguments\n");
+		return VACCEL_EINVAL;
+	}
+	int ret;
 
-	fprintf(stdout, "[noop] Dumping arguments for Image segmentation:\n");
-	fprintf(stdout, "[noop] len_img: %zu\n", len_img);
+	noop_debug("Calling Image segmentation for session %u",
+		   sess->session_id);
+
+	noop_debug("Dumping arguments for Image segmentation:");
+	noop_debug("len_img: %zu", len_img);
+	if (len_out_imgname)
+		noop_debug("len_out_imgname: %zu", len_out_imgname);
+	if (out_imgname) {
+		noop_debug("will return a dummy result");
+		ret = snprintf((char *)out_imgname, len_out_imgname,
+			       "This is a dummy imgname!");
+		if (ret <= 0)
+			return VACCEL_EINVAL;
+	}
 
 	return VACCEL_OK;
 }
@@ -114,11 +155,25 @@ static int noop_img_pose(struct vaccel_session *sess, const void *img,
 			 const unsigned char *out_imgname, size_t len_img,
 			 size_t len_out_imgname)
 {
-	fprintf(stdout, "[noop] Calling Image pose for session %u\n",
-		sess->session_id);
+	if (!sess || !img) {
+		noop_error("Invalid input arguments\n");
+		return VACCEL_EINVAL;
+	}
+	int ret;
 
-	fprintf(stdout, "[noop] Dumping arguments for Image pose:\n");
-	fprintf(stdout, "[noop] len_img: %zu\n", len_img);
+	noop_debug("Calling Image pose for session %u", sess->session_id);
+
+	noop_debug("Dumping arguments for Image pose:");
+	noop_debug("len_img: %zu", len_img);
+	if (len_out_imgname)
+		noop_debug("len_out_imgname: %zu", len_out_imgname);
+	if (out_imgname) {
+		noop_debug("will return a dummy result");
+		ret = snprintf((char *)out_imgname, len_out_imgname,
+			       "This is a dummy imgname!");
+		if (ret <= 0)
+			return VACCEL_EINVAL;
+	}
 
 	return VACCEL_OK;
 }
@@ -127,11 +182,25 @@ static int noop_img_depth(struct vaccel_session *sess, const void *img,
 			  const unsigned char *out_imgname, size_t len_img,
 			  size_t len_out_imgname)
 {
-	fprintf(stdout, "[noop] Calling Image depth for session %u\n",
-		sess->session_id);
+	if (!sess || !img) {
+		noop_error("Invalid input arguments\n");
+		return VACCEL_EINVAL;
+	}
+	int ret;
 
-	fprintf(stdout, "[noop] Dumping arguments for Image depth:\n");
-	fprintf(stdout, "[noop] len_img: %zu\n", len_img);
+	noop_debug("Calling Image depth for session %u", sess->session_id);
+
+	noop_debug("Dumping arguments for Image depth:");
+	noop_debug("len_img: %zu", len_img);
+	if (len_out_imgname)
+		noop_debug("len_out_imgname: %zu", len_out_imgname);
+	if (out_imgname) {
+		noop_debug("will return a dummy result");
+		ret = snprintf((char *)out_imgname, len_out_imgname,
+			       "This is a dummy imgname!");
+		if (ret <= 0)
+			return VACCEL_EINVAL;
+	}
 
 	return VACCEL_OK;
 }
@@ -140,13 +209,16 @@ static int noop_exec(struct vaccel_session *sess, const char *library,
 		     const char *fn_symbol, struct vaccel_arg *read,
 		     size_t nr_read, struct vaccel_arg *write, size_t nr_write)
 {
-	fprintf(stdout, "[noop] Calling exec for session %u\n",
-		sess->session_id);
+	if (!sess || !library || !fn_symbol) {
+		noop_error("Invalid input arguments\n");
+		return VACCEL_EINVAL;
+	}
 
-	fprintf(stdout, "[noop] Dumping arguments for exec:\n");
-	fprintf(stdout, "[noop] library: %s symbol: %s\n", library, fn_symbol);
-	fprintf(stdout, "[noop] nr_read: %zu nr_write: %zu\n", nr_read,
-		nr_write);
+	noop_debug("Calling exec for session %u", sess->session_id);
+
+	noop_debug("Dumping arguments for exec:");
+	noop_debug("library: %s symbol: %s", library, fn_symbol);
+	noop_debug("nr_read: %zu nr_write: %zu", nr_read, nr_write);
 
 	return VACCEL_OK;
 }
@@ -172,19 +244,34 @@ static int noop_exec_with_resource(struct vaccel_session *sess,
 		return VACCEL_ENOENT;
 	}
 
-	fprintf(stdout, "[noop] Calling exec_with_resource for session %u\n",
-		sess->session_id);
+	noop_debug("Calling exec_with_resource for session %u",
+		   sess->session_id);
 
 	const char *library = object->file.path;
-	fprintf(stdout, "[noop] object file path: %s\n", object->file.path);
-	fprintf(stdout, "[noop] Dumping arguments for exec_with_resource:\n");
-	fprintf(stdout, "[noop] library: %s symbol: %s\n", library, fn_symbol);
-	fprintf(stdout, "[noop] nr_read: %zu nr_write: %zu\n", nr_read,
-		nr_write);
+	noop_debug("object file path: %s", object->file.path);
+	noop_debug("Dumping arguments for exec_with_resource:");
+	noop_debug("library: %s symbol: %s", library, fn_symbol);
+	noop_debug("nr_read: %zu nr_write: %zu", nr_read, nr_write);
 
-	if (nr_write > 0) {
-		int out = 2 * (*(int *)read[0].buf);
-		memcpy(write[0].buf, &out, sizeof(int));
+	if ((nr_write > 0) && (write[0].size == read[0].size) &&
+	    (write[0].size % sizeof(int) == 0)) {
+		noop_debug(
+			"will return dummy output based on 'mytestlib' functions\n");
+
+		int nr_output = write[0].size / sizeof(int);
+		if (nr_output == 1) {
+			int output = 2 * (*(int *)read[0].buf);
+			memcpy(write[0].buf, &output, sizeof(int));
+		} else {
+			if (nr_output > 1) {
+				int *input = (int *)read[0].buf;
+				int *output = (int *)write[0].buf;
+				output[0] = input[0];
+				for (int j = 1; j < nr_output; j++) {
+					output[j] = 2 * input[j];
+				}
+			}
+		}
 	}
 
 	return VACCEL_OK;
@@ -239,44 +326,66 @@ static int noop_tf_session_run(struct vaccel_session *session,
 	}
 
 	if (run_options)
-		noop_info("Run options -> %p, %zu\n", run_options->data,
-			  run_options->size);
+		noop_debug("Run options -> %p, %zu", run_options->data,
+			   run_options->size);
 
-	noop_info("Number of inputs: %d\n", nr_inputs);
+	noop_debug("Number of inputs: %d", nr_inputs);
 	for (int i = 0; i < nr_inputs; ++i) {
-		noop_info("\tNode %d: %s:%d\n", i, in_nodes[i].name,
-			  in_nodes[i].id);
-		noop_info("\t#dims: %d -> {", in[i]->nr_dims);
+		noop_debug("\tNode %d: %s:%d", i, in_nodes[i].name,
+			   in_nodes[i].id);
+		noop_debug("\t#dims: %d -> {", in[i]->nr_dims);
 		for (int j = 0; j < in[i]->nr_dims; ++j)
 			printf("%" PRId64 "%s", in[i]->dims[j],
 			       (j == in[i]->nr_dims - 1) ? "}\n" : " ");
 
-		noop_info("\tData type: %d\n", in[i]->data_type);
-		noop_info("\tData -> %p, %zu\n", in[i]->data, in[i]->size);
+		noop_debug("\tData type: %d", in[i]->data_type);
+		noop_debug("\tData -> %p, %zu", in[i]->data, in[i]->size);
 	}
 
-	noop_info("Number of outputs: %d\n", nr_outputs);
+	noop_debug("Number of outputs: %d", nr_outputs);
 	for (int i = 0; i < nr_outputs; ++i) {
-		noop_info("\tNode %d: %s:%d\n", i, out_nodes[i].name,
-			  out_nodes[i].id);
+		out[i] = NULL;
+	}
+	for (int i = 0; i < nr_outputs; ++i) {
+		noop_debug("\tNode %d: %s:%d", i, out_nodes[i].name,
+			   out_nodes[i].id);
 		out[i] = malloc(sizeof(*out[i]));
+		if (!out[i])
+			goto free_tf;
 		out[i]->nr_dims = in[i]->nr_dims;
+		out[i]->data_type = in[i]->data_type;
+		out[i]->owned = 1;
+		out[i]->size = in[i]->size;
 		out[i]->dims = malloc(sizeof(*out[i]->dims) * in[i]->nr_dims);
+		out[i]->data = malloc(in[i]->size * sizeof(double));
+		if (!out[i]->dims || !out[i]->data)
+			goto free_tf;
 		memcpy(out[i]->dims, in[i]->dims,
 		       sizeof(*in[i]->dims) * in[i]->nr_dims);
-		out[i]->data_type = in[i]->data_type;
-		out[i]->data = malloc(in[i]->size * sizeof(double));
 		memcpy(out[i]->data, in[i]->data, in[i]->size);
-		out[i]->size = in[i]->size;
 	}
 
 	if (status) {
 		status->message = strdup("Operation handled by noop plugin");
 		if (!status->message)
-			return VACCEL_ENOMEM;
+			goto free_tf;
 	}
 
 	return VACCEL_OK;
+
+free_tf:
+	for (int i = 0; i < nr_outputs; ++i) {
+		if (!out[i])
+			continue;
+
+		if (out[i]->dims)
+			free(out[i]->dims);
+		if (out[i]->data)
+			free(out[i]->data);
+
+		free(out[i]);
+	}
+	return VACCEL_ENOMEM;
 }
 
 static int noop_tf_session_delete(struct vaccel_session *session,
@@ -340,31 +449,53 @@ static int noop_tflite_session_run(struct vaccel_session *session,
 		return VACCEL_EINVAL;
 	}
 
-	noop_info("Number of inputs: %d\n", nr_inputs);
+	noop_debug("Number of inputs: %d", nr_inputs);
 	for (int i = 0; i < nr_inputs; ++i) {
-		noop_info("\t#dims: %d -> {", in[i]->nr_dims);
+		noop_debug("\t#dims: %d -> {", in[i]->nr_dims);
 		for (int j = 0; j < in[i]->nr_dims; ++j)
 			printf("%" PRId32 "%s", in[i]->dims[j],
 			       (j == in[i]->nr_dims - 1) ? "}\n" : " ");
 
-		noop_info("\tData type: %d\n", in[i]->data_type);
-		noop_info("\tData -> %p, %zu\n", in[i]->data, in[i]->size);
+		noop_debug("\tData type: %d", in[i]->data_type);
+		noop_debug("\tData -> %p, %zu", in[i]->data, in[i]->size);
 	}
 
-	noop_info("Number of outputs: %d\n", nr_outputs);
+	noop_debug("Number of outputs: %d", nr_outputs);
+	for (int i = 0; i < nr_outputs; ++i) {
+		out[i] = NULL;
+	}
 	for (int i = 0; i < nr_outputs; ++i) {
 		out[i] = malloc(sizeof(*out[i]));
+		if (!out[i])
+			goto free_tflite;
 		out[i]->nr_dims = in[i]->nr_dims;
+		out[i]->data_type = in[i]->data_type;
+		out[i]->owned = 1;
+		out[i]->size = in[i]->size;
 		out[i]->dims = malloc(sizeof(*out[i]->dims) * in[i]->nr_dims);
+		out[i]->data = malloc(in[i]->size * sizeof(double));
+		if (!out[i]->dims || !out[i]->data)
+			goto free_tflite;
 		memcpy(out[i]->dims, in[i]->dims,
 		       sizeof(*in[i]->dims) * in[i]->nr_dims);
-		out[i]->data_type = in[i]->data_type;
-		out[i]->data = malloc(in[i]->size * sizeof(double));
 		memcpy(out[i]->data, in[i]->data, in[i]->size);
-		out[i]->size = in[i]->size;
 	}
 
 	return VACCEL_OK;
+
+free_tflite:
+	for (int i = 0; i < nr_outputs; ++i) {
+		if (!out[i])
+			continue;
+
+		if (out[i]->dims)
+			free(out[i]->dims);
+		if (out[i]->data)
+			free(out[i]->data);
+
+		free(out[i]);
+	}
+	return VACCEL_ENOMEM;
 }
 
 static int noop_tflite_session_delete(struct vaccel_session *session,
@@ -386,11 +517,10 @@ static int noop_tflite_session_delete(struct vaccel_session *session,
 static int v_arraycopy(struct vaccel_session *session, const int *a, int *b,
 		       size_t c)
 {
-	fprintf(stdout, "[noop] Calling v_arraycopy for session %u\n",
-		session->session_id);
+	noop_debug("Calling v_arraycopy for session %u", session->session_id);
 
-	fprintf(stdout, "[noop] Dumping arguments for v_arracycopy:\n");
-	fprintf(stdout, "[noop] size: %zu \n", c);
+	noop_debug("Dumping arguments for v_arracycopy:");
+	noop_debug("size: %zu ", c);
 
 	/* Fill output with dummy values */
 	for (size_t i = 0; i < c; i++) {
@@ -403,11 +533,10 @@ static int v_arraycopy(struct vaccel_session *session, const int *a, int *b,
 static int v_vectoradd(struct vaccel_session *session, const float *a,
 		       const float *b, float *c, size_t len_a, size_t len_b)
 {
-	fprintf(stdout, "[noop] Calling v_vectoradd for session %u\n",
-		session->session_id);
+	noop_debug("Calling v_vectoradd for session %u", session->session_id);
 
-	fprintf(stdout, "[noop] Dumping arguments for v_vectoradd:\n");
-	fprintf(stdout, "[noop] len_a: %zu len_b: %zu \n", len_a, len_b);
+	noop_debug("Dumping arguments for v_vectoradd:");
+	noop_debug("len_a: %zu len_b: %zu ", len_a, len_b);
 
 	/* Fill output with dummy values */
 	for (size_t i = 0; i < len_a; i++) {
@@ -421,11 +550,10 @@ static int v_parallel(struct vaccel_session *session, const float *a,
 		      const float *b, float *add_out, float *mult_out,
 		      size_t len_a)
 {
-	fprintf(stdout, "[noop] Calling v_parallel for session %u\n",
-		session->session_id);
+	noop_debug("Calling v_parallel for session %u", session->session_id);
 
-	fprintf(stdout, "[noop] Dumping arguments for v_parallel:\n");
-	fprintf(stdout, "[noop] len_a: %zu\n", len_a);
+	noop_debug("Dumping arguments for v_parallel:");
+	noop_debug("len_a: %zu", len_a);
 
 	/* Fill output with dummy values */
 	for (size_t i = 0; i < len_a; i++) {
@@ -439,11 +567,10 @@ static int v_parallel(struct vaccel_session *session, const float *a,
 static int v_mmult(struct vaccel_session *session, float *a, float *b,
 		   float *c_out, size_t len_a)
 {
-	fprintf(stdout, "[noop] Calling v_mmult for session %u\n",
-		session->session_id);
+	noop_debug("Calling v_mmult for session %u", session->session_id);
 
-	fprintf(stdout, "[noop] Dumping arguments for v_mmult:\n");
-	fprintf(stdout, "[noop] len_a: %zu\n", len_a);
+	noop_debug("Dumping arguments for v_mmult:");
+	noop_debug("len_a: %zu", len_a);
 
 	/* Fill output with dummy values */
 	for (size_t i = 0; i < len_a; i++) {
@@ -453,12 +580,10 @@ static int v_mmult(struct vaccel_session *session, float *a, float *b,
 	return VACCEL_OK;
 }
 
-// Torch NOOP test
 static int noop_torch_jitload_forward(
 	struct vaccel_session *session, const struct vaccel_single_model *model,
 	const struct vaccel_torch_buffer *run_options,
 	struct vaccel_torch_tensor **in_tensor, int nr_read,
-	/*char **tags, */
 	struct vaccel_torch_tensor **out_tensor, int nr_write)
 {
 	if (!session) {
@@ -471,38 +596,71 @@ static int noop_torch_jitload_forward(
 		return VACCEL_EINVAL;
 	}
 
-	fprintf(stdout, "[noop] Calling jitload_forward for session %u\n",
-		session->session_id);
+	noop_debug("Calling jitload_forward for session %u",
+		   session->session_id);
 
-	noop_info("Number of inputs: %d\n", nr_read);
+	noop_debug("Number of inputs: %d", nr_read);
 	for (int i = 0; i < nr_read; ++i) {
-		noop_info("\t#dims: %d -> {", in_tensor[i]->nr_dims);
+		noop_debug("\t#dims: %d -> {", in_tensor[i]->nr_dims);
 		for (int j = 0; j < in_tensor[i]->nr_dims; ++j)
 			printf("%d%s", in_tensor[i]->dims[j],
 			       (j == in_tensor[i]->nr_dims - 1) ? "}\n" : " ");
 
-		noop_info("\tData type: %d\n", in_tensor[i]->data_type);
-		noop_info("\tData -> %p, %zu\n", in_tensor[i]->data,
-			  in_tensor[i]->size);
+		noop_debug("\tData type: %d", in_tensor[i]->data_type);
+		noop_debug("\tData -> %p, %zu", in_tensor[i]->data,
+			   in_tensor[i]->size);
 	}
 
-	noop_info("Number of outputs: %d\n", nr_write);
+	noop_debug("Number of outputs: %d", nr_write);
+	int *malloced = NULL;
+	if (nr_write > 0) {
+		malloced = calloc(nr_write, sizeof(*malloced));
+		if (!malloced)
+			return VACCEL_ENOMEM;
+	}
 	for (int i = 0; i < nr_write; ++i) {
-		out_tensor[i] = malloc(sizeof(*out_tensor[i]));
+		if (!out_tensor[i]) {
+			out_tensor[i] = malloc(sizeof(*out_tensor[i]));
+			if (!out_tensor[i])
+				goto free_torch;
+			malloced[i] = 1;
+		}
 		out_tensor[i]->nr_dims = in_tensor[i]->nr_dims;
+		out_tensor[i]->data_type = in_tensor[i]->data_type;
+		out_tensor[i]->size = in_tensor[i]->size;
+		out_tensor[i]->owned = 1;
 		out_tensor[i]->dims = malloc(sizeof(*out_tensor[i]->dims) *
 					     in_tensor[i]->nr_dims);
-		memcpy(out_tensor[i]->dims, in_tensor[i]->dims,
-		       sizeof(*in_tensor[i]->dims) * in_tensor[i]->nr_dims);
-		out_tensor[i]->data_type = in_tensor[i]->data_type;
 		out_tensor[i]->data =
 			malloc(in_tensor[i]->size * sizeof(double));
+		if (!out_tensor[i]->dims || !out_tensor[i]->data)
+			goto free_torch;
+		memcpy(out_tensor[i]->dims, in_tensor[i]->dims,
+		       sizeof(*in_tensor[i]->dims) * in_tensor[i]->nr_dims);
 		memcpy(out_tensor[i]->data, in_tensor[i]->data,
 		       in_tensor[i]->size);
-		out_tensor[i]->size = in_tensor[i]->size;
 	}
+	if (malloced)
+		free(malloced);
 
 	return VACCEL_OK;
+
+free_torch:
+	for (int i = 0; i < nr_write; ++i) {
+		if (!out_tensor[i])
+			continue;
+
+		if (out_tensor[i]->dims)
+			free(out_tensor[i]->dims);
+		if (out_tensor[i]->data)
+			free(out_tensor[i]->data);
+
+		if (malloced[i])
+			free(out_tensor[i]);
+	}
+	free(malloced);
+
+	return VACCEL_ENOMEM;
 }
 
 static int noop_torch_sgemm(struct vaccel_session *session,
@@ -516,10 +674,9 @@ static int noop_torch_sgemm(struct vaccel_session *session,
 		return VACCEL_EINVAL;
 	}
 
-	fprintf(stdout, "[noop] Calling torch_sgemm for session %u\n",
-		session->session_id);
-	fprintf(stdout, "[noop] Dumping arguments for torch_sgemm:\n");
-	fprintf(stdout, "[noop] m: %d n: %d k: %d\n", M, N, K);
+	noop_debug("Calling torch_sgemm for session %u", session->session_id);
+	noop_debug("Dumping arguments for torch_sgemm:");
+	noop_debug("m: %d n: %d k: %d", M, N, K);
 	return VACCEL_OK;
 }
 
@@ -527,21 +684,16 @@ static int noop_opencv(struct vaccel_session *sess, struct vaccel_arg *read,
 		       size_t nr_read, struct vaccel_arg *write,
 		       size_t nr_write)
 {
-	fprintf(stdout, "[noop] Calling opencv for session %u\n",
-		sess->session_id);
+	noop_debug("Calling opencv for session %u", sess->session_id);
 
-	fprintf(stdout, "[noop] Dumping arguments for opencv:\n");
-	fprintf(stdout, "[noop] nr_read: %zu nr_write: %zu\n", nr_read,
-		nr_write);
-	fprintf(stdout, "[noop] [OpenCV] function: %u\n",
-		*(uint8_t *)read[0].buf);
+	noop_debug("Dumping arguments for opencv:");
+	noop_debug("nr_read: %zu nr_write: %zu", nr_read, nr_write);
+	noop_debug("[OpenCV] function: %u", *(uint8_t *)read[0].buf);
 	for (size_t i = 1; i < nr_read; i++) {
-		fprintf(stdout, "[noop] opencv read[%zu] size: %u\n", i,
-			read[i].size);
+		noop_debug("opencv read[%zu] size: %u", i, read[i].size);
 	}
 	for (size_t i = 0; i < nr_write; i++) {
-		fprintf(stdout, "[noop] opencv write[%zu] size: %u\n", i,
-			write[i].size);
+		noop_debug("opencv write[%zu] size: %u", i, write[i].size);
 		size_t *header;
 		header = write[i].buf;
 		header[0] = write[i].size / sizeof(float);

@@ -97,6 +97,8 @@ int create_from_path(const char *path)
 		return ret;
 	}
 
+	free(model);
+
 	vaccel_info("Destroying session %u", sess.session_id);
 	return destroy_session(&sess);
 }
@@ -180,6 +182,8 @@ int create_from_in_mem(const char *path)
 		vaccel_error("Could not destroy model");
 		return ret;
 	}
+
+	free(model);
 
 	vaccel_info("Destroying session %u", sess.session_id);
 	return destroy_session(&sess);

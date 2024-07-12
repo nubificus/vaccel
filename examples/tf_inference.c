@@ -57,6 +57,8 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "Could not load graph from model\n");
 		goto unregister_resource;
 	}
+	if (status.message)
+		free((char *)status.message);
 
 	struct vaccel_tf_buffer run_options = { NULL, 0 };
 
@@ -100,15 +102,24 @@ int main(int argc, char *argv[])
 	for (unsigned int i = 0; i < min(10, out->size / sizeof(float)); ++i)
 		printf("%f\n", offsets[i]);
 
+	if (status.message)
+		free((char *)status.message);
+	if (vaccel_tf_tensor_destroy(out))
+		fprintf(stderr, "Could not destroy out tensor\n");
 unload_session:
-	vaccel_tf_session_delete(&vsess, &model, &status);
+	if (vaccel_tf_tensor_destroy(in))
+		fprintf(stderr, "Could not destroy in tensor\n");
 
+	if (vaccel_tf_session_delete(&vsess, &model, &status))
+		fprintf(stderr, "Could not delete tf session\n");
+	if (status.message)
+		free((char *)status.message);
 unregister_resource:
-	vaccel_sess_unregister(&vsess, model.resource);
-
+	if (vaccel_sess_unregister(&vsess, model.resource))
+		fprintf(stderr, "Could not unregister model with session\n");
 close_session:
-	vaccel_sess_free(&vsess);
-
+	if (vaccel_sess_free(&vsess))
+		fprintf(stderr, "Could not clear session\n");
 destroy_resource:
 	vaccel_tf_saved_model_destroy(&model);
 

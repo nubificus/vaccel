@@ -51,7 +51,6 @@ auto main(int argc, char **argv) -> int
 	struct vaccel_session sess;
 	struct vaccel_single_model model;
 	struct vaccel_torch_buffer run_options;
-	float *offsets;
 	int ret;
 	char *model_path = argv[2];
 	std::vector<float> res_data = random_input_generator();
@@ -81,13 +80,13 @@ auto main(int argc, char **argv) -> int
 
 	/* Read the image file */
 	ret = read_file(argv[1], (void **)&run_options.data, &run_options.size);
-	if (ret != 0) {
+	if (ret != VACCEL_OK) {
 		fprintf(stderr, "Could not load the image file: %d", ret);
 		goto close_session;
 	}
 
 	ret = vaccel_sess_init(&sess, 0);
-	if (ret != 0) {
+	if (ret != VACCEL_OK) {
 		fprintf(stderr, "Could not initialize vAccel session\n");
 		goto destroy_resource;
 	}
@@ -97,7 +96,7 @@ auto main(int argc, char **argv) -> int
 	/* Take vaccel_session and vaccel_resource as inputs, 
 	 * register a resource with a session */
 	ret = vaccel_sess_register(&sess, model.resource);
-	if (ret != 0) {
+	if (ret != VACCEL_OK) {
 		fprintf(stderr, "Could not register model with session\n");
 		goto close_session;
 	}
@@ -105,35 +104,36 @@ auto main(int argc, char **argv) -> int
 	in = vaccel_torch_tensor_new(4, dims, VACCEL_TORCH_FLOAT);
 	if (in == nullptr) {
 		fprintf(stderr, "Could not allocate memory\n");
-		goto close_session;
+		goto unregister_session;
 	}
 	in->data = res_data.data();
-	// memcpy(in->data, res_data.data(), res_data.size());
 	in->size = res_data.size() * sizeof(float);
-	std::cout << "The IN ADDRESS: " << in->data << '\n';
-	std::cout << "size: " << in->size << '\n';
+	printf("The IN ADDRESS: %p\n", in->data);
+	printf("data: %f\n", *(float *)in->data);
+	printf("size: %zu\n", in->size);
 
 	/* Output tensor */
 	out = (struct vaccel_torch_tensor *)malloc(
 		sizeof(struct vaccel_torch_tensor) * 1);
-	// struct vaccel_torch_tensor *out = vaccel_torch_tensor_new(4, dims, VACCEL_TORCH_FLOAT);
+	if (out == nullptr) {
+		fprintf(stderr, "Could not allocate memory\n");
+		goto free_tensor;
+	}
+
 	/* Conducting torch inference */
 	ret = vaccel_torch_jitload_forward(&sess, &model, &run_options, &in, 1,
 					   &out, 1);
-
-	if (ret != 0) {
+	if (ret != VACCEL_OK) {
 		fprintf(stderr, "Could not run op: %d\n", ret);
-		goto close_session;
+		goto free_tensor;
 	}
 
 	printf("Success!\n");
 	printf("Result Tensor :\n");
 	printf("Output tensor => type:%u nr_dims:%u\n", out->data_type,
 	       out->nr_dims);
-
-	offsets = (float *)out->data;
-	//printf ("%d\n", *(int *) out->data);
-	printf("%f\n", *offsets);
+	printf("data: %f\n", *(float *)out->data);
+	printf("size: %zu\n", out->size);
 	/*
 	   const char* classes[10] = { "plane", "car", "bird", 
 	   "cat", "deer", "dog", 
@@ -141,19 +141,21 @@ auto main(int argc, char **argv) -> int
 
 	   printf("Pred: %s\n", classes[int(offsets)])
 	   */
-	ret = vaccel_sess_unregister(&sess, model.resource);
-	if (ret != 0) {
-		fprintf(stderr, "Could not unregister model with session\n");
-		// goto close_session;
-		return vaccel_sess_free(&sess);
-	}
 
+	if (vaccel_torch_tensor_destroy(out) != VACCEL_OK)
+		fprintf(stderr, "Could not destroy out tensor\n");
+free_tensor:
+	if (vaccel_torch_tensor_destroy(in) != VACCEL_OK)
+		fprintf(stderr, "Could not destroy in tensor\n");
+unregister_session:
+	if (vaccel_sess_unregister(&sess, model.resource) != VACCEL_OK)
+		fprintf(stderr, "Could not unregister model with session\n");
 close_session:
-	if (vaccel_sess_free(&sess) != VACCEL_OK) {
+	if (vaccel_sess_free(&sess) != VACCEL_OK)
 		fprintf(stderr, "Could not clear session\n");
-		return 1;
-	}
 destroy_resource:
+	free(run_options.data);
 	vaccel_single_model_destroy(&model);
+
 	return ret;
 }
