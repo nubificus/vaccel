@@ -20,8 +20,9 @@
 
 DEFINE_FFF_GLOBALS;
 
-extern "C" {
 #include <vaccel.h>
+
+extern "C" {
 FAKE_VALUE_FUNC(struct vaccel_plugin *, get_virtio_plugin);
 FAKE_VALUE_FUNC(struct vaccel_session *, sess_free);
 }
@@ -85,9 +86,6 @@ TEST_CASE("session_init", "[session]")
 
 	RESET_FAKE(get_virtio_plugin);
 
-	// Ensure that the session system is initialized
-	ret = sessions_bootstrap();
-	REQUIRE(ret == VACCEL_OK);
 	struct vaccel_session sess;
 	sess.hint = 0;
 	sess.session_id = 0;
@@ -122,16 +120,10 @@ TEST_CASE("session_init", "[session]")
 	REQUIRE(sess.hint == 1);
 	REQUIRE(sess.resources == nullptr);
 	REQUIRE(sess.priv == nullptr);
-
-	ret = plugins_shutdown();
-	REQUIRE(ret == VACCEL_OK);
-
-	ret = sessions_cleanup();
-	REQUIRE(ret == VACCEL_OK);
 }
 
 // Test case for session update and cleanup
-TEST_CASE("vaccel_sess_update_and_free", "[session]")
+TEST_CASE("session_update_and_free", "[session]")
 {
 	struct vaccel_session sess;
 	sess.session_id = 0;
@@ -140,9 +132,6 @@ TEST_CASE("vaccel_sess_update_and_free", "[session]")
 	int ret;
 
 	RESET_FAKE(get_virtio_plugin);
-
-	ret = sessions_bootstrap();
-	REQUIRE(ret == VACCEL_OK);
 
 	ret = vaccel_sess_init(&sess, 1);
 	REQUIRE(ret == VACCEL_OK);
@@ -179,20 +168,14 @@ TEST_CASE("vaccel_sess_update_and_free", "[session]")
 	REQUIRE(sess.hint == 2);
 	REQUIRE(sess.resources == nullptr);
 	REQUIRE(sess.priv == nullptr);
-
-	ret = sessions_cleanup();
-	REQUIRE(ret == VACCEL_OK);
 }
 
 // Test case for unregistering a session with null parameters
-TEST_CASE("sess_unregister_null", "[session]")
+TEST_CASE("session_unregister_null", "[session]")
 {
 	int ret;
 
 	RESET_FAKE(get_virtio_plugin);
-
-	ret = sessions_bootstrap();
-	REQUIRE(VACCEL_OK == ret);
 
 	struct vaccel_session sess;
 	sess.session_id = 0;
@@ -208,6 +191,7 @@ TEST_CASE("sess_unregister_null", "[session]")
 
 	struct vaccel_resource res;
 	res.type = VACCEL_RES_SHARED_OBJ;
+	res.id = 1;
 
 	ret = vaccel_sess_register(nullptr, nullptr);
 	REQUIRE(ret == VACCEL_EINVAL);
@@ -242,10 +226,12 @@ TEST_CASE("sess_unregister_null", "[session]")
 	REQUIRE(sess.priv == nullptr);
 
 	res.type = VACCEL_RES_MAX;
+	res.id = 2;
 	ret = vaccel_sess_unregister(&sess, &res);
 	REQUIRE(ret == VACCEL_EINVAL);
 
 	res.type = VACCEL_RES_SHARED_OBJ;
+	res.id = 1;
 	ret = vaccel_sess_unregister(&sess, &res);
 	REQUIRE(ret == VACCEL_OK);
 	REQUIRE(sess.session_id);
@@ -263,13 +249,10 @@ TEST_CASE("sess_unregister_null", "[session]")
 	REQUIRE(sess.hint == 1);
 	REQUIRE(sess.resources == nullptr);
 	REQUIRE(sess.priv == nullptr);
-
-	ret = sessions_cleanup();
-	REQUIRE(VACCEL_OK == ret);
 }
 
 // Test case for session initialization, update, registration, and cleanup
-TEST_CASE("session_sess", "[session]")
+TEST_CASE("session_ops", "[session]")
 {
 	int ret;
 	struct vaccel_session test_sess;
@@ -279,14 +262,9 @@ TEST_CASE("session_sess", "[session]")
 	test_sess.priv = nullptr;
 	struct vaccel_resource test_res;
 	test_res.type = VACCEL_RES_SHARED_OBJ;
+	test_res.id = 1;
 
 	RESET_FAKE(get_virtio_plugin);
-
-	ret = sessions_bootstrap();
-	REQUIRE(VACCEL_OK == ret);
-
-	ret = resources_bootstrap();
-	REQUIRE(VACCEL_OK == ret);
 
 	ret = vaccel_sess_init(&test_sess, 1);
 	REQUIRE(VACCEL_OK == ret);
@@ -314,7 +292,6 @@ TEST_CASE("session_sess", "[session]")
 
 	ret = vaccel_sess_unregister(&test_sess, &test_res);
 	REQUIRE(VACCEL_OK == ret);
-	REQUIRE(VACCEL_OK == ret);
 	REQUIRE(test_sess.session_id);
 	REQUIRE(test_sess.hint == 2);
 	REQUIRE(list_empty(&test_sess.resources->registered[test_res.type]));
@@ -326,17 +303,11 @@ TEST_CASE("session_sess", "[session]")
 	REQUIRE(test_sess.hint == 2);
 	REQUIRE(test_sess.resources == nullptr);
 	REQUIRE(test_sess.priv == nullptr);
-
-	ret = resources_cleanup();
-	REQUIRE(VACCEL_OK == ret);
-
-	ret = sessions_cleanup();
-	REQUIRE(VACCEL_OK == ret);
 }
 
 // Test case for session initialization, update, registration, and cleanup with
 // a VirtIO plugin
-TEST_CASE("session_sess_virtio", "[session]")
+TEST_CASE("session_virtio", "[session]")
 {
 	int ret;
 	struct vaccel_session test_sess;
@@ -346,6 +317,7 @@ TEST_CASE("session_sess_virtio", "[session]")
 	test_sess.priv = nullptr;
 	struct vaccel_resource test_res;
 	test_res.type = VACCEL_RES_SHARED_OBJ;
+	test_res.id = 1;
 
 	RESET_FAKE(get_virtio_plugin);
 
@@ -365,12 +337,6 @@ TEST_CASE("session_sess_virtio", "[session]")
 
 	get_virtio_plugin_fake.return_val = &v_mock;
 
-	ret = sessions_bootstrap();
-	REQUIRE(VACCEL_OK == ret);
-
-	ret = resources_bootstrap();
-	REQUIRE(VACCEL_OK == ret);
-
 	ret = vaccel_sess_init(&test_sess, 1 | VACCEL_REMOTE);
 	REQUIRE(VACCEL_OK == ret);
 
@@ -388,11 +354,4 @@ TEST_CASE("session_sess_virtio", "[session]")
 
 	// Ensure that the VirtIO plugin was called the expected number of times
 	REQUIRE(get_virtio_plugin_fake.call_count == 5);
-
-	// Cleanup session and resource systems
-	// ret = resources_cleanup();
-	// REQUIRE(VACCEL_OK == ret);
-
-	// ret = sessions_cleanup();
-	// REQUIRE(VACCEL_OK == ret);
 }

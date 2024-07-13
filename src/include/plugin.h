@@ -35,12 +35,15 @@ static const char *vaccel_plugin_type_name[] = {
 };
 
 /* Dummy type to str function for debug */
-static inline const char *vaccel_plugin_type_str(enum vaccel_plugin_type type)
+static inline char *vaccel_plugin_type_str(enum vaccel_plugin_type type)
 {
 	int i = 0;
+	unsigned int tester = 1;
 	char *p;
 	char *plugin_type_str = (char *)malloc(100);
-	unsigned int tester = 1;
+	if (!plugin_type_str)
+		return NULL;
+
 	p = plugin_type_str;
 	for (i = 0; i < VACCEL_PLUGIN_TYPE_MAX >> 9; i++) {
 		if (tester & type) {

@@ -273,12 +273,17 @@ int get_available_plugins(enum vaccel_op_type op_type)
 
 	for_each_container_safe(opiter, tmp_op, &plugin_state.ops[op_type],
 				struct vaccel_op, func_entry) {
+		char *p_type_str =
+			vaccel_plugin_type_str(opiter->owner->info->type);
+		if (!p_type_str)
+			return VACCEL_ENOMEM;
 		vaccel_debug("Found implementation of %s in %s plugin type: %s",
 			     vaccel_op_type_str(opiter->type),
-			     opiter->owner->info->name,
-			     vaccel_plugin_type_str(opiter->owner->info->type));
+			     opiter->owner->info->name, p_type_str);
+		free(p_type_str);
 	}
-	return 0;
+
+	return VACCEL_OK;
 }
 
 size_t get_nr_plugins()

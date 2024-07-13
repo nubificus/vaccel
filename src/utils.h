@@ -5,6 +5,10 @@
 #include <stdbool.h>
 #include <stddef.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Check if a directory exists */
 bool dir_exists(const char *path);
 
@@ -20,3 +24,7 @@ int read_file(const char *path, void **data, size_t *size);
  * This will actually mmap the file with read and write access
  * and return the mapped memory and the size of the file */
 int read_file_mmap(const char *path, void **data, size_t *size);
+
+#ifdef __cplusplus
+}
+#endif

@@ -6,6 +6,10 @@
 #include <stdatomic.h>
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct id_pool {
 	/* Pool of ids */
 	vaccel_id_t *ids;
@@ -28,3 +32,7 @@ vaccel_id_t id_pool_get(id_pool_t *pool);
 
 /* Release an id back to the pool */
 void id_pool_release(id_pool_t *pool, vaccel_id_t id);
+
+#ifdef __cplusplus
+}
+#endif

@@ -9,13 +9,11 @@
 #include <catch.hpp>
 #include <utils.hpp>
 
-extern "C" {
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
 #include <vaccel.h>
-}
 
-TEST_CASE("noop", "[noop]")
+TEST_CASE("noop", "[ops_noop]")
 {
 	int ret;
 	struct vaccel_session sess;

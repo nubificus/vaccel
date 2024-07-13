@@ -4,16 +4,14 @@
 #include <cstdint>
 #include <utils.hpp>
 
-extern "C" {
 #include <fcntl.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <vaccel.h>
-}
 
 struct mydata {
 	uint32_t size;
@@ -90,12 +88,13 @@ auto deser(void *buf, uint32_t bytes) -> void *
     *  
     */
 
-TEST_CASE("exec_helpers")
+TEST_CASE("exec_helpers", "[ops_exec_helpers]")
 {
 	int ret = 0;
 	struct mydata mydata_instance;
 	mydata_instance.size = 5;
 	mydata_instance.array = (int *)malloc(5 * sizeof(int));
+	REQUIRE(mydata_instance.array);
 	for (int i = 0; i < 5; i++)
 		mydata_instance.array[i] = i + 1;
 
@@ -141,4 +140,5 @@ TEST_CASE("exec_helpers")
 	ret = vaccel_delete_args(read);
 	REQUIRE(ret == VACCEL_OK);
 	free(serbuf);
+	free(mydata_instance.array);
 }

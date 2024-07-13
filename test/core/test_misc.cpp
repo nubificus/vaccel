@@ -13,13 +13,12 @@
 
 DEFINE_FFF_GLOBALS;
 
-extern "C" {
 #include <vaccel.h>
-}
 
-TEST_CASE("vaccel_get_plugins", "[vaccel_get_plugins]")
+TEST_CASE("get_plugins", "[core_misc]")
 {
 	struct vaccel_session session;
+	session.session_id = 0;
 
 	SECTION("return correct implementation")
 	{

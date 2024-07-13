@@ -10,16 +10,14 @@
 #include <catch.hpp>
 #include <utils.hpp>
 
-extern "C" {
-#include <inttypes.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include <cinttypes>
+#include <cstdio>
+#include <cstdlib>
 #include <vaccel.h>
-}
 
 #define min(a, b) ((a) < (b) ? (a) : (b))
 
-TEST_CASE("tensor_ops")
+TEST_CASE("tflite_tensor_ops", "[ops_tflite]")
 {
 	int32_t dims[] = { 1, 30 };
 
@@ -90,12 +88,12 @@ TEST_CASE("tensor_ops")
 	REQUIRE(ret == VACCEL_EINVAL);
 }
 
-TEST_CASE("inference")
+TEST_CASE("tflite_inference", "[ops_tflite]")
 {
 	struct vaccel_session vsess;
 	struct vaccel_single_model model;
 	int ret;
-	const char *model_path =
+	char *model_path =
 		abs_path(SOURCE_ROOT, "examples/models/tf/lstm2.tflite");
 
 	vsess.session_id = 0;
@@ -170,6 +168,23 @@ TEST_CASE("inference")
 	for (unsigned int i = 0; i < min(10, out->size / sizeof(float)); ++i)
 		printf("%f\n", offsets[i]);
 
+	ret = vaccel_tflite_tensor_destroy(in);
+	REQUIRE(ret == VACCEL_OK);
+
+	ret = vaccel_tflite_tensor_destroy(out);
+	REQUIRE(ret == VACCEL_OK);
+
 	ret = vaccel_tflite_session_delete(&vsess, &model);
 	REQUIRE(ret == VACCEL_OK);
+
+	ret = vaccel_sess_unregister(&vsess, model.resource);
+	REQUIRE(ret == VACCEL_OK);
+
+	ret = vaccel_sess_free(&vsess);
+	REQUIRE(ret == VACCEL_OK);
+
+	ret = vaccel_single_model_destroy(&model);
+	REQUIRE(ret == VACCEL_OK);
+
+	free(model_path);
 }

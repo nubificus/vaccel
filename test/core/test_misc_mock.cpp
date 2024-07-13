@@ -13,12 +13,13 @@
 
 DEFINE_FFF_GLOBALS;
 
-extern "C" {
 #include <vaccel.h>
+
+extern "C" {
 FAKE_VALUE_FUNC(int, get_available_plugins, enum vaccel_op_type);
 }
 
-TEST_CASE("vaccel_get_plugins", "[vaccel_get_plugins]")
+TEST_CASE("get_plugins_mock", "[core_misc]")
 {
 	struct vaccel_session session;
 	session.session_id = 123;
