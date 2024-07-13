@@ -88,11 +88,11 @@ jobs:
           prefix: ${{github.workspace}}/artifacts/${{matrix.archconfig}}/${{matrix.build_type}}/opt
 
       - name: Run examples with valgrind
-        if: ${{ inputs.release == false }}
+        if: ${{ inputs.release == false && inputs.valgrind == true}}
         uses: ./.github/actions/run-examples
         with:
           prefix: ${{github.workspace}}/artifacts/${{matrix.archconfig}}/${{matrix.build_type}}/opt
-          valgrind: ${{ inputs.valgrind }}
+          valgrind: 'true'
 
       - name: Build project (dist)
         if: ${{ contains(github.event.pull_request.labels.*.name, 'ok-to-upload') || inputs.release == true }}

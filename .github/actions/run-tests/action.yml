@@ -27,8 +27,12 @@ runs:
       working-directory: ${{ inputs.source-dir }}
       if: ${{ inputs.valgrind == 'true' }}
       run: |
+          VALGRIND_CMD="valgrind"
+          VALGRIND_CMD+=" --leak-check=full --show-leak-kinds=all"
+          VALGRIND_CMD+=" --track-origins=yes --errors-for-leak-kinds=all"
+          VALGRIND_CMD+=" --max-stackframe=3145916 --error-exitcode=1"
           meson test \
-            --wrap='valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes' \
+            --wrap="$VALGRIND_CMD" \
             -t 4 \
             --print-errorlogs \
             -C ${{ inputs.build-dir }}
