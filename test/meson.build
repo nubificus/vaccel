@@ -81,7 +81,7 @@ foreach t : tests_ops_sources + tests_res_sources
   if name.contains('exec')
     test(name + '+exec', exe,
       args : tests_args,
-      env : tests_env + tests_env_exec,
+      env : tests_env + tests_env_exec + 'VACCEL_EXEC_DLCLOSE=1',
       is_parallel : false)
   endif
 endforeach
