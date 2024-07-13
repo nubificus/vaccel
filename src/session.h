@@ -6,6 +6,10 @@
 #include "list.h"
 #include "resources.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum { MAX_SESSION_RUNDIR_PATH = 512 };
 
 /* Struct used to represent a resource registered
@@ -40,3 +44,7 @@ struct session_resources {
 
 int sessions_bootstrap(void);
 int sessions_cleanup(void);
+
+#ifdef __cplusplus
+}
+#endif

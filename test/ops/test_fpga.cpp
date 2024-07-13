@@ -13,11 +13,9 @@
 #include <iostream>
 #include <utils.hpp>
 
-extern "C" {
 #include <vaccel.h>
-}
 
-TEST_CASE("vaccel_fpga_add", "[vaccel_fpga_plugins]")
+TEST_CASE("fpga_add", "[ops_fpga]")
 {
 	int ret;
 	struct vaccel_session sess;
@@ -25,10 +23,6 @@ TEST_CASE("vaccel_fpga_add", "[vaccel_fpga_plugins]")
 	sess.priv = nullptr;
 	sess.resources = nullptr;
 	sess.hint = 1;
-
-	// Ensure that the session system is initialized
-	ret = sessions_bootstrap();
-	REQUIRE(ret == VACCEL_OK);
 
 	float A[] = { 1, 2, 3, 4, 5 };
 	float B[] = { 1, 2, 6, 4, 5 };
@@ -74,12 +68,9 @@ TEST_CASE("vaccel_fpga_add", "[vaccel_fpga_plugins]")
 
 		REQUIRE(std::equal(C, C + len_C, C_expected));
 	}
-
-	ret = sessions_cleanup();
-	REQUIRE(ret == VACCEL_OK);
 }
 
-TEST_CASE("vaccel_fpga_copy", "[vaccel_fpga_plugins]")
+TEST_CASE("fpga_copy", "[ops_fpga]")
 {
 	int ret;
 	struct vaccel_session sess;
@@ -87,10 +78,6 @@ TEST_CASE("vaccel_fpga_copy", "[vaccel_fpga_plugins]")
 	sess.priv = nullptr;
 	sess.resources = nullptr;
 	sess.hint = 1;
-
-	// Ensure that the session system is initialized
-	ret = sessions_bootstrap();
-	REQUIRE(ret == VACCEL_OK);
 
 	int A[] = { 1, 2, 3, 4, 5 };
 	int B[] = { 1, 1, 1, 1, 1 };
@@ -120,12 +107,9 @@ TEST_CASE("vaccel_fpga_copy", "[vaccel_fpga_plugins]")
 
 		REQUIRE(std::equal(B, B + len_B, B_expected));
 	}
-
-	ret = sessions_cleanup();
-	REQUIRE(ret == VACCEL_OK);
 }
 
-TEST_CASE("vaccel_fpga_mmult", "[vaccel_fpga_plugins]")
+TEST_CASE("fpga_mmult", "[ops_fpga]")
 {
 	int ret;
 	struct vaccel_session sess;
@@ -133,10 +117,6 @@ TEST_CASE("vaccel_fpga_mmult", "[vaccel_fpga_plugins]")
 	sess.priv = nullptr;
 	sess.resources = nullptr;
 	sess.hint = 1;
-
-	// Ensure that the session system is initialized
-	ret = sessions_bootstrap();
-	REQUIRE(ret == VACCEL_OK);
 
 	float a[] = { 1.2, 3.2, 3.0, 4.1, 5.7 };
 	float b[] = { 1.1, 0.2, 6.1, 4.6, 5.2 };
@@ -167,7 +147,4 @@ TEST_CASE("vaccel_fpga_mmult", "[vaccel_fpga_plugins]")
 
 		REQUIRE(std::equal(c, c + len_c, C_expected));
 	}
-
-	ret = sessions_cleanup();
-	REQUIRE(ret == VACCEL_OK);
 }

@@ -12,15 +12,14 @@
 #include <catch.hpp>
 #include <utils.hpp>
 
-extern "C" {
-#include <errno.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include <cerrno>
+
+#include <cstdio>
+#include <cstdlib>
 #include <vaccel.h>
-}
 
 extern "C" {
+
 #define M 512
 #define N 512
 #define K 512
@@ -42,7 +41,7 @@ void init(int m, int n, int k, float *A, float *B, float *C)
 }
 }
 
-TEST_CASE("sgemm", "[blas]")
+TEST_CASE("sgemm", "[ops_blas]")
 {
 	// Open a file stream for output data
 	// FILE* data_fp = NULL;

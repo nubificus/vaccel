@@ -14,21 +14,18 @@
 #include <catch.hpp>
 #include <utils.hpp>
 
-extern "C" {
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
+#include <cstdio>
+#include <cstdlib>
+#include <ctime>
 #include <vaccel.h>
-}
 
 #define timespec_usec(t) \
 	((double)(t).tv_nsec / 10e3 + (double)(t).tv_sec * 10e6)
 #define time_diff_usec(t0, t1) (timespec_usec((t1)) - timespec_usec((t0)))
 
-TEST_CASE("min_max", "[minmax]")
+TEST_CASE("min_max", "[ops_minmax]")
 {
-	const char *path =
-		abs_path(SOURCE_ROOT, "examples/input/input_262144.csv");
+	char *path = abs_path(SOURCE_ROOT, "examples/input/input_262144.csv");
 	double min;
 	double max;
 	int ret;
@@ -86,14 +83,17 @@ TEST_CASE("min_max", "[minmax]")
 	REQUIRE(session.priv == nullptr);
 	REQUIRE(ret == VACCEL_OK);
 
+	ret = fclose(fp);
+	REQUIRE(!ret);
+
 	free(outdata);
 	free(indata);
+	free(path);
 }
 
-TEST_CASE("min_max_generic", "[minmax]")
+TEST_CASE("min_max_generic", "[ops_minmax]")
 {
-	const char *path =
-		abs_path(SOURCE_ROOT, "examples/input/input_262144.csv");
+	char *path = abs_path(SOURCE_ROOT, "examples/input/input_262144.csv");
 	double min;
 	double max;
 	int ret;
@@ -170,6 +170,10 @@ TEST_CASE("min_max_generic", "[minmax]")
 	REQUIRE(session.priv == nullptr);
 	REQUIRE(ret == VACCEL_OK);
 
+	ret = fclose(fp);
+	REQUIRE(!ret);
+
 	free(outdata);
 	free(indata);
+	free(path);
 }

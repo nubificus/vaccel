@@ -7,6 +7,10 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct vaccel_single_model;
 
 /* This is one-to-one mapping with tensorflow lite's
@@ -78,3 +82,7 @@ int vaccel_tflite_session_run(struct vaccel_session *session,
 
 int vaccel_tflite_session_delete(struct vaccel_session *session,
 				 struct vaccel_single_model *model);
+
+#ifdef __cplusplus
+}
+#endif

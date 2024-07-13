@@ -1,23 +1,18 @@
 // SPDX-License-Identifier: Apache-2.0
 
 /*
- *
- * The code below performs unit testing for bootstrapping and shutting down parts of the vAccel framework
- *
- *
+ * The code below performs unit testing for bootstrapping and shutting down
+ * parts of the vAccel framework
  */
 
 #include <catch.hpp>
 #include <utils.hpp>
 
-extern "C" {
-#include <stdbool.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <sys/stat.h>
 #include <vaccel.h>
-}
 
 enum {
 	MAX_VACCEL_SESSIONS = 1024,
@@ -25,7 +20,7 @@ enum {
 	MAX_RESOURCE_RUNDIR = 1024
 };
 
-TEST_CASE("plugin")
+TEST_CASE("bootstrap_plugin", "[core_bootstrap]")
 {
 	int ret;
 	ret = plugins_bootstrap();
@@ -35,7 +30,7 @@ TEST_CASE("plugin")
 	REQUIRE(ret == VACCEL_OK);
 }
 
-TEST_CASE("resource")
+TEST_CASE("bootstrap_resource", "[core_bootstrap]")
 {
 	id_pool_t id_pool;
 	list_t live_resources[VACCEL_RES_MAX];
@@ -56,7 +51,7 @@ TEST_CASE("resource")
 	REQUIRE(ret == VACCEL_OK);
 }
 
-TEST_CASE("session")
+TEST_CASE("bootstrap_session", "[core_bootstrap]")
 {
 	struct {
 		bool initialized;

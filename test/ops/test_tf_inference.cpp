@@ -10,23 +10,20 @@
 #include <catch.hpp>
 #include <utils.hpp>
 
-extern "C" {
-#include <inttypes.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include <cinttypes>
+#include <cstdio>
+#include <cstdlib>
 #include <vaccel.h>
-}
 
 #define min(a, b) ((a) < (b) ? (a) : (b))
 
-TEST_CASE("main")
+TEST_CASE("tf_inference", "[ops_tf]")
 {
 	struct vaccel_session vsess;
 	struct vaccel_tf_saved_model model;
 	struct vaccel_tf_status status;
 	int ret;
-	const char *model_path =
-		abs_path(SOURCE_ROOT, "examples/models/tf/lstm2");
+	char *model_path = abs_path(SOURCE_ROOT, "examples/models/tf/lstm2");
 
 	vsess.session_id = 0;
 	vsess.resources = nullptr;
@@ -70,6 +67,9 @@ TEST_CASE("main")
 	ret = vaccel_tf_session_load(&vsess, &model, &status);
 	REQUIRE(ret == VACCEL_OK);
 
+	if (status.message != nullptr)
+		free((char *)status.message);
+
 	struct vaccel_tf_buffer run_options = { nullptr, 0 };
 	const char *in_node_name = "serving_default_input_1";
 
@@ -97,6 +97,9 @@ TEST_CASE("main")
 				    1, &out_node, &out, 1, &status);
 	REQUIRE(ret == VACCEL_OK);
 
+	if (status.message != nullptr)
+		free((char *)status.message);
+
 	printf("Success!\n");
 	printf("Output tensor => type:%u nr_dims:%u\n", out->data_type,
 	       out->nr_dims);
@@ -108,6 +111,26 @@ TEST_CASE("main")
 	for (unsigned int i = 0; i < min(10, out->size / sizeof(float)); ++i)
 		printf("%f\n", offsets[i]);
 
+	ret = vaccel_tf_tensor_destroy(in);
+	REQUIRE(ret == VACCEL_OK);
+
+	ret = vaccel_tf_tensor_destroy(out);
+	REQUIRE(ret == VACCEL_OK);
+
 	ret = vaccel_tf_session_delete(&vsess, &model, &status);
 	REQUIRE(ret == VACCEL_OK);
+
+	if (status.message != nullptr)
+		free((char *)status.message);
+
+	ret = vaccel_sess_unregister(&vsess, model.resource);
+	REQUIRE(ret == VACCEL_OK);
+
+	ret = vaccel_sess_free(&vsess);
+	REQUIRE(ret == VACCEL_OK);
+
+	ret = vaccel_tf_saved_model_destroy(&model);
+	REQUIRE(ret == VACCEL_OK);
+
+	free(model_path);
 }

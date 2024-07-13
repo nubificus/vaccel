@@ -6,6 +6,10 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct vaccel_session;
 struct vaccel_tf_saved_model;
 
@@ -124,3 +128,7 @@ int vaccel_tf_session_run(struct vaccel_session *session,
 int vaccel_tf_session_delete(struct vaccel_session *session,
 			     struct vaccel_tf_saved_model *model,
 			     struct vaccel_tf_status *status);
+
+#ifdef __cplusplus
+}
+#endif

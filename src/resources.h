@@ -8,6 +8,10 @@
 #include <stdatomic.h>
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct vaccel_resource {
 	/* resource id */
 	vaccel_id_t id;
@@ -60,3 +64,7 @@ int resource_destroy_rundir(struct vaccel_resource *res);
 #define for_each_vaccel_resource_safe(iter, tmp, list)                         \
 	for_each_container_safe((iter), (tmp), (list), struct vaccel_resource, \
 				entry)
+
+#ifdef __cplusplus
+}
+#endif

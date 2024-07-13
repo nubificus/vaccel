@@ -17,12 +17,10 @@
 #include <cerrno>
 #include <utils.hpp>
 
-extern "C" {
 #include <dlfcn.h>
-#include <stdbool.h>
-#include <string.h>
+
+#include <cstring>
 #include <vaccel.h>
-}
 
 static const char *pname = "mock_plugin_test";
 static const char *pversion = "0.0.0";
@@ -45,7 +43,7 @@ static auto exec_op() -> int
 	return 3;
 }
 
-TEST_CASE("get_all_available_functions")
+TEST_CASE("get_all_available_functions", "[core_plugin]")
 {
 	int ret;
 	vaccel_plugin plugin;
@@ -60,6 +58,8 @@ TEST_CASE("get_all_available_functions")
 	plugin.info->init = init;
 	plugin.info->fini = fini;
 	plugin.info->is_virtio = false;
+	plugin.info->sess_init = nullptr;
+	plugin.info->sess_free = nullptr;
 	plugin.info->type = VACCEL_PLUGIN_GENERIC;
 
 	vaccel_op operation;
@@ -88,7 +88,7 @@ TEST_CASE("get_all_available_functions")
 	REQUIRE(ret == VACCEL_OK);
 }
 
-TEST_CASE("register numerous function")
+TEST_CASE("register_multiple_functions", "[core_plugin]")
 {
 	int ret;
 	vaccel_plugin plugin;
@@ -103,6 +103,8 @@ TEST_CASE("register numerous function")
 	plugin.info->init = init;
 	plugin.info->fini = fini;
 	plugin.info->is_virtio = false;
+	plugin.info->sess_init = nullptr;
+	plugin.info->sess_free = nullptr;
 	plugin.info->type = VACCEL_PLUGIN_GENERIC;
 
 	size_t operation_array_size = 2;
@@ -160,7 +162,7 @@ TEST_CASE("register numerous function")
 	REQUIRE(ret == VACCEL_OK);
 }
 
-TEST_CASE("register plugin functions")
+TEST_CASE("register_plugin_ops", "[core_plugin]")
 {
 	int ret;
 	vaccel_plugin plugin;
@@ -175,6 +177,8 @@ TEST_CASE("register plugin functions")
 	plugin.info->init = init;
 	plugin.info->fini = fini;
 	plugin.info->is_virtio = false;
+	plugin.info->sess_init = nullptr;
+	plugin.info->sess_free = nullptr;
 	plugin.info->type = VACCEL_PLUGIN_GENERIC;
 
 	vaccel_op operation;
@@ -184,7 +188,7 @@ TEST_CASE("register plugin functions")
 	list_init_entry(&operation.plugin_entry);
 	list_init_entry(&operation.func_entry);
 
-	SECTION("invalid plugin")
+	SECTION("invalid_plugin")
 	{
 		ret = plugins_bootstrap();
 		REQUIRE(ret == VACCEL_OK);
@@ -196,7 +200,7 @@ TEST_CASE("register plugin functions")
 		REQUIRE(ret == VACCEL_OK);
 	}
 
-	SECTION("not bootstrapped yet")
+	SECTION("not_bootstrapped_yet")
 	{
 		ret = register_plugin(&plugin);
 		REQUIRE(ret == VACCEL_EBACKEND);
@@ -208,7 +212,7 @@ TEST_CASE("register plugin functions")
 		REQUIRE(ret == VACCEL_OK);
 	}
 
-	SECTION("invalid pinfo")
+	SECTION("invalid_pinfo")
 	{
 		ret = plugins_bootstrap();
 		REQUIRE(ret == VACCEL_OK);

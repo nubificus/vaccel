@@ -14,19 +14,27 @@
 
 DEFINE_FFF_GLOBALS;
 
-extern "C" {
 #include <dlfcn.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <string.h>
+
+#include <cstdio>
+#include <cstring>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <vaccel.h>
-}
 
-TEST_CASE("constructor & destructor", "[vaccel]")
+TEST_CASE("constructor_and_destructor", "[vaccel]")
 {
 	int ret;
+
+	ret = plugins_shutdown();
+	REQUIRE(ret == VACCEL_OK);
+
+	ret = resources_cleanup();
+	REQUIRE(ret == VACCEL_OK);
+
+	ret = sessions_cleanup();
+	REQUIRE(ret == VACCEL_OK);
+
 	ret = vaccel_log_init();
 	REQUIRE(ret == VACCEL_OK);
 
@@ -38,13 +46,4 @@ TEST_CASE("constructor & destructor", "[vaccel]")
 
 	ret = plugins_bootstrap();
 	REQUIRE(ret == VACCEL_OK);
-
-	// ret = plugins_shutdown();
-	// REQUIRE(ret == VACCEL_OK);
-
-	// ret = resources_cleanup();
-	// REQUIRE(ret == VACCEL_OK);
-
-	// ret = sessions_cleanup();
-	// REQUIRE(ret == VACCEL_OK);
 }

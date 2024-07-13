@@ -6,6 +6,7 @@
 #include "plugin.h"
 #include "utils.h"
 
+#include <inttypes.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -114,7 +115,7 @@ int vaccel_sess_register(struct vaccel_session *sess,
 	list_add_tail(&resources->registered[res->type], &container->entry);
 	resource_refcount_inc(res);
 
-	vaccel_debug("Registered resource %lld to session %lld", res->id,
+	vaccel_debug("Registered resource %lld to session %" PRIu32, res->id,
 		     sess->session_id);
 
 	return VACCEL_OK;
@@ -149,7 +150,7 @@ int vaccel_sess_unregister(struct vaccel_session *sess,
 		find_registered_resource(sess, res);
 
 	if (!container) {
-		vaccel_error("Resource %u not registered with session %u\n",
+		vaccel_error("Resource %u not registered with session %" PRIu32,
 			     res->id, sess->session_id);
 		return VACCEL_EINVAL;
 	}
@@ -161,7 +162,7 @@ int vaccel_sess_unregister(struct vaccel_session *sess,
 							    res->remote_id);
 			if (ret) {
 				vaccel_error(
-					"BUG: Could not unregister host-side resource %u",
+					"BUG: Could not unregister host-side resource %" PRIu32,
 					res->remote_id);
 				return ret;
 			}
@@ -169,7 +170,7 @@ int vaccel_sess_unregister(struct vaccel_session *sess,
 			ret = virtio->info->resource_destroy(res->remote_id);
 			if (ret) {
 				vaccel_warn(
-					"Could not destroy host-side resource %lld",
+					"Could not destroy host-side resource %" PRIu32,
 					res->remote_id);
 			}
 		} else {
@@ -183,8 +184,8 @@ int vaccel_sess_unregister(struct vaccel_session *sess,
 	resource_refcount_dec(container->res);
 	free(container);
 
-	vaccel_debug("Unregistered resource %lld from session %lld", res->id,
-		     sess->session_id);
+	vaccel_debug("Unregistered resource %lld from session %" PRIu32,
+		     res->id, sess->session_id);
 
 	return VACCEL_OK;
 }
@@ -206,10 +207,11 @@ static int initialize_session_resources(struct vaccel_session *sess)
 
 	const char *root_rundir = vaccel_rundir();
 	int ret = snprintf(res->rundir, MAX_SESSION_RUNDIR_PATH,
-			   "%s/session.%u", root_rundir, sess->session_id);
+			   "%s/session.%" PRIu32, root_rundir,
+			   sess->session_id);
 	if (ret == MAX_SESSION_RUNDIR_PATH) {
-		vaccel_error("rundir path '%s/session.%u' too big", root_rundir,
-			     sess->session_id);
+		vaccel_error("rundir path '%s/session.%" PRIu32 "' too big",
+			     root_rundir, sess->session_id);
 		ret = VACCEL_ENAMETOOLONG;
 		goto cleanup_res;
 	}
@@ -253,8 +255,9 @@ static int cleanup_session_resources(struct vaccel_session *sess)
 	 * if this fails, we just warn the user */
 	int ret = cleanup_rundir(sess->resources->rundir);
 	if (ret)
-		vaccel_warn("Could not cleanup rundir '%s' for session %u",
-			    sess->resources->rundir, sess->session_id);
+		vaccel_warn(
+			"Could not cleanup rundir '%s' for session %" PRIu32,
+			sess->resources->rundir, sess->session_id);
 
 	free(sess->resources);
 	sess->resources = NULL;
@@ -305,7 +308,7 @@ int vaccel_sess_init(struct vaccel_session *sess, uint32_t flags)
 
 	sess->hint = flags;
 
-	vaccel_debug("session:%u New session", sess->session_id);
+	vaccel_debug("session:%" PRIu32 " New session", sess->session_id);
 
 	sessions.running_sessions[sess->session_id - 1] = sess;
 
@@ -353,8 +356,8 @@ int vaccel_sess_update(struct vaccel_session *sess, uint32_t flags)
 		sess->hint = flags;
 	}
 
-	vaccel_debug("session:%u update with flags: %u", sess->session_id,
-		     flags);
+	vaccel_debug("session:%" PRIu32 " update with flags: %u",
+		     sess->session_id, flags);
 
 	return VACCEL_OK;
 }
@@ -396,7 +399,7 @@ int vaccel_sess_free(struct vaccel_session *sess)
 
 	sessions.running_sessions[sess->session_id - 1] = NULL;
 
-	vaccel_debug("session:%u Free session", sess->session_id);
+	vaccel_debug("session:%" PRIu32 " Free session", sess->session_id);
 
 	return VACCEL_OK;
 }

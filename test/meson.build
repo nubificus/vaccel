@@ -13,8 +13,9 @@ utils_hpp = configure_file(input : 'utils.hpp.in',
 
 tests_includes = include_directories('.', 'fff', 'catch2')
 
-subdir('unit')
-subdir('op')
+subdir('core')
+subdir('ops')
+subdir('resources')
 
 libtests_main = library('tests-main',
   ['main.cpp', 'utils.cpp', vaccel_utils_c],
@@ -23,6 +24,11 @@ libtests_main = library('tests-main',
   dependencies : libvaccel_private,
   install : false)
 
+
+tests_cpp_args = [
+  '-std=c++2b',
+  '-DCATCH_CONFIG_FAST_COMPILE'
+]
 
 tests_args = [
   '--order rand',
@@ -40,20 +46,28 @@ foreach t : tests_core_sources
   name = fs.stem(t)
   exe = executable(name,
     sources : t,
-    cpp_args : vaccel_cargs + '-std=c++2b',
+    cpp_args : vaccel_cargs + tests_cpp_args,
     include_directories : [tests_includes, vaccel_src_includes],
     dependencies : libvaccel_private,
     link_with : libtests_main,
     install : false)
 
   test(name, exe, args : tests_args, env : tests_env, is_parallel : false)
+  if name == 'test_log'
+    foreach l : range(1, 4)
+      test('@0@+@1@@2@'.format(name, 'level', l), exe,
+        args : tests_args,
+        env : 'VACCEL_DEBUG_LEVEL=' + l.to_string(),
+        is_parallel : false)
+    endforeach
+  endif
 endforeach
 
-foreach t : tests_api_sources
+foreach t : tests_ops_sources + tests_res_sources
   name = fs.stem(t)
   exe = executable(name,
     sources : t,
-    cpp_args : vaccel_cargs + '-std=c++2b',
+    cpp_args : vaccel_cargs + tests_cpp_args,
     include_directories : [tests_includes, vaccel_src_includes],
     dependencies : libvaccel_private,
     link_with : libtests_main,

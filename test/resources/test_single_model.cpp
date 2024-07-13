@@ -11,24 +11,21 @@
 #include <catch.hpp>
 #include <utils.hpp>
 
-extern "C" {
 #include "utils.h"
 #include <fcntl.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <vaccel.h>
-}
 
-TEST_CASE("single_model_from_memory")
+TEST_CASE("single_model_from_memory", "[resources_single_model]")
 {
 	int ret;
-	const char *path =
-		abs_path(SOURCE_ROOT, "examples/models/tf/lstm2.tflite");
+	char *path = abs_path(SOURCE_ROOT, "examples/models/tf/lstm2.tflite");
 
 	struct vaccel_single_model *model = vaccel_single_model_new();
 	REQUIRE(model);
@@ -66,13 +63,16 @@ TEST_CASE("single_model_from_memory")
 
 	ret = vaccel_sess_free(&sess);
 	REQUIRE(ret == VACCEL_OK);
+
+	free(model);
+	free(ptr);
+	free(path);
 }
 
-TEST_CASE("single_model_from_file")
+TEST_CASE("single_model_from_file", "[resources_single_model]")
 {
 	int ret;
-	const char *path =
-		abs_path(SOURCE_ROOT, "examples/models/tf/lstm2.tflite");
+	char *path = abs_path(SOURCE_ROOT, "examples/models/tf/lstm2.tflite");
 
 	struct vaccel_single_model *model = vaccel_single_model_new();
 	REQUIRE(model);
@@ -101,4 +101,7 @@ TEST_CASE("single_model_from_file")
 
 	ret = vaccel_sess_free(&sess);
 	REQUIRE(ret == VACCEL_OK);
+
+	free(model);
+	free(path);
 }
