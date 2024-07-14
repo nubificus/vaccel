@@ -136,4 +136,5 @@ jobs:
           target-branch: "main"
 
       - name: Clean-up
+        if: ${{ always() }}
         run: sudo rm -rf build
