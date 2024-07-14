@@ -70,6 +70,7 @@ jobs:
             --error-exitcode=2
 
       - name: Clean-up
+        if: ${{ always() }}
         run: |
           sudo rm -rf build
           [ -n "$(dpkg -l vaccel 2> /dev/null)" ] && \
@@ -136,6 +137,7 @@ jobs:
           version: 18
 
       - name: Clean-up
+        if: ${{ always() }}
         run: |
           sudo rm -rf build
           [ -n "$(dpkg -l vaccel 2> /dev/null)" ] && \

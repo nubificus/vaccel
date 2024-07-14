@@ -116,6 +116,7 @@ jobs:
           secret-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
       - name: Clean-up
+        if: ${{ always() }}
         run: |
           sudo rm -rf artifacts build_${{ matrix.build_type }}
           [ -n "$(dpkg -l vaccel 2> /dev/null)" ] && \
