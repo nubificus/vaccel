@@ -49,6 +49,7 @@ summary({
 meson.add_dist_script(
   'scripts/dist.sh',
   'vaccel',
+  get_option('buildtype'),
   'plugin-exec',
   opt_plugin_exec.enabled() ? 'enabled' : 'disabled',
   'plugin-noop',
