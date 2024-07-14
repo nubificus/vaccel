@@ -6,7 +6,39 @@ cd "${MESON_SOURCE_ROOT}" || exit 1
 VERSION="$(sh ./scripts/generate-version.sh "" --no-dirty)"
 echo "${VERSION}" > "${MESON_DIST_ROOT}/.version"
 
-# build .deb packages
+# parse script args
+PKG_NAME=$1 && shift
+PKG_BUILDTYPE=$1 && shift
+MESON_ARGS="--buildtype=${PKG_BUILDTYPE} "
+c=$((0))
+for v in "$@"
+do
+	if [ $((c % 2)) -eq 0 ]
+	then
+		MESON_ARGS="${MESON_ARGS}-D$v="
+	else
+		MESON_ARGS="${MESON_ARGS}$v " 
+	fi
+	c=$((c+1))
+done
+
+cd "${MESON_DIST_ROOT}" || exit 1
+
+# generate binary dist
+# (needs: meson dist --include-subprojects)
+BIN_NAME="${PKG_NAME}-${VERSION}"
+BIN_TAR_NAME="${BIN_NAME}-bin.tar.gz"
+BIN_PREFIX="${MESON_DIST_ROOT}/build/${BIN_NAME}"
+rm -rf ../"${BIN_TAR_NAME}" build
+eval meson setup "${MESON_ARGS}" \
+	--prefix="${BIN_PREFIX}/usr" \
+	build && \
+meson compile -C build && \
+meson install -C build && \
+tar cfz ../"${BIN_TAR_NAME}" -C build "${BIN_NAME}"
+rm -rf build
+
+# generate .deb packages
 # (needs: meson dist --include-subprojects)
 for p in "build-essential" "dh-make" "git-buildpackage";
 do
@@ -15,31 +47,17 @@ do
 		return
 	fi
 done
-cd "${MESON_DIST_ROOT}" || exit 1
 rm -f ../*"${VERSION}".orig.tar.xz
 rm -rf "${MESON_DIST_ROOT}"/.git*
 DEBFULLNAME="Anastassios Nanos"
 export DEBFULLNAME
 DEBEMAIL="ananos@nubificus.co.uk"
 export DEBEMAIL
-PKG_NAME=$1 && shift
 
 USER="$(whoami)" \
 	dh_make -s -y -c apache -p "${PKG_NAME}_${VERSION}" --createorig
 
 # debian/rules
-MESON_ARGS=""
-c=$((0))
-for v in "$@"
-do
-	if [ $((c % 2)) -eq 0 ]
-	then
-		MESON_ARGS="${MESON_ARGS}-D$v="
-	else
-		MESON_ARGS="${MESON_ARGS}$v "
-	fi
-	c=$((c+1))
-done
 printf "%s\n" "export DEB_LDFLAGS_MAINT_STRIP = -Wl,-Bsymbolic-functions" \
 	>> debian/rules
 printf "%s\n\t%s" "override_dh_auto_configure:" \

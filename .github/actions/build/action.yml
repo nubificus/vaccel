@@ -67,7 +67,7 @@ runs:
     - name: Generate distribution tar/deb
       working-directory: ${{ inputs.source-dir }}
       if: ${{ inputs.dist == 'true' || inputs.install-deb == 'true' }}
-      run: meson dist --formats gztar --include-subprojects --allow-dirty -C ${{ inputs.build-dir }}
+      run: meson dist --include-subprojects --allow-dirty -C ${{ inputs.build-dir }}
       shell: bash
 
     - name: Install generated debs
