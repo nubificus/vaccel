@@ -5,7 +5,7 @@ on:
     inputs:
       runner:
         type: string
-        default: '[]'
+        default: '["gcc", "lite", "2204"]'
       plugin:
         type: string
         default: ''
