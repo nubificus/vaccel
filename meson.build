@@ -60,3 +60,13 @@ meson.add_dist_script(
   opt_examples.enabled() ? 'enabled' : 'disabled',
   'tests',
   opt_tests.enabled() ? 'enabled' : 'disabled')
+
+if opt_examples.enabled() and opt_plugin_noop.enabled() and opt_plugin_exec.enabled()
+  run_target('run-examples',
+    command : 'scripts/run-examples.sh',
+    depends : [examples, libvaccel_noop, libvaccel_exec])
+  run_target('run-examples-valgrind',
+    command : ['scripts/run-examples.sh', '', 'true'],
+    depends : [examples, libvaccel_noop, libvaccel_exec])
+endif
+

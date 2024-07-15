@@ -34,8 +34,9 @@ examples_sources = files([
   'local_and_virtio.c',
 ])
 
+examples = []
 foreach e : examples_sources
-  exe = executable(fs.stem(e),
+  examples += executable(fs.stem(e),
     sources : [e, vaccel_utils_c, vaccel_headers],
     c_args : vaccel_cargs,
     cpp_args : vaccel_cargs + vaccel_cppargs,
