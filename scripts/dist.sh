@@ -4,22 +4,20 @@
 # generate .version file
 cd "${MESON_SOURCE_ROOT}" || exit 1
 VERSION="$(sh ./scripts/generate-version.sh "" --no-dirty)"
-echo "${VERSION}" > "${MESON_DIST_ROOT}/.version"
+echo "${VERSION}" >"${MESON_DIST_ROOT}/.version"
 
 # parse script args
 PKG_NAME=$1 && shift
 PKG_BUILDTYPE=$1 && shift
 MESON_ARGS="--buildtype=${PKG_BUILDTYPE} "
 c=$((0))
-for v in "$@"
-do
-	if [ $((c % 2)) -eq 0 ]
-	then
+for v in "$@"; do
+	if [ $((c % 2)) -eq 0 ]; then
 		MESON_ARGS="${MESON_ARGS}-D$v="
 	else
-		MESON_ARGS="${MESON_ARGS}$v " 
+		MESON_ARGS="${MESON_ARGS}$v "
 	fi
-	c=$((c+1))
+	c=$((c + 1))
 done
 
 cd "${MESON_DIST_ROOT}" || exit 1
@@ -32,16 +30,15 @@ BIN_PREFIX="${MESON_DIST_ROOT}/build/${BIN_NAME}"
 rm -rf ../"${BIN_TAR_NAME}" build
 eval meson setup "${MESON_ARGS}" \
 	--prefix="${BIN_PREFIX}/usr" \
-	build && \
-meson compile -C build && \
-meson install -C build && \
-tar cfz ../"${BIN_TAR_NAME}" -C build "${BIN_NAME}"
+	build &&
+	meson compile -C build &&
+	meson install -C build &&
+	tar cfz ../"${BIN_TAR_NAME}" -C build "${BIN_NAME}"
 rm -rf build
 
 # generate .deb packages
 # (needs: meson dist --include-subprojects)
-for p in "build-essential" "dh-make" "git-buildpackage";
-do
+for p in "build-essential" "dh-make" "git-buildpackage"; do
 	if [ -z "$(dpkg -l | awk "/^ii  $p/")" ]; then
 		echo "Not building a deb package: Package $p missing"
 		return
@@ -59,10 +56,10 @@ USER="$(whoami)" \
 
 # debian/rules
 printf "%s\n" "export DEB_LDFLAGS_MAINT_STRIP = -Wl,-Bsymbolic-functions" \
-	>> debian/rules
+	>>debian/rules
 printf "%s\n\t%s" "override_dh_auto_configure:" \
 	"dh_auto_configure --buildsystem=meson -- ${MESON_ARGS}" \
-	>> debian/rules
+	>>debian/rules
 
 # debian/copyright
 sed -i "s/Upstream-Contact.*/Upstream-Contact: ${DEBFULLNAME} <${DEBEMAIL}>/g" debian/copyright
@@ -85,21 +82,19 @@ cp -r "${MESON_SOURCE_ROOT}"/.git* ./
 TAG=$(git describe --abbrev=0 --tags --match "v[0-9]*" 2>/dev/null)
 TAG_DIFF=$(git describe --abbrev=8 --tags --match "v[0-9]*" 2>/dev/null)
 ORIG_COMMIT=$(git rev-parse HEAD)
-for t in $(git tag --sort=v:refname | grep "v[0-9]*")
-do
+for t in $(git tag --sort=v:refname | grep "v[0-9]*"); do
 	CUR_VERSION="$(echo "$t" | cut -c 2-)-1"
 	git checkout "$t" 1>/dev/null 2>&1
 	PREV_TAG=$(git describe --abbrev=0 --tags --match "v[0-9]*" --exclude="$t" 2>/dev/null) || continue
 	gbp dch --since="${PREV_TAG}" --ignore-branch --release --spawn-editor=never --new-version="${CUR_VERSION}" --dch-opt="-b" --dch-opt="--check-dirname-level=0" --dch-opt="-p" 1>/dev/null 2>&1
 done
-if [ "${TAG}" != "${TAG_DIFF}" ]
-then
+if [ "${TAG}" != "${TAG_DIFF}" ]; then
 	git checkout "${ORIG_COMMIT}" 1>/dev/null 2>&1
-	PREV_TAG=$(git describe --abbrev=0 --tags --match "v[0-9]*"  2>/dev/null)
+	PREV_TAG=$(git describe --abbrev=0 --tags --match "v[0-9]*" 2>/dev/null)
 	CUR_VERSION="${VERSION}-1"
 	gbp dch --since="${PREV_TAG}" --ignore-branch --release --spawn-editor=never --new-version="${CUR_VERSION}" --dch-opt="-b" --dch-opt="--check-dirname-level=0" --dch-opt="-p" 1>/dev/null 2>&1
 fi
-head -n -6 debian/changelog > debian/changelog_ && rm debian/changelog && mv debian/changelog_ debian/changelog
+head -n -6 debian/changelog >debian/changelog_ && rm debian/changelog && mv debian/changelog_ debian/changelog
 rm -rf "${MESON_DIST_ROOT}"/.git*
 
 rm -rf debian/*.ex debian/*.EX debian/*.docs debian/README*
