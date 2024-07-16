@@ -1,8 +1,8 @@
-# vAccelRT
+# vAccel
 
-[![Build and upload](https://github.com/cloudkernels/vaccelrt/actions/workflows/main-build-and-upload.yml/badge.svg)](https://github.com/cloudkernels/vaccelrt/actions/workflows/main-build-and-upload.yml)
+[![Build and upload](https://github.com/nubificus/vaccel/actions/workflows/main-build-and-upload.yml/badge.svg)](https://github.com/nubificus/vaccel/actions/workflows/main-build-and-upload.yml)
 
-vAccelRT is a runtime library for hardware acceleration. vAccelRT provides an
+vAccel is a runtime library for hardware acceleration. vAccel provides an
 API with a set of functions that the library is able to offload to hardware
 acceleration devices. The design of the runtime library is modular, it consists
 of a front-end library which exposes the API to the user application and a set
@@ -33,12 +33,12 @@ For step-by-step tutorials, you can have a look at our
 ```bash
 apt-get install build-essential ninja-build pkg-config python3-pip 
 pip install meson
-git clone https://github.com/cloudkernels/vaccelrt --recursive
+git clone https://github.com/nubificus/vaccel --recursive
 ```
 
 ### 2. Configure, build and install the core runtime library
 ```bash
-cd vaccelrt
+cd vaccel
 
 # Configure the build directory with the default options and set build
 # type to 'release'.
@@ -80,7 +80,7 @@ meson setup --buildtype=release build
 meson configure build
 ```
 
-vAccelRT specific options can be found in the `Project Options`
+vAccel specific options can be found in the `Project Options`
 section.
 
 You can find more meson command examples in

@@ -63,7 +63,7 @@ printf "%s\n\t%s" "override_dh_auto_configure:" \
 
 # debian/copyright
 sed -i "s/Upstream-Contact.*/Upstream-Contact: ${DEBFULLNAME} <${DEBEMAIL}>/g" debian/copyright
-sed -i "s/Source.*/Source: https:\/\/github.com\/cloudkernels\/vaccelrt/g" debian/copyright
+sed -i "s/Source.*/Source: https:\/\/github.com\/nubificus\/vaccel/g" debian/copyright
 sed -i "s/Upstream-Contact.*/Upstream-Contact: ${DEBFULLNAME} <${DEBEMAIL}>/g" debian/copyright
 sed -i "s/Copyright.*/Copyright: 2020-$(date +"%Y") Nubificus LTD <info@nubificus.co.uk>/g" debian/copyright
 sed -i "/<years>/d" debian/copyright
