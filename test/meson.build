@@ -92,8 +92,8 @@ To enable coverage measurements configure with option:
 
 and create a gcovr.cfg in root dir with:
 gcov-executable = gcov-@0@
-filter = ../src/
-filter = ../plugins/
+filter = src/
+filter = plugins/
 
 For more info see:
 https://mesonbuild.com/Unit-tests.html#coverage

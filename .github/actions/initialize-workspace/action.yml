@@ -12,6 +12,8 @@ inputs:
     default: ${{ github.token }}
   remote-actions-repo:
     default: ''
+  dot-github-only:
+    default: 'false'
 
 outputs:
   remote-branch:
@@ -34,6 +36,7 @@ runs:
         fetch-depth: ${{ inputs.fetch-depth }}
         ref: ${{ inputs.ref }}
         token: ${{ inputs.token }}
+        sparse-checkout: ${{ (inputs.dot-github-only == 'true' && '.github') || '' }}
 
     - name: Determince remote actions branch
       id: get_remote_branch

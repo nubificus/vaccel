@@ -16,6 +16,9 @@ jobs:
   git-trailers:
     name: Add Git Trailers to PR commits
     runs-on: [self-hosted, x86_64]
+    permissions:
+      contents: write
+      pull-requests: write
 
     steps:
       - name: Checkout .github directory
@@ -33,7 +36,7 @@ jobs:
           token: ${{ secrets.GIT_CLONE_PAT || github.token }}
 
       - name: Append git trailers
-        uses: nubificus/git-trailers@main
+        uses: nubificus/git-trailers@feat_checkout_branch
         with:
           user_info: .github/contributors.yaml
 

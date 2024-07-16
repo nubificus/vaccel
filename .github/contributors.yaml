@@ -1,4 +1,7 @@
 users:
+  github-actions:
+    name: github-actions[bot]
+    email: 41898282+github-actions[bot]@users.noreply.github.com
   ananos:
     name: Anastassios Nanos
     email: ananos@nubificus.co.uk

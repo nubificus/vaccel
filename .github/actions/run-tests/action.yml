@@ -44,6 +44,6 @@ runs:
       if: ${{ inputs.coverage == 'true' }}
       run: |
         echo "gcov-executable = ${{ inputs.gcov }}" > gcovr.cfg
-        echo -e "filter = ../src/\nfilter = ../plugins/" >> gcovr.cfg
+        echo -e "filter = src/\nfilter = plugins/" >> gcovr.cfg
         ninja coverage-xml -C ${{ inputs.build-dir }}
       shell: bash

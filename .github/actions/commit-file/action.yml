@@ -1,0 +1,55 @@
+name: Commit File
+description: Commit file (signed)
+
+inputs:
+  branch:
+    required: true
+  file:
+    required: true
+  message:
+    required: true
+  repo:
+    default: ${{ github.repository }}
+  token:
+    default: ${{ github.token }}
+  workdir:
+    default: '.'
+
+runs:
+  using: composite
+  steps:
+    - name: Commit file
+      working-directory: ${{ inputs.workdir }}
+      run: |
+        CONTENT=$(base64 -i "${{ inputs.file }}")
+        URL=https://api.github.com/repos/${{ inputs.repo }}/contents/${{ inputs.file }}
+        SHA=$(git rev-parse "${{ inputs.branch }}:${{ inputs.file }}")
+        MESSAGE=$(printf "%s\n\n%s" "${{ inputs.message }}" \
+          "Signed-off-by: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>")
+        JSON=$(jq -n \
+          --arg owner "$(dirname ${{ inputs.repo }})" \
+          --arg repo "$(basename ${{ inputs.repo }})" \
+          --arg path "${{ inputs.file }}" \
+          --arg message "$MESSAGE" \
+          --arg content "$CONTENT" \
+          --arg sha "$SHA" \
+          --arg branch "${{ inputs.branch }}" \
+          '{
+            owner: $owner,
+            repo: $repo,
+            path: $path,
+            message: $message,
+            content: $content,
+            sha: $sha,
+            branch: $branch
+          }'
+        )
+
+        curl --fail-with-body -L \
+          -X PUT \
+          -H "Accept: application/vnd.github+json" \
+          -H "Authorization: Bearer ${{ inputs.token }}" \
+          -H "X-GitHub-Api-Version: 2022-11-28" \
+          "https://api.github.com/repos/${{ inputs.repo }}/contents/${{ inputs.file }}" \
+          -d "$JSON"
+      shell: bash

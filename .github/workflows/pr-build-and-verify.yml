@@ -36,9 +36,9 @@ jobs:
     uses: ./.github/workflows/validate-code.yml
     secrets: inherit
 
-  generate_coverage_diff:
+  generate_coverage:
     needs: [test_build, verify_build, validate_files_and_commits, validate_code]
-    name: Generate Coverage Report Diff
+    name: Generate Coverage Report
     uses: ./.github/workflows/coverage-report.yml
     with:
       comment-diff: true
