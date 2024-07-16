@@ -41,19 +41,26 @@ data during the execution of a region.
 **Reporting**: `vaccel_prof_region_print()` is used to output the collected
 data for analysis.
 
+**Profiling State**: `vaccel_prof_enabled()` can be used to check if vAccel
+profiling is enabled or not.
+
 ### Batch Operations
 
-**Start by Name**: `vaccel_prof_regions_start_by_name()` allows starting
-multiple regions by their names.
+To simplify handling of multiple profiling regions, ie. when converting from
+non-vAccel profiling data types, vAccel provides functions for batch
+operations.
 
-**Stop by Name**: `vaccel_prof_regions_stop_by_name()` stops multiple regions
-similarly.
+**Start by Name**: `vaccel_prof_regions_start_by_name()` starts data collection
+for a region, from an array of regions, with the specified name.
 
-**Clear Regions**: `vaccel_prof_regions_clear()` clears collected data from
-regions.
+**Stop by Name**: `vaccel_prof_regions_stop_by_name()` stops data collection
+for a region, from an array of regions, accordingly.
+
+**Clear Regions**: `vaccel_prof_regions_clear()` clears collected data from a
+region array.
 
 **Print All**: `vaccel_prof_regions_print_all()` prints profiling data for all
-regions.
+regions in the array.
 
 ### Enabling Profiling
 
@@ -290,4 +297,33 @@ struct vaccel_prof_region torch_out_stats =
     vaccel_prof_region_print(&torch_out_stats);
 ```
 
+## Example Code for Batch Operations
 
+The code sample below demonstrates the use of profiling batch
+operations for creating and printing an array of profiling regions
+from an external timers object.
+
+```c
+void my_operation(struct vaccel_session *session)
+{
+    if (!vaccel_prof_enabled())
+        return;
+
+    // User function to get external timers.
+    // Get the timers/profiling regions number first
+    int nr_timers = my_timers_func(session->remote_id, NULL, 0);
+    if (nr_timers == 0)
+        return;
+
+    struct vaccel_prof_region *timers =
+                    malloc(nr_timers * sizeof(*timers));
+
+    vaccel_prof_regions_init(timers, nr_timers);
+
+    // Profiling regions are allocated and initialized.
+    // Now set profiling regions' data.
+    my_timers_func(session->remote_id, timers, nr_timers);
+
+    vaccel_prof_regions_print_all(timers, nr_timers);
+}
+```
