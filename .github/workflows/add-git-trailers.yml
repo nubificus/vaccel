@@ -22,7 +22,7 @@ jobs:
         with:
           sparse-checkout: .github
           repository: ${{ (inputs.plugin != '' && 'nubificus/vaccel') || '' }}
-          ref: ${{ (inputs.plugin != '' && 'ci_rework_plugin') || '' }}
+          ref: ${{ (inputs.plugin != '' && 'main') || '' }}
 
       - name: Initialize workspace
         uses: ./.github/actions/initialize-workspace
