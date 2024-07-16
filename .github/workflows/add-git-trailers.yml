@@ -14,6 +14,7 @@ on:
 
 jobs:
   git-trailers:
+    name: Add Git Trailers to PR commits
     runs-on: [self-hosted, x86_64]
 
     steps:
@@ -34,7 +35,7 @@ jobs:
       - name: Append git trailers
         uses: nubificus/git-trailers@main
         with:
-          user_info: ${{ github.workspace }}/.contributors.yaml
+          user_info: .github/contributors.yaml
 
       - name: Trigger required tests re-run
         run: |
