@@ -1,10 +1,10 @@
-# Contributing to vAccelRT
+# Contributing to vAccel
 
-Thank you for your interest in vAccelRT. We appreciate any effort to improve our project and welcome contributions from the community. Please take a moment to review the guidelines below to facilitate a smooth and effective contribution process.
+Thank you for your interest in vAccel. We appreciate any effort to improve our project and welcome contributions from the community. Please take a moment to review the guidelines below to facilitate a smooth and effective contribution process.
 
 ## How to contribute
 
-1. **Use and Report:** Try vAccelRT and share your experience. Were the instructions clear? Did everything work as expected?
+1. **Use and Report:** Try vAccel and share your experience. Were the instructions clear? Did everything work as expected?
 2. **Improve Documentation:** Suggest changes or improvements to the documentation to make it clearer.
 3. **Request Features:** Propose new features or enhancements.
 4. **Report Bugs:** Describe any issues you encounter.
@@ -12,27 +12,27 @@ Thank you for your interest in vAccelRT. We appreciate any effort to improve our
 
 ## Code organization
 
-The `vAccelRT` project is structured as follows:
+The `vAccel` project is structured as follows:
 - **Root Directory:** Contains build files, LICENSE, README and other non-code files.
-- **`/src`:** Contains the core implementation of the `vAccelRT` library and its' headers.
+- **`/src`:** Contains the core implementation of the `vAccel` library and its' headers.
 - **`/plugins`:** Contains the implementation of core `vAccel` plugins.
 - **`/examples`:** Provides examples demonstrating library/API usage.
-- **`/python`:** Includes a library implementation for `vAccelRT` python integration.
+- **`/python`:** Includes a library implementation for `vAccel` python integration.
 - **`/docs`:** Houses project documentation.
-- **`/scripts`:** Contains scripts used for building and distributing `vAccelRT`.
+- **`/scripts`:** Contains scripts used for building and distributing `vAccel`.
 - **`/subprojects`:** Holds Meson-specific files for fetching/compiling build dependencies.
 - **`/test`:** Includes unit and integration tests to verify library functionality.
 
 ## Opening an issue
 
-If you encounter any bugs or have suggestions for improvements, please open an [issue](https://github.com/cloudkernels/vaccelrt//issues/new).
+If you encounter any bugs or have suggestions for improvements, please open an [issue](https://github.com/nubificus/vaccel/issues/new).
 
 ### Reporting bugs
 
 When reporting a bug provide as much detail as possible, including steps to reproduce the issue and any relevant information about your environment. Specifically, include:
 - A clear description of the issue.
 - The respective output logs using the maximum debug level (`VACCEL_DEBUG_LEVEL=4`).
-- Version details of vAccelRT and plugins (either the commit's hash or the version).
+- Version details of vAccel and plugins (either the commit's hash or the version).
 - CPU architecture and build type.
 - Steps to reproduce the issue.
 - Mark the issue with the `bug` label.
@@ -44,8 +44,8 @@ Example template for an issue:
 An explanation of the issue 
 
 ## System info
-- vAccelRT version:
-- vAccelRT Plugin/Plugin's version:
+- vAccel version:
+- vAccel Plugin/Plugin's version:
 - Arch:
 - Build type:
 
@@ -107,12 +107,12 @@ The above rules are enforced by the PR checks, which will fail if requirements a
 
 ### C/C++ code style
 
-`vAccelRT` code is formatted using `clang-format` with custom rules based on the Linux Kernel/K&R style. Contributors can automatically apply formatting rules using the ninja target `clang-format` generated my meson.
+`vAccel` code is formatted using `clang-format` with custom rules based on the Linux Kernel/K&R style. Contributors can automatically apply formatting rules using the ninja target `clang-format` generated my meson.
 When Pull Request checks are run, an automated review with a patch containing any additional format changes required will be generated. For a Pull Request to be valid, format checks must not fail.
 
 ## Static code analysis
 
-`vAccelRT` includes `clang-tidy` configs to validate it's codebase. Contributors can run checks using the ninja target `clang-tidy` generated my meson.
+`vAccel` includes `clang-tidy` configs to validate it's codebase. Contributors can run checks using the ninja target `clang-tidy` generated my meson.
 Please address all errors and as much warnings as possible for the PR to be eligible for approval. Additionally, `cppcheck` checks triggered by the Pull Request actions must be successful.
 
 ## Contact

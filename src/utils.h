@@ -12,7 +12,7 @@ extern "C" {
 /* Check if a directory exists */
 bool dir_exists(const char *path);
 
-/* It tries to cleanup a rundir created by vaccelrt. It will
+/* It tries to cleanup a rundir created by vaccel. It will
  * return VACCEL_OK at success, or a proper error code otherwise
  */
 int cleanup_rundir(const char *path);

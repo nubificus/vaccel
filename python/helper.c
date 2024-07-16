@@ -13,7 +13,7 @@
 void *vacceldl = NULL;
 char *pname = NULL;
 
-/* Copied from vaccelrt/src/vaccel.c */
+/* Copied from vaccel/src/vaccel.c */
 static int load_backend_plugin(const char *path)
 {
 	int ret;
@@ -59,7 +59,7 @@ close_dl:
 	return ret;
 }
 
-/* Copied from vaccelrt/src/vaccel.c */
+/* Copied from vaccel/src/vaccel.c */
 int load_backend_plugins(char *plugins)
 {
 	char *plugin;
