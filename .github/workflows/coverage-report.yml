@@ -12,7 +12,7 @@ on:
       plugin:
         type: string
         default: ''
-      upload:
+      commit:
         type: boolean
         default: false
       comment-diff:
@@ -24,7 +24,11 @@ on:
 
 jobs:
   coverage_report:
+    name: Coverage Report
     runs-on: [self-hosted, x86_64, "${{ fromJSON(inputs.runner) }}"]
+    permissions:
+      contents: write
+      pull-requests: write
 
     env:
       CC: gcc-12
@@ -37,16 +41,33 @@ jobs:
           repository: ${{ (inputs.plugin != '' && 'nubificus/vaccel') || '' }}
           ref: ${{ (inputs.plugin != '' && 'main') || '' }}
 
+      - name: Set repository directories
+        id: set_repo_dirs
+        run: |
+          echo "repo=${{ github.event.repository.name }}" >> "$GITHUB_OUTPUT"
+          echo "repo-default=${{ github.event.repository.name }}_${{ github.event.repository.default_branch }}" \
+            >> "$GITHUB_OUTPUT"
+        shell: bash
+
       - name: Initialize workspace
         uses: ./.github/actions/initialize-workspace
         with:
           remote-actions-repo: ${{ (inputs.plugin != '' && 'nubificus/vaccel') || '' }}
           token: ${{ secrets.GIT_CLONE_PAT || github.token }}
+          dot-github-only: 'true'
+
+      - name: Checkout current branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.ref || github.ref_name }}
+          path: ${{ steps.set_repo_dirs.outputs.repo }}
 
       - name: Build project
         uses: ./.github/actions/build
         with:
           build-dir: build
+          source-dir: ${{ steps.set_repo_dirs.outputs.repo }}
           coverage: 'true'
           options: ${{ inputs.options }}
 
@@ -54,25 +75,22 @@ jobs:
         uses: ./.github/actions/run-tests
         with:
           build-dir: build
+          source-dir: ${{ steps.set_repo_dirs.outputs.repo }}
           coverage: 'true'
           gcov: 'gcov-12'
 
-      - name: Clone project @default_branch
-        id: clone_project
-        if: ${{ inputs.comment-diff == true }}
-        run: |
-          DEFAULT_BRANCH_DIR="${{ github.event.repository.name }}_${{ github.event.repository.default_branch }}"
-          git clone --recursive \
-            "${{ github.event.repository.html_url }}" \
-            "${DEFAULT_BRANCH_DIR}"
-          echo "default-branch-dir=${DEFAULT_BRANCH_DIR}" >> "$GITHUB_OUTPUT"
+      - name: Checkout default_branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          path:  ${{ steps.set_repo_dirs.outputs.repo-default }}
 
       - name: Build project @default_branch
         if: ${{ inputs.comment-diff == true }}
         uses: ./.github/actions/build
         with:
           build-dir: build
-          source-dir: "${{ steps.clone_project.outputs.default-branch-dir }}"
+          source-dir: ${{ steps.set_repo_dirs.outputs.repo-default }}
           coverage: 'true'
           options: ${{ inputs.options }}
 
@@ -81,60 +99,58 @@ jobs:
         uses: ./.github/actions/run-tests
         with:
           build-dir: build
-          source-dir: "${{ steps.clone_project.outputs.default-branch-dir }}"
+          source-dir: ${{ steps.set_repo_dirs.outputs.repo-default }}
           coverage: 'true'
           gcov: 'gcov-12'
 
       - name: Calculate coverage diff
         if: ${{ inputs.comment-diff == true }}
         run: |
-          # Temporarily ignore coverage changes, just print out the exit code
-          # https://github.com/aconrad/pycobertura?tab=readme-ov-file#diff-exit-codes
           pycobertura diff \
-            "$(find "${{ steps.clone_project.outputs.default-branch-dir }}"/build -name "coverage*.xml")" \
-            "$(find build -name "coverage*.xml")" \
+            "$(find "${{ steps.set_repo_dirs.outputs.repo-default }}/build" -name "coverage*.xml")" \
+            "$(find "${{ steps.set_repo_dirs.outputs.repo }}/build" -name "coverage*.xml")" \
             --no-color --no-source -f markdown > coverage_diff.txt  || PYCOB_RESULT="$?"
-          echo "pycobertura exited with $PYCOB_RESULT"
-          echo '```' > temp_file && \
-            cat ./coverage_diff.txt >> temp_file && \
-            echo -e '\n```' >> temp_file && \
-            mv temp_file ./coverage_diff.txt
-          rm -rf "${{ steps.clone_project.outputs.default-branch-dir }}"
+          echo "pycobertura exited with ${PYCOB_RESULT:-0}"
+          [ "$PYCOB_RESULT" == 1 ] && exit 1
+
+          echo -e '# Coverage report diff\n' > coverage_diff.md && \
+            cat coverage_diff.txt >> coverage_diff.md
         shell: bash
 
       - name: PR comment with file
         if: ${{ inputs.comment-diff == true }}
         uses: thollander/actions-comment-pull-request@v2
         with:
-          filePath: ./coverage_diff.txt
+          filePath: ./coverage_diff.md
           comment_tag: coverage
           mode: recreate
 
-      - name: Produce markdown file
-        if: ${{ inputs.upload == true }}
+      - name: Generate markdown file
+        id: generate_md_file
+        if: ${{ inputs.commit == true }}
         run: |
-          pycobertura show "$(find build -name "coverage*.xml")" \
-              --format markdown --output "coverage.md"
+          COVERAGE_FILE="docs/coverage/src_coverage/coverage.md"
+          pycobertura show \
+            "$(find "${{ steps.set_repo_dirs.outputs.repo }}/build" -name "coverage*.xml")" \
+            --format markdown --output "coverage.md"
           printf "%s\n\n" "# Tests coverage report" \
-              > "${{github.workspace}}/docs/coverage/src_coverage/coverage.md"
-          cat coverage.md \
-              >> "${{github.workspace}}/docs/coverage/src_coverage/coverage.md"
+            > "${{ steps.set_repo_dirs.outputs.repo }}/$COVERAGE_FILE"
+          cat coverage.md >> "${{ steps.set_repo_dirs.outputs.repo }}/$COVERAGE_FILE"
           rm -f coverage.md
+          echo "coverage-file=${COVERAGE_FILE}" >> "$GITHUB_OUTPUT"
         shell: bash
 
-      - name: Push to vaccel-docs
-        if: ${{ inputs.upload == true }}
-        uses: cpina/github-action-push-to-another-repository@v1
+      - name: Commit report
+        if: ${{ inputs.commit == true }}
+        uses: ./.github/actions/commit-file
         with:
-          source-directory: "./docs/coverage/src_coverage"
-          target-directory: "docs/coverage"
-          destination-github-username: "nubificus"
-          destination-repository-name: "vaccel-docs"
-          user-email: "github-actions[bot]@users.noreply.github.com"
-          user-name: "github-actions[bot]"
-          commit-message: "[GHA] Update coverage report"
-          target-branch: "main"
+          workdir: ${{ steps.set_repo_dirs.outputs.repo }} 
+          branch: ${{ github.event.pull_request.head.ref || github.ref_name }} 
+          file: ${{ steps.generate_md_file.outputs.coverage-file }}
+          message: "docs(coverage): Update coverage report"
 
       - name: Clean-up
         if: ${{ always() }}
-        run: sudo rm -rf build
+        run: |
+          sudo rm -rf coverage* ${{ steps.set_repo_dirs.outputs.repo }} \
+            ${{ steps.set_repo_dirs.outputs.repo-default }}

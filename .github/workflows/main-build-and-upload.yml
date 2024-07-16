@@ -24,11 +24,3 @@ jobs:
     with:
       release: true
     secrets: inherit
-
-  coverage_docs:
-    needs: [build_dist]
-    name: Upload coverage report
-    uses: ./.github/workflows/coverage-report.yml
-    with:
-      upload: true
-    secrets: inherit
