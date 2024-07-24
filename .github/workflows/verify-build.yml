@@ -6,6 +6,9 @@ on:
       runner:
         type: string
         default: '["gcc", "lite", "2204"]'
+      runner-archs:
+        type: string
+        default: '["x86_64", "aarch64", "armv7l"]'
       options:
         type: string
         default: 'auto_features=enabled'
@@ -36,7 +39,7 @@ jobs:
 
     strategy:
       matrix:
-        archconfig: [x86_64, aarch64, armv7l]
+        archconfig: ["${{ fromJSON(inputs.runner-archs) }}"]
         build_type: [debug, release]
       fail-fast: false
 

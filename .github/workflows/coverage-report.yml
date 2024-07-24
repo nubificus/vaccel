@@ -6,6 +6,9 @@ on:
       runner:
         type: string
         default: '["gcc", "lite", "2204"]'
+      runner-arch:
+        type: string
+        default: 'x86_64'
       options:
         type: string
         default: 'auto_features=enabled'
@@ -25,7 +28,7 @@ on:
 jobs:
   coverage_report:
     name: Coverage Report
-    runs-on: [self-hosted, x86_64, "${{ fromJSON(inputs.runner) }}"]
+    runs-on: [self-hosted, "${{ inputs.runner-arch }}", "${{ fromJSON(inputs.runner) }}"]
     permissions:
       contents: write
       pull-requests: write
