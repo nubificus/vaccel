@@ -6,6 +6,9 @@ on:
       runner:
         type: string
         default: '["gcc", "lite", "2204"]'
+      runner-arch:
+        type: string
+        default: 'x86_64'
       options:
         type: string
         default: 'auto_features=enabled'
@@ -23,7 +26,7 @@ on:
 jobs:
   linter_cppcheck:
     name: Lint C/C++ (cppcheck)
-    runs-on: [self-hosted, x86_64, "${{ fromJSON(inputs.runner) }}"]
+    runs-on: [self-hosted, "${{ inputs.runner-arch }}", "${{ fromJSON(inputs.runner) }}"]
 
     env:
       CC: gcc-12
