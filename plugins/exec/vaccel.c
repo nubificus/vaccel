@@ -7,6 +7,8 @@
 #include <stdio.h>
 #include <vaccel.h>
 
+#include "vaccel_file.h"
+
 #define exec_debug(fmt, ...) vaccel_debug("[exec] " fmt, ##__VA_ARGS__)
 #define exec_error(fmt, ...) vaccel_error("[exec] " fmt, ##__VA_ARGS__)
 
@@ -78,7 +80,7 @@ static int exec(struct vaccel_session *session, const char *library,
 }
 
 static int exec_with_resource(struct vaccel_session *session,
-			      struct vaccel_shared_object *object,
+			      struct vaccel_resource *resource,
 			      const char *fn_symbol, void *read, size_t nr_read,
 			      void *write, size_t nr_write)
 {
@@ -87,15 +89,18 @@ static int exec_with_resource(struct vaccel_session *session,
 	int (*fptr)(void *, size_t, void *, size_t);
 	int ret;
 	struct vaccel_resource **deps;
-	struct vaccel_resource *resource = object->resource;
 	size_t nr_deps;
-	struct vaccel_file *file = &object->file;
-	const char *library = file->path;
+	char *library;
 	struct vaccel_arg *args;
 
 	exec_res_debug("Calling exec_with_resource for session %u",
 		       session->session_id);
 
+	library = vaccel_resource_get_path(resource);
+	if (library == NULL) {
+		vaccel_error("Could not get the path of the shared object");
+		return VACCEL_EINVAL;
+	}
 	ret = vaccel_resource_get_deps(&deps, &nr_deps, resource);
 	if (ret)
 		return VACCEL_EINVAL;
@@ -108,15 +113,7 @@ static int exec_with_resource(struct vaccel_session *session,
 	}
 	for (size_t i = 0; i < nr_deps; i++) {
 		struct vaccel_resource *res = deps[i];
-		struct vaccel_shared_object *object =
-			vaccel_shared_object_from_resource(res);
-		if (!object) {
-			exec_res_error(
-				"Could not get shared_object from resource");
-			ret = VACCEL_EINVAL;
-			goto free;
-		}
-		const char *fpath = object->file.path;
+		const char *fpath = res->files[0]->path;
 
 		exec_res_debug("dep library: %s", fpath);
 		ddl[i] = dlopen(fpath, RTLD_NOW | RTLD_GLOBAL);
@@ -181,6 +178,7 @@ static int exec_with_resource(struct vaccel_session *session,
 		ret = VACCEL_OK;
 
 free:
+	free(library);
 	if (ddl)
 		free(ddl);
 	return ret;
