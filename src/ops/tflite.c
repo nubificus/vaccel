@@ -111,7 +111,7 @@ struct vaccel_prof_region tflite_load_stats =
 	VACCEL_PROF_REGION_INIT("vaccel_tflite_session_load");
 
 int vaccel_tflite_session_load(struct vaccel_session *sess,
-			       struct vaccel_single_model *model)
+			       struct vaccel_resource *model)
 {
 	int ret;
 
@@ -127,8 +127,7 @@ int vaccel_tflite_session_load(struct vaccel_session *sess,
 	vaccel_prof_region_start(&tflite_load_stats);
 
 	// Get implementation
-	int (*plugin_op)(struct vaccel_session *,
-			 struct vaccel_single_model *) =
+	int (*plugin_op)(struct vaccel_session *, struct vaccel_resource *) =
 		get_plugin_op(VACCEL_TFLITE_SESSION_LOAD, sess->hint);
 	if (!plugin_op) {
 		ret = VACCEL_ENOTSUP;
@@ -146,7 +145,7 @@ struct vaccel_prof_region tflite_session_run_stats =
 	VACCEL_PROF_REGION_INIT("vaccel_tflite_session_run");
 
 int vaccel_tflite_session_run(struct vaccel_session *sess,
-			      const struct vaccel_single_model *model,
+			      const struct vaccel_resource *model,
 			      struct vaccel_tflite_tensor *const *in,
 			      int nr_inputs, struct vaccel_tflite_tensor **out,
 			      int nr_outputs, uint8_t *status)
@@ -166,7 +165,7 @@ int vaccel_tflite_session_run(struct vaccel_session *sess,
 
 	// Get implementation
 	int (*plugin_op)(struct vaccel_session *,
-			 const struct vaccel_single_model *,
+			 const struct vaccel_resource *,
 			 struct vaccel_tflite_tensor *const *, int,
 			 struct vaccel_tflite_tensor **, int, uint8_t *) =
 		get_plugin_op(VACCEL_TFLITE_SESSION_RUN, sess->hint);
@@ -186,7 +185,7 @@ struct vaccel_prof_region tflite_session_delete_stats =
 	VACCEL_PROF_REGION_INIT("vaccel_tflite_session_delete");
 
 int vaccel_tflite_session_delete(struct vaccel_session *sess,
-				 struct vaccel_single_model *model)
+				 struct vaccel_resource *model)
 {
 	int ret;
 
@@ -199,8 +198,7 @@ int vaccel_tflite_session_delete(struct vaccel_session *sess,
 		"session:%u Looking for plugin implementing tflite_session_delete operation",
 		sess->session_id);
 
-	int (*plugin_op)(struct vaccel_session *,
-			 struct vaccel_single_model *) =
+	int (*plugin_op)(struct vaccel_session *, struct vaccel_resource *) =
 		get_plugin_op(VACCEL_TFLITE_SESSION_DELETE, sess->hint);
 	if (!plugin_op) {
 		ret = VACCEL_ENOTSUP;

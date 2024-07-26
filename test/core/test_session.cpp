@@ -190,14 +190,14 @@ TEST_CASE("session_unregister_null", "[session]")
 	REQUIRE(sess.priv == nullptr);
 
 	struct vaccel_resource res;
-	res.type = VACCEL_RES_SHARED_OBJ;
+	res.type = VACCEL_FILE_LIB;
 	res.id = 1;
 
-	ret = vaccel_sess_register(nullptr, nullptr);
+	ret = vaccel_resource_register(nullptr, nullptr);
 	REQUIRE(ret == VACCEL_EINVAL);
-	ret = vaccel_sess_register(nullptr, &res);
+	ret = vaccel_resource_register(nullptr, &res);
 	REQUIRE(ret == VACCEL_EINVAL);
-	ret = vaccel_sess_register(&sess, nullptr);
+	ret = vaccel_resource_register(&sess, nullptr);
 	REQUIRE(ret == VACCEL_EINVAL);
 
 	REQUIRE(sess.session_id);
@@ -205,7 +205,7 @@ TEST_CASE("session_unregister_null", "[session]")
 	REQUIRE(sess.resources);
 	REQUIRE(sess.priv == nullptr);
 
-	ret = vaccel_sess_register(&sess, &res);
+	ret = vaccel_resource_register(&sess, &res);
 	REQUIRE(ret == VACCEL_OK);
 	REQUIRE(sess.session_id);
 	REQUIRE(sess.hint == 1);
@@ -215,9 +215,9 @@ TEST_CASE("session_unregister_null", "[session]")
 	bool check_bool = vaccel_sess_has_resource(&sess, &res);
 	REQUIRE(check_bool);
 
-	ret = vaccel_sess_unregister(nullptr, &res);
+	ret = vaccel_resource_unregister(nullptr, &res);
 	REQUIRE(ret == VACCEL_EINVAL);
-	ret = vaccel_sess_unregister(&sess, nullptr);
+	ret = vaccel_resource_unregister(&sess, nullptr);
 	REQUIRE(ret == VACCEL_EINVAL);
 
 	REQUIRE(sess.session_id);
@@ -227,12 +227,12 @@ TEST_CASE("session_unregister_null", "[session]")
 
 	res.type = VACCEL_RES_MAX;
 	res.id = 2;
-	ret = vaccel_sess_unregister(&sess, &res);
+	ret = vaccel_resource_unregister(&sess, &res);
 	REQUIRE(ret == VACCEL_EINVAL);
 
-	res.type = VACCEL_RES_SHARED_OBJ;
+	res.type = VACCEL_FILE_LIB;
 	res.id = 1;
-	ret = vaccel_sess_unregister(&sess, &res);
+	ret = vaccel_resource_unregister(&sess, &res);
 	REQUIRE(ret == VACCEL_OK);
 	REQUIRE(sess.session_id);
 	REQUIRE(sess.hint == 1);
@@ -261,7 +261,7 @@ TEST_CASE("session_ops", "[session]")
 	test_sess.resources = nullptr;
 	test_sess.priv = nullptr;
 	struct vaccel_resource test_res;
-	test_res.type = VACCEL_RES_SHARED_OBJ;
+	test_res.type = VACCEL_FILE_LIB;
 	test_res.id = 1;
 
 	RESET_FAKE(get_virtio_plugin);
@@ -282,7 +282,7 @@ TEST_CASE("session_ops", "[session]")
 	REQUIRE(test_sess.resources);
 	REQUIRE(test_sess.priv == nullptr);
 
-	ret = vaccel_sess_register(&test_sess, &test_res);
+	ret = vaccel_resource_register(&test_sess, &test_res);
 	REQUIRE(VACCEL_OK == ret);
 	REQUIRE(test_sess.session_id);
 	REQUIRE(test_sess.hint == 2);
@@ -290,7 +290,7 @@ TEST_CASE("session_ops", "[session]")
 		list_empty(&test_sess.resources->registered[test_res.type]));
 	REQUIRE(test_sess.priv == nullptr);
 
-	ret = vaccel_sess_unregister(&test_sess, &test_res);
+	ret = vaccel_resource_unregister(&test_sess, &test_res);
 	REQUIRE(VACCEL_OK == ret);
 	REQUIRE(test_sess.session_id);
 	REQUIRE(test_sess.hint == 2);
@@ -316,8 +316,9 @@ TEST_CASE("session_virtio", "[session]")
 	test_sess.resources = nullptr;
 	test_sess.priv = nullptr;
 	struct vaccel_resource test_res;
-	test_res.type = VACCEL_RES_SHARED_OBJ;
+	test_res.type = VACCEL_FILE_LIB;
 	test_res.id = 1;
+	test_res.remote_id = -1;
 
 	RESET_FAKE(get_virtio_plugin);
 
@@ -343,10 +344,10 @@ TEST_CASE("session_virtio", "[session]")
 	ret = vaccel_sess_update(&test_sess, 2);
 	REQUIRE(VACCEL_OK == ret);
 
-	ret = vaccel_sess_register(&test_sess, &test_res);
+	ret = vaccel_resource_register(&test_sess, &test_res);
 	REQUIRE(VACCEL_OK == ret);
 
-	ret = vaccel_sess_unregister(&test_sess, &test_res);
+	ret = vaccel_resource_unregister(&test_sess, &test_res);
 	REQUIRE(VACCEL_OK == ret);
 
 	ret = vaccel_sess_free(&test_sess);
