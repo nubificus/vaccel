@@ -28,45 +28,41 @@ TEST_CASE("resource_destroy", "[resources]")
 {
 	int ret;
 	struct vaccel_resource res;
-	vaccel_resource_t test_type = VACCEL_RES_SINGLE_MODEL;
-	void *test_data = nullptr;
-	int (*cleanup_res_test)(void *) = cleanup_resource_mock;
+	vaccel_resource_t test_type = VACCEL_FILE_DATA;
+	char *test_path = abs_path(BUILD_ROOT, "examples/libmytestlib.so");
 
 	// Test handling of null resource
 	SECTION("Null resource")
 	{
-		ret = resource_new(nullptr, test_type, test_data,
-				   cleanup_res_test);
+		ret = vaccel_resource_new(nullptr, nullptr, test_type);
 		REQUIRE(ret == VACCEL_EINVAL);
 
-		ret = resource_destroy(nullptr);
+		ret = vaccel_resource_destroy(nullptr);
 		REQUIRE(ret == VACCEL_EINVAL);
 	}
 
 	// Test creation and destruction of a valid resource
 	SECTION("Valid resource")
 	{
-		ret = resource_new(&res, test_type, test_data,
-				   cleanup_res_test);
+		ret = vaccel_resource_new(&res, test_path, test_type);
 		REQUIRE(ret == VACCEL_OK);
 
 		REQUIRE(res.id == 1);
-		REQUIRE(res.type == VACCEL_RES_SINGLE_MODEL);
-		REQUIRE(res.data == nullptr);
+		REQUIRE(res.type == VACCEL_FILE_DATA);
 		REQUIRE_FALSE(list_empty(&res.entry));
 		REQUIRE(res.refcount == 0);
 		REQUIRE(res.rundir == NULL);
 
-		ret = resource_destroy(&res);
+		ret = vaccel_resource_destroy(&res);
 		REQUIRE(ret == VACCEL_OK);
 
 		REQUIRE(res.id == 1);
-		REQUIRE(res.type == VACCEL_RES_SINGLE_MODEL);
-		REQUIRE(res.data == nullptr);
+		REQUIRE(res.type == VACCEL_FILE_DATA);
 		REQUIRE(list_empty(&res.entry));
 		REQUIRE(res.refcount == 0);
 		REQUIRE(res.rundir == NULL);
 	}
+	free(test_path);
 }
 
 // Test case for resource creation and rundir creation
@@ -74,17 +70,15 @@ TEST_CASE("resource_create", "[resources]")
 {
 	int ret;
 	struct vaccel_resource res;
-	vaccel_resource_t test_type = VACCEL_RES_SINGLE_MODEL;
-	void *test_data = nullptr;
-	int (*cleanup_res_test)(void *) = cleanup_resource_mock;
+	vaccel_resource_t test_type = VACCEL_FILE_DATA;
+	char *test_path = abs_path(BUILD_ROOT, "examples/libmytestlib.so");
 
 	// Create a resource
-	ret = resource_new(&res, test_type, test_data, cleanup_res_test);
+	ret = vaccel_resource_new(&res, test_path, test_type);
 	REQUIRE(ret == VACCEL_OK);
 
 	REQUIRE(res.id == 1);
-	REQUIRE(res.type == VACCEL_RES_SINGLE_MODEL);
-	REQUIRE(res.data == nullptr);
+	REQUIRE(res.type == VACCEL_FILE_DATA);
 	REQUIRE_FALSE(list_empty(&res.entry));
 	REQUIRE(res.refcount == 0);
 	REQUIRE(res.rundir == NULL);
@@ -94,22 +88,22 @@ TEST_CASE("resource_create", "[resources]")
 	REQUIRE(ret == VACCEL_OK);
 
 	REQUIRE(res.id == 1);
-	REQUIRE(res.type == VACCEL_RES_SINGLE_MODEL);
-	REQUIRE(res.data == nullptr);
+	REQUIRE(res.type == VACCEL_FILE_DATA);
 	REQUIRE_FALSE(list_empty(&res.entry));
 	REQUIRE(res.refcount == 0);
 	REQUIRE_FALSE(res.rundir == NULL);
 
 	// Cleanup the resource
-	ret = resource_destroy(&res);
+	ret = vaccel_resource_destroy(&res);
 	REQUIRE(ret == VACCEL_OK);
 
 	REQUIRE(res.id == 1);
-	REQUIRE(res.type == VACCEL_RES_SINGLE_MODEL);
-	REQUIRE(res.data == nullptr);
+	REQUIRE(res.type == VACCEL_FILE_DATA);
 	REQUIRE(list_empty(&res.entry));
 	REQUIRE(res.refcount == 0);
 	REQUIRE_FALSE(res.rundir == NULL);
+
+	free(test_path);
 }
 
 // Test case for finding a resource by ID (failure case)
@@ -129,17 +123,15 @@ TEST_CASE("resource_find_by_id", "[resources]")
 {
 	int ret;
 	struct vaccel_resource test_res;
-	vaccel_resource_t test_type = VACCEL_RES_SINGLE_MODEL;
-	void *test_data = nullptr;
-	int (*cleanup_res_test)(void *) = cleanup_resource_mock;
+	vaccel_resource_t test_type = VACCEL_FILE_DATA;
+	char *test_path = abs_path(BUILD_ROOT, "examples/libmytestlib.so");
 
 	// Create a test resource
-	ret = resource_new(&test_res, test_type, test_data, cleanup_res_test);
+	ret = vaccel_resource_new(&test_res, test_path, test_type);
 	REQUIRE(ret == VACCEL_OK);
 
 	REQUIRE(test_res.id == 1);
-	REQUIRE(test_res.type == VACCEL_RES_SINGLE_MODEL);
-	REQUIRE(test_res.data == nullptr);
+	REQUIRE(test_res.type == VACCEL_FILE_DATA);
 	REQUIRE_FALSE(list_empty(&test_res.entry));
 	REQUIRE(test_res.refcount == 0);
 	REQUIRE(test_res.rundir == NULL);
@@ -153,22 +145,22 @@ TEST_CASE("resource_find_by_id", "[resources]")
 	REQUIRE(result_resource != nullptr);
 
 	REQUIRE(result_resource->id == 1);
-	REQUIRE(result_resource->type == VACCEL_RES_SINGLE_MODEL);
-	REQUIRE(result_resource->data == nullptr);
+	REQUIRE(result_resource->type == VACCEL_FILE_DATA);
 	REQUIRE_FALSE(list_empty(&result_resource->entry));
 	REQUIRE(result_resource->refcount == 0);
 	REQUIRE(result_resource->rundir == NULL);
 
 	// Cleanup the test resource
-	ret = resource_destroy(&test_res);
+	ret = vaccel_resource_destroy(&test_res);
 	REQUIRE(ret == VACCEL_OK);
 
 	REQUIRE(test_res.id == 1);
-	REQUIRE(test_res.type == VACCEL_RES_SINGLE_MODEL);
-	REQUIRE(test_res.data == nullptr);
+	REQUIRE(test_res.type == VACCEL_FILE_DATA);
 	REQUIRE(list_empty(&test_res.entry));
 	REQUIRE(test_res.refcount == 0);
 	REQUIRE(test_res.rundir == NULL);
+
+	free(test_path);
 }
 
 TEST_CASE("resource_with_deps", "[resources]")
@@ -180,25 +172,23 @@ TEST_CASE("resource_with_deps", "[resources]")
 	struct vaccel_resource **test_deps_g;
 	struct vaccel_resource *test_deps[2] = { &test_dep_1, &test_dep_2 };
 	size_t nr_deps;
-	vaccel_resource_t test_type = VACCEL_RES_SHARED_OBJ;
-	void *test_data = nullptr;
-	int (*cleanup_res_test)(void *) = cleanup_resource_mock;
+	vaccel_resource_t test_type = VACCEL_FILE_LIB;
+	char *test_path = abs_path(BUILD_ROOT, "examples/libmytestlib.so");
 
 	// Create a test resource
-	ret = resource_new(&test_res, test_type, test_data, cleanup_res_test);
+	ret = vaccel_resource_new(&test_res, test_path, test_type);
 	REQUIRE(ret == VACCEL_OK);
 
 	REQUIRE(test_res.id == 1);
-	REQUIRE(test_res.type == VACCEL_RES_SHARED_OBJ);
-	REQUIRE(test_res.data == nullptr);
+	REQUIRE(test_res.type == VACCEL_FILE_LIB);
 	REQUIRE_FALSE(list_empty(&test_res.entry));
 	REQUIRE(test_res.refcount == 0);
 	REQUIRE(test_res.rundir == NULL);
 
-	ret = resource_new(&test_dep_1, test_type, test_data, cleanup_res_test);
+	ret = vaccel_resource_new(&test_dep_1, test_path, test_type);
 	REQUIRE(ret == VACCEL_OK);
 
-	ret = resource_new(&test_dep_2, test_type, test_data, cleanup_res_test);
+	ret = vaccel_resource_new(&test_dep_2, test_path, test_type);
 	REQUIRE(ret == VACCEL_OK);
 
 	SECTION("valid_deps")
@@ -281,38 +271,36 @@ TEST_CASE("resource_with_deps", "[resources]")
 	}
 
 	// Cleanup the test resource
-	ret = resource_destroy(&test_dep_1);
+	ret = vaccel_resource_destroy(&test_dep_1);
 	REQUIRE(ret == VACCEL_OK);
 
-	REQUIRE(test_dep_1.data == nullptr);
 	REQUIRE(list_empty(&test_dep_1.entry));
 	REQUIRE(test_dep_1.refcount == 0);
 	REQUIRE(test_dep_1.rundir == NULL);
 
-	ret = resource_destroy(&test_dep_2);
+	ret = vaccel_resource_destroy(&test_dep_2);
 	REQUIRE(ret == VACCEL_OK);
 
-	REQUIRE(test_dep_2.data == nullptr);
 	REQUIRE(list_empty(&test_dep_2.entry));
 	REQUIRE(test_dep_2.refcount == 0);
 	REQUIRE(test_dep_2.rundir == NULL);
 
-	ret = resource_destroy(&test_res);
+	ret = vaccel_resource_destroy(&test_res);
 	REQUIRE(ret == VACCEL_OK);
 
-	REQUIRE(test_res.data == nullptr);
 	REQUIRE(list_empty(&test_res.entry));
 	REQUIRE(test_res.refcount == 0);
 	REQUIRE(test_res.rundir == NULL);
+
+	free(test_path);
 }
 
 TEST_CASE("resource_not_bootstrapped", "[resources]")
 {
 	int ret;
 	struct vaccel_resource test_res;
-	vaccel_resource_t test_type = VACCEL_RES_SINGLE_MODEL;
-	void *test_data = nullptr;
-	int (*cleanup_res_test)(void *) = cleanup_resource_mock;
+	vaccel_resource_t test_type = VACCEL_FILE_DATA;
+	char *test_path = abs_path(BUILD_ROOT, "examples/libmytestlib.so");
 	struct vaccel_resource *result_resource = nullptr;
 	vaccel_id_t id_to_find = 1;
 
@@ -320,13 +308,13 @@ TEST_CASE("resource_not_bootstrapped", "[resources]")
 	ret = resources_cleanup();
 	REQUIRE(ret == VACCEL_OK);
 
-	ret = resource_new(&test_res, test_type, test_data, cleanup_res_test);
+	ret = vaccel_resource_new(&test_res, test_path, test_type);
 	REQUIRE(ret == VACCEL_EPERM);
 
 	ret = resource_get_by_id(&result_resource, id_to_find);
 	REQUIRE(ret == VACCEL_EPERM);
 
-	ret = resource_destroy(&test_res);
+	ret = vaccel_resource_destroy(&test_res);
 	REQUIRE(ret == VACCEL_EPERM);
 
 	ret = resource_create_rundir(nullptr);
@@ -335,4 +323,6 @@ TEST_CASE("resource_not_bootstrapped", "[resources]")
 	// bootstrap again so the rest of the tests run correctly
 	ret = resources_bootstrap();
 	REQUIRE(ret == VACCEL_OK);
+
+	free(test_path);
 }

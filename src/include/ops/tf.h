@@ -11,7 +11,7 @@ extern "C" {
 #endif
 
 struct vaccel_session;
-struct vaccel_tf_saved_model;
+struct vaccel_resource;
 
 /* This is one-to-one mapping with tensorflow's
  * data types representation: see `tensorflow/tensorflow/c/tf_datatype.h'
@@ -113,11 +113,11 @@ struct vaccel_tf_status {
 };
 
 int vaccel_tf_session_load(struct vaccel_session *session,
-			   struct vaccel_tf_saved_model *model,
+			   struct vaccel_resource *model,
 			   struct vaccel_tf_status *status);
 
 int vaccel_tf_session_run(struct vaccel_session *session,
-			  const struct vaccel_tf_saved_model *model,
+			  const struct vaccel_resource *model,
 			  const struct vaccel_tf_buffer *run_options,
 			  const struct vaccel_tf_node *in_nodes,
 			  struct vaccel_tf_tensor *const *in, int nr_inputs,
@@ -126,7 +126,7 @@ int vaccel_tf_session_run(struct vaccel_session *session,
 			  struct vaccel_tf_status *status);
 
 int vaccel_tf_session_delete(struct vaccel_session *session,
-			     struct vaccel_tf_saved_model *model,
+			     struct vaccel_resource *model,
 			     struct vaccel_tf_status *status);
 
 #ifdef __cplusplus

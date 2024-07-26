@@ -8,6 +8,8 @@
 #include <unistd.h>
 #include <vaccel.h>
 
+#define ARR_LEN 5
+
 struct mydata {
 	uint32_t size;
 	int *array;
@@ -21,11 +23,10 @@ void *ser(void *buf, uint32_t *bytes)
 	uint32_t size = (non_ser->size + 1) * sizeof(int);
 	int *ser_buf = malloc(size);
 
-	memcpy(ser_buf, (int *)(&non_ser->size), sizeof(int));
+	*ser_buf = non_ser->size;
 
-	uint32_t i;
-	for (i = 0; i < non_ser->size; i++)
-		memcpy(&ser_buf[i + 1], &non_ser->array[i], sizeof(int));
+	for (uint32_t i = 0; i < non_ser->size; i++)
+		ser_buf[i + 1] = non_ser->array[i];
 
 	*bytes = size;
 	return ser_buf;
@@ -45,7 +46,7 @@ void *deser(void *buf, uint32_t __attribute__((unused)) bytes)
 	new_buf->size = (uint32_t)size;
 	new_buf->array = malloc(new_buf->size * sizeof(int));
 	for (int i = 0; i < size; i++)
-		memcpy(&new_buf->array[i], &ser_buf[i + 1], sizeof(int));
+		new_buf->array[i] = ser_buf[i + 1];
 
 	return new_buf;
 }
@@ -54,34 +55,34 @@ int main(int argc, char *argv[])
 {
 	int ret;
 	struct vaccel_session sess;
-	struct vaccel_shared_object object;
+	struct vaccel_resource object;
 
 	struct mydata input_data;
 	struct mydata *output_data = NULL;
 
 	if (argc < 3) {
-		fprintf(stderr, "You must specify the number of iterations\n");
+		vaccel_error("You must specify the number of iterations");
 		return 1;
 	}
 
-	ret = vaccel_shared_object_new(&object, argv[1]);
+	ret = vaccel_resource_new(&object, argv[1], VACCEL_FILE_LIB);
 	if (ret) {
-		fprintf(stderr, "Could not create shared object resource: %s",
-			strerror(ret));
+		vaccel_error("Could not create shared object resource: %s",
+			     strerror(ret));
 		exit(1);
 	}
 	sess.hint = VACCEL_PLUGIN_DEBUG;
 	ret = vaccel_sess_init(&sess, sess.hint);
 	if (ret != VACCEL_OK) {
-		fprintf(stderr, "Could not initialize session\n");
+		vaccel_error("Could not initialize session");
 		return 1;
 	}
 
 	printf("Initialized session with id: %u\n", sess.session_id);
 
-	ret = vaccel_sess_register(&sess, object.resource);
+	ret = vaccel_resource_register(&sess, &object);
 	if (ret) {
-		fprintf(stderr, "Could register shared object to session\n");
+		vaccel_error("Could register shared object to session");
 		exit(1);
 	}
 
@@ -93,10 +94,10 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	input_data.size = 5;
-	input_data.array = malloc(5 * sizeof(int));
+	input_data.size = ARR_LEN;
+	input_data.array = malloc(ARR_LEN * sizeof(int));
 	printf("Input: ");
-	for (int i = 0; i < 5; i++) {
+	for (int i = 0; i < ARR_LEN; i++) {
 		input_data.array[i] = 2 * i;
 		printf("%d ", input_data.array[i]);
 	}
@@ -122,7 +123,7 @@ int main(int argc, char *argv[])
 						write->size);
 
 		if (ret) {
-			fprintf(stderr, "Could not run op: %d\n", ret);
+			vaccel_error("Could not run op: %d", ret);
 			goto close_session;
 		}
 	}
@@ -160,20 +161,20 @@ close_session:
 		return 1;
 	}
 
-	ret = vaccel_sess_unregister(&sess, object.resource);
+	ret = vaccel_resource_unregister(&sess, &object);
 	if (ret) {
-		fprintf(stderr, "Could not unregister object from session\n");
+		vaccel_error("Could not unregister object from session");
 		exit(1);
 	}
 
 	if (vaccel_sess_free(&sess) != VACCEL_OK) {
-		fprintf(stderr, "Could not clear session\n");
+		vaccel_error("Could not clear session");
 		return 1;
 	}
 
-	ret = vaccel_shared_object_destroy(&object);
+	ret = vaccel_resource_destroy(&object);
 	if (ret) {
-		fprintf(stderr, "Could not destroy object\n");
+		vaccel_error("Could not destroy object");
 		exit(1);
 	}
 

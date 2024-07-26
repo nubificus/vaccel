@@ -7,7 +7,6 @@
 #include "genop.h"
 #include "log.h"
 #include "plugin.h"
-#include "resources/shared_object.h"
 #include "session.h"
 #include "vaccel_ops.h"
 #include "vaccel_prof.h"
@@ -45,7 +44,7 @@ int vaccel_exec(struct vaccel_session *sess, const char *library,
 }
 
 int vaccel_exec_with_resource(struct vaccel_session *sess,
-			      struct vaccel_shared_object *object,
+			      struct vaccel_resource *resource,
 			      const char *fn_symbol, struct vaccel_arg *read,
 			      size_t nr_read, struct vaccel_arg *write,
 			      size_t nr_write)
@@ -67,7 +66,7 @@ int vaccel_exec_with_resource(struct vaccel_session *sess,
 	if (!plugin_op)
 		return VACCEL_ENOTSUP;
 
-	ret = plugin_op(sess, object, fn_symbol, read, nr_read, write,
+	ret = plugin_op(sess, resource, fn_symbol, read, nr_read, write,
 			nr_write);
 
 	vaccel_prof_region_stop(&exec_op_stats);
@@ -106,7 +105,6 @@ int vaccel_exec_with_res_unpack(struct vaccel_session *sess,
 
 	/* Pop the first two arguments */
 	struct vaccel_resource *resource;
-	struct vaccel_shared_object *object;
 
 	ret = resource_get_by_id(&resource, *(long long int *)read[0].buf);
 	if (ret) {
@@ -114,16 +112,10 @@ int vaccel_exec_with_res_unpack(struct vaccel_session *sess,
 		return ret;
 	}
 
-	object = (struct vaccel_shared_object *)resource->data;
-	if (!object) {
-		vaccel_error("resource is empty..");
-		return VACCEL_EINVAL;
-	}
-
 	char *fn_symbol = (char *)read[1].buf;
 
 	/* Pass on the rest of the read and all write arguments */
-	return vaccel_exec_with_resource(sess, object, fn_symbol, &read[2],
+	return vaccel_exec_with_resource(sess, resource, fn_symbol, &read[2],
 					 nr_read - 2, write, nr_write);
 }
 

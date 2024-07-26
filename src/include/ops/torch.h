@@ -10,7 +10,7 @@ extern "C" {
 #endif
 
 struct vaccel_session;
-struct vaccel_single_model;
+struct vaccel_resource;
 
 /*
 
@@ -113,7 +113,7 @@ int vaccel_torch_jitload_forward(struct vaccel_session *sess,
 
 // struct vaccel_arg *write -> char **tags
 int vaccel_torch_jitload_forward(struct vaccel_session *sess,
-				 const struct vaccel_single_model *model,
+				 const struct vaccel_resource *model,
 				 const struct vaccel_torch_buffer *run_options,
 				 struct vaccel_torch_tensor **in_tensor,
 				 int nr_read,
