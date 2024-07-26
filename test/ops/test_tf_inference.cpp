@@ -20,7 +20,7 @@
 TEST_CASE("tf_inference", "[ops_tf]")
 {
 	struct vaccel_session vsess;
-	struct vaccel_tf_saved_model model;
+	struct vaccel_resource model;
 	struct vaccel_tf_status status;
 	int ret;
 	char *model_path = abs_path(SOURCE_ROOT, "examples/models/tf/lstm2");
@@ -30,22 +30,12 @@ TEST_CASE("tf_inference", "[ops_tf]")
 	vsess.hint = 0;
 	vsess.priv = nullptr;
 
-	model.resource = nullptr;
 	model.path = nullptr;
-	model.priv = nullptr;
 
-	ret = vaccel_tf_saved_model_set_path(&model, model_path);
+	ret = vaccel_resource_new(&model, model_path, VACCEL_FILE_DATA);
 	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(model.resource == NULL);
 	REQUIRE_FALSE(model.path == nullptr);
-	REQUIRE(model.priv == nullptr);
 	INFO("model.path: " << model.path);
-
-	ret = vaccel_tf_saved_model_register(&model);
-	REQUIRE(ret == VACCEL_OK);
-	REQUIRE_FALSE(model.path == nullptr);
-	REQUIRE(model.priv == nullptr);
-	REQUIRE_FALSE(model.resource == NULL);
 
 	ret = vaccel_sess_init(&vsess, 0);
 	REQUIRE(ret == VACCEL_OK);
@@ -56,12 +46,11 @@ TEST_CASE("tf_inference", "[ops_tf]")
 
 	printf("Initialized vAccel session %u\n", vsess.session_id);
 
-	ret = vaccel_sess_register(&vsess, model.resource);
+	ret = vaccel_resource_register(&vsess, &model);
 	REQUIRE(ret == VACCEL_OK);
 	REQUIRE_FALSE(vsess.session_id == 0);
 	REQUIRE(vsess.hint == 0);
-	REQUIRE_FALSE(
-		list_empty(&vsess.resources->registered[model.resource->type]));
+	REQUIRE_FALSE(list_empty(&vsess.resources->registered[model.type]));
 	REQUIRE(vsess.priv == nullptr);
 
 	ret = vaccel_tf_session_load(&vsess, &model, &status);
@@ -123,13 +112,13 @@ TEST_CASE("tf_inference", "[ops_tf]")
 	if (status.message != nullptr)
 		free((char *)status.message);
 
-	ret = vaccel_sess_unregister(&vsess, model.resource);
+	ret = vaccel_resource_unregister(&vsess, &model);
 	REQUIRE(ret == VACCEL_OK);
 
 	ret = vaccel_sess_free(&vsess);
 	REQUIRE(ret == VACCEL_OK);
 
-	ret = vaccel_tf_saved_model_destroy(&model);
+	ret = vaccel_resource_destroy(&model);
 	REQUIRE(ret == VACCEL_OK);
 
 	free(model_path);

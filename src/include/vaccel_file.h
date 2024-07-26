@@ -13,6 +13,9 @@ extern "C" {
 struct vaccel_resource;
 
 struct vaccel_file {
+	/* name of the file */
+	char *name;
+
 	/* Path to file */
 	char *path;
 

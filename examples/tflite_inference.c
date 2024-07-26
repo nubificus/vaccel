@@ -12,30 +12,21 @@
 int main(int argc, char *argv[])
 {
 	struct vaccel_session vsess;
-	struct vaccel_single_model model;
+	struct vaccel_resource model;
 
 	if (argc != 2) {
 		fprintf(stderr, "usage: %s model\n", argv[0]);
 		exit(1);
 	}
 
-	const char *model_path = argv[1];
+	char *model_path = argv[1];
 
-	int ret = vaccel_single_model_set_path(&model, model_path);
+	int ret = vaccel_resource_new(&model, model_path, VACCEL_FILE_DATA);
 	if (ret) {
-		fprintf(stderr,
-			"Could not set model path to TensorFlow Lite model\n");
-		exit(1);
+		vaccel_error("Could not create model resource");
+		return ret;
 	}
-
-	ret = vaccel_single_model_register(&model);
-	if (ret) {
-		fprintf(stderr,
-			"Could not register TensorFlow Lite model resource\n");
-		exit(1);
-	}
-
-	printf("Created new model %lld\n", vaccel_single_model_get_id(&model));
+	printf("Created new model %lld\n", model.id);
 
 	ret = vaccel_sess_init(&vsess, 0);
 	if (ret) {
@@ -45,7 +36,7 @@ int main(int argc, char *argv[])
 
 	printf("Initialized vAccel session %u\n", vsess.session_id);
 
-	ret = vaccel_sess_register(&vsess, model.resource);
+	ret = vaccel_resource_register(&vsess, &model);
 	if (ret) {
 		fprintf(stderr, "Could not register model with session\n");
 		goto close_session;
@@ -104,13 +95,13 @@ unload_session:
 	if (vaccel_tflite_session_delete(&vsess, &model))
 		fprintf(stderr, "Could not delete tf session\n");
 unregister_resource:
-	if (vaccel_sess_unregister(&vsess, model.resource))
+	if (vaccel_resource_unregister(&vsess, &model))
 		fprintf(stderr, "Could not unregister model with session\n");
 close_session:
 	if (vaccel_sess_free(&vsess))
 		fprintf(stderr, "Could not clear session\n");
 destroy_resource:
-	vaccel_single_model_destroy(&model);
+	vaccel_resource_destroy(&model);
 
 	return ret;
 }

@@ -49,7 +49,7 @@ auto random_input_generator(int min_value = 1, int max_value = 100,
 auto main(int argc, char **argv) -> int
 {
 	struct vaccel_session sess;
-	struct vaccel_single_model model;
+	struct vaccel_resource model;
 	struct vaccel_torch_buffer run_options;
 	int ret;
 	char *model_path = argv[2];
@@ -65,18 +65,11 @@ auto main(int argc, char **argv) -> int
 		exit(1);
 	}
 
-	ret = vaccel_single_model_set_path(&model, model_path);
-	if (ret != 0) {
-		fprintf(stderr, "Could not set model path to Torch model %d\n",
-			ret);
-		exit(1);
+	ret = vaccel_resource_new(&model, model_path, VACCEL_FILE_DATA);
+	if (ret) {
+		vaccel_error("Could not create model resource");
+		return ret;
 	}
-	ret = vaccel_single_model_register(&model);
-	if (ret != 0) {
-		fprintf(stderr, "Could not register Torch model resource\n");
-		exit(1);
-	}
-	printf("Created new model %lld\n", vaccel_single_model_get_id(&model));
 
 	/* Read the image file */
 	ret = read_file(argv[1], (void **)&run_options.data, &run_options.size);
@@ -95,7 +88,7 @@ auto main(int argc, char **argv) -> int
 
 	/* Take vaccel_session and vaccel_resource as inputs, 
 	 * register a resource with a session */
-	ret = vaccel_sess_register(&sess, model.resource);
+	ret = vaccel_resource_register(&sess, &model);
 	if (ret != VACCEL_OK) {
 		fprintf(stderr, "Could not register model with session\n");
 		goto close_session;
@@ -148,14 +141,14 @@ free_tensor:
 	if (vaccel_torch_tensor_destroy(in) != VACCEL_OK)
 		fprintf(stderr, "Could not destroy in tensor\n");
 unregister_session:
-	if (vaccel_sess_unregister(&sess, model.resource) != VACCEL_OK)
+	if (vaccel_resource_unregister(&sess, &model) != VACCEL_OK)
 		fprintf(stderr, "Could not unregister model with session\n");
 close_session:
 	if (vaccel_sess_free(&sess) != VACCEL_OK)
 		fprintf(stderr, "Could not clear session\n");
 destroy_resource:
 	free(run_options.data);
-	vaccel_single_model_destroy(&model);
+	vaccel_resource_destroy(&model);
 
 	return ret;
 }

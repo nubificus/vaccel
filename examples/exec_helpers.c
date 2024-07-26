@@ -9,13 +9,15 @@
 
 #include <vaccel.h>
 
+#define EXAMPLE_INT 15
+
 int main(int argc, char *argv[])
 {
 	int ret;
 	struct vaccel_session sess;
 	int input_int;
 	int output_int;
-	struct vaccel_shared_object object;
+	struct vaccel_resource object;
 
 	if (argc < 3) {
 		vaccel_error(
@@ -23,7 +25,7 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	ret = vaccel_shared_object_new(&object, argv[1]);
+	ret = vaccel_resource_new(&object, argv[1], VACCEL_FILE_LIB);
 	if (ret) {
 		vaccel_error("Could not create shared object resource: %s",
 			     strerror(ret));
@@ -36,14 +38,14 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 	printf("Initialized session with id: %u\n", sess.session_id);
-	ret = vaccel_sess_register(&sess, object.resource);
+	ret = vaccel_resource_register(&sess, &object);
 	if (ret) {
 		vaccel_error("Could register shared object to session");
 		return 1;
 	}
 
-	printf("Registered resource %llu to session %u\n",
-	       vaccel_shared_object_get_id(&object), sess.session_id);
+	printf("Registered resource %llu to session %u\n", object.id,
+	       sess.session_id);
 
 	struct vaccel_arg_list *read = vaccel_args_init(1);
 	struct vaccel_arg_list *write = vaccel_args_init(1);
@@ -53,7 +55,7 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	input_int = 15;
+	input_int = EXAMPLE_INT;
 	ret = vaccel_add_serial_arg(read, &input_int, sizeof(input_int));
 	if (ret != VACCEL_OK) {
 		printf("Could not add serialized arg\n");
@@ -101,7 +103,7 @@ close_session:
 		return 1;
 	}
 
-	ret = vaccel_sess_unregister(&sess, object.resource);
+	ret = vaccel_resource_unregister(&sess, &object);
 	if (ret) {
 		vaccel_error("Could not unregister object from session");
 		return 1;
@@ -112,7 +114,7 @@ close_session:
 		return 1;
 	}
 
-	ret = vaccel_shared_object_destroy(&object);
+	ret = vaccel_resource_destroy(&object);
 	if (ret) {
 		vaccel_error("Could not destroy object");
 		return 1;
