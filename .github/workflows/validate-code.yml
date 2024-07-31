@@ -181,6 +181,7 @@ jobs:
         env:
           DEFAULT_BRANCH: main
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ENABLE_GITHUB_ACTIONS_STEP_SUMMARY: false
           VALIDATE_ALL_CODEBASE: true
           VALIDATE_PYTHON_RUFF: true
           VALIDATE_BASH: true
