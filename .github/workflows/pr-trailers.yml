@@ -20,6 +20,6 @@ jobs:
   git_trailers:
     needs: [commit_coverage]
     name: Add Git Trailers to PR commits
-    if: ${{ github.event.review.state == 'approved' }}
+    if: ${{ github.event.pull_request.base.ref == 'main' && github.event.review.state == 'approved' }}
     uses: ./.github/workflows/add-git-trailers.yml
     secrets: inherit

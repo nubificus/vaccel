@@ -14,6 +14,9 @@ inputs:
 runs:
   using: composite
   steps:
+    - run: sleep 3
+      shell: bash
+
     - name: Remove label
       run: |
         curl -L \
