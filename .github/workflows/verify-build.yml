@@ -15,6 +15,9 @@ on:
       dist-options:
         type: string
         default: ''
+      skip-examples:
+        type: boolean
+        default: false
       valgrind:
         type: boolean
         default: true
@@ -85,14 +88,14 @@ jobs:
           install: 'true'
 
       - name: Run examples
-        if: ${{ inputs.release == false }}
+        if: ${{ inputs.skip-examples == false && inputs.release == false }}
         uses: ./.github/actions/run-examples
         with:
           prefix: ${{github.workspace}}/artifacts/${{matrix.archconfig}}/${{matrix.build_type}}/opt
           plugin: ${{ inputs.plugin }}
 
       - name: Run examples with valgrind
-        if: ${{ inputs.release == false && inputs.valgrind == true}}
+        if: ${{ inputs.skip-examples == false && inputs.release == false && inputs.valgrind == true }}
         uses: ./.github/actions/run-examples
         with:
           prefix: ${{github.workspace}}/artifacts/${{matrix.archconfig}}/${{matrix.build_type}}/opt
