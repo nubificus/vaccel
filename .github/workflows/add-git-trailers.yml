@@ -14,7 +14,7 @@ on:
 
 jobs:
   git-trailers:
-    name: Add Git Trailers to PR commits
+    name: Add Git Trailers
     runs-on: [self-hosted, x86_64]
     permissions:
       contents: write
