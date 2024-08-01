@@ -18,7 +18,19 @@ inputs:
 runs:
   using: composite
   steps:
+    - name: Verify file changed
+      id: verify_file_changed
+      working-directory: ${{ inputs.workdir }}
+      run: |
+        RES=0
+        git diff --quiet ${{ inputs.file }} || RES="$?"
+        [ "$RES" != 0 ] && [ "$RES" != 1 ] && exit "$((RES + 0))"
+        echo "changed=${RES}" >> "$GITHUB_OUTPUT"
+        echo "changed=${RES}"
+      shell: bash
+
     - name: Commit file
+      if: ${{ steps.verify_file_changed.changed == 1 }}
       working-directory: ${{ inputs.workdir }}
       run: |
         CONTENT=$(base64 -i "${{ inputs.file }}")
