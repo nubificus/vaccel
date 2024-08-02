@@ -19,11 +19,24 @@ for v in "$@"; do
 	fi
 	c=$((c + 1))
 done
+REPO_URL=$(git remote get-url origin |
+	sed 's/git@github.com:\(.*\)\.git/https:\/\/github.com\/\1/g')
+NOT_VACCEL=0
+if [ "${PKG_NAME}" != "vaccel" ]; then
+	[ "${PKG_NAME#*"vaccel"}" = "${PKG_NAME}" ] && exit 1
+	NOT_VACCEL=1
+fi
+printf "Package    : %s\n" "${PKG_NAME}"
+printf "Version    : %s\n" "${VERSION}"
+printf "Build type : %s\n" "${PKG_BUILDTYPE}"
+printf "Repo URL   : %s\n" "${REPO_URL}"
+printf "Meson args : %s\n\n" "${MESON_ARGS}"
 
 cd "${MESON_DIST_ROOT}" || exit 1
 
 # generate binary dist
 # (needs: meson dist --include-subprojects)
+printf "%s\n\n" "Generating binary distribution"
 BIN_NAME="${PKG_NAME}-${VERSION}"
 BIN_TAR_NAME="${BIN_NAME}-bin.tar.gz"
 BIN_PREFIX="${MESON_DIST_ROOT}/build/${BIN_NAME}"
@@ -35,9 +48,11 @@ eval meson setup "${MESON_ARGS}" \
 	meson install -C build &&
 	tar cfz ../"${BIN_TAR_NAME}" -C build "${BIN_NAME}"
 rm -rf build
+printf "\n%s\n\n" "Created $(dirname "${MESON_DIST_ROOT}")/${BIN_TAR_NAME}"
 
 # generate .deb packages
 # (needs: meson dist --include-subprojects)
+printf "%s\n\n" "Generating deb package"
 for p in "build-essential" "dh-make" "git-buildpackage"; do
 	if [ -z "$(dpkg -l | awk "/^ii  $p/")" ]; then
 		echo "Not building a deb package: Package $p missing"
@@ -46,9 +61,11 @@ for p in "build-essential" "dh-make" "git-buildpackage"; do
 done
 rm -f ../*"${VERSION}".orig.tar.xz
 rm -rf "${MESON_DIST_ROOT}"/.git*
-DEBFULLNAME="Anastassios Nanos"
+UPFULLNAME="Anastassios Nanos"
+UPEMAIL="ananos@nubificus.co.uk"
+DEBFULLNAME="Kostis Papazafeiropoulos"
 export DEBFULLNAME
-DEBEMAIL="ananos@nubificus.co.uk"
+DEBEMAIL="papazof@nubificus.co.uk"
 export DEBEMAIL
 
 USER="$(whoami)" \
@@ -62,27 +79,28 @@ printf "%s\n\t%s" "override_dh_auto_configure:" \
 	>>debian/rules
 
 # debian/copyright
-sed -i "s/Upstream-Contact.*/Upstream-Contact: ${DEBFULLNAME} <${DEBEMAIL}>/g" \
+sed -i "s/Upstream-Contact.*/Upstream-Contact: ${UPFULLNAME} <${UPEMAIL}>/g" \
 	debian/copyright
-sed -i "s/Source.*/Source: https:\/\/github.com\/nubificus\/vaccel/g" \
+sed -i "s/Source.*/Source: $(echo "$REPO_URL" | sed 's/\//\\\//g')/g" \
 	debian/copyright
-sed -i "s/Upstream-Contact.*/Upstream-Contact: ${DEBFULLNAME} <${DEBEMAIL}>/g" \
+sed -i -z -e "s/\(Copyright:\)\n[^\n]\+[\n]*[^\n]*\n\(License\)/\1 2020-$(date +"%Y") Nubificus LTD <info@nubificus.co.uk>\n\2/g" \
 	debian/copyright
-sed -i "s/Copyright.*/Copyright: 2020-$(date +"%Y") Nubificus LTD <info@nubificus.co.uk>/g" \
-	debian/copyright
-sed -i "/<years>/d" debian/copyright
-sed -i "/^#.*/d" debian/copyright
+sed -i -z -e "s/\n#.*[\n]*//g" debian/copyright
 
 # debian/control
 sed -i "s/Homepage.*/Homepage: https:\/\/vaccel.org/g" debian/control
 sed -i "s/Section.*/Section: libs/g" debian/control
-sed -i "s/Description.*/Description: Hardware Acceleration for Serverless Computing/g" \
+sed -i -z -e "s/Description.*/Description: Hardware Acceleration for Serverless Computing/g" \
 	debian/control
 sed -i "/^#.*/d" debian/control
-sed -i "/<insert/d" debian/control
+sed -i "/cmake/d" debian/control
+if [ "${NOT_VACCEL}" = 1 ]; then
+	sed -i -z -e 's/\(Depends:\n.*\n\)\(Description\)/\1 vaccel,\n\2/g' \
+		debian/control
+fi
 
 # debian/changelog
-echo "Generating changelog..."
+echo "Generating changelog"
 sed -i "2d;3d" debian/changelog
 cp -r "${MESON_SOURCE_ROOT}"/.git* ./
 TAG=$(git describe --abbrev=0 --tags --match "v[0-9]*" 2>/dev/null)
@@ -116,6 +134,9 @@ if [ "${TAG}" != "${TAG_DIFF}" ]; then
 fi
 rm -rf "${MESON_DIST_ROOT}"/.git*
 
+echo "Building package"
 rm -rf debian/*.ex debian/*.EX debian/*.docs debian/README*
 dpkg-buildpackage -us -uc
 rm -rf obj-* debian
+printf "\n%s\n\n" \
+	"Created $(ls "$(dirname "${MESON_DIST_ROOT}")"/"${PKG_NAME}_${VERSION}"*.deb)"
