@@ -3,14 +3,16 @@ project('vaccel', 'c', 'cpp',
   default_options : ['c_std=c11'],
   license : 'Apache-2.0',
   license_files : 'LICENSE',
-  version : run_command('scripts/generate-version.sh',
-    '', '--no-dirty', check: false).stdout().strip())
+  version : run_command('sh', '-c',
+    'git submodule update --init >/dev/null && ' +
+    'scripts/common/generate-version.sh . --no-dirty',
+    check: false).stdout().strip())
 
 vaccel_cargs = ['-Wall','-Wextra','-Werror']
-vaccel_cppargs= ['-std=c++2b']
+vaccel_cppargs = ['-std=c++2b']
 plugins_cargs = vaccel_cargs + '-Wno-unused'
 
-vaccel_version = run_command('scripts/generate-version.sh',
+vaccel_version = run_command('scripts/common/generate-version.sh',
   meson.project_source_root(),
   check: false).stdout().strip()
 
@@ -47,7 +49,7 @@ summary({
   bool_yn : true)
 
 meson.add_dist_script(
-  'scripts/dist.sh',
+  'scripts/common/dist.sh',
   'vaccel',
   get_option('buildtype'),
   'plugin-exec',
