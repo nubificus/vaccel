@@ -1,3 +1,6 @@
 [submodule "third-party/slog"]
 	path = third-party/slog
 	url = https://github.com/kala13x/slog.git
+[submodule "scripts/meson"]
+	path = scripts/common
+	url = https://github.com/nubificus/vaccel-meson-scripts.git
