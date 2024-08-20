@@ -22,6 +22,8 @@ inputs:
     default: 'false'
   dist:
     default: 'false'
+  dist-no-subprojects:
+    default: 'false'
   install-deb:
     default: 'false'
 
@@ -67,7 +69,13 @@ runs:
     - name: Generate distribution tar/deb
       working-directory: ${{ inputs.source-dir }}
       if: ${{ inputs.dist == 'true' || inputs.install-deb == 'true' }}
-      run: meson dist --include-subprojects --allow-dirty -C ${{ inputs.build-dir }}
+      run: |
+        if [ "${{ inputs.dist-no-subprojects }}" == "false" ]; then
+          SUBPROJECTS=--include-subprojects
+        else
+          SUBPROJECTS=
+        fi
+        meson dist $SUBPROJECTS --allow-dirty -C ${{ inputs.build-dir }}
       shell: bash
 
     - name: Install generated debs
