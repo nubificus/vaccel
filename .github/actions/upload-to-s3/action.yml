@@ -39,8 +39,6 @@ runs:
           echo "Event not supported."
           exit 1
         fi
-        # Since we know this is a PR that just got merged, we ignore the 
-        # branch name, we just use main
         echo "ARTIFACT_SHA=$(echo $SHA)" >> "$GITHUB_OUTPUT"
         echo "ARTIFACT_NAME=$(echo $BRANCH)" >> "$GITHUB_OUTPUT"
         BASE_PATH="nbfc-assets/github/vaccel"
@@ -54,8 +52,10 @@ runs:
     - name: Get artifacts paths
       id: get_artifact_paths
       run: |
-        echo "deb-path=$(find ${{ inputs.build-dir }} -name "vaccel*.deb")" >> "$GITHUB_OUTPUT"
-        echo "tar-path=$(find ${{ inputs.build-dir }} -name "vaccel*bin.tar.gz")" >> "$GITHUB_OUTPUT"
+        DEB_DIR=$(dirname $(find "${{ inputs.build-dir }}" -name "vaccel*.deb" | head -1))
+        TAR_DIR=$(dirname $(find "${{ inputs.build-dir }}" -name "vaccel*.tar.gz" | head -1))
+        echo "deb-path=$DEB_DIR/vaccel*.deb" >> "$GITHUB_OUTPUT"
+        echo "tar-path=$TAR_DIR/vaccel*bin.tar.gz" >> "$GITHUB_OUTPUT"
       shell: bash
 
     - name: Upload deb artifact to s3 by name
