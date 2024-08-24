@@ -15,7 +15,7 @@ on:
 jobs:
   git-trailers:
     name: Add Git Trailers
-    runs-on: [self-hosted, x86_64]
+    runs-on: [self-hosted, x86_64, "2204"]
     permissions:
       contents: write
       pull-requests: write
