@@ -1,8 +1,8 @@
 users:
-  github-actions:
+  github-actionsbot:
     name: github-actions[bot]
     email: 41898282+github-actions[bot]@users.noreply.github.com
-  dependabot:
+  dependabotbot:
     name: dependabot[bot]
     email: support@github.com
   ananos:
