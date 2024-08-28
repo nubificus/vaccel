@@ -21,6 +21,10 @@ jobs:
       pull-requests: write
 
     steps:
+      - name: Exit if PR is not rebaseable
+        if: ${{ github.event.pull_request.rebaseable != null && github.event.pull_request.rebaseable == false }}
+        run: exit 1
+
       - name: Checkout .github directory
         uses: actions/checkout@v4
         with:
