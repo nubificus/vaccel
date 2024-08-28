@@ -36,7 +36,7 @@ jobs:
           token: ${{ secrets.GIT_CLONE_PAT || github.token }}
 
       - name: Append git trailers
-        uses: nubificus/git-trailers@feat_checkout_branch
+        uses: nubificus/git-trailers@feat_use_rebase
         with:
           user_info: .github/contributors.yaml
 
