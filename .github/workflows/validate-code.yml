@@ -177,7 +177,7 @@ jobs:
           token: ${{ secrets.GIT_CLONE_PAT || github.token }}
 
       - name: Run super-linter
-        uses: super-linter/super-linter@v6
+        uses: super-linter/super-linter@v7
         env:
           DEFAULT_BRANCH: main
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
