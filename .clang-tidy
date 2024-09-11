@@ -1,5 +1,5 @@
 ---
-Checks:         'clang-diagnostic-*,clang-analyzer-*,bugprone-*,llvm-*,modernize-*,performance-*,portability-*,readability-*,-readability-braces-around-statements,-readability-identifier-length,-llvm-header-guard,-modernize-use-std-print'
+Checks:         'clang-diagnostic-*,clang-analyzer-*,bugprone-*,llvm-*,modernize-*,performance-*,portability-*,readability-*,-readability-braces-around-statements,-readability-identifier-length,-llvm-header-guard,-modernize-use-std-print,-bugprone-easily-swappable-parameters'
 WarningsAsErrors: 'clang-analyzer-core.*,clang-analyzer-unix.*,readability-inconsistent-declaration-parameter-name,clang-analyzer-deadcode.*,bugprone-suspicious-include,clang-diagnostic-sometimes-uninitialized'
 HeaderFileExtensions:
   - ''
@@ -18,3 +18,6 @@ HeaderFilterRegex: ''
 FormatStyle:     file
 User:            clang-tidy
 SystemHeaders:   false
+CheckOptions:
+  - key:   readability-function-cognitive-complexity.Threshold
+    value: '30'
