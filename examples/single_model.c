@@ -31,6 +31,8 @@ int create_from_path(char *path)
 	vaccel_info("Creating new model handle");
 	struct vaccel_resource model;
 	int ret = vaccel_resource_new(&model, path, VACCEL_FILE_DATA);
+	if (ret)
+		return ret;
 
 	struct vaccel_session sess;
 	ret = create_session(&sess);

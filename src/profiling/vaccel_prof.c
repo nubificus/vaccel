@@ -23,7 +23,7 @@ static uint64_t get_tstamp_nsec(void)
 
 	clock_gettime(CLOCK_MONOTONIC_RAW, &tp);
 
-	return tp.tv_sec * 1e9 + tp.tv_nsec;
+	return (tp.tv_sec * 1e9) + tp.tv_nsec;
 }
 
 bool vaccel_prof_enabled(void)

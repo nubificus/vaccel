@@ -26,7 +26,7 @@ static int load_backend_plugin(const char *path)
 		return VACCEL_ENOENT;
 	}
 
-	plugin_p = dlsym(dl, "vaccel_plugin");
+	plugin_p = (struct vaccel_plugin **)dlsym(dl, "vaccel_plugin");
 	if (!plugin_p) {
 		printf("Not a vaccel plugin: %s", path);
 		ret = VACCEL_ELIBBAD;

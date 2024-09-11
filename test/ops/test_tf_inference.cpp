@@ -59,10 +59,12 @@ TEST_CASE("tf_inference", "[ops_tf]")
 	if (status.message != nullptr)
 		free((char *)status.message);
 
-	struct vaccel_tf_buffer run_options = { nullptr, 0 };
+	struct vaccel_tf_buffer run_options = { .data = nullptr, .size = 0 };
 	const char *in_node_name = "serving_default_input_1";
 
-	struct vaccel_tf_node in_node = { const_cast<char *>(in_node_name), 0 };
+	struct vaccel_tf_node in_node = {
+		.name = const_cast<char *>(in_node_name), .id = 0
+	};
 
 	int64_t dims[] = { 1, 30 };
 	float data[30];
@@ -78,8 +80,9 @@ TEST_CASE("tf_inference", "[ops_tf]")
 
 	const char *out_node_name = "StatefulPartitionedCall";
 
-	struct vaccel_tf_node out_node = { const_cast<char *>(out_node_name),
-					   0 };
+	struct vaccel_tf_node out_node = {
+		.name = const_cast<char *>(out_node_name), .id = 0
+	};
 	struct vaccel_tf_tensor *out;
 
 	ret = vaccel_tf_session_run(&vsess, &model, &run_options, &in_node, &in,

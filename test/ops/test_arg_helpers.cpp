@@ -4,10 +4,10 @@
 #include <cstdint>
 #include <utils.hpp>
 
-#include <fcntl.h>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>

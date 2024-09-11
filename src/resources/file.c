@@ -103,6 +103,12 @@ int vaccel_file_persist(struct vaccel_file *file, const char *dir,
 	FILE *fp;
 	if (randomize) {
 		int fd = mkstemp(file->path);
+		if (fd < 0) {
+			vaccel_error("Could not create file %s: %s", file->path,
+				     strerror(errno));
+			ret = VACCEL_EIO;
+			goto remove_file;
+		}
 		fp = fdopen(fd, "w+");
 	} else {
 		fp = fopen(file->path, "w+");
@@ -110,13 +116,16 @@ int vaccel_file_persist(struct vaccel_file *file, const char *dir,
 
 	/* Check if we managed to open the file */
 	if (!fp) {
-		ret = errno;
+		vaccel_error("Could not open file %s: %s", file->path,
+			     strerror(errno));
+		ret = VACCEL_EIO;
 		goto free_path;
 	}
 
 	if (fwrite(file->data, sizeof(char), file->size, fp) != file->size) {
 		vaccel_error("Could not persist file %s: %s", file->path,
 			     strerror(errno));
+		fclose(fp);
 		ret = VACCEL_EIO;
 		goto remove_file;
 	}
@@ -142,7 +151,6 @@ int vaccel_file_persist(struct vaccel_file *file, const char *dir,
 	return VACCEL_OK;
 
 remove_file:
-	fclose(fp);
 	remove(file->path);
 free_path:
 	free(file->path);
