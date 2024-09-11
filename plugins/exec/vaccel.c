@@ -107,7 +107,7 @@ static int exec_with_resource(struct vaccel_session *session,
 
 	if (nr_deps) {
 		exec_res_debug("nr_deps: %zu", nr_deps);
-		ddl = malloc(sizeof(*ddl) * nr_deps);
+		ddl = (void **)malloc(sizeof(*ddl) * nr_deps);
 		if (!ddl)
 			return VACCEL_ENOMEM;
 	}

@@ -66,7 +66,7 @@ auto main(int argc, char **argv) -> int
 	}
 
 	ret = vaccel_resource_new(&model, model_path, VACCEL_FILE_DATA);
-	if (ret) {
+	if (ret != 0) {
 		vaccel_error("Could not create model resource");
 		return ret;
 	}
