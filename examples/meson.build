@@ -37,7 +37,7 @@ examples_sources = files([
 examples = []
 foreach e : examples_sources
   examples += executable(fs.stem(e),
-    sources : [e, vaccel_utils_c, vaccel_headers],
+    sources : e,
     c_args : vaccel_cargs,
     cpp_args : vaccel_cargs + vaccel_cppargs,
     include_directories : vaccel_includes,
