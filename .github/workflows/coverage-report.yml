@@ -9,12 +9,6 @@ on:
       actions-rev:
         type: string
         default: 'main'
-      runner:
-        type: string
-        default: '["gcc", "lite", "2204"]'
-      runner-archs:
-        type: string
-        default: '["x86_64"]'
       options:
         type: string
         default: 'auto_features=enabled'
@@ -31,10 +25,9 @@ on:
 jobs:
   coverage-report:
     name: Coverage Report
-    runs-on: [self-hosted, "${{ matrix.archconfig }}", "${{ fromJSON(inputs.runner) }}"]
+    runs-on: [gcc-dind-2204-amd64]
     strategy:
       matrix:
-        archconfig: ["${{ fromJSON(inputs.runner-archs) }}"]
         build-type: [plain]
       fail-fast: false
     permissions:

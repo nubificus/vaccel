@@ -1,8 +1,6 @@
 self-hosted-runner:
   labels:
-    - x86_64
-    - aarch64
-    - armv7l
-    - gcc
-    - lite
-    - "2204"
+    - '*-*-amd64'
+    - '*-dind-*-amd64'
+    - '*-*-arm*'
+    - '*-dind-*-arm*'

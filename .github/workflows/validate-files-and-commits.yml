@@ -9,12 +9,6 @@ on:
       actions-rev:
         type: string
         default: 'main'
-      runner:
-        type: string
-        default: '["gcc", "lite", "2204"]'
-      runner-archs:
-        type: string
-        default: '["x86_64"]'
     secrets:
       GIT_CLONE_PAT:
         required: false
@@ -22,11 +16,7 @@ on:
 jobs:
   linter-commitlint:
     name: Lint Commit Messages
-    runs-on: [self-hosted, "${{ matrix.archconfig }}", "${{ fromJSON(inputs.runner) }}"]
-    strategy:
-      matrix:
-        archconfig: ["${{ fromJSON(inputs.runner-archs) }}"]
-      fail-fast: false
+    runs-on: [gcc-dind-2204-amd64]
     steps:
       - name: Checkout .github directory
         uses: actions/checkout@v4
@@ -49,11 +39,7 @@ jobs:
 
   linter-typos:
     name: Spell Check Repo
-    runs-on: [self-hosted, "${{ matrix.archconfig }}", "${{ fromJSON(inputs.runner) }}"]
-    strategy:
-      matrix:
-        archconfig: ["${{ fromJSON(inputs.runner-archs) }}"]
-      fail-fast: false
+    runs-on: [gcc-dind-2204-amd64]
     steps:
       - name: Checkout .github directory
         uses: actions/checkout@v4
@@ -76,11 +62,7 @@ jobs:
 
   linter-license-eye:
     name: Check License Headers
-    runs-on: [self-hosted, "${{ matrix.archconfig }}", "${{ fromJSON(inputs.runner) }}"]
-    strategy:
-      matrix:
-        archconfig: ["${{ fromJSON(inputs.runner-archs) }}"]
-      fail-fast: false
+    runs-on: [gcc-dind-2204-amd64]
     steps:
       - name: Checkout .github directory
         uses: actions/checkout@v4

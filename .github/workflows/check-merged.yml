@@ -19,7 +19,7 @@ on:
 jobs:
   check-merged:
     name: Check PR is merged
-    runs-on: [self-hosted, x86_64]
+    runs-on: [gcc-2204-amd64]
     outputs:
       is-merged: ${{ steps.check.outputs.is-merged }}
     steps:
