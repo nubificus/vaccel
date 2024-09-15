@@ -22,7 +22,9 @@ inputs:
     default: 'false'
   dist:
     default: 'false'
-  dist-no-subprojects:
+  dist-subprojects:
+    default: 'true'
+  dist-tests:
     default: 'false'
   install-deb:
     default: 'false'
@@ -33,24 +35,25 @@ runs:
     - name: Configure project
       working-directory: ${{ inputs.source-dir }}
       run: |
-        export OPTIONS=$(echo ${{ inputs.options }} | \
+        OPTIONS=$(echo "${{ inputs.options }}" | \
           sed -E 's/[,]*([^,]+)[,]*/-D\1 /g')
         [ -n "${{ inputs.pkgconfig-prefix }}" ] && \
-          PKGCONFIG_DIR=lib/$($CC -print-multiarch)/pkgconfig && \
-          export OPTIONS=$OPTIONS" --pkg-config-path=${{ inputs.pkgconfig-prefix }}/$PKGCONFIG_DIR"
+          PKGCONFIG_DIR="lib/$($CC -print-multiarch)/pkgconfig" && \
+          OPTIONS="$OPTIONS --pkg-config-path=${{ inputs.pkgconfig-prefix }}/$PKGCONFIG_DIR"
         meson setup \
           --reconfigure \
-          --prefix=${{ inputs.prefix }} \
-          --buildtype=${{ inputs.build-type }} \
-          -Db_coverage=${{ inputs.coverage }} \
-          $OPTIONS \
-          ${{ inputs.build-dir }}
+          --prefix="${{ inputs.prefix }}" \
+          --buildtype="${{ inputs.build-type }}" \
+          -Db_coverage="${{ inputs.coverage }}" \
+          "$OPTIONS" \
+          "${{ inputs.build-dir }}"
       shell: bash
 
     - name: Build project
       working-directory: ${{ inputs.source-dir }}
-      if: ${{ inputs.build == 'true' || inputs.dist == 'true' || inputs.install == 'true' || inputs.install-deb == 'true' }}
-      run: meson compile -C ${{ inputs.build-dir }}
+      if: ${{ inputs.build == 'true' || inputs.dist == 'true' || \
+        inputs.install == 'true' || inputs.install-deb == 'true' }}
+      run: meson compile -C "${{ inputs.build-dir }}"
       shell: bash
 
     - name: Create run dir
@@ -63,23 +66,22 @@ runs:
     - name: Install project
       working-directory: ${{ inputs.source-dir }}
       if: ${{ inputs.install == 'true' }}
-      run: meson install -C ${{ inputs.build-dir }}
+      run: meson install -C "${{ inputs.build-dir }}"
       shell: bash
 
     - name: Generate distribution tar/deb
       working-directory: ${{ inputs.source-dir }}
       if: ${{ inputs.dist == 'true' || inputs.install-deb == 'true' }}
       run: |
-        if [ "${{ inputs.dist-no-subprojects }}" == "false" ]; then
-          SUBPROJECTS=--include-subprojects
-        else
-          SUBPROJECTS=
-        fi
-        meson dist $SUBPROJECTS --allow-dirty -C ${{ inputs.build-dir }}
+        [ "${{ inputs.dist-subprojects }}" == "true" ] && \
+          ARGS+=" --include-subprojects"
+        [ "${{ inputs.dist-tests }}" == "false" ] && \
+          ARGS+=" --no-tests"
+        meson dist "$ARGS" --allow-dirty -C "${{ inputs.build-dir }}"
       shell: bash
 
     - name: Install generated debs
       working-directory: ${{ inputs.source-dir }}
       if: ${{ inputs.install-deb == 'true' }}
-      run: sudo dpkg -i ${{ inputs.build-dir }}/meson-dist/vaccel*.deb
+      run: sudo dpkg -i "${{ inputs.build-dir }}"/meson-dist/vaccel*.deb
       shell: bash
