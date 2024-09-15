@@ -11,10 +11,13 @@ on:
         default: 'main'
       runner:
         type: string
-        default: '["gcc", "lite", "2204"]'
+        default: '["gcc", "dind", "2204"]'
       runner-archs:
         type: string
-        default: '["x86_64"]'
+        default: '["amd64"]'
+      runner-arch-map:
+        type: string
+        default: '[{"amd64":"x86_64", "arm64":"aarch64", "arm":"armv7l"}]'
       options:
         type: string
         default: 'auto_features=enabled'
@@ -39,14 +42,15 @@ jobs:
   linter-cppcheck:
     name: Lint C/C++ (cppcheck)
     if: ${{ inputs.skip-cppcheck == false }}
-    runs-on: [self-hosted, "${{ matrix.archconfig }}", "${{ fromJSON(inputs.runner) }}"]
+    runs-on: ${{ format('{0}-{1}', join(fromJSON(inputs.runner), '-'), matrix.arch) }}
     strategy:
       matrix:
-        archconfig: ["${{ fromJSON(inputs.runner-archs) }}"]
+        arch: ["${{ fromJSON(inputs.runner-archs) }}"]
         build-type: [release]
       fail-fast: false
     env:
-      DOWNLOAD_PATH: ${{github.workspace}}/artifacts/downloads/${{matrix.archconfig}}/${{matrix.build-type}}
+      ARCH: ${{ fromJson(inputs.runner-arch-map)[0][matrix.arch] }}
+      DOWNLOAD_PATH: ${{github.workspace}}/artifacts/downloads/${{fromJson(inputs.runner-arch-map)[0][matrix.arch]}}/${{matrix.build-type}}
       CC: gcc-12
       CXX: g++-12
     steps:
@@ -74,7 +78,7 @@ jobs:
         with:
           branch: ${{ steps.initialize-workspace.outputs.remote-branch }}
           build-type: ${{ matrix.build-type }}
-          arch: ${{ matrix.archconfig }}
+          arch: ${{ env.ARCH }}
           access-key: ${{ secrets.AWS_ACCESS_KEY }}
           secret-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           local-path: ${{ env.DOWNLOAD_PATH }}
@@ -106,17 +110,18 @@ jobs:
 
   linter-cpp-linter:
     name: Lint C/C++ (cpp-linter)
-    runs-on: [self-hosted, "${{ matrix.archconfig }}", "${{ fromJSON(inputs.runner) }}"]
+    runs-on: ${{ format('{0}-{1}', join(fromJSON(inputs.runner), '-'), matrix.arch) }}
     strategy:
       matrix:
-        archconfig: ["${{ fromJSON(inputs.runner-archs) }}"]
+        arch: ["${{ fromJSON(inputs.runner-archs) }}"]
         build-type: [release]
       fail-fast: false
     permissions:
       pull-requests: write
       contents: read
     env:
-      DOWNLOAD_PATH: ${{github.workspace}}/artifacts/downloads/${{matrix.archconfig}}/${{matrix.build-type}}
+      ARCH: ${{ fromJson(inputs.runner-arch-map)[0][matrix.arch] }}
+      DOWNLOAD_PATH: ${{github.workspace}}/artifacts/downloads/${{fromJson(inputs.runner-arch-map)[0][matrix.arch]}}/${{matrix.build-type}}
       CC: gcc-12
       CXX: g++-12
     steps:
@@ -144,7 +149,7 @@ jobs:
         with:
           branch: ${{ steps.initialize-workspace.outputs.remote-branch }}
           build-type: ${{ matrix.build-type }}
-          arch: ${{ matrix.archconfig }}
+          arch: ${{ env.ARCH }}
           access-key: ${{ secrets.AWS_ACCESS_KEY }}
           secret-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           local-path: ${{ env.DOWNLOAD_PATH }}
@@ -186,10 +191,10 @@ jobs:
 
   linter-super-linter:
     name: Lint Python/Shell/Dockerfiles/GHActions/Markdown/YAML/JS
-    runs-on: [self-hosted, "${{ matrix.archconfig }}", "${{ fromJSON(inputs.runner) }}"]
+    runs-on: ${{ format('{0}-{1}', join(fromJSON(inputs.runner), '-'), matrix.arch) }}
     strategy:
       matrix:
-        archconfig: ["${{ fromJSON(inputs.runner-archs) }}"]
+        arch: ["${{ fromJSON(inputs.runner-archs) }}"]
       fail-fast: false
     permissions:
       contents: read
