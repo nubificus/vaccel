@@ -3,25 +3,37 @@ name: Verify Build
 on:
   workflow_call:
     inputs:
+      actions-repo:
+        type: string
+        default: 'nubificus/vaccel'
+      actions-rev:
+        type: string
+        default: 'main'
       runner:
         type: string
         default: '["gcc", "lite", "2204"]'
       runner-archs:
         type: string
         default: '["x86_64", "aarch64", "armv7l"]'
+      package:
+        type: string
+        default: 'vaccel'
       options:
         type: string
         default: 'auto_features=enabled'
       dist-options:
         type: string
         default: ''
+      dist-subprojects:
+        type: boolean
+        default: true
       skip-examples:
         type: boolean
         default: false
       valgrind:
         type: boolean
         default: true
-      plugin:
+      upload-subpath:
         type: string
         default: ''
       release:
@@ -36,17 +48,18 @@ on:
         required: false
 
 jobs:
-  verify_build:
+  verify-build:
     name: Verify Build
     runs-on: [self-hosted, "${{ matrix.archconfig }}", "${{ fromJSON(inputs.runner) }}"]
-
     strategy:
       matrix:
         archconfig: ["${{ fromJSON(inputs.runner-archs) }}"]
-        build_type: [debug, release]
+        build-type: [debug, release]
       fail-fast: false
-
     env:
+      DEFAULT_UPPATH: ${{ (inputs.package != 'vaccel') && format('{0}/{1}', 'plugins', inputs.package) || '' }}
+      DOWNLOAD_PATH: ${{github.workspace}}/artifacts/downloads/${{matrix.archconfig}}/${{matrix.build-type}}
+      INSTALL_PREFIX: ${{github.workspace}}/artifacts/${{matrix.archconfig}}/${{matrix.build-type}}
       CC: gcc-12
       CXX: g++-12
     steps:
@@ -54,36 +67,37 @@ jobs:
         uses: actions/checkout@v4
         with:
           sparse-checkout: .github
-          repository: ${{ (inputs.plugin != '' && 'nubificus/vaccel') || '' }}
-          ref: ${{ (inputs.plugin != '' && 'main') || '' }}
+          repository: ${{ inputs.actions-repo }}
+          ref: ${{ inputs.actions-rev }}
 
       - name: Initialize workspace
-        id: initialize_workspace
+        id: initialize-workspace
         uses: ./.github/actions/initialize-workspace
         with:
           fetch-depth: 0
-          remote-actions-repo: ${{ (inputs.plugin != '' && 'nubificus/vaccel') || '' }}
+          remote-actions-repo: ${{ inputs.actions-repo }}
           token: ${{ secrets.GIT_CLONE_PAT || github.token }}
 
       - name: Download artifacts from s3
-        if: ${{ inputs.plugin != '' }} 
+        id: download-artifacts
+        if: ${{ inputs.actions-repo != github.repository }}
         uses: ./.github/actions/download-from-s3
         with:
-          branch: ${{ steps.initialize_workspace.outputs.remote-branch }}
-          build-type: ${{matrix.build_type}}
-          arch: ${{matrix.archconfig}}
+          branch: ${{ steps.initialize-workspace.outputs.remote-branch }}
+          build-type: ${{ matrix.build-type }}
+          arch: ${{ matrix.archconfig }}
           access-key: ${{ secrets.AWS_ACCESS_KEY }}
           secret-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          output-dir: ./artifacts/downloads/${{matrix.archconfig}}/${{matrix.build_type}}
+          local-path: ${{ env.DOWNLOAD_PATH }}
           install: 'true'
 
       - name: Build project
         if: ${{ inputs.release == false }}
         uses: ./.github/actions/build
         with:
-          prefix: ${{github.workspace}}/artifacts/${{matrix.archconfig}}/${{matrix.build_type}}/opt
-          build-dir: build_${{matrix.build_type}}
-          build-type: ${{matrix.build_type}}
+          prefix: ${{ env.INSTALL_PREFIX }}
+          build-path: build_${{ matrix.build-type }}
+          build-type: ${{ matrix.build-type }}
           options: ${{ inputs.options }}
           install: 'true'
 
@@ -91,42 +105,44 @@ jobs:
         if: ${{ inputs.skip-examples == false && inputs.release == false }}
         uses: ./.github/actions/run-examples
         with:
-          prefix: ${{github.workspace}}/artifacts/${{matrix.archconfig}}/${{matrix.build_type}}/opt
-          plugin: ${{ inputs.plugin }}
+          prefix: ${{ env.INSTALL_PREFIX }}
+          package: ${{ inputs.package }}
 
       - name: Run examples with valgrind
         if: ${{ inputs.skip-examples == false && inputs.release == false && inputs.valgrind == true }}
         uses: ./.github/actions/run-examples
         with:
-          prefix: ${{github.workspace}}/artifacts/${{matrix.archconfig}}/${{matrix.build_type}}/opt
+          prefix: ${{ env.INSTALL_PREFIX }}
           valgrind: 'true'
-          plugin: ${{ inputs.plugin }}
+          package: ${{ inputs.package }}
 
       - name: Build project (dist)
+        id: build-dist
         if: ${{ contains(github.event.pull_request.labels.*.name, 'ok-to-upload') || inputs.release == true }}
         uses: ./.github/actions/build
         with:
-          prefix: ${{github.workspace}}/artifacts/${{matrix.archconfig}}/${{matrix.build_type}}/opt
-          build-dir: build_${{matrix.build_type}}
-          build-type: ${{matrix.build_type}}
+          prefix: ${{ env.INSTALL_PREFIX }}
+          build-path: build_${{ matrix.build-type }}
+          build-type: ${{ matrix.build-type }}
           options: ${{ inputs.dist-options || inputs.options }}
           dist: 'true'
+          dist-subprojects: ${{ inputs.dist-subprojects }}
 
       - name: Upload to s3
         if: ${{ contains(github.event.pull_request.labels.*.name, 'ok-to-upload') || inputs.release == true }}
         uses: ./.github/actions/upload-to-s3
         with:
-          build-dir: build_${{matrix.build_type}}
-          build-type: ${{matrix.build_type}}
-          arch: ${{matrix.archconfig}}
-          plugin: ${{ inputs.plugin }}
+          arch: ${{ matrix.archconfig }}
+          build-type: ${{ matrix.build-type }}
+          local-path: ${{ steps.build-dist.outputs.dist-path }}/*
+          remote-subpath: ${{ (inputs.upload-subpath != '' && inputs.upload-subpath) || env.DEFAULT_UPPATH }}
           access-key: ${{ secrets.AWS_ACCESS_KEY }}
           secret-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
       - name: Clean-up
         if: ${{ always() }}
         run: |
-          sudo rm -rf artifacts build_${{ matrix.build_type }}
-          [ -n "$(dpkg -l vaccel 2> /dev/null)" ] && \
-            sudo apt-get purge -y vaccel || echo
+          sudo rm -rf artifacts build*
+          sudo apt-get purge -y \
+            ${{ steps.download-artifacts.outputs.installed }} || echo
         shell: bash

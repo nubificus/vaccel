@@ -3,38 +3,43 @@ name: Validate Files and Commit Messages
 on:
   workflow_call:
     inputs:
+      actions-repo:
+        type: string
+        default: 'nubificus/vaccel'
+      actions-rev:
+        type: string
+        default: 'main'
       runner:
         type: string
         default: '["gcc", "lite", "2204"]'
-      runner-arch:
+      runner-archs:
         type: string
-        default: 'x86_64'
-      plugin:
-        type: string
-        default: ''
+        default: '["x86_64"]'
     secrets:
       GIT_CLONE_PAT:
         required: false
 
 jobs:
-  linter_commitlint:
+  linter-commitlint:
     name: Lint Commit Messages
-    runs-on: [self-hosted, "${{ inputs.runner-arch }}", "${{ fromJSON(inputs.runner) }}"]
-
+    runs-on: [self-hosted, "${{ matrix.archconfig }}", "${{ fromJSON(inputs.runner) }}"]
+    strategy:
+      matrix:
+        archconfig: ["${{ fromJSON(inputs.runner-archs) }}"]
+      fail-fast: false
     steps:
       - name: Checkout .github directory
         uses: actions/checkout@v4
         with:
           sparse-checkout: .github
-          repository: ${{ (inputs.plugin != '' && 'nubificus/vaccel') || '' }}
-          ref: ${{ (inputs.plugin != '' && 'main') || '' }}
+          repository: ${{ inputs.actions-repo }}
+          ref: ${{ inputs.actions-rev }}
 
       - name: Initialize workspace
-        id: initialize_workspace
         uses: ./.github/actions/initialize-workspace
         with:
           submodules: 'false'
-          remote-actions-repo: ${{ (inputs.plugin != '' && 'nubificus/vaccel') || '' }}
+          remote-actions-repo: ${{ inputs.actions-repo }}
           token: ${{ secrets.GIT_CLONE_PAT || github.token }}
 
       - name: Run commitlint
@@ -42,24 +47,26 @@ jobs:
         with:
           configFile: .github/linters/commitlint.config.mjs
 
-  linter_typos:
+  linter-typos:
     name: Spell Check Repo
-    runs-on: [self-hosted, x86_64, "${{ fromJSON(inputs.runner) }}"]
-
+    runs-on: [self-hosted, "${{ matrix.archconfig }}", "${{ fromJSON(inputs.runner) }}"]
+    strategy:
+      matrix:
+        archconfig: ["${{ fromJSON(inputs.runner-archs) }}"]
+      fail-fast: false
     steps:
       - name: Checkout .github directory
         uses: actions/checkout@v4
         with:
           sparse-checkout: .github
-          repository: ${{ (inputs.plugin != '' && 'nubificus/vaccel') || '' }}
-          ref: ${{ (inputs.plugin != '' && 'main') || '' }}
+          repository: ${{ inputs.actions-repo }}
+          ref: ${{ inputs.actions-rev }}
 
       - name: Initialize workspace
-        id: initialize_workspace
         uses: ./.github/actions/initialize-workspace
         with:
           submodules: 'false'
-          remote-actions-repo: ${{ (inputs.plugin != '' && 'nubificus/vaccel') || '' }}
+          remote-actions-repo: ${{ inputs.actions-repo }}
           token: ${{ secrets.GIT_CLONE_PAT || github.token }}
 
       - name: Spell check
@@ -67,24 +74,26 @@ jobs:
         with:
           config: .github/linters/typos.toml
 
-  linter_license_eye:
+  linter-license-eye:
     name: Check License Headers
-    runs-on: [self-hosted, x86_64, "${{ fromJSON(inputs.runner) }}"]
-
+    runs-on: [self-hosted, "${{ matrix.archconfig }}", "${{ fromJSON(inputs.runner) }}"]
+    strategy:
+      matrix:
+        archconfig: ["${{ fromJSON(inputs.runner-archs) }}"]
+      fail-fast: false
     steps:
       - name: Checkout .github directory
         uses: actions/checkout@v4
         with:
           sparse-checkout: .github
-          repository: ${{ (inputs.plugin != '' && 'nubificus/vaccel') || '' }}
-          ref: ${{ (inputs.plugin != '' && 'main') || '' }}
+          repository: ${{ inputs.actions-repo }}
+          ref: ${{ inputs.actions-rev }}
 
       - name: Initialize workspace
-        id: initialize_workspace
         uses: ./.github/actions/initialize-workspace
         with:
           submodules: 'false'
-          remote-actions-repo: ${{ (inputs.plugin != '' && 'nubificus/vaccel') || '' }}
+          remote-actions-repo: ${{ inputs.actions-repo }}
           token: ${{ secrets.GIT_CLONE_PAT || github.token }}
 
       - name: Run license-eye

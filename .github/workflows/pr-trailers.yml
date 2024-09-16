@@ -9,7 +9,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  commit_coverage:
+  commit-coverage:
     name: Commit coverage report
     if: ${{ github.event.review.state == 'approved' }}
     uses: ./.github/workflows/coverage-report.yml
@@ -17,8 +17,8 @@ jobs:
       commit: true
     secrets: inherit
 
-  git_trailers:
-    needs: [commit_coverage]
+  git-trailers:
+    needs: [commit-coverage]
     name: Add Git Trailers to PR commits
     if: ${{ github.event.pull_request.base.ref == 'main' && github.event.review.state == 'approved' }}
     uses: ./.github/workflows/add-git-trailers.yml

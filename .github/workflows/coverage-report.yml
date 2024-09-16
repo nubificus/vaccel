@@ -3,18 +3,21 @@ name: Coverage Report
 on:
   workflow_call:
     inputs:
+      actions-repo:
+        type: string
+        default: 'nubificus/vaccel'
+      actions-rev:
+        type: string
+        default: 'main'
       runner:
         type: string
         default: '["gcc", "lite", "2204"]'
-      runner-arch:
+      runner-archs:
         type: string
-        default: 'x86_64'
+        default: '["x86_64"]'
       options:
         type: string
         default: 'auto_features=enabled'
-      plugin:
-        type: string
-        default: ''
       commit:
         type: boolean
         default: false
@@ -26,13 +29,17 @@ on:
         required: false
 
 jobs:
-  coverage_report:
+  coverage-report:
     name: Coverage Report
-    runs-on: [self-hosted, "${{ inputs.runner-arch }}", "${{ fromJSON(inputs.runner) }}"]
+    runs-on: [self-hosted, "${{ matrix.archconfig }}", "${{ fromJSON(inputs.runner) }}"]
+    strategy:
+      matrix:
+        archconfig: ["${{ fromJSON(inputs.runner-archs) }}"]
+        build-type: [plain]
+      fail-fast: false
     permissions:
       contents: write
       pull-requests: write
-
     env:
       CC: gcc-12
       CXX: g++-12
@@ -41,11 +48,11 @@ jobs:
         uses: actions/checkout@v4
         with:
           sparse-checkout: .github
-          repository: ${{ (inputs.plugin != '' && 'nubificus/vaccel') || '' }}
-          ref: ${{ (inputs.plugin != '' && 'main') || '' }}
+          repository: ${{ inputs.actions-repo }}
+          ref: ${{ inputs.actions-rev }}
 
       - name: Set repository directories
-        id: set_repo_dirs
+        id: set-repo-dirs
         run: |
           echo "repo=${{ github.event.repository.name }}" >> "$GITHUB_OUTPUT"
           echo "repo-default=${{ github.event.repository.name }}_${{ github.event.repository.default_branch }}" \
@@ -55,7 +62,7 @@ jobs:
       - name: Initialize workspace
         uses: ./.github/actions/initialize-workspace
         with:
-          remote-actions-repo: ${{ (inputs.plugin != '' && 'nubificus/vaccel') || '' }}
+          remote-actions-repo: ${{ inputs.actions-repo }}
           token: ${{ secrets.GIT_CLONE_PAT || github.token }}
           dot-github-only: 'true'
 
@@ -64,21 +71,22 @@ jobs:
         with:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.ref || github.ref_name }}
-          path: ${{ steps.set_repo_dirs.outputs.repo }}
+          path: ${{ steps.set-repo-dirs.outputs.repo }}
 
       - name: Build project
         uses: ./.github/actions/build
         with:
-          build-dir: build
-          source-dir: ${{ steps.set_repo_dirs.outputs.repo }}
+          build-path: build_${{ matrix.build-type }}
+          build-type: ${{ matrix.build-type }}
+          source-path: ${{ steps.set-repo-dirs.outputs.repo }}
           coverage: 'true'
           options: ${{ inputs.options }}
 
       - name: Generate coverage report
         uses: ./.github/actions/run-tests
         with:
-          build-dir: build
-          source-dir: ${{ steps.set_repo_dirs.outputs.repo }}
+          build-path: build_${{ matrix.build-type }}
+          source-path: ${{ steps.set-repo-dirs.outputs.repo }}
           coverage: 'true'
           gcov: 'gcov-12'
 
@@ -86,14 +94,15 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.repository.default_branch }}
-          path:  ${{ steps.set_repo_dirs.outputs.repo-default }}
+          path:  ${{ steps.set-repo-dirs.outputs.repo-default }}
 
       - name: Build project @default_branch
         if: ${{ inputs.comment-diff == true }}
         uses: ./.github/actions/build
         with:
-          build-dir: build
-          source-dir: ${{ steps.set_repo_dirs.outputs.repo-default }}
+          build-path: build_${{ matrix.build-type }}
+          build-type: ${{ matrix.build-type }}
+          source-path: ${{ steps.set-repo-dirs.outputs.repo-default }}
           coverage: 'true'
           options: ${{ inputs.options }}
 
@@ -101,8 +110,8 @@ jobs:
         if: ${{ inputs.comment-diff == true }}
         uses: ./.github/actions/run-tests
         with:
-          build-dir: build
-          source-dir: ${{ steps.set_repo_dirs.outputs.repo-default }}
+          build-path: build_${{ matrix.build-type }}
+          source-path: ${{ steps.set-repo-dirs.outputs.repo-default }}
           coverage: 'true'
           gcov: 'gcov-12'
 
@@ -110,8 +119,12 @@ jobs:
         if: ${{ inputs.comment-diff == true }}
         run: |
           pycobertura diff \
-            "$(find "${{ steps.set_repo_dirs.outputs.repo-default }}/build" -name "coverage*.xml")" \
-            "$(find "${{ steps.set_repo_dirs.outputs.repo }}/build" -name "coverage*.xml")" \
+            "$(find \
+              "${{ steps.set-repo-dirs.outputs.repo-default }}/build_${{ matrix.build-type }}" \
+              -name "coverage*.xml")" \
+            "$(find \
+              "${{ steps.set-repo-dirs.outputs.repo }}/build_${{ matrix.build-type }}" \
+              -name "coverage*.xml")" \
             --no-color --no-source -f markdown > coverage_diff.txt  || PYCOB_RESULT="$?"
           echo "pycobertura exited with ${PYCOB_RESULT:-0}"
           [ "$PYCOB_RESULT" == 1 ] && exit 1
@@ -129,16 +142,17 @@ jobs:
           mode: recreate
 
       - name: Generate markdown file
-        id: generate_md_file
+        id: generate-md-file
         if: ${{ inputs.commit == true }}
         run: |
           COVERAGE_FILE="docs/coverage/src_coverage/coverage.md"
           pycobertura show \
-            "$(find "${{ steps.set_repo_dirs.outputs.repo }}/build" -name "coverage*.xml")" \
+            "$(find "${{ steps.set-repo-dirs.outputs.repo }}/build_${{ matrix.build-type }}" \
+              -name "coverage*.xml")" \
             --format markdown --output "coverage.md"
           printf "%s\n\n" "# Tests coverage report" \
-            > "${{ steps.set_repo_dirs.outputs.repo }}/$COVERAGE_FILE"
-          cat coverage.md >> "${{ steps.set_repo_dirs.outputs.repo }}/$COVERAGE_FILE"
+            > "${{ steps.set-repo-dirs.outputs.repo }}/$COVERAGE_FILE"
+          cat coverage.md >> "${{ steps.set-repo-dirs.outputs.repo }}/$COVERAGE_FILE"
           rm -f coverage.md
           echo "coverage-file=${COVERAGE_FILE}" >> "$GITHUB_OUTPUT"
         shell: bash
@@ -147,13 +161,13 @@ jobs:
         if: ${{ inputs.commit == true }}
         uses: ./.github/actions/commit-file
         with:
-          workdir: ${{ steps.set_repo_dirs.outputs.repo }} 
+          workdir: ${{ steps.set-repo-dirs.outputs.repo }} 
           branch: ${{ github.event.pull_request.head.ref || github.ref_name }} 
-          file: ${{ steps.generate_md_file.outputs.coverage-file }}
+          file: ${{ steps.generate-md-file.outputs.coverage-file }}
           message: "docs(coverage): Update coverage report"
 
       - name: Clean-up
         if: ${{ always() }}
         run: |
-          sudo rm -rf coverage* ${{ steps.set_repo_dirs.outputs.repo }} \
-            ${{ steps.set_repo_dirs.outputs.repo-default }}
+          sudo rm -rf coverage* ${{ steps.set-repo-dirs.outputs.repo }} \
+            ${{ steps.set-repo-dirs.outputs.repo-default }}

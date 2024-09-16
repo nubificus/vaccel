@@ -6,15 +6,15 @@ inputs:
     default: ${{ github.workspace }}/opt
   valgrind:
     default: 'false'
-  plugin:
-    deafult: ''
+  package:
+    default: 'vaccel'
 
 runs:
   using: composite
   steps:
     - name: Run examples
       run: |
-        if [ "${{ inputs.plugin }}" == "" ]; then
+        if [ "${{ inputs.package }}" == "vaccel" ]; then
           "${{ github.workspace }}"/scripts/run-examples.sh \
             "${{ inputs.prefix }}" "${{ inputs.valgrind }}"
         else
