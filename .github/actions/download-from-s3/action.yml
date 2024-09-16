@@ -8,55 +8,63 @@ inputs:
     default: 'x86_64'
   build-type:
     default: 'release'
-  output-dir:
-    default: './'
-  plugin:
+  local-path:
+    default: '.'
+  remote-basepath:
+    default: 'nbfc-assets/github/vaccel'
+  remote-subpath:
     default: ''
   access-key:
     required: true
   secret-key:
     required: true
+  latest-only:
+    default: 'true'
   install:
     default: 'false'
+
+outputs:
+  installed:
+    value: ${{ steps.install.outputs.installed }}
 
 runs:
   using: composite
   steps:
     - name: Set required variables and verify output dir exists
-      id: get_artifact_vars
+      id: get-artifact-vars
       run: |
-        BASE_PATH="nbfc-assets/github/vaccel"
-        if [ -n "${{ inputs.plugin }}" ]; then
-          BASE_PATH="${BASE_PATH}/plugins/${{ inputs.plugin }}"
+        mkdir -p "${{ inputs.local-path }}"
+        local_path=$(realpath -s --relative-to="${{ github.workspace }}" \
+          "${{ inputs.local-path }}")
+        echo "local-path=${local_path}/" >> "$GITHUB_OUTPUT"
+        base_path="${{ inputs.remote-basepath }}"
+        if [ -n "${{ inputs.remote-subpath }}" ]; then
+          base_path="${base_path}/${{ inputs.remote-subpath }}"
         fi
-        echo "remote-name-path=$(echo "${BASE_PATH}/${{ inputs.branch }}/${{ inputs.arch }}/${{ inputs.build-type }}")" >> "$GITHUB_OUTPUT"
-        echo "REMOTE_SHA_PATH=$(echo "${BASE_PATH}/${{ inputs.branch }}/${{ inputs.arch }}/${{ inputs.build-type }}")" >> "$GITHUB_OUTPUT"
-        echo "uid=$(id -u)" >> "$GITHUB_OUTPUT"
-        echo "gid=$(id -g)" >> "$GITHUB_OUTPUT"
-        mkdir -p "${{ inputs.output-dir }}"
+        remote_path="${base_path}/rev/${{inputs.branch}}/${{inputs.arch}}/${{inputs.build-type}}"
+        if [ "${{ inputs.latest-only }}" == "true" ]; then
+          remote_path="${remote_path}/*latest*"
+        fi
+        echo "remote-path=${remote_path}" >> "$GITHUB_OUTPUT"
       shell: bash
 
-    - name: Download deb artifact from s3 by name
-      uses: cloudkernels/minio-download@v4
+    - name: Download artifacts from s3
+      uses: cloudkernels/minio-download@feat_wildcards
       with:
         url: https://s3.nubificus.co.uk
         access-key: ${{ inputs.access-key }}
         secret-key: ${{ inputs.secret-key }}
-        local-path: ${{ inputs.output-dir }}
-        remote-path: ${{ steps.get_artifact_vars.outputs.remote-name-path }}-deb/
+        local-path: ${{ steps.get-artifact-vars.outputs.local-path }}
+        remote-path: ${{ steps.get-artifact-vars.outputs.remote-path }}
 
-    - name: Download tar artifact from s3 by name
-      uses: cloudkernels/minio-download@v4
-      with:
-        url: https://s3.nubificus.co.uk
-        access-key: ${{ inputs.access-key }}
-        secret-key: ${{ inputs.secret-key }}
-        local-path: ${{ inputs.output-dir }}
-        remote-path: ${{ steps.get_artifact_vars.outputs.remote-name-path }}-tar/
-
-    - name: Install deb artifact
+    - name: Install deb artifacts
+      id: install
+      working-directory: ${{ inputs.local-path }}
       if: ${{ inputs.install == 'true' }} 
       run: |
-        LATEST_DEB=$(ls -1 "${{ inputs.output-dir }}"/*.deb | sort -r | head -1)
-        sudo dpkg -i "$LATEST_DEB"
+        for d in $(ls -1 *.deb); do
+          sudo dpkg -i "$d" || continue
+          installed+=" $(dpkg -f "$d" 'Package')"
+        done
+        echo "installed=${installed}" >> "$GITHUB_OUTPUT"
       shell: bash

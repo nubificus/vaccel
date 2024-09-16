@@ -10,9 +10,9 @@ inputs:
     default: ${{ github.workspace }}/opt
   pkgconfig-prefix:
     default: ''
-  build-dir:
+  build-path:
     default: 'build'
-  source-dir:
+  source-path:
     default: '.'
   build-type:
     default: 'plain'
@@ -29,59 +29,66 @@ inputs:
   install-deb:
     default: 'false'
 
+outputs:
+  dist-path:
+    value: ${{ steps.dist.outputs.dist-path }}
+
 runs:
   using: composite
   steps:
     - name: Configure project
-      working-directory: ${{ inputs.source-dir }}
+      working-directory: ${{ inputs.source-path }}
       run: |
-        OPTIONS=$(echo "${{ inputs.options }}" | \
+        options=$(echo "${{ inputs.options }}" | \
           sed -E 's/[,]*([^,]+)[,]*/-D\1 /g')
         [ -n "${{ inputs.pkgconfig-prefix }}" ] && \
-          PKGCONFIG_DIR="lib/$($CC -print-multiarch)/pkgconfig" && \
-          OPTIONS="$OPTIONS --pkg-config-path=${{ inputs.pkgconfig-prefix }}/$PKGCONFIG_DIR"
-        meson setup \
+          pkgconfig_dir="lib/$($CC -print-multiarch)/pkgconfig" && \
+          options="$options --pkg-config-path=${{ inputs.pkgconfig-prefix }}/$pkgconfig_dir"
+        eval meson setup \
           --reconfigure \
           --prefix="${{ inputs.prefix }}" \
           --buildtype="${{ inputs.build-type }}" \
           -Db_coverage="${{ inputs.coverage }}" \
-          "$OPTIONS" \
-          "${{ inputs.build-dir }}"
+          "$options" \
+          "${{ inputs.build-path }}"
       shell: bash
 
     - name: Build project
-      working-directory: ${{ inputs.source-dir }}
-      if: ${{ inputs.build == 'true' || inputs.dist == 'true' || \
-        inputs.install == 'true' || inputs.install-deb == 'true' }}
-      run: meson compile -C "${{ inputs.build-dir }}"
+      working-directory: ${{ inputs.source-path }}
+      if: >-
+        ${{ inputs.build == 'true' || inputs.dist == 'true' || 
+          inputs.install == 'true' || inputs.install-deb == 'true' }}
+      run: meson compile -C "${{ inputs.build-path }}"
       shell: bash
 
     - name: Create run dir
-      working-directory: ${{ inputs.source-dir }}
+      working-directory: ${{ inputs.source-path }}
       run: |
         sudo mkdir -p /run/user/1001
         sudo chown -R runner /run/user/1001
       shell: bash
 
     - name: Install project
-      working-directory: ${{ inputs.source-dir }}
+      working-directory: ${{ inputs.source-path }}
       if: ${{ inputs.install == 'true' }}
-      run: meson install -C "${{ inputs.build-dir }}"
+      run: meson install -C "${{ inputs.build-path }}"
       shell: bash
 
     - name: Generate distribution tar/deb
-      working-directory: ${{ inputs.source-dir }}
+      id: dist
+      working-directory: ${{ inputs.source-path }}
       if: ${{ inputs.dist == 'true' || inputs.install-deb == 'true' }}
       run: |
         [ "${{ inputs.dist-subprojects }}" == "true" ] && \
-          ARGS+=" --include-subprojects"
+          args+=" --include-subprojects"
         [ "${{ inputs.dist-tests }}" == "false" ] && \
-          ARGS+=" --no-tests"
-        meson dist "$ARGS" --allow-dirty -C "${{ inputs.build-dir }}"
+          args+=" --no-tests"
+        eval meson dist "$args" --allow-dirty -C "${{ inputs.build-path }}"
+        echo "dist-path=${{ inputs.build-path }}/meson-dist" >> "$GITHUB_OUTPUT"
       shell: bash
 
     - name: Install generated debs
-      working-directory: ${{ inputs.source-dir }}
+      working-directory: ${{ inputs.source-path }}
       if: ${{ inputs.install-deb == 'true' }}
-      run: sudo dpkg -i "${{ inputs.build-dir }}"/meson-dist/vaccel*.deb
+      run: sudo dpkg -i "${{ steps.dist.outputs.dist-path }}"/vaccel*.deb
       shell: bash

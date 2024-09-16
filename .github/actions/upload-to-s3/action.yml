@@ -6,9 +6,11 @@ inputs:
     default: 'x86_64'
   build-type:
     default: 'release'
-  build-dir:
+  local-path:
     default: 'build'
-  plugin:
+  remote-basepath:
+    default: 'nbfc-assets/github/vaccel'
+  remote-subpath:
     default: ''
   access-key:
     required: true
@@ -19,81 +21,64 @@ runs:
   using: composite
   steps:
     - name: Determine SHA, branch and remote paths
-      id: get_artifact_vars
+      id: get-artifact-vars
       run: |
         if [ "${{ github.event_name }}" == "pull_request" ]; then
           if [ "${{ github.event.pull_request.merged }}" == true ]; then
-            SHA="${{ github.sha }}"
-            BRANCH="${{ github.base_ref }}"
-            echo "PR merged. SHA: $SHA, Branch: $BRANCH"
+            sha="${{ github.sha }}"
+            branch="${{ github.base_ref }}"
+            echo "PR merged. SHA: $sha, Branch: $branch"
           else
-            SHA="${{ github.event.pull_request.head.sha }}"
-            BRANCH="${{ github.event.pull_request.head.ref }}"
-            echo "PR not yet merged. SHA: $SHA, Branch: $BRANCH"
+            sha="${{ github.event.pull_request.head.sha }}"
+            branch="${{ github.event.pull_request.head.ref }}"
+            echo "PR not yet merged. SHA: $sha, Branch: $branch"
           fi
         elif [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-          SHA="${{ github.sha }}"
-          BRANCH="${{ github.event.ref_name }}"
-          echo "Workflow dispatch event. SHA: $SHA, Branch: $BRANCH"
+          sha="${{ github.sha }}"
+          branch="${{ github.event.ref_name }}"
+          echo "Workflow dispatch event. SHA: $sha, Branch: $branch"
         else
           echo "Event not supported."
           exit 1
         fi
-        echo "ARTIFACT_SHA=$(echo $SHA)" >> "$GITHUB_OUTPUT"
-        echo "ARTIFACT_NAME=$(echo $BRANCH)" >> "$GITHUB_OUTPUT"
-        BASE_PATH="nbfc-assets/github/vaccel"
-        if [ -n "${{ inputs.plugin }}" ]; then
-          BASE_PATH="${BASE_PATH}/plugins/${{ inputs.plugin }}"
+        local_path=$(realpath -s --relative-to="${{ github.workspace }}" \
+          "${{ inputs.local-path }}")
+        echo "local-path=${local_path}" >> "$GITHUB_OUTPUT"
+        base_path="${{ inputs.remote-basepath }}"
+        if [ -n "${{ inputs.remote-subpath }}" ]; then
+          base_path="${base_path}/${{ inputs.remote-subpath }}"
         fi
-        echo "remote-name-path=$(echo "${BASE_PATH}/${BRANCH}/${{ inputs.arch }}/${{ inputs.build-type }}")" >> "$GITHUB_OUTPUT"
-        echo "remote-sha-path=$(echo "${BASE_PATH}/${SHA}/${{ inputs.arch }}/${{ inputs.build-type }}")" >> "$GITHUB_OUTPUT"
+        remote_path="${base_path}/rev/${branch}/${{inputs.arch}}/${{inputs.build-type}}/"
+        echo "remote-path=${remote_path}" >> "$GITHUB_OUTPUT"
       shell: bash
 
-    - name: Get artifacts paths
-      id: get_artifact_paths
+    - name: Generate \"latest\" artifacts
       run: |
-        DEB_DIR=$(dirname $(find "${{ inputs.build-dir }}" -name "vaccel*.deb" | head -1))
-        TAR_DIR=$(dirname $(find "${{ inputs.build-dir }}" -name "vaccel*.tar.gz" | head -1))
-        echo "deb-path=$DEB_DIR/vaccel*.deb" >> "$GITHUB_OUTPUT"
-        echo "tar-path=$TAR_DIR/vaccel*bin.tar.gz" >> "$GITHUB_OUTPUT"
+        if [ -d "${{ inputs.local-path }}" ]; then
+          echo "Local path is a directory, skipping"
+          exit 0
+        fi
+        # attempt to match filenames of the form
+        # pkg-A.B.C[-D-E{8}-][-M][moretext].extension
+        # where capital letters are numbers and E is 8 digits long
+        VERSION_REGEX="(.+)\d+\.\d+\.\d+(-\d+-[\da-z].{7})*(-\d+)*([^.]*\..+)"
+        pushd "$(dirname "${{ inputs.local-path }}")"
+        for f in $(ls -d *); do
+          [ ! -f "$f" ] && continue
+          latest_filename=$(echo "$f" | \
+            perl -pe "s/${VERSION_REGEX}/\1latest\4/g")
+          echo "Copying $f to ${latest_filename}"
+          cp "$f" "${latest_filename}"
+        done
+        popd
       shell: bash
 
-    - name: Upload deb artifact to s3 by name
+    - name: Upload artifact to s3
       uses: cloudkernels/minio-upload@v4
       with:
         url: https://s3.nubificus.co.uk
         access-key: ${{ inputs.access-key }}
         secret-key: ${{ inputs.secret-key }}
-        local-path: ${{ steps.get_artifact_paths.outputs.deb-path }}
-        remote-path: ${{ steps.get_artifact_vars.outputs.remote-name-path }}-deb/
-        policy: 1
-
-    - name: Upload deb artifact to s3
-      uses: cloudkernels/minio-upload@v4
-      with:
-        url: https://s3.nubificus.co.uk
-        access-key: ${{ inputs.access-key }}
-        secret-key: ${{ inputs.secret-key }}
-        local-path: ${{ steps.get_artifact_paths.outputs.deb-path }}
-        remote-path: ${{ steps.get_artifact_vars.outputs.remote-sha-path }}-deb/
-        policy: 1
-
-    - name: Upload tar artifact to s3 by name
-      uses: cloudkernels/minio-upload@v4
-      with:
-        url: https://s3.nubificus.co.uk
-        access-key: ${{ inputs.access-key }}
-        secret-key: ${{ inputs.secret-key }}
-        local-path: ${{ steps.get_artifact_paths.outputs.tar-path }}
-        remote-path: ${{ steps.get_artifact_vars.outputs.remote-name-path }}-tar/
-        policy: 1
-
-    - name: Upload tar artifact to s3
-      uses: cloudkernels/minio-upload@v4
-      with:
-        url: https://s3.nubificus.co.uk
-        access-key: ${{ inputs.access-key }}
-        secret-key: ${{ inputs.secret-key }}
-        local-path: ${{ steps.get_artifact_paths.outputs.tar-path }}
-        remote-path: ${{ steps.get_artifact_vars.outputs.remote-sha-path }}-tar/
+        local-path: ${{ steps.get-artifact-vars.outputs.local-path }}
+        remote-path: ${{ steps.get-artifact-vars.outputs.remote-path }}
         policy: 1

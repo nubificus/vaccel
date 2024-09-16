@@ -19,41 +19,41 @@ runs:
   using: composite
   steps:
     - name: Verify file changed
-      id: verify_file_changed
+      id: verify-file-changed
       working-directory: ${{ inputs.workdir }}
       run: |
-        RES=0
-        git diff --quiet ${{ inputs.file }} || RES="$?"
-        [ "$RES" != 0 ] && [ "$RES" != 1 ] && exit "$((RES + 0))"
-        echo "changed=${RES}" >> "$GITHUB_OUTPUT"
-        echo "changed=${RES}"
+        res=0
+        git diff --quiet ${{ inputs.file }} || res="$?"
+        [ "$res" != 0 ] && [ "$res" != 1 ] && exit "$((res + 0))"
+        echo "changed=${res}" >> "$GITHUB_OUTPUT"
+        echo "changed=${res}"
       shell: bash
 
     - name: Commit file
-      if: ${{ steps.verify_file_changed.changed == 1 }}
+      if: ${{ steps.verify-file-changed.changed == 1 }}
       working-directory: ${{ inputs.workdir }}
       run: |
-        CONTENT=$(base64 -i "${{ inputs.file }}")
-        URL=https://api.github.com/repos/${{ inputs.repo }}/contents/${{ inputs.file }}
-        SHA=$(git rev-parse "${{ inputs.branch }}:${{ inputs.file }}")
-        MESSAGE=$(printf "%s\n\n%s" "${{ inputs.message }}" \
-          "Signed-off-by: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>")
-        JSON=$(jq -n \
-          --arg owner "$(dirname ${{ inputs.repo }})" \
-          --arg repo "$(basename ${{ inputs.repo }})" \
-          --arg path "${{ inputs.file }}" \
-          --arg message "$MESSAGE" \
-          --arg content "$CONTENT" \
-          --arg sha "$SHA" \
-          --arg branch "${{ inputs.branch }}" \
+        content=$(base64 -i "${{ inputs.file }}")
+        url=https://api.github.com/repos/${{ inputs.repo }}/contents/${{ inputs.file }}
+        sha=$(git rev-parse "${{ inputs.branch }}:${{ inputs.file }}")
+        message=$(printf "%s\n\n%s" "${{ inputs.message }}" \
+          "Signed-off-by: github-actions[bot] <support@github.com>")
+        json=$(jq -n \
+          --arg jowner "$(dirname ${{ inputs.repo }})" \
+          --arg jrepo "$(basename ${{ inputs.repo }})" \
+          --arg jpath "${{ inputs.file }}" \
+          --arg jmessage "$message" \
+          --arg jcontent "$content" \
+          --arg jsha "$sha" \
+          --arg jbranch "${{ inputs.branch }}" \
           '{
-            owner: $owner,
-            repo: $repo,
-            path: $path,
-            message: $message,
-            content: $content,
-            sha: $sha,
-            branch: $branch
+            owner: $jowner,
+            repo: $jrepo,
+            path: $jpath,
+            message: $jmessage,
+            content: $jcontent,
+            sha: $jsha,
+            branch: $jbranch
           }'
         )
 
@@ -64,5 +64,5 @@ runs:
           -H "Authorization: Bearer ${{ inputs.token }}" \
           -H "X-GitHub-Api-Version: 2022-11-28" \
           "https://api.github.com/repos/${{ inputs.repo }}/contents/${{ inputs.file }}" \
-          -d "$JSON"
+          -d "$json"
       shell: bash

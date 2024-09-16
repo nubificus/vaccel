@@ -3,7 +3,6 @@ name: Build and Upload
 on:
   pull_request:
     types: [closed]
-
   workflow_dispatch:
 
 concurrency:
@@ -11,15 +10,15 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  check_merged:
+  check-merged:
     name: Check PR is merged
     uses: ./.github/workflows/check-merged.yml
     secrets: inherit
 
-  build_dist:
-    needs: [check_merged]
+  build-dist:
+    needs: [check-merged]
     name: Build and Upload
-    if: ${{ needs.check_merged.outputs.is_merged == 'true' }}
+    if: ${{ needs.check-merged.outputs.is-merged == 'true' }}
     uses: ./.github/workflows/verify-build.yml
     with:
       release: true

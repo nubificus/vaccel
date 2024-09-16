@@ -3,7 +3,6 @@ export default {
 	helpUrl: 'https://www.conventionalcommits.org/',
 	ignores: [
 		(msg) => /Signed-off-by: dependabot\[bot]/m.test(msg),
-		(msg) => /docs\(coverage\): Update coverage report/m.test(msg),
 	],
 	rules: {
 		'header-max-length': [2, 'always', 72],

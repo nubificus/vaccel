@@ -3,36 +3,38 @@ name: Check PR is merged
 on:
   workflow_call:
     inputs:
-      plugin:
+      actions-repo:
         type: string
-        default: ''
+        default: 'nubificus/vaccel'
+      actions-rev:
+        type: string
+        default: 'main'
     outputs:
-      is_merged:
-        value: ${{ jobs.check_merged.outputs.is_merged }}
+      is-merged:
+        value: ${{ jobs.check-merged.outputs.is-merged }}
     secrets:
       GIT_CLONE_PAT:
         required: false
 
 jobs:
-  check_merged:
+  check-merged:
     name: Check PR is merged
     runs-on: [self-hosted, x86_64]
     outputs:
-      is_merged: ${{ steps.check.outputs.is_merged }}
-
+      is-merged: ${{ steps.check.outputs.is-merged }}
     steps:
       - name: Checkout .github directory
         uses: actions/checkout@v4
         with:
           sparse-checkout: .github
-          repository: ${{ (inputs.plugin != '' && 'nubificus/vaccel') || '' }}
-          ref: ${{ (inputs.plugin != '' && 'main') || '' }}
+          repository: ${{ inputs.actions-repo }}
+          ref: ${{ inputs.actions-rev }}
 
       - name: Initialize workspace
         uses: ./.github/actions/initialize-workspace
         with:
           fetch-depth: 0
-          remote-actions-repo: ${{ (inputs.plugin != '' && 'nubificus/vaccel') || '' }}
+          remote-actions-repo: ${{ inputs.actions-repo }}
           token: ${{ secrets.GIT_CLONE_PAT || github.token }}
 
       - name: Check merged
@@ -44,6 +46,6 @@ jobs:
             echo "is_merged=true" >> "$GITHUB_OUTPUT"
           else
             echo "The PR is not merged. Exiting..."
-            echo "is_merged=false" >> "$GITHUB_OUTPUT"
+            echo "is-merged=false" >> "$GITHUB_OUTPUT"
           fi
         shell: bash

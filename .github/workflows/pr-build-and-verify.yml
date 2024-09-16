@@ -4,7 +4,6 @@ on:
   pull_request:
     branches: ["main"]
     types: [synchronize, labeled]
-
   workflow_dispatch:
 
 concurrency:
@@ -12,32 +11,32 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  test_build:
+  test-build:
     name: Test Build
     if: ${{ contains(github.event.pull_request.labels.*.name, 'ok-to-test') }}
     uses: ./.github/workflows/test-build.yml
     secrets: inherit
 
-  verify_build:
+  verify-build:
     name: Verify Build
     if: ${{ contains(github.event.pull_request.labels.*.name, 'ok-to-test') }}
     uses: ./.github/workflows/verify-build.yml
     secrets: inherit
 
-  validate_files_and_commits:
+  validate-files-and-commits:
     name: Validate Files and Commits
     if: ${{ contains(github.event.pull_request.labels.*.name, 'ok-to-test') }}
     uses: ./.github/workflows/validate-files-and-commits.yml
     secrets: inherit
 
-  validate_code:
+  validate-code:
     name: Validate Code
     if: ${{ contains(github.event.pull_request.labels.*.name, 'ok-to-test') }}
     uses: ./.github/workflows/validate-code.yml
     secrets: inherit
 
-  generate_coverage:
-    needs: [test_build, verify_build, validate_files_and_commits, validate_code]
+  generate-coverage:
+    needs: [test-build, verify-build, validate-files-and-commits, validate-code]
     name: Generate Coverage Report
     uses: ./.github/workflows/coverage-report.yml
     with:
