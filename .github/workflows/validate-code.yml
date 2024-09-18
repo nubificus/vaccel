@@ -133,7 +133,7 @@ jobs:
         with:
           style: 'file'  # Use .clang-format config file
           tidy-checks: '' # Use .clang-tidy config file
-          ignore: 'build|subprojects'
+          ignore: 'build*'
           database: build
           thread-comments: ${{ github.event_name == 'pull_request' && 'true' }}
           format-review: ${{ github.event_name == 'pull_request' && 'true' }}
