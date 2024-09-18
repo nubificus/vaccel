@@ -3,11 +3,18 @@
 #pragma once
 
 #include <stddef.h>
+
+#ifdef __cplusplus
+#include <atomic>
+typedef std::atomic<unsigned int> atomic_uint;
+#else
 #include <stdatomic.h>
+#endif
 
 #include "error.h"
 #include "vaccel_id.h"
 #include "list.h"
+#include "vaccel_file.h"
 
 #ifdef __cplusplus
 extern "C" {
