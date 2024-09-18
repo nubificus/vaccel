@@ -3,7 +3,13 @@
 #pragma once
 
 #include <stddef.h>
+
+#ifdef __cplusplus
+#include <atomic>
+typedef std::atomic<unsigned int> atomic_uint;
+#else
 #include <stdatomic.h>
+#endif
 
 #include "error.h"
 #include "vaccel_id.h"
