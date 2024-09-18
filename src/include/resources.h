@@ -14,6 +14,7 @@ typedef std::atomic<unsigned int> atomic_uint;
 #include "error.h"
 #include "vaccel_id.h"
 #include "list.h"
+#include "vaccel_file.h"
 
 #ifdef __cplusplus
 extern "C" {
