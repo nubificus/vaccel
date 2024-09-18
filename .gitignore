@@ -17,6 +17,7 @@ cscope.out
 **target
 /subprojects/*
 !/subprojects/*.wrap
+!/subprojects/*.clang*
 !/subprojects/packagefiles
 
 .cache
