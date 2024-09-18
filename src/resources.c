@@ -631,10 +631,8 @@ int vaccel_resource_new_multi(struct vaccel_resource *res, char **paths,
 	if (!res->files)
 		return VACCEL_ENOMEM;
 
-	for (i = 0; i < nr_files; ++i)
-		res->files[i] = NULL;
-
 	for (i = 0; i < nr_files; ++i) {
+		res->files[i] = NULL;
 		if (!paths[i]) {
 			ret = VACCEL_EINVAL;
 			goto free;
@@ -709,5 +707,7 @@ char *vaccel_resource_get_path(struct vaccel_resource *res)
 	    !(*res->files)->path)
 		return NULL;
 
+	if (res->file_type == DIRECTORY || res->file_type == FILE_REMOTE)
+		return strdup(res->path);
 	return strdup((*res->files)->path);
 }
