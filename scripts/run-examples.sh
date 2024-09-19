@@ -1,6 +1,8 @@
 #!/bin/sh
 # SPDX-License-Identifier: Apache-2.0
 
+set -e
+
 PREFIX=${1:-"/usr/local"}
 VALGRIND=$2
 if [ -n "${MESON_BUILD_ROOT}" ]; then
