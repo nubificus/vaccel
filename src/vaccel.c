@@ -158,7 +158,7 @@ __attribute__((constructor)) static void vaccel_init(void)
 	vaccel_log_init();
 
 	vaccel_debug("Initializing vAccel");
-	vaccel_info("vAccel %s", VACCELRT_VERSION);
+	vaccel_info("vAccel %s", VACCEL_VERSION);
 
 	ret = create_vaccel_rundir();
 	if (ret) {

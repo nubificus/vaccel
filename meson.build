@@ -5,18 +5,14 @@ project('vaccel', 'c', 'cpp',
   license_files : 'LICENSE',
   version : run_command('sh', '-c',
     'git submodule update --init >/dev/null && ' +
-    'scripts/common/generate-version.sh . --no-dirty',
-    check: false).stdout().strip())
+    'scripts/common/generate-version.sh .',
+    check: true).stdout().strip())
 
 vaccel_cargs = ['-Wall','-Wextra','-Werror']
 vaccel_cppargs = ['-std=c++2b']
 plugins_cargs = vaccel_cargs + '-Wno-unused'
 
-vaccel_version = run_command('scripts/common/generate-version.sh',
-  meson.project_source_root(),
-  check: false).stdout().strip()
-
-libvaccel_version = vaccel_version.split('-')[0]
+libvaccel_version = meson.project_version().split('-')[0]
 
 opt_tests = get_option('tests')
 opt_examples = get_option('examples').enable_if(opt_tests.enabled())

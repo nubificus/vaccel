@@ -749,5 +749,5 @@ static int fini(void)
 	return VACCEL_OK;
 }
 
-VACCEL_MODULE(.name = "noop", .version = VACCELRT_VERSION,
+VACCEL_MODULE(.name = "noop", .version = VACCEL_VERSION,
 	      .type = VACCEL_PLUGIN_DEBUG, .init = init, .fini = fini)
