@@ -1,5 +1,5 @@
 conf = configuration_data()
-conf.set('VACCELRT_VERSION', vaccel_version)
+conf.set('VACCEL_VERSION', meson.project_version())
 
 vaccel_h = configure_file(input : 'vaccel.h.in',
   output : 'vaccel.h',

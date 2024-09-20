@@ -2,7 +2,7 @@
 
 #pragma once
 
-#define VACCELRT_VERSION "@VACCELRT_VERSION@"
+#define VACCEL_VERSION "@VACCEL_VERSION@"
 
 #include "error.h"
 #include "log.h"
