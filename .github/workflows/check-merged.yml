@@ -43,7 +43,7 @@ jobs:
           if [ "${{ github.event.pull_request.merged }}" == "true" ] || \
             [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
             echo "The PR was merged - running upload workflows"
-            echo "is_merged=true" >> "$GITHUB_OUTPUT"
+            echo "is-merged=true" >> "$GITHUB_OUTPUT"
           else
             echo "The PR is not merged. Exiting..."
             echo "is-merged=false" >> "$GITHUB_OUTPUT"
