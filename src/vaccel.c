@@ -43,13 +43,18 @@ static int load_backend_plugin(const char *path)
 
 	plugin = *plugin_p;
 	ret = register_plugin(plugin);
-	if (ret != VACCEL_OK)
+	if (ret != VACCEL_OK) {
+		vaccel_error("Could not register plugin %s", path);
 		goto close_dl;
+	}
 
 	/* Initialize the plugin */
 	ret = plugin->info->init();
-	if (ret != VACCEL_OK)
+	if (ret != VACCEL_OK) {
+		vaccel_error("Could not initialize plugin %s",
+			     plugin->info->name);
 		goto close_dl;
+	}
 
 	/* Keep dl handle so we can later close the library */
 	plugin->dl_handle = dl;
@@ -186,7 +191,11 @@ __attribute__((constructor)) static void vaccel_init(void)
 	if (!plugins)
 		return;
 
-	load_backend_plugins(plugins);
+	ret = load_backend_plugins(plugins);
+	if (ret) {
+		vaccel_error("Could not load backend plugins");
+		exit(ret);
+	}
 }
 
 __attribute__((destructor)) static void vaccel_fini(void)
