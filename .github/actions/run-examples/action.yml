@@ -12,6 +12,14 @@ inputs:
 runs:
   using: composite
   steps:
+    - name: Ensure run dir exists
+      run: |
+        uid=$(id -u)
+        [ -d "/run/user/${uid}" ] && exit 0
+        sudo mkdir -p "/run/user/${uid}"
+        sudo chown -R  "${uid}" "/run/user/${uid}"
+      shell: bash
+
     - name: Run examples
       run: |
         if [ "${{ inputs.package }}" == "vaccel" ]; then

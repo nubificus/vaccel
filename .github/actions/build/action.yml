@@ -17,7 +17,7 @@ inputs:
   build-type:
     default: 'plain'
   build:
-    default: 'true'
+    default: ''
   install:
     default: 'false'
   dist:
@@ -56,16 +56,9 @@ runs:
     - name: Build project
       working-directory: ${{ inputs.source-path }}
       if: >-
-        ${{ inputs.build == 'true' || inputs.dist == 'true' || 
-          inputs.install == 'true' || inputs.install-deb == 'true' }}
+        ${{ (inputs.build == '' && inputs.dist == 'false') ||
+          inputs.build == 'true' || inputs.install == 'true' }}
       run: meson compile -C "${{ inputs.build-path }}"
-      shell: bash
-
-    - name: Create run dir
-      working-directory: ${{ inputs.source-path }}
-      run: |
-        sudo mkdir -p /run/user/1001
-        sudo chown -R runner /run/user/1001
       shell: bash
 
     - name: Install project
@@ -74,7 +67,7 @@ runs:
       run: meson install -C "${{ inputs.build-path }}"
       shell: bash
 
-    - name: Generate distribution tar/deb
+    - name: Generate distribution artifacts
       id: dist
       working-directory: ${{ inputs.source-path }}
       if: ${{ inputs.dist == 'true' || inputs.install-deb == 'true' }}
@@ -90,5 +83,5 @@ runs:
     - name: Install generated debs
       working-directory: ${{ inputs.source-path }}
       if: ${{ inputs.install-deb == 'true' }}
-      run: sudo dpkg -i "${{ steps.dist.outputs.dist-path }}"/vaccel*.deb
+      run: sudo dpkg -i "${{ steps.dist.outputs.dist-path }}"/*.deb
       shell: bash
