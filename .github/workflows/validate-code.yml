@@ -19,8 +19,14 @@ on:
         type: string
         default: 'auto_features=enabled'
       build:
-        type: string
-        default: 'false'
+        type: boolean
+        default: false
+      skip-download:
+        type: boolean
+        default: false
+      skip-cppcheck:
+        type: boolean
+        default: false
     secrets:
       GIT_CLONE_PAT:
         required: false
@@ -32,6 +38,7 @@ on:
 jobs:
   linter-cppcheck:
     name: Lint C/C++ (cppcheck)
+    if: ${{ inputs.skip-cppcheck == false }}
     runs-on: [self-hosted, "${{ matrix.archconfig }}", "${{ fromJSON(inputs.runner) }}"]
     strategy:
       matrix:
@@ -60,7 +67,9 @@ jobs:
 
       - name: Download artifacts from s3
         id: download-artifacts
-        if: ${{ inputs.actions-repo != github.repository }}
+        if: >-
+          ${{ inputs.actions-repo != github.repository &&
+          inputs.skip-download == false }}
         uses: ./.github/actions/download-from-s3
         with:
           branch: ${{ steps.initialize-workspace.outputs.remote-branch }}
@@ -128,7 +137,9 @@ jobs:
 
       - name: Download artifacts from s3
         id: download-artifacts
-        if: ${{ inputs.actions-repo != github.repository }}
+        if: >-
+          ${{ inputs.actions-repo != github.repository &&
+          inputs.skip-download == false }}
         uses: ./.github/actions/download-from-s3
         with:
           branch: ${{ steps.initialize-workspace.outputs.remote-branch }}
