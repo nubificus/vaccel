@@ -2,6 +2,8 @@
 
 #define _POSIX_C_SOURCE 200809L
 
+#include "vaccel_file.h"
+
 #include <inttypes.h>
 #include <stdio.h>
 #include <string.h>
@@ -224,7 +226,7 @@ static int noop_exec(struct vaccel_session *sess, const char *library,
 }
 
 static int noop_exec_with_resource(struct vaccel_session *sess,
-				   struct vaccel_shared_object *object,
+				   struct vaccel_resource *object,
 				   const char *fn_symbol,
 				   struct vaccel_arg *read, size_t nr_read,
 				   struct vaccel_arg *write, size_t nr_write)
@@ -239,7 +241,7 @@ static int noop_exec_with_resource(struct vaccel_session *sess,
 		return VACCEL_EINVAL;
 	}
 
-	if (!vaccel_sess_has_resource(sess, object->resource)) {
+	if (!vaccel_sess_has_resource(sess, object)) {
 		noop_error("Shared object is not registered with session\n");
 		return VACCEL_ENOENT;
 	}
@@ -247,8 +249,14 @@ static int noop_exec_with_resource(struct vaccel_session *sess,
 	noop_debug("Calling exec_with_resource for session %u",
 		   sess->session_id);
 
-	const char *library = object->file.path;
-	noop_debug("object file path: %s", object->file.path);
+	char *library;
+	library = vaccel_resource_get_path(object);
+	if (library == NULL) {
+		vaccel_error("Could not get path from resource");
+		return EINVAL;
+	}
+
+	noop_debug("object file path: %s", library);
 	noop_debug("Dumping arguments for exec_with_resource:");
 	noop_debug("library: %s symbol: %s", library, fn_symbol);
 	noop_debug("nr_read: %zu nr_write: %zu", nr_read, nr_write);
@@ -273,12 +281,12 @@ static int noop_exec_with_resource(struct vaccel_session *sess,
 			}
 		}
 	}
-
+	free(library);
 	return VACCEL_OK;
 }
 
 static int noop_tf_session_load(struct vaccel_session *session,
-				struct vaccel_tf_saved_model *model,
+				struct vaccel_resource *model,
 				struct vaccel_tf_status *status)
 {
 	if (!session) {
@@ -291,7 +299,7 @@ static int noop_tf_session_load(struct vaccel_session *session,
 		return VACCEL_EINVAL;
 	}
 
-	if (!vaccel_sess_has_resource(session, model->resource)) {
+	if (!vaccel_sess_has_resource(session, model)) {
 		noop_error("Model is not registered with session\n");
 		return VACCEL_ENOENT;
 	}
@@ -306,7 +314,7 @@ static int noop_tf_session_load(struct vaccel_session *session,
 }
 
 static int noop_tf_session_run(struct vaccel_session *session,
-			       const struct vaccel_tf_saved_model *model,
+			       const struct vaccel_resource *model,
 			       const struct vaccel_tf_buffer *run_options,
 			       const struct vaccel_tf_node *in_nodes,
 			       struct vaccel_tf_tensor *const *in,
@@ -389,7 +397,7 @@ free_tf:
 }
 
 static int noop_tf_session_delete(struct vaccel_session *session,
-				  const struct vaccel_tf_saved_model *model,
+				  const struct vaccel_resource *model,
 				  struct vaccel_tf_status *status)
 {
 	if (!session) {
@@ -412,7 +420,7 @@ static int noop_tf_session_delete(struct vaccel_session *session,
 }
 
 static int noop_tflite_session_load(struct vaccel_session *session,
-				    struct vaccel_single_model *model)
+				    struct vaccel_resource *model)
 {
 	if (!session) {
 		noop_error("Invalid session\n");
@@ -424,7 +432,7 @@ static int noop_tflite_session_load(struct vaccel_session *session,
 		return VACCEL_EINVAL;
 	}
 
-	if (!vaccel_sess_has_resource(session, model->resource)) {
+	if (!vaccel_sess_has_resource(session, model)) {
 		noop_error("Model is not registered with session\n");
 		return VACCEL_ENOENT;
 	}
@@ -433,7 +441,7 @@ static int noop_tflite_session_load(struct vaccel_session *session,
 }
 
 static int noop_tflite_session_run(struct vaccel_session *session,
-				   const struct vaccel_single_model *model,
+				   const struct vaccel_resource *model,
 				   struct vaccel_tflite_tensor *const *in,
 				   int nr_inputs,
 				   struct vaccel_tflite_tensor **out,
@@ -499,7 +507,7 @@ free_tflite:
 }
 
 static int noop_tflite_session_delete(struct vaccel_session *session,
-				      const struct vaccel_single_model *model)
+				      const struct vaccel_resource *model)
 {
 	if (!session) {
 		noop_error("Invalid session\n");
@@ -581,7 +589,7 @@ static int v_mmult(struct vaccel_session *session, float *a, float *b,
 }
 
 static int noop_torch_jitload_forward(
-	struct vaccel_session *session, const struct vaccel_single_model *model,
+	struct vaccel_session *session, const struct vaccel_resource *model,
 	const struct vaccel_torch_buffer *run_options,
 	struct vaccel_torch_tensor **in_tensor, int nr_read,
 	struct vaccel_torch_tensor **out_tensor, int nr_write)
