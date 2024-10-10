@@ -54,17 +54,18 @@ runs:
 
     - name: Generate \"latest\" artifacts
       run: |
-        if [ -d "${{ inputs.local-path }}" ]; then
-          echo "Local path is a directory, skipping"
-          exit 0
-        fi
         # attempt to match filenames of the form
         # pkg-A.B.C[-D-E{8}-][-M][moretext].extension
         # where capital letters are numbers and E is 8 digits long
         VERSION_REGEX="(.+)\d+\.\d+\.\d+(-\d+-[\da-z].{7})*(-\d+)*([^.]*\..+)"
-        pushd "$(dirname "${{ inputs.local-path }}")"
-        for f in $(ls -d *); do
-          [ ! -f "$f" ] && continue
+        if [ -d "${{ inputs.local-path }}" ]; then
+          echo "Local path is a directory, skipping"
+          exit 0
+        fi
+        dir=$(dirname "${{ inputs.local-path }}")
+        files=$(basename "${{ inputs.local-path }}")
+        pushd "${dir}"
+        for f in $(find . -maxdepth 1 -type f -name "${files}"); do
           latest_filename=$(echo "$f" | \
             perl -pe "s/${VERSION_REGEX}/\1latest\4/g")
           echo "Copying $f to ${latest_filename}"
@@ -74,7 +75,7 @@ runs:
       shell: bash
 
     - name: Upload artifact to s3
-      uses: cloudkernels/minio-upload@v4
+      uses: cloudkernels/minio-upload@v5
       with:
         url: https://s3.nubificus.co.uk
         access-key: ${{ inputs.access-key }}

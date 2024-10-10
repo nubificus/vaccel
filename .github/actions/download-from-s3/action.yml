@@ -14,12 +14,12 @@ inputs:
     default: 'nbfc-assets/github/vaccel'
   remote-subpath:
     default: ''
+  remote-files:
+    default: '*latest*'
   access-key:
     required: true
   secret-key:
     required: true
-  latest-only:
-    default: 'true'
   install:
     default: 'false'
 
@@ -30,7 +30,7 @@ outputs:
 runs:
   using: composite
   steps:
-    - name: Set required variables and verify output dir exists
+    - name: Generate paths and verify output dir exists
       id: get-artifact-vars
       run: |
         mkdir -p "${{ inputs.local-path }}"
@@ -42,14 +42,12 @@ runs:
           base_path="${base_path}/${{ inputs.remote-subpath }}"
         fi
         remote_path="${base_path}/rev/${{inputs.branch}}/${{inputs.arch}}/${{inputs.build-type}}"
-        if [ "${{ inputs.latest-only }}" == "true" ]; then
-          remote_path="${remote_path}/*latest*"
-        fi
+        remote_path="${remote_path}/${{ inputs.remote-files }}"
         echo "remote-path=${remote_path}" >> "$GITHUB_OUTPUT"
       shell: bash
 
     - name: Download artifacts from s3
-      uses: cloudkernels/minio-download@feat_wildcards
+      uses: cloudkernels/minio-download@v5
       with:
         url: https://s3.nubificus.co.uk
         access-key: ${{ inputs.access-key }}
