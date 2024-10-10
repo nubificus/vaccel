@@ -20,27 +20,14 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Determine SHA, branch and remote paths
+    - name: Determine SHA and branch
+      id: get-rev-info
+      uses: ./.github/actions/get-revision-info
+
+    - name: Generate paths
       id: get-artifact-vars
       run: |
-        if [ "${{ github.event_name }}" == "pull_request" ]; then
-          if [ "${{ github.event.pull_request.merged }}" == true ]; then
-            sha="${{ github.sha }}"
-            branch="${{ github.base_ref }}"
-            echo "PR merged. SHA: $sha, Branch: $branch"
-          else
-            sha="${{ github.event.pull_request.head.sha }}"
-            branch="${{ github.event.pull_request.head.ref }}"
-            echo "PR not yet merged. SHA: $sha, Branch: $branch"
-          fi
-        elif [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-          sha="${{ github.sha }}"
-          branch="${{ github.event.ref_name }}"
-          echo "Workflow dispatch event. SHA: $sha, Branch: $branch"
-        else
-          echo "Event not supported."
-          exit 1
-        fi
+        branch=${{ steps.get-rev-info.outputs.branch }} 
         local_path=$(realpath -s --relative-to="${{ github.workspace }}" \
           "${{ inputs.local-path }}")
         echo "local-path=${local_path}" >> "$GITHUB_OUTPUT"
