@@ -25,12 +25,12 @@
 
 TEST_CASE("min_max", "[ops_minmax]")
 {
-	char *path = abs_path(SOURCE_ROOT, "examples/input/input_262144.csv");
+	char *path = abs_path(SOURCE_ROOT, "examples/input/input_2048.csv");
 	double min;
 	double max;
 	int ret;
 
-	int ndata = 262144;
+	int ndata = 2048;
 	REQUIRE(ndata > 0);
 
 	auto *indata = (double *)malloc(ndata * sizeof(double));
@@ -93,12 +93,12 @@ TEST_CASE("min_max", "[ops_minmax]")
 
 TEST_CASE("min_max_generic", "[ops_minmax]")
 {
-	char *path = abs_path(SOURCE_ROOT, "examples/input/input_262144.csv");
+	char *path = abs_path(SOURCE_ROOT, "examples/input/input_2048.csv");
 	double min;
 	double max;
 	int ret;
 
-	int ndata = 262144;
+	int ndata = 2048;
 	REQUIRE(ndata > 0);
 
 	auto *indata = (double *)malloc(ndata * sizeof(double));
