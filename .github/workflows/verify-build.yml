@@ -74,6 +74,10 @@ jobs:
           repository: ${{ inputs.actions-repo }}
           ref: ${{ inputs.actions-rev }}
 
+      - name: Get revision info
+        id: get-rev-info
+        uses: ./.github/actions/get-revision-info
+
       - name: Initialize workspace
         id: initialize-workspace
         uses: ./.github/actions/initialize-workspace
@@ -81,6 +85,7 @@ jobs:
           fetch-depth: 0
           remote-actions-repo: ${{ inputs.actions-repo }}
           token: ${{ secrets.GIT_CLONE_PAT || github.token }}
+          ref: ${{ steps.get-rev-info.outputs.sha }}
 
       - name: Download artifacts from s3
         id: download-artifacts
