@@ -32,6 +32,9 @@ on:
       AWS_SECRET_ACCESS_KEY:
         required: false
 
+env:
+  ACTIONS_REV: ${{ (github.repository != inputs.actions-repo) && inputs.actions-rev || '' }}
+
 jobs:
   test-build:
     name: Test Build
@@ -52,7 +55,7 @@ jobs:
         with:
           sparse-checkout: .github
           repository: ${{ inputs.actions-repo }}
-          ref: ${{ inputs.actions-rev }}
+          ref: ${{ env.ACTIONS_REV }}
 
       - name: Initialize workspace
         id: initialize-workspace

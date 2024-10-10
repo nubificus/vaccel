@@ -13,6 +13,9 @@ on:
       GIT_CLONE_PAT:
         required: false
 
+env:
+  ACTIONS_REV: ${{ (github.repository != inputs.actions-repo) && inputs.actions-rev || '' }}
+
 jobs:
   linter-commitlint:
     name: Lint Commit Messages
@@ -23,7 +26,7 @@ jobs:
         with:
           sparse-checkout: .github
           repository: ${{ inputs.actions-repo }}
-          ref: ${{ inputs.actions-rev }}
+          ref: ${{ env.ACTIONS_REV }}
 
       - name: Initialize workspace
         uses: ./.github/actions/initialize-workspace
@@ -46,7 +49,7 @@ jobs:
         with:
           sparse-checkout: .github
           repository: ${{ inputs.actions-repo }}
-          ref: ${{ inputs.actions-rev }}
+          ref: ${{ env.ACTIONS_REV }}
 
       - name: Initialize workspace
         uses: ./.github/actions/initialize-workspace
@@ -69,7 +72,7 @@ jobs:
         with:
           sparse-checkout: .github
           repository: ${{ inputs.actions-repo }}
-          ref: ${{ inputs.actions-rev }}
+          ref: ${{ env.ACTIONS_REV }}
 
       - name: Initialize workspace
         uses: ./.github/actions/initialize-workspace

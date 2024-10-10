@@ -50,6 +50,10 @@ on:
       AWS_SECRET_ACCESS_KEY:
         required: false
 
+env:
+  ACTIONS_REV: ${{ (github.repository != inputs.actions-repo) && inputs.actions-rev || '' }}
+  DEFAULT_UPPATH: ${{ (inputs.package != 'vaccel') && format('{0}/{1}', 'plugins', inputs.package) || '' }}
+
 jobs:
   verify-build:
     name: Verify Build
@@ -61,7 +65,6 @@ jobs:
       fail-fast: false
     env:
       ARCH: ${{ fromJson(inputs.runner-arch-map)[0][matrix.arch] }}
-      DEFAULT_UPPATH: ${{ (inputs.package != 'vaccel') && format('{0}/{1}', 'plugins', inputs.package) || '' }}
       DOWNLOAD_PATH: ${{github.workspace}}/artifacts/downloads/${{fromJson(inputs.runner-arch-map)[0][matrix.arch]}}/${{matrix.build-type}}
       INSTALL_PREFIX: ${{github.workspace}}/artifacts/${{fromJson(inputs.runner-arch-map)[0][matrix.arch]}}/${{matrix.build-type}}
       CC: gcc-12
@@ -72,12 +75,13 @@ jobs:
         with:
           sparse-checkout: .github
           repository: ${{ inputs.actions-repo }}
-          ref: ${{ inputs.actions-rev }}
+          ref: ${{ env.ACTIONS_REV }}
 
       - name: Get revision info
         id: get-rev-info
         uses: ./.github/actions/get-revision-info
 
+      # use the actual branch rev so uploaded artifacts are versioned correctly
       - name: Initialize workspace
         id: initialize-workspace
         uses: ./.github/actions/initialize-workspace
