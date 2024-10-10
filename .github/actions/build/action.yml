@@ -22,7 +22,7 @@ inputs:
     default: 'false'
   dist:
     default: 'false'
-  dist-subprojects:
+  subprojects:
     default: 'true'
   dist-tests:
     default: 'false'
@@ -64,7 +64,10 @@ runs:
     - name: Install project
       working-directory: ${{ inputs.source-path }}
       if: ${{ inputs.install == 'true' }}
-      run: meson install -C "${{ inputs.build-path }}"
+      run: |
+        [ "${{ inputs.subprojects }}" == "false" ] && \
+          args+=" --skip-subprojects"
+        eval meson install "${args}" -C "${{ inputs.build-path }}"
       shell: bash
 
     - name: Generate distribution artifacts
@@ -72,11 +75,11 @@ runs:
       working-directory: ${{ inputs.source-path }}
       if: ${{ inputs.dist == 'true' || inputs.install-deb == 'true' }}
       run: |
-        [ "${{ inputs.dist-subprojects }}" == "true" ] && \
+        [ "${{ inputs.subprojects }}" == "true" ] && \
           args+=" --include-subprojects"
         [ "${{ inputs.dist-tests }}" == "false" ] && \
           args+=" --no-tests"
-        eval meson dist "$args" --allow-dirty -C "${{ inputs.build-path }}"
+        eval meson dist "${args}" --allow-dirty -C "${{ inputs.build-path }}"
         echo "dist-path=${{ inputs.build-path }}/meson-dist" >> "$GITHUB_OUTPUT"
       shell: bash
 

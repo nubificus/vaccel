@@ -27,7 +27,7 @@ on:
       dist-options:
         type: string
         default: ''
-      dist-subprojects:
+      subprojects:
         type: boolean
         default: true
       skip-examples:
@@ -104,6 +104,7 @@ jobs:
           build-type: ${{ matrix.build-type }}
           options: ${{ inputs.options }}
           install: 'true'
+          subprojects: ${{ inputs.subprojects }}
 
       - name: Run examples
         if: ${{ inputs.skip-examples == false && inputs.release == false }}
@@ -130,7 +131,7 @@ jobs:
           build-type: ${{ matrix.build-type }}
           options: ${{ inputs.dist-options || inputs.options }}
           dist: 'true'
-          dist-subprojects: ${{ inputs.dist-subprojects }}
+          subprojects: ${{ inputs.subprojects }}
 
       - name: Upload to s3
         if: ${{ contains(github.event.pull_request.labels.*.name, 'ok-to-upload') || inputs.release == true }}
