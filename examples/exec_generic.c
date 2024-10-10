@@ -17,13 +17,14 @@ int main(int argc, char **argv)
 	int input;
 	int output = 0;
 
-	if (argc < 2) {
-		fprintf(stderr, "You must specify the number of iterations\n");
+	if (argc < 3) {
+		vaccel_error(
+			"You must specify path to shared object and the number of iterations");
 		return 1;
 	}
 	ret = vaccel_sess_init(&sess, 0);
 	if (ret != VACCEL_OK) {
-		fprintf(stderr, "Could not initialize session\n");
+		vaccel_error("Could not initialize session\n");
 		return 1;
 	}
 
@@ -33,8 +34,7 @@ int main(int argc, char **argv)
 	enum vaccel_op_type op_type = VACCEL_EXEC;
 	struct vaccel_arg read[4] = {
 		{ .size = sizeof(uint8_t), .buf = &op_type },
-		{ .size = strlen("/usr/local/lib/libmytestlib.so"),
-		  .buf = "/usr/local/lib/libmytestlib.so" },
+		{ .size = strlen(argv[1]), .buf = argv[1] },
 		{ .size = strlen("mytestfunc"), .buf = "mytestfunc" },
 		{ .size = sizeof(input), .buf = &input }
 	};
@@ -42,10 +42,10 @@ int main(int argc, char **argv)
 		{ .size = sizeof(output), .buf = &output },
 	};
 
-	for (int i = 0; i < atoi(argv[1]); ++i) {
+	for (int i = 0; i < atoi(argv[2]); ++i) {
 		ret = vaccel_genop(&sess, read, 4, write, 1);
 		if (ret) {
-			fprintf(stderr, "Could not run op: %d\n", ret);
+			vaccel_error("Could not run op: %d\n", ret);
 			goto close_session;
 		}
 	}
@@ -54,7 +54,7 @@ int main(int argc, char **argv)
 
 close_session:
 	if (vaccel_sess_free(&sess) != VACCEL_OK) {
-		fprintf(stderr, "Could not clear session\n");
+		vaccel_error("Could not clear session\n");
 		return 1;
 	}
 

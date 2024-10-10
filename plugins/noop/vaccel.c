@@ -40,8 +40,8 @@ int noop_minmax(struct vaccel_session *sess, const double *indata, int ndata,
 		int low_threshold, int high_threshold, double *outdata,
 		double *min, double *max)
 {
-	double tmp_max = -1.0;
-	double tmp_min = 10000.0;
+	double tmp_max = 10000.0;
+	double tmp_min = -1.0;
 
 	if (!sess)
 		return VACCEL_EINVAL;
@@ -51,7 +51,7 @@ int noop_minmax(struct vaccel_session *sess, const double *indata, int ndata,
 	noop_debug("Dumping arguments for minmax: ndata:%d", ndata);
 	noop_debug("low: %d high: %d ", low_threshold, high_threshold);
 
-	//*outdata = tmp_min;
+	noop_debug("will return dummy min and max values\n");
 	memcpy(outdata, indata, ndata * sizeof(double));
 	*max = tmp_max;
 	*min = tmp_min;
