@@ -22,6 +22,9 @@ on:
       GIT_CLONE_PAT:
         required: false
 
+env:
+  ACTIONS_REV: ${{ (github.repository != inputs.actions-repo) && inputs.actions-rev || '' }}
+
 jobs:
   coverage-report:
     name: Coverage Report
@@ -42,7 +45,7 @@ jobs:
         with:
           sparse-checkout: .github
           repository: ${{ inputs.actions-repo }}
-          ref: ${{ inputs.actions-rev }}
+          ref: ${{ env.ACTIONS_REV }}
 
       - name: Set repository directories
         id: set-repo-dirs

@@ -14,6 +14,8 @@ on:
         required: false
       VACCEL_BOT_PRIVATE_KEY:
         required: true
+env:
+  ACTIONS_REV: ${{ (github.repository != inputs.actions-repo) && inputs.actions-rev || '' }}
 
 jobs:
   git-trailers:
@@ -32,7 +34,7 @@ jobs:
         with:
           sparse-checkout: .github
           repository: ${{ inputs.actions-repo }}
-          ref: ${{ inputs.actions-rev }}
+          ref: ${{ env.ACTIONS_REV }}
 
       - name: Initialize workspace
         uses: ./.github/actions/initialize-workspace
