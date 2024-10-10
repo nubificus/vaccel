@@ -25,12 +25,13 @@ runs:
         res=0
         git diff --quiet ${{ inputs.file }} || res="$?"
         [ "$res" != 0 ] && [ "$res" != 1 ] && exit "$((res + 0))"
-        echo "changed=${res}" >> "$GITHUB_OUTPUT"
-        echo "changed=${res}"
+        changed=$([ "$res" == 0 ] && echo 'false' || echo 'true')
+        echo "changed=${changed}" >> "$GITHUB_OUTPUT"
+        echo "changed=${changed}"
       shell: bash
 
     - name: Commit file
-      if: ${{ steps.verify-file-changed.changed == 1 }}
+      if: ${{ steps.verify-file-changed.outputs.changed == 'true' }}
       working-directory: ${{ inputs.workdir }}
       run: |
         content=$(base64 -i "${{ inputs.file }}")
