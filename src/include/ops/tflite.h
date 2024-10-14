@@ -11,8 +11,6 @@
 extern "C" {
 #endif
 
-struct vaccel_single_model;
-
 /* This is one-to-one mapping with tensorflow lite's
  * data types representation: see 'tensorflow/tensorflow/lite/core/c/c_api_types.h'
  */
@@ -72,16 +70,16 @@ int vaccel_tflite_tensor_set_data(struct vaccel_tflite_tensor *tensor,
 void *vaccel_tflite_tensor_get_data(struct vaccel_tflite_tensor *tensor);
 
 int vaccel_tflite_session_load(struct vaccel_session *session,
-			       struct vaccel_single_model *model);
+			       struct vaccel_resource *model);
 
 int vaccel_tflite_session_run(struct vaccel_session *session,
-			      const struct vaccel_single_model *model,
+			      const struct vaccel_resource *model,
 			      struct vaccel_tflite_tensor *const *in,
 			      int nr_inputs, struct vaccel_tflite_tensor **out,
 			      int nr_outputs, uint8_t *status);
 
 int vaccel_tflite_session_delete(struct vaccel_session *session,
-				 struct vaccel_single_model *model);
+				 struct vaccel_resource *model);
 
 #ifdef __cplusplus
 }

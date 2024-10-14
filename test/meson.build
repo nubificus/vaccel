@@ -18,7 +18,7 @@ subdir('ops')
 subdir('resources')
 
 libtests_main = library('tests-main',
-  ['main.cpp', 'utils.cpp', vaccel_utils_c],
+  ['main.cpp', 'utils.cpp'],
   cpp_args : vaccel_cargs,
   include_directories : [tests_includes, vaccel_src_includes],
   dependencies : libvaccel_private,

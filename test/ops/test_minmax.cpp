@@ -73,8 +73,8 @@ TEST_CASE("min_max", "[ops_minmax]")
 
 	fprintf(stdout, "min: %lf max: %lf Execution time: %lf msec\n", min,
 		max,
-		(double)(t1.tv_sec - t0.tv_sec) * 1000.0 +
-			(double)(t1.tv_nsec - t0.tv_nsec) / 1.0e6);
+		((double)(t1.tv_sec - t0.tv_sec) * 1000.0) +
+			((double)(t1.tv_nsec - t0.tv_nsec) / 1.0e6));
 
 	ret = vaccel_sess_free(&session);
 	REQUIRE(session.session_id);
@@ -160,8 +160,8 @@ TEST_CASE("min_max_generic", "[ops_minmax]")
 
 	fprintf(stdout, "min: %lf max: %lf Execution time: %lf msec\n", min,
 		max,
-		(double)(t1.tv_sec - t0.tv_sec) * 1000.0 +
-			(double)(t1.tv_nsec - t0.tv_nsec) / 1.0e6);
+		((double)(t1.tv_sec - t0.tv_sec) * 1000.0) +
+			((double)(t1.tv_nsec - t0.tv_nsec) / 1.0e6));
 
 	ret = vaccel_sess_free(&session);
 	REQUIRE(session.session_id);
