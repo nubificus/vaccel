@@ -18,6 +18,9 @@ extern "C" {
 #include <random>
 #include <vector>
 
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
 auto random_input_generator(int min_value = 1, int max_value = 100,
 			    size_t vector_size = 150528,
 			    bool is_print = true) -> std::vector<float>
@@ -52,9 +55,11 @@ auto main(int argc, char **argv) -> int
 	struct vaccel_single_model model;
 	struct vaccel_torch_buffer run_options;
 	int ret;
+        int width, height, channels;
+        unsigned char* img_data;
 	char *model_path = argv[2];
-	std::vector<float> res_data = random_input_generator();
-	res_data.resize(static_cast<size_t>(3 * 224 * 224));
+	std::vector<float> res_data;// = random_input_generator();
+	//res_data.resize(static_cast<size_t>(3 * 224 * 224));
 	int64_t dims[] = { 1, 224, 224, 3 };
 	struct vaccel_torch_tensor *in;
 	struct vaccel_torch_tensor *out;
@@ -78,12 +83,6 @@ auto main(int argc, char **argv) -> int
 	}
 	printf("Created new model %lld\n", vaccel_single_model_get_id(&model));
 
-	/* Read the image file */
-	ret = read_file(argv[1], (void **)&run_options.data, &run_options.size);
-	if (ret != VACCEL_OK) {
-		fprintf(stderr, "Could not load the image file: %d", ret);
-		goto close_session;
-	}
 
 	ret = vaccel_sess_init(&sess, 0);
 	if (ret != VACCEL_OK) {
@@ -106,8 +105,33 @@ auto main(int argc, char **argv) -> int
 		fprintf(stderr, "Could not allocate memory\n");
 		goto unregister_session;
 	}
+	//in->data = res_data.data();
+	//in->size = res_data.size() * sizeof(float);
+	//res_data.resize(static_cast<size_t>(3 * 224 * 224));
+    // Step 1: Load the image
+    
+    img_data = stbi_load(argv[1], &width, &height, &channels, 0);
+    
+    if (img_data == nullptr) {
+        std::cerr << "Failed to load image\n";
+        return -1;
+    }
+
+    // Step 2: Convert image to a vector of floats and normalize (0-1)
+    res_data.reserve(width * height * channels);
+    
+    for (int i = 0; i < width * height * channels; ++i) {
+        res_data.push_back(img_data[i] / 255.0f);  // Normalize pixel value
+    }
+
+    run_options.data = strdup("resnet");
+    run_options.size = strlen(run_options.data);
+    // Step 3: Free the image memory after use
+    stbi_image_free(img_data);
+
 	in->data = res_data.data();
 	in->size = res_data.size() * sizeof(float);
+
 	printf("The IN ADDRESS: %p\n", in->data);
 	printf("data: %f\n", *(float *)in->data);
 	printf("size: %zu\n", in->size);
