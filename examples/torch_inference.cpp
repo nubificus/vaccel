@@ -18,6 +18,11 @@ extern "C" {
 #include <random>
 #include <vector>
 
+#ifdef VACCEL_LOAD_IMAGE
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+#endif
+
 auto random_input_generator(int min_value = 1, int max_value = 100,
 			    size_t vector_size = 150528,
 			    bool is_print = true) -> std::vector<float>
@@ -53,8 +58,14 @@ auto main(int argc, char **argv) -> int
 	struct vaccel_torch_buffer run_options;
 	int ret;
 	char *model_path = argv[2];
+#ifndef VACCEL_LOAD_IMAGE
 	std::vector<float> res_data = random_input_generator();
 	res_data.resize(static_cast<size_t>(3 * 224 * 224));
+#else
+	int width, height, channels;
+	unsigned char* img_data;
+	std::vector<float> res_data;
+#endif
 	int64_t dims[] = { 1, 224, 224, 3 };
 	struct vaccel_torch_tensor *in;
 	struct vaccel_torch_tensor *out;
@@ -69,14 +80,6 @@ auto main(int argc, char **argv) -> int
 	if (ret != 0) {
 		vaccel_error("Could not create model resource");
 		return ret;
-	}
-
-	/* Read the image file */
-	ret = fs_file_read(argv[1], (void **)&run_options.data,
-			   &run_options.size);
-	if (ret != VACCEL_OK) {
-		fprintf(stderr, "Could not load the image file: %d", ret);
-		goto close_session;
 	}
 
 	ret = vaccel_session_init(&sess, 0);
@@ -100,11 +103,27 @@ auto main(int argc, char **argv) -> int
 		fprintf(stderr, "Could not allocate memory\n");
 		goto unregister_session;
 	}
+
+	run_options.data = strdup("resnet");
+	run_options.size = strlen(run_options.data) + 1;
+
+#ifdef VACCEL_LOAD_IMAGE
+	img_data = stbi_load(argv[1], &width, &height, &channels, 0);
+	if (img_data == nullptr) {
+		std::cerr << "Failed to load image\n";
+		return -1;
+	}
+
+	res_data.reserve(width * height * channels);
+
+	for (int i = 0; i < width * height * channels; ++i) {
+		res_data.push_back(img_data[i] / 255.0f);  // Normalize pixel value
+	}
+	stbi_image_free(img_data);
+#endif
+
 	in->data = res_data.data();
 	in->size = res_data.size() * sizeof(float);
-	printf("The IN ADDRESS: %p\n", in->data);
-	printf("data: %f\n", *(float *)in->data);
-	printf("size: %zu\n", in->size);
 
 	/* Output tensor */
 	out = (struct vaccel_torch_tensor *)malloc(
