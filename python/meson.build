@@ -5,8 +5,7 @@ python_sources = files([
 libvaccel_python = library('vaccel-python',
   python_sources,
   version: libvaccel_version,
-  c_args : vaccel_cargs,
-  #include_directories : vaccel_includes,
+  c_args : vaccel_c_args,
   dependencies : [libvaccel_private],
   install : true)
 

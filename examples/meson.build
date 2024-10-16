@@ -38,8 +38,8 @@ examples = []
 foreach e : examples_sources
   examples += executable(fs.stem(e),
     sources : e,
-    c_args : vaccel_cargs,
-    cpp_args : vaccel_cargs + vaccel_cppargs,
+    c_args : vaccel_c_args,
+    cpp_args : vaccel_cpp_args,
     include_directories : vaccel_includes,
     dependencies : [libvaccel_private],
     install : true)
@@ -47,7 +47,7 @@ endforeach
 
 mytestlib = library('mytestlib',
   files('mytestlib.c'),
-  c_args : vaccel_cargs,
+  c_args : vaccel_c_args,
   include_directories : vaccel_includes,
   dependencies : [libvaccel_private],
   install : true)

@@ -48,7 +48,7 @@ libvaccel_deps = [
 libvaccel = library('vaccel',
   vaccel_sources,
   version: libvaccel_version,
-  c_args : vaccel_cargs,
+  c_args : vaccel_c_args,
   include_directories : vaccel_includes,
   dependencies : libvaccel_deps,
   install : true)
