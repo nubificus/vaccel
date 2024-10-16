@@ -101,13 +101,13 @@ TEST_CASE("tflite_inference", "[ops_tflite]")
 	vsess.hint = 0;
 	vsess.priv = nullptr;
 
-	model.path = nullptr;
+	model.paths = nullptr;
 
-	ret = vaccel_resource_new(&model, model_path, VACCEL_FILE_DATA);
+	ret = vaccel_resource_new(&model, model_path, VACCEL_RESOURCE_MODEL);
 	REQUIRE(ret == VACCEL_OK);
-	REQUIRE_FALSE(model.path == nullptr);
-	REQUIRE_FALSE(model.files == nullptr);
-	INFO("model.path: " << model.path);
+	REQUIRE_FALSE(model.paths == nullptr);
+	REQUIRE_FALSE(model.paths[0] == nullptr);
+	INFO("model.paths[0]: " << model.paths[0]);
 
 	ret = vaccel_session_init(&vsess, 0);
 	REQUIRE(ret == VACCEL_OK);
@@ -118,12 +118,14 @@ TEST_CASE("tflite_inference", "[ops_tflite]")
 
 	printf("Initialized vAccel session %u\n", vsess.session_id);
 
-	ret = vaccel_resource_register(&vsess, &model);
+	ret = vaccel_resource_register(&model, &vsess);
 	REQUIRE(ret == VACCEL_OK);
 	REQUIRE_FALSE(vsess.session_id == 0);
 	REQUIRE(vsess.hint == 0);
 	REQUIRE_FALSE(list_empty(&vsess.resources->registered[model.type]));
 	REQUIRE(vsess.priv == nullptr);
+	REQUIRE_FALSE(model.files == nullptr);
+	REQUIRE_FALSE(model.files[0] == nullptr);
 
 	ret = vaccel_tflite_session_load(&vsess, &model);
 	REQUIRE(ret == VACCEL_OK);
@@ -167,7 +169,7 @@ TEST_CASE("tflite_inference", "[ops_tflite]")
 	ret = vaccel_tflite_session_delete(&vsess, &model);
 	REQUIRE(ret == VACCEL_OK);
 
-	ret = vaccel_resource_unregister(&vsess, &model);
+	ret = vaccel_resource_unregister(&model, &vsess);
 	REQUIRE(ret == VACCEL_OK);
 
 	ret = vaccel_session_free(&vsess);
