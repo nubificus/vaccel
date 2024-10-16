@@ -126,20 +126,19 @@ TEST_CASE("exec_with_resource", "[ops_exec]")
 	REQUIRE(len);
 
 	struct vaccel_resource object;
-	object.path = nullptr;
+	object.paths = nullptr;
 
 	struct vaccel_resource object2;
-	object2.path = nullptr;
+	object2.paths = nullptr;
 
-	ret = vaccel_resource_new(&object, plugin_path, VACCEL_FILE_LIB);
+	ret = vaccel_resource_new(&object, plugin_path, VACCEL_RESOURCE_LIB);
 	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(object.path);
-	REQUIRE(object.files);
+	REQUIRE(object.paths);
+	REQUIRE(object.paths[0]);
 
 	ret = vaccel_resource_new_from_buf(&object2, (unsigned char *)buff, len,
-					   VACCEL_FILE_LIB);
+					   VACCEL_RESOURCE_LIB);
 	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(object2.files);
 
 	struct vaccel_session sess;
 	sess.session_id = 0;
@@ -167,19 +166,21 @@ TEST_CASE("exec_with_resource", "[ops_exec]")
 	REQUIRE(sess2.resources);
 	REQUIRE(sess2.priv == nullptr);
 
-	ret = vaccel_resource_register(&sess, &object);
+	ret = vaccel_resource_register(&object, &sess);
 	REQUIRE(ret == VACCEL_OK);
 	REQUIRE(sess.session_id);
 	REQUIRE(sess.hint == 0);
 	REQUIRE_FALSE(list_empty(&sess.resources->registered[object.type]));
 	REQUIRE(sess.priv == nullptr);
+	REQUIRE(object.files);
 
-	ret = vaccel_resource_register(&sess2, &object2);
+	ret = vaccel_resource_register(&object2, &sess2);
 	REQUIRE(ret == VACCEL_OK);
 	REQUIRE(sess2.session_id);
 	REQUIRE(sess2.hint == 0);
 	REQUIRE_FALSE(list_empty(&sess2.resources->registered[object2.type]));
 	REQUIRE(sess2.priv == nullptr);
+	REQUIRE(object2.files);
 
 	input = 10;
 	struct vaccel_arg read[1] = {
@@ -214,14 +215,14 @@ TEST_CASE("exec_with_resource", "[ops_exec]")
 	REQUIRE(sess2.priv == nullptr);
 	REQUIRE(output2);
 
-	ret = vaccel_resource_unregister(&sess, &object);
+	ret = vaccel_resource_unregister(&object, &sess);
 	REQUIRE(ret == VACCEL_OK);
 	REQUIRE(sess.session_id);
 	REQUIRE(sess.hint == 0);
 	REQUIRE(list_empty(&sess.resources->registered[object.type]));
 	REQUIRE(sess.priv == nullptr);
 
-	ret = vaccel_resource_unregister(&sess2, &object2);
+	ret = vaccel_resource_unregister(&object2, &sess2);
 	REQUIRE(ret == VACCEL_OK);
 	REQUIRE(sess2.session_id);
 	REQUIRE(sess2.hint == 0);

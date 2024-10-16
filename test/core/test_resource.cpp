@@ -28,7 +28,7 @@ TEST_CASE("resource_destroy", "[resources]")
 {
 	int ret;
 	struct vaccel_resource res;
-	vaccel_resource_t test_type = VACCEL_FILE_DATA;
+	vaccel_resource_t test_type = VACCEL_RESOURCE_LIB;
 	char *test_path = abs_path(BUILD_ROOT, "examples/libmytestlib.so");
 
 	// Test handling of null resource
@@ -48,7 +48,7 @@ TEST_CASE("resource_destroy", "[resources]")
 		REQUIRE(ret == VACCEL_OK);
 
 		REQUIRE(res.id == 1);
-		REQUIRE(res.type == VACCEL_FILE_DATA);
+		REQUIRE(res.type == VACCEL_RESOURCE_LIB);
 		REQUIRE_FALSE(list_empty(&res.entry));
 		REQUIRE(res.refcount == 0);
 		REQUIRE(res.rundir == NULL);
@@ -57,7 +57,7 @@ TEST_CASE("resource_destroy", "[resources]")
 		REQUIRE(ret == VACCEL_OK);
 
 		REQUIRE(res.id == 1);
-		REQUIRE(res.type == VACCEL_FILE_DATA);
+		REQUIRE(res.type == VACCEL_RESOURCE_LIB);
 		REQUIRE(list_empty(&res.entry));
 		REQUIRE(res.refcount == 0);
 		REQUIRE(res.rundir == NULL);
@@ -70,7 +70,7 @@ TEST_CASE("resource_create", "[resources]")
 {
 	int ret;
 	struct vaccel_resource res;
-	vaccel_resource_t test_type = VACCEL_FILE_DATA;
+	vaccel_resource_t test_type = VACCEL_RESOURCE_LIB;
 	char *test_path = abs_path(BUILD_ROOT, "examples/libmytestlib.so");
 
 	// Create a resource
@@ -78,7 +78,7 @@ TEST_CASE("resource_create", "[resources]")
 	REQUIRE(ret == VACCEL_OK);
 
 	REQUIRE(res.id == 1);
-	REQUIRE(res.type == VACCEL_FILE_DATA);
+	REQUIRE(res.type == VACCEL_RESOURCE_LIB);
 	REQUIRE_FALSE(list_empty(&res.entry));
 	REQUIRE(res.refcount == 0);
 	REQUIRE(res.rundir == NULL);
@@ -88,7 +88,7 @@ TEST_CASE("resource_create", "[resources]")
 	REQUIRE(ret == VACCEL_OK);
 
 	REQUIRE(res.id == 1);
-	REQUIRE(res.type == VACCEL_FILE_DATA);
+	REQUIRE(res.type == VACCEL_RESOURCE_LIB);
 	REQUIRE_FALSE(list_empty(&res.entry));
 	REQUIRE(res.refcount == 0);
 	REQUIRE_FALSE(res.rundir == NULL);
@@ -98,7 +98,7 @@ TEST_CASE("resource_create", "[resources]")
 	REQUIRE(ret == VACCEL_OK);
 
 	REQUIRE(res.id == 1);
-	REQUIRE(res.type == VACCEL_FILE_DATA);
+	REQUIRE(res.type == VACCEL_RESOURCE_LIB);
 	REQUIRE(list_empty(&res.entry));
 	REQUIRE(res.refcount == 0);
 	REQUIRE_FALSE(res.rundir == NULL);
@@ -123,7 +123,7 @@ TEST_CASE("resource_find_by_id", "[resources]")
 {
 	int ret;
 	struct vaccel_resource test_res;
-	vaccel_resource_t test_type = VACCEL_FILE_DATA;
+	vaccel_resource_t test_type = VACCEL_RESOURCE_LIB;
 	char *test_path = abs_path(BUILD_ROOT, "examples/libmytestlib.so");
 
 	// Create a test resource
@@ -131,7 +131,7 @@ TEST_CASE("resource_find_by_id", "[resources]")
 	REQUIRE(ret == VACCEL_OK);
 
 	REQUIRE(test_res.id == 1);
-	REQUIRE(test_res.type == VACCEL_FILE_DATA);
+	REQUIRE(test_res.type == VACCEL_RESOURCE_LIB);
 	REQUIRE_FALSE(list_empty(&test_res.entry));
 	REQUIRE(test_res.refcount == 0);
 	REQUIRE(test_res.rundir == NULL);
@@ -145,7 +145,7 @@ TEST_CASE("resource_find_by_id", "[resources]")
 	REQUIRE(result_resource != nullptr);
 
 	REQUIRE(result_resource->id == 1);
-	REQUIRE(result_resource->type == VACCEL_FILE_DATA);
+	REQUIRE(result_resource->type == VACCEL_RESOURCE_LIB);
 	REQUIRE_FALSE(list_empty(&result_resource->entry));
 	REQUIRE(result_resource->refcount == 0);
 	REQUIRE(result_resource->rundir == NULL);
@@ -155,7 +155,7 @@ TEST_CASE("resource_find_by_id", "[resources]")
 	REQUIRE(ret == VACCEL_OK);
 
 	REQUIRE(test_res.id == 1);
-	REQUIRE(test_res.type == VACCEL_FILE_DATA);
+	REQUIRE(test_res.type == VACCEL_RESOURCE_LIB);
 	REQUIRE(list_empty(&test_res.entry));
 	REQUIRE(test_res.refcount == 0);
 	REQUIRE(test_res.rundir == NULL);
@@ -172,7 +172,7 @@ TEST_CASE("resource_with_deps", "[resources]")
 	struct vaccel_resource **test_deps_g;
 	struct vaccel_resource *test_deps[2] = { &test_dep_1, &test_dep_2 };
 	size_t nr_deps;
-	vaccel_resource_t test_type = VACCEL_FILE_LIB;
+	vaccel_resource_t test_type = VACCEL_RESOURCE_LIB;
 	char *test_path = abs_path(BUILD_ROOT, "examples/libmytestlib.so");
 
 	// Create a test resource
@@ -180,7 +180,7 @@ TEST_CASE("resource_with_deps", "[resources]")
 	REQUIRE(ret == VACCEL_OK);
 
 	REQUIRE(test_res.id == 1);
-	REQUIRE(test_res.type == VACCEL_FILE_LIB);
+	REQUIRE(test_res.type == VACCEL_RESOURCE_LIB);
 	REQUIRE_FALSE(list_empty(&test_res.entry));
 	REQUIRE(test_res.refcount == 0);
 	REQUIRE(test_res.rundir == NULL);
@@ -299,7 +299,7 @@ TEST_CASE("resource_not_bootstrapped", "[resources]")
 {
 	int ret;
 	struct vaccel_resource test_res;
-	vaccel_resource_t test_type = VACCEL_FILE_DATA;
+	vaccel_resource_t test_type = VACCEL_RESOURCE_LIB;
 	char *test_path = abs_path(BUILD_ROOT, "examples/libmytestlib.so");
 	struct vaccel_resource *result_resource = nullptr;
 	vaccel_id_t id_to_find = 1;

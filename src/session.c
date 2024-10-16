@@ -62,12 +62,13 @@ int sessions_cleanup(void)
 	return VACCEL_OK;
 }
 
-int vaccel_resource_register(struct vaccel_session *sess,
-			     struct vaccel_resource *res)
+int vaccel_session_register_resource(struct vaccel_session *sess,
+				     struct vaccel_resource *res)
 {
 	int ret;
 
-	if (!sess || !sess->resources || !res || res->type >= VACCEL_RES_MAX)
+	if (!sess || !sess->resources || !res ||
+	    res->type >= VACCEL_RESOURCE_MAX)
 		return VACCEL_EINVAL;
 
 	struct session_resources *resources = sess->resources;
@@ -129,12 +130,12 @@ find_registered_resource(const struct vaccel_session *sess,
 	return NULL;
 }
 
-int vaccel_resource_unregister(struct vaccel_session *sess,
-			       struct vaccel_resource *res)
+int vaccel_session_unregister_resource(struct vaccel_session *sess,
+				       struct vaccel_resource *res)
 {
 	int ret;
 
-	if (!sess || !res || res->type >= VACCEL_RES_MAX)
+	if (!sess || !res || res->type >= VACCEL_RESOURCE_MAX)
 		return VACCEL_EINVAL;
 
 	/* Check if resource is indeed registered to session */
@@ -213,7 +214,7 @@ static int session_initialize_resources(struct vaccel_session *sess)
 		goto cleanup_res;
 
 	sess->resources = res;
-	for (int i = 0; i < VACCEL_RES_MAX; ++i)
+	for (int i = 0; i < VACCEL_RESOURCE_MAX; ++i)
 		list_init(&res->registered[i]);
 
 	return VACCEL_OK;
@@ -229,12 +230,13 @@ static int session_cleanup_resources(struct vaccel_session *sess)
 		return VACCEL_EINVAL;
 
 	struct session_resources *resources = sess->resources;
-	for (int i = 0; i < VACCEL_RES_MAX; ++i) {
+	for (int i = 0; i < VACCEL_RESOURCE_MAX; ++i) {
 		struct registered_resource *iter = NULL;
 		struct registered_resource *tmp;
 		for_each_session_resource_safe(iter, tmp,
 					       &resources->registered[i]) {
-			int ret = vaccel_resource_unregister(sess, iter->res);
+			int ret = vaccel_session_unregister_resource(sess,
+								     iter->res);
 			if (ret) {
 				vaccel_error(
 					"Could not unregister resource from session");

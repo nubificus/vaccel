@@ -14,11 +14,7 @@
 #include <sys/stat.h>
 #include <vaccel.h>
 
-enum {
-	MAX_VACCEL_SESSIONS = 1024,
-	MAX_RESOURCES = 2048,
-	MAX_RESOURCE_RUNDIR = 1024
-};
+enum { MAX_SESSIONS = 1024, MAX_RESOURCES = 2048, MAX_RESOURCE_RUNDIR = 1024 };
 
 TEST_CASE("bootstrap_plugin", "[core_bootstrap]")
 {
@@ -33,7 +29,7 @@ TEST_CASE("bootstrap_plugin", "[core_bootstrap]")
 TEST_CASE("bootstrap_resource", "[core_bootstrap]")
 {
 	id_pool_t id_pool;
-	list_t live_resources[VACCEL_RES_MAX];
+	list_t live_resources[VACCEL_RESOURCE_MAX];
 	int ret;
 	ret = id_pool_new(&id_pool, MAX_RESOURCES);
 	REQUIRE(ret == VACCEL_OK);
@@ -56,11 +52,11 @@ TEST_CASE("bootstrap_session", "[core_bootstrap]")
 	struct {
 		bool initialized;
 		id_pool_t ids;
-		struct vaccel_session *running_sessions[MAX_VACCEL_SESSIONS];
+		struct vaccel_session *running_sessions[MAX_SESSIONS];
 	} sessions;
 
 	int ret;
-	ret = id_pool_new(&sessions.ids, MAX_VACCEL_SESSIONS);
+	ret = id_pool_new(&sessions.ids, MAX_SESSIONS);
 	REQUIRE(ret == VACCEL_OK);
 
 	for (auto &running_session : sessions.running_sessions)

@@ -42,12 +42,12 @@ int vaccel_session_update(struct vaccel_session *sess, uint32_t flags);
 int vaccel_session_free(struct vaccel_session *sess);
 
 /* Register a resource with a session */
-int vaccel_resource_register(struct vaccel_session *sess,
-			     struct vaccel_resource *res);
+int vaccel_session_register_resource(struct vaccel_session *sess,
+				     struct vaccel_resource *res);
 
 /* Unregister a resource from a session */
-int vaccel_resource_unregister(struct vaccel_session *sess,
-			       struct vaccel_resource *res);
+int vaccel_session_unregister_resource(struct vaccel_session *sess,
+				       struct vaccel_resource *res);
 
 /* Check if a resource is registered with a session */
 bool vaccel_session_has_resource(const struct vaccel_session *sess,

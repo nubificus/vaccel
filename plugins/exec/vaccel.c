@@ -113,7 +113,7 @@ static int exec_with_resource(struct vaccel_session *session,
 	}
 	for (size_t i = 0; i < nr_deps; i++) {
 		struct vaccel_resource *res = deps[i];
-		const char *fpath = res->files[0]->path;
+		const char *fpath = vaccel_resource_get_path(res);
 
 		exec_res_debug("dep library: %s", fpath);
 		ddl[i] = dlopen(fpath, RTLD_NOW | RTLD_GLOBAL);

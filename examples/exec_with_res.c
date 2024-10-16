@@ -28,7 +28,7 @@ int main(int argc, char *argv[])
 
 	struct vaccel_resource resource;
 
-	int ret = vaccel_resource_new(&resource, argv[1], VACCEL_FILE_LIB);
+	int ret = vaccel_resource_new(&resource, argv[1], VACCEL_RESOURCE_LIB);
 	if (ret) {
 		vaccel_error("Could not create shared object resource: %s",
 			     strerror(ret));
@@ -43,7 +43,7 @@ int main(int argc, char *argv[])
 	}
 	printf("Initialized session with id: %u\n", sess.session_id);
 
-	ret = vaccel_resource_register(&sess, &resource);
+	ret = vaccel_resource_register(&resource, &sess);
 	if (ret) {
 		vaccel_error("Could register shared object to session");
 		exit(1);
@@ -59,7 +59,7 @@ int main(int argc, char *argv[])
 	}
 
 	ret = vaccel_resource_new_from_buf(&resource2, buff, len,
-					   VACCEL_FILE_LIB);
+					   VACCEL_RESOURCE_LIB);
 	if (ret) {
 		vaccel_error(
 			"Could not create shared object2 resource from buffer: %s",
@@ -67,7 +67,7 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	ret = vaccel_resource_register(&sess, &resource2);
+	ret = vaccel_resource_register(&resource2, &sess);
 	if (ret) {
 		vaccel_error("Could not register object 2 to session");
 		exit(1);
@@ -108,13 +108,13 @@ int main(int argc, char *argv[])
 	printf("output1(2x%d): %d\n", input, output2);
 
 close_session:
-	ret = vaccel_resource_unregister(&sess, &resource);
+	ret = vaccel_resource_unregister(&resource, &sess);
 	if (ret) {
 		vaccel_error("Could not unregister object from session");
 		exit(1);
 	}
 
-	ret = vaccel_resource_unregister(&sess, &resource2);
+	ret = vaccel_resource_unregister(&resource2, &sess);
 	if (ret) {
 		vaccel_error("Could not unregister object 2 from session");
 		exit(1);

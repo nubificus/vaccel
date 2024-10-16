@@ -65,7 +65,7 @@ auto main(int argc, char **argv) -> int
 		exit(1);
 	}
 
-	ret = vaccel_resource_new(&model, model_path, VACCEL_FILE_DATA);
+	ret = vaccel_resource_new(&model, model_path, VACCEL_RESOURCE_MODEL);
 	if (ret != 0) {
 		vaccel_error("Could not create model resource");
 		return ret;
@@ -88,7 +88,7 @@ auto main(int argc, char **argv) -> int
 
 	/* Take vaccel_session and vaccel_resource as inputs, 
 	 * register a resource with a session */
-	ret = vaccel_resource_register(&sess, &model);
+	ret = vaccel_resource_register(&model, &sess);
 	if (ret != VACCEL_OK) {
 		fprintf(stderr, "Could not register model with session\n");
 		goto close_session;
@@ -141,7 +141,7 @@ free_tensor:
 	if (vaccel_torch_tensor_destroy(in) != VACCEL_OK)
 		fprintf(stderr, "Could not destroy in tensor\n");
 unregister_session:
-	if (vaccel_resource_unregister(&sess, &model) != VACCEL_OK)
+	if (vaccel_resource_unregister(&model, &sess) != VACCEL_OK)
 		fprintf(stderr, "Could not unregister model with session\n");
 close_session:
 	if (vaccel_session_free(&sess) != VACCEL_OK)

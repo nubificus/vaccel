@@ -30,7 +30,7 @@ int create_from_path(char *path)
 {
 	vaccel_info("Creating new model handle");
 	struct vaccel_resource model;
-	int ret = vaccel_resource_new(&model, path, VACCEL_FILE_DATA);
+	int ret = vaccel_resource_new(&model, path, VACCEL_RESOURCE_MODEL);
 	if (ret)
 		return ret;
 
@@ -42,7 +42,7 @@ int create_from_path(char *path)
 	vaccel_info("Registering model %lld with session %u", model.id,
 		    sess.session_id);
 
-	ret = vaccel_resource_register(&sess, &model);
+	ret = vaccel_resource_register(&model, &sess);
 	if (ret) {
 		vaccel_error("Could not register model to session");
 		return ret;
@@ -51,7 +51,7 @@ int create_from_path(char *path)
 	vaccel_info("Unregistering model %lld from session %u", model.id,
 		    sess.session_id);
 
-	ret = vaccel_resource_unregister(&sess, &model);
+	ret = vaccel_resource_unregister(&model, &sess);
 	if (ret) {
 		vaccel_error("Could not unregister model from session");
 		return ret;
@@ -81,7 +81,8 @@ int create_from_in_mem(const char *path)
 		return VACCEL_ENOMEM;
 	}
 
-	ret = vaccel_resource_new_from_buf(&model, ptr, len, VACCEL_FILE_DATA);
+	ret = vaccel_resource_new_from_buf(&model, ptr, len,
+					   VACCEL_RESOURCE_MODEL);
 	if (ret) {
 		vaccel_error("Could not set file for model");
 		return ret;
@@ -95,7 +96,7 @@ int create_from_in_mem(const char *path)
 	vaccel_info("Registering model %lld with session %u", model.id,
 		    sess.session_id);
 
-	ret = vaccel_resource_register(&sess, &model);
+	ret = vaccel_resource_register(&model, &sess);
 	if (ret) {
 		vaccel_error("Could not register model to session");
 		return ret;
@@ -104,7 +105,7 @@ int create_from_in_mem(const char *path)
 	vaccel_info("Unregistering model %lld from session %u", model.id,
 		    sess.session_id);
 
-	ret = vaccel_resource_unregister(&sess, &model);
+	ret = vaccel_resource_unregister(&model, &sess);
 	if (ret) {
 		vaccel_error("Could not unregister model from session");
 		return ret;

@@ -93,8 +93,8 @@ struct vaccel_plugin_info {
 	int (*resource_set_deps)(struct vaccel_resource *res,
 				 struct vaccel_resource **deps, size_t nr_deps);
 	int (*resource_destroy)(vaccel_id_t id);
-	int (*resource_register)(uint32_t sess_id, vaccel_id_t resource_id,
-				 vaccel_id_t *remote_resource_id);
+	int (*resource_register)(struct vaccel_session *sess,
+				 struct vaccel_resource *res);
 };
 
 struct vaccel_plugin {
