@@ -34,17 +34,17 @@ TEST_CASE("resource_destroy", "[resources]")
 	// Test handling of null resource
 	SECTION("Null resource")
 	{
-		ret = vaccel_resource_new(nullptr, nullptr, test_type);
+		ret = vaccel_resource_init(nullptr, nullptr, test_type);
 		REQUIRE(ret == VACCEL_EINVAL);
 
-		ret = vaccel_resource_destroy(nullptr);
+		ret = vaccel_resource_release(nullptr);
 		REQUIRE(ret == VACCEL_EINVAL);
 	}
 
 	// Test creation and destruction of a valid resource
 	SECTION("Valid resource")
 	{
-		ret = vaccel_resource_new(&res, test_path, test_type);
+		ret = vaccel_resource_init(&res, test_path, test_type);
 		REQUIRE(ret == VACCEL_OK);
 
 		REQUIRE(res.id == 1);
@@ -53,11 +53,10 @@ TEST_CASE("resource_destroy", "[resources]")
 		REQUIRE(res.refcount == 0);
 		REQUIRE(res.rundir == NULL);
 
-		ret = vaccel_resource_destroy(&res);
+		ret = vaccel_resource_release(&res);
 		REQUIRE(ret == VACCEL_OK);
 
-		REQUIRE(res.id == 1);
-		REQUIRE(res.type == VACCEL_RESOURCE_LIB);
+		REQUIRE(res.id == -1);
 		REQUIRE(list_empty(&res.entry));
 		REQUIRE(res.refcount == 0);
 		REQUIRE(res.rundir == NULL);
@@ -74,7 +73,7 @@ TEST_CASE("resource_create", "[resources]")
 	char *test_path = abs_path(BUILD_ROOT, "examples/libmytestlib.so");
 
 	// Create a resource
-	ret = vaccel_resource_new(&res, test_path, test_type);
+	ret = vaccel_resource_init(&res, test_path, test_type);
 	REQUIRE(ret == VACCEL_OK);
 
 	REQUIRE(res.id == 1);
@@ -94,14 +93,13 @@ TEST_CASE("resource_create", "[resources]")
 	REQUIRE_FALSE(res.rundir == NULL);
 
 	// Cleanup the resource
-	ret = vaccel_resource_destroy(&res);
+	ret = vaccel_resource_release(&res);
 	REQUIRE(ret == VACCEL_OK);
 
-	REQUIRE(res.id == 1);
-	REQUIRE(res.type == VACCEL_RESOURCE_LIB);
+	REQUIRE(res.id == -1);
 	REQUIRE(list_empty(&res.entry));
 	REQUIRE(res.refcount == 0);
-	REQUIRE_FALSE(res.rundir == NULL);
+	REQUIRE(res.rundir == NULL);
 
 	free(test_path);
 }
@@ -127,7 +125,7 @@ TEST_CASE("resource_find_by_id", "[resources]")
 	char *test_path = abs_path(BUILD_ROOT, "examples/libmytestlib.so");
 
 	// Create a test resource
-	ret = vaccel_resource_new(&test_res, test_path, test_type);
+	ret = vaccel_resource_init(&test_res, test_path, test_type);
 	REQUIRE(ret == VACCEL_OK);
 
 	REQUIRE(test_res.id == 1);
@@ -151,11 +149,10 @@ TEST_CASE("resource_find_by_id", "[resources]")
 	REQUIRE(result_resource->rundir == NULL);
 
 	// Cleanup the test resource
-	ret = vaccel_resource_destroy(&test_res);
+	ret = vaccel_resource_release(&test_res);
 	REQUIRE(ret == VACCEL_OK);
 
-	REQUIRE(test_res.id == 1);
-	REQUIRE(test_res.type == VACCEL_RESOURCE_LIB);
+	REQUIRE(test_res.id == -1);
 	REQUIRE(list_empty(&test_res.entry));
 	REQUIRE(test_res.refcount == 0);
 	REQUIRE(test_res.rundir == NULL);
@@ -176,7 +173,7 @@ TEST_CASE("resource_with_deps", "[resources]")
 	char *test_path = abs_path(BUILD_ROOT, "examples/libmytestlib.so");
 
 	// Create a test resource
-	ret = vaccel_resource_new(&test_res, test_path, test_type);
+	ret = vaccel_resource_init(&test_res, test_path, test_type);
 	REQUIRE(ret == VACCEL_OK);
 
 	REQUIRE(test_res.id == 1);
@@ -185,10 +182,10 @@ TEST_CASE("resource_with_deps", "[resources]")
 	REQUIRE(test_res.refcount == 0);
 	REQUIRE(test_res.rundir == NULL);
 
-	ret = vaccel_resource_new(&test_dep_1, test_path, test_type);
+	ret = vaccel_resource_init(&test_dep_1, test_path, test_type);
 	REQUIRE(ret == VACCEL_OK);
 
-	ret = vaccel_resource_new(&test_dep_2, test_path, test_type);
+	ret = vaccel_resource_init(&test_dep_2, test_path, test_type);
 	REQUIRE(ret == VACCEL_OK);
 
 	SECTION("valid_deps")
@@ -271,21 +268,21 @@ TEST_CASE("resource_with_deps", "[resources]")
 	}
 
 	// Cleanup the test resource
-	ret = vaccel_resource_destroy(&test_dep_1);
+	ret = vaccel_resource_release(&test_dep_1);
 	REQUIRE(ret == VACCEL_OK);
 
 	REQUIRE(list_empty(&test_dep_1.entry));
 	REQUIRE(test_dep_1.refcount == 0);
 	REQUIRE(test_dep_1.rundir == NULL);
 
-	ret = vaccel_resource_destroy(&test_dep_2);
+	ret = vaccel_resource_release(&test_dep_2);
 	REQUIRE(ret == VACCEL_OK);
 
 	REQUIRE(list_empty(&test_dep_2.entry));
 	REQUIRE(test_dep_2.refcount == 0);
 	REQUIRE(test_dep_2.rundir == NULL);
 
-	ret = vaccel_resource_destroy(&test_res);
+	ret = vaccel_resource_release(&test_res);
 	REQUIRE(ret == VACCEL_OK);
 
 	REQUIRE(list_empty(&test_res.entry));
@@ -308,13 +305,13 @@ TEST_CASE("resource_not_bootstrapped", "[resources]")
 	ret = resources_cleanup();
 	REQUIRE(ret == VACCEL_OK);
 
-	ret = vaccel_resource_new(&test_res, test_path, test_type);
+	ret = vaccel_resource_init(&test_res, test_path, test_type);
 	REQUIRE(ret == VACCEL_EPERM);
 
 	ret = vaccel_resource_get_by_id(&result_resource, id_to_find);
 	REQUIRE(ret == VACCEL_EPERM);
 
-	ret = vaccel_resource_destroy(&test_res);
+	ret = vaccel_resource_release(&test_res);
 	REQUIRE(ret == VACCEL_EPERM);
 
 	ret = resource_create_rundir(nullptr);

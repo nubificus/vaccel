@@ -2,20 +2,18 @@
 
 #pragma once
 
-#include <stddef.h>
-
 #ifdef __cplusplus
 #include <atomic>
 typedef std::atomic<unsigned int> atomic_uint;
 #else
 #include <stdatomic.h>
 #endif
-
 #include "error.h"
-#include "vaccel_id.h"
+#include "file.h"
 #include "list.h"
-#include "vaccel_file.h"
 #include "session.h"
+#include "vaccel_id.h"
+#include <stddef.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -37,6 +35,9 @@ typedef enum {
 } vaccel_path_t;
 
 struct vaccel_resource {
+	/* an entry to add this resource in a list */
+	list_entry_t entry;
+
 	/* resource id */
 	vaccel_id_t id;
 
@@ -48,9 +49,6 @@ struct vaccel_resource {
 
 	/* type of the given path */
 	vaccel_path_t path_type;
-
-	/* an entry to add this resource in a list */
-	list_entry_t entry;
 
 	/* reference counter representing the number of sessions
 	 * to which this resource is registered to */
@@ -88,22 +86,39 @@ int vaccel_resource_deps_from_ids(struct vaccel_resource **deps,
 int vaccel_resource_set_deps_from_ids(struct vaccel_resource *res,
 				      vaccel_id_t *ids, size_t nr_ids);
 
-int vaccel_resource_new(struct vaccel_resource *res, char *path,
+int vaccel_resource_init(struct vaccel_resource *res, const char *path,
+			 vaccel_resource_t type);
+
+int vaccel_resource_init_multi(struct vaccel_resource *res, const char **paths,
+			       size_t nr_paths, vaccel_resource_t type);
+
+int vaccel_resource_init_from_buf(struct vaccel_resource *res, const void *buf,
+				  size_t nr_bytes, vaccel_resource_t type,
+				  const char *filename);
+
+int vaccel_resource_init_from_files(struct vaccel_resource *res,
+				    const struct vaccel_file **files,
+				    size_t nr_files, vaccel_resource_t type);
+
+int vaccel_resource_release(struct vaccel_resource *res);
+
+int vaccel_resource_new(struct vaccel_resource **res, const char *path,
 			vaccel_resource_t type);
 
-int vaccel_resource_new_from_buf(struct vaccel_resource *res, void *buf,
-				 size_t nr_bytes, vaccel_resource_t type);
+int vaccel_resource_from_buf(struct vaccel_resource **res, const void *buf,
+			     size_t nr_bytes, vaccel_resource_t type);
 
-int vaccel_resource_new_multi(struct vaccel_resource *res, char **paths,
-			      vaccel_resource_t type, size_t nr_files);
+int vaccel_resource_from_files(struct vaccel_resource **res,
+			       const struct vaccel_file **files,
+			       size_t nr_files, vaccel_resource_t type);
 
-int vaccel_resource_destroy(struct vaccel_resource *res);
+int vaccel_resource_delete(struct vaccel_resource *res);
 
 int vaccel_resource_register(struct vaccel_resource *res,
 			     struct vaccel_session *sess);
 
-#define vaccel_resource_unregister(res, sess) \
-	vaccel_session_unregister_resource(sess, res)
+int vaccel_resource_unregister(struct vaccel_resource *res,
+			       struct vaccel_session *sess);
 
 int vaccel_resource_get_path_by_name(struct vaccel_resource *res,
 				     const char *name, char *dest);

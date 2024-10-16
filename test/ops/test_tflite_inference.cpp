@@ -103,7 +103,7 @@ TEST_CASE("tflite_inference", "[ops_tflite]")
 
 	model.paths = nullptr;
 
-	ret = vaccel_resource_new(&model, model_path, VACCEL_RESOURCE_MODEL);
+	ret = vaccel_resource_init(&model, model_path, VACCEL_RESOURCE_MODEL);
 	REQUIRE(ret == VACCEL_OK);
 	REQUIRE_FALSE(model.paths == nullptr);
 	REQUIRE_FALSE(model.paths[0] == nullptr);
@@ -175,7 +175,7 @@ TEST_CASE("tflite_inference", "[ops_tflite]")
 	ret = vaccel_session_free(&vsess);
 	REQUIRE(ret == VACCEL_OK);
 
-	ret = vaccel_resource_destroy(&model);
+	ret = vaccel_resource_release(&model);
 	REQUIRE(ret == VACCEL_OK);
 
 	free(model_path);

@@ -41,7 +41,7 @@ TEST_CASE("bootstrap_resource", "[core_bootstrap]")
 		struct vaccel_resource *res;
 		struct vaccel_resource *tmp;
 		for_each_vaccel_resource_safe(res, tmp, &live_resource)
-			vaccel_resource_destroy(res);
+			vaccel_resource_release(res);
 	}
 	ret = id_pool_destroy(&id_pool);
 	REQUIRE(ret == VACCEL_OK);

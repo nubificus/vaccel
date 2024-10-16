@@ -32,7 +32,7 @@ int create_from_path(char *path)
 	vaccel_info("Creating new SavedModel handle");
 	struct vaccel_resource model;
 
-	int ret = vaccel_resource_new(&model, path, VACCEL_RESOURCE_MODEL);
+	int ret = vaccel_resource_init(&model, path, VACCEL_RESOURCE_MODEL);
 	if (ret) {
 		vaccel_error("Could not create resource");
 	}
@@ -64,7 +64,7 @@ int create_from_path(char *path)
 	}
 
 	vaccel_info("Destroying model %lld", model_id);
-	ret = vaccel_resource_destroy(&model);
+	ret = vaccel_resource_release(&model);
 	if (ret) {
 		vaccel_error("Could not destroy model");
 		return ret;
@@ -85,10 +85,10 @@ int create_from_in_mem(const char *path)
 	sprintf(path1, "%s/%s", path, "saved_model.pb");
 	sprintf(path2, "%s/%s", path, "variables/variables.index");
 
-	char *paths[] = { path1, path2, path2 };
+	const char *paths[] = { path1, path2, path2 };
 
-	int ret = vaccel_resource_new_multi(&model, paths,
-					    VACCEL_RESOURCE_MODEL, 3);
+	int ret = vaccel_resource_init_multi(&model, paths, 3,
+					     VACCEL_RESOURCE_MODEL);
 	if (ret) {
 		vaccel_error("Could not create model resource");
 		return ret;
@@ -121,7 +121,7 @@ int create_from_in_mem(const char *path)
 	}
 
 	vaccel_info("Destroying model %lld", model_id);
-	ret = vaccel_resource_destroy(&model);
+	ret = vaccel_resource_release(&model);
 	if (ret) {
 		vaccel_error("Could not destroy model");
 		return ret;

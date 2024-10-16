@@ -19,13 +19,13 @@ vaccel_public_headers = files([
   'ops/vaccel_ops.h',
   'session.h',
   'vaccel_args.h',
-  'vaccel_file.h',
+  'resource.h',
+  'file.h',
   'vaccel_id.h',
   'vaccel_prof.h',
   'list.h',
   'misc.h',
   'plugin.h',
-  'resources.h',
 ])
 
 vaccel_public_headers += include_vaccel_h

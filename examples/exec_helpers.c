@@ -9,7 +9,7 @@
 
 #include <vaccel.h>
 
-#define EXAMPLE_INT 15
+enum { EXAMPLE_INT = 15 };
 
 int main(int argc, char *argv[])
 {
@@ -25,7 +25,7 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	ret = vaccel_resource_new(&object, argv[1], VACCEL_RESOURCE_LIB);
+	ret = vaccel_resource_init(&object, argv[1], VACCEL_RESOURCE_LIB);
 	if (ret) {
 		vaccel_error("Could not create shared object resource: %s",
 			     strerror(ret));
@@ -114,7 +114,7 @@ close_session:
 		return 1;
 	}
 
-	ret = vaccel_resource_destroy(&object);
+	ret = vaccel_resource_release(&object);
 	if (ret) {
 		vaccel_error("Could not destroy object");
 		return 1;
