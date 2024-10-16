@@ -78,7 +78,7 @@ auto main(int argc, char **argv) -> int
 		goto close_session;
 	}
 
-	ret = vaccel_sess_init(&sess, 0);
+	ret = vaccel_session_init(&sess, 0);
 	if (ret != VACCEL_OK) {
 		fprintf(stderr, "Could not initialize vAccel session\n");
 		goto destroy_resource;
@@ -144,7 +144,7 @@ unregister_session:
 	if (vaccel_resource_unregister(&sess, &model) != VACCEL_OK)
 		fprintf(stderr, "Could not unregister model with session\n");
 close_session:
-	if (vaccel_sess_free(&sess) != VACCEL_OK)
+	if (vaccel_session_free(&sess) != VACCEL_OK)
 		fprintf(stderr, "Could not clear session\n");
 destroy_resource:
 	free(run_options.data);

@@ -18,12 +18,12 @@ TEST_CASE("noop", "[ops_noop]")
 	int ret;
 	struct vaccel_session sess;
 
-	ret = vaccel_sess_init(&sess, 0);
+	ret = vaccel_session_init(&sess, 0);
 	REQUIRE(ret == VACCEL_OK);
 
 	ret = vaccel_noop(&sess);
 	REQUIRE(ret == VACCEL_OK);
 
-	ret = vaccel_sess_free(&sess);
+	ret = vaccel_session_free(&sess);
 	REQUIRE(ret == VACCEL_OK);
 }

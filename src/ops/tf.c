@@ -236,7 +236,7 @@ int vaccel_tf_session_load(struct vaccel_session *sess,
 
 	vaccel_prof_region_start(&tf_load_stats);
 
-	if (!vaccel_sess_has_resource(sess, model)) {
+	if (!vaccel_session_has_resource(sess, model)) {
 		vaccel_error("Resource %u is not registered to session %u",
 			     model->id, sess->session_id);
 		return VACCEL_EPERM;
@@ -283,7 +283,7 @@ int vaccel_tf_session_run(struct vaccel_session *sess,
 
 	vaccel_prof_region_start(&tf_session_run_stats);
 
-	if (!vaccel_sess_has_resource(sess, model)) {
+	if (!vaccel_session_has_resource(sess, model)) {
 		vaccel_error("Resource %u is not registered to session %u",
 			     model->id, sess->session_id);
 		return VACCEL_EPERM;
@@ -328,7 +328,7 @@ int vaccel_tf_session_delete(struct vaccel_session *sess,
 		"session:%u Looking for plugin implementing tf_session_delete operation",
 		sess->session_id);
 
-	if (!vaccel_sess_has_resource(sess, model)) {
+	if (!vaccel_session_has_resource(sess, model)) {
 		vaccel_error("Resource %u is not registered to session %u",
 			     model->id, sess->session_id);
 		return VACCEL_EPERM;

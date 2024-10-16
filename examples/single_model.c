@@ -10,7 +10,7 @@
 
 int create_session(struct vaccel_session *sess)
 {
-	int ret = vaccel_sess_init(sess, 0);
+	int ret = vaccel_session_init(sess, 0);
 	if (ret) {
 		vaccel_error("Could not initialize session");
 		return ret;
@@ -22,7 +22,7 @@ int create_session(struct vaccel_session *sess)
 
 int destroy_session(struct vaccel_session *sess)
 {
-	vaccel_sess_free(sess);
+	vaccel_session_free(sess);
 	return VACCEL_OK;
 }
 
