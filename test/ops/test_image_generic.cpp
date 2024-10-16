@@ -41,7 +41,7 @@ TEST_CASE("classify_generic", "[ops_image]")
 	sess.resources = nullptr;
 	sess.hint = 1;
 
-	ret = vaccel_sess_init(&sess, 0);
+	ret = vaccel_session_init(&sess, 0);
 	REQUIRE(ret == VACCEL_OK);
 	REQUIRE(sess.session_id);
 	REQUIRE(sess.hint == 0);
@@ -80,7 +80,7 @@ TEST_CASE("classify_generic", "[ops_image]")
 
 	printf("classification tags: %s\n", out_text);
 
-	ret = vaccel_sess_free(&sess);
+	ret = vaccel_session_free(&sess);
 	REQUIRE(ret == VACCEL_OK);
 
 	free(file_path);
@@ -101,7 +101,7 @@ TEST_CASE("depth_generic", "[ops_image]")
 	sess.resources = nullptr;
 	sess.hint = 1;
 
-	ret = vaccel_sess_init(&sess, 0);
+	ret = vaccel_session_init(&sess, 0);
 	REQUIRE(ret == VACCEL_OK);
 	REQUIRE(sess.session_id);
 	REQUIRE(sess.hint == 0);
@@ -136,7 +136,7 @@ TEST_CASE("depth_generic", "[ops_image]")
 	REQUIRE(ret == VACCEL_OK);
 	printf("depth estimation imagename: %s\n", out_imagename);
 
-	ret = vaccel_sess_free(&sess);
+	ret = vaccel_session_free(&sess);
 	REQUIRE(ret == VACCEL_OK);
 
 	free(file_path);
@@ -157,7 +157,7 @@ TEST_CASE("detect_generic", "[ops_image]")
 	sess.resources = nullptr;
 	sess.hint = 1;
 
-	ret = vaccel_sess_init(&sess, 0);
+	ret = vaccel_session_init(&sess, 0);
 	REQUIRE(ret == VACCEL_OK);
 	REQUIRE(sess.session_id);
 	REQUIRE(sess.hint == 0);
@@ -194,7 +194,7 @@ TEST_CASE("detect_generic", "[ops_image]")
 
 	printf("detection image name: %s\n", out_imagename);
 
-	ret = vaccel_sess_free(&sess);
+	ret = vaccel_session_free(&sess);
 	REQUIRE(ret == VACCEL_OK);
 
 	free(file_path);
@@ -215,7 +215,7 @@ TEST_CASE("pose_generic", "[ops_image]")
 	sess.resources = nullptr;
 	sess.hint = 1;
 
-	ret = vaccel_sess_init(&sess, 0);
+	ret = vaccel_session_init(&sess, 0);
 	REQUIRE(ret == VACCEL_OK);
 	REQUIRE(sess.session_id);
 	REQUIRE(sess.hint == 0);
@@ -251,7 +251,7 @@ TEST_CASE("pose_generic", "[ops_image]")
 	REQUIRE(ret == VACCEL_OK);
 	printf("pose estimation imagename: %s\n", out_imagename);
 
-	ret = vaccel_sess_free(&sess);
+	ret = vaccel_session_free(&sess);
 	REQUIRE(ret == VACCEL_OK);
 
 	free(file_path);
@@ -272,7 +272,7 @@ TEST_CASE("segmentation_generic", "[ops_image]")
 	sess.resources = nullptr;
 	sess.hint = 1;
 
-	ret = vaccel_sess_init(&sess, 0);
+	ret = vaccel_session_init(&sess, 0);
 	REQUIRE(ret == VACCEL_OK);
 	REQUIRE(sess.session_id);
 	REQUIRE(sess.hint == 0);
@@ -308,7 +308,7 @@ TEST_CASE("segmentation_generic", "[ops_image]")
 	REQUIRE(ret == VACCEL_OK);
 	printf("segmentation output: %s\n", out_imagename);
 
-	ret = vaccel_sess_free(&sess);
+	ret = vaccel_session_free(&sess);
 	REQUIRE(ret == VACCEL_OK);
 
 	free(file_path);

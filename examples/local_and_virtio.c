@@ -48,7 +48,7 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	if (vaccel_sess_init(&virtio_sess, VACCEL_REMOTE)) {
+	if (vaccel_session_init(&virtio_sess, VACCEL_REMOTE)) {
 		vaccel_error("Could not create virtio session");
 		exit(1);
 	}
@@ -56,7 +56,7 @@ int main(int argc, char *argv[])
 	printf("Initialized virtio session with id: %u\n",
 	       virtio_sess.session_id);
 
-	if (vaccel_sess_init(&local_sess, 0)) {
+	if (vaccel_session_init(&local_sess, 0)) {
 		vaccel_error("Could not create local session");
 		exit(1);
 	}
@@ -110,12 +110,12 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	if (vaccel_sess_free(&local_sess)) {
+	if (vaccel_session_free(&local_sess)) {
 		vaccel_error("Could not close session");
 		exit(1);
 	}
 
-	if (vaccel_sess_free(&virtio_sess)) {
+	if (vaccel_session_free(&virtio_sess)) {
 		vaccel_error("Could not close session");
 		exit(1);
 	}

@@ -48,7 +48,7 @@ TEST_CASE("fpga_add", "[ops_fpga]")
 
 	SECTION("valid session and inputs")
 	{
-		ret = vaccel_sess_init(&sess, 0);
+		ret = vaccel_session_init(&sess, 0);
 		REQUIRE(ret == VACCEL_OK);
 		REQUIRE(sess.session_id);
 		REQUIRE(sess.hint == 0);
@@ -61,7 +61,7 @@ TEST_CASE("fpga_add", "[ops_fpga]")
 		size_t len_C_expected =
 			sizeof(C_expected) / sizeof(C_expected[0]);
 
-		REQUIRE(vaccel_sess_free(&sess) == VACCEL_OK);
+		REQUIRE(vaccel_session_free(&sess) == VACCEL_OK);
 		REQUIRE(ret != VACCEL_ENOTSUP);
 
 		REQUIRE(len_C == len_C_expected);
@@ -93,7 +93,7 @@ TEST_CASE("fpga_copy", "[ops_fpga]")
 
 	SECTION("valid session and inputs")
 	{
-		ret = vaccel_sess_init(&sess, 0);
+		ret = vaccel_session_init(&sess, 0);
 		REQUIRE(ret == VACCEL_OK);
 		REQUIRE(sess.session_id);
 		REQUIRE(sess.hint == 0);
@@ -102,7 +102,7 @@ TEST_CASE("fpga_copy", "[ops_fpga]")
 		ret = vaccel_fpga_arraycopy(&sess, A, B, len_A);
 		float B_expected[] = { 1, 2, 3, 4, 5 };
 
-		REQUIRE(vaccel_sess_free(&sess) == VACCEL_OK);
+		REQUIRE(vaccel_session_free(&sess) == VACCEL_OK);
 		REQUIRE(ret != VACCEL_ENOTSUP);
 
 		REQUIRE(std::equal(B, B + len_B, B_expected));
@@ -132,7 +132,7 @@ TEST_CASE("fpga_mmult", "[ops_fpga]")
 
 	SECTION("valid session and inputs")
 	{
-		ret = vaccel_sess_init(&sess, 0);
+		ret = vaccel_session_init(&sess, 0);
 		REQUIRE(ret == VACCEL_OK);
 		REQUIRE(sess.session_id);
 		REQUIRE(sess.hint == 0);
@@ -142,7 +142,7 @@ TEST_CASE("fpga_mmult", "[ops_fpga]")
 		ret = vaccel_fpga_mmult(&sess, a, b, c, len_c);
 		float C_expected[] = { 9.1, 9.1, 9.1, 9.1, 9.1 };
 
-		REQUIRE(vaccel_sess_free(&sess) == VACCEL_OK);
+		REQUIRE(vaccel_session_free(&sess) == VACCEL_OK);
 		REQUIRE(ret != VACCEL_ENOTSUP);
 
 		REQUIRE(std::equal(c, c + len_c, C_expected));

@@ -36,7 +36,7 @@ int main(int argc, char *argv[])
 	}
 
 	struct vaccel_session sess;
-	ret = vaccel_sess_init(&sess, 0);
+	ret = vaccel_session_init(&sess, 0);
 	if (ret) {
 		vaccel_error("Could not create new shared object");
 		exit(1);
@@ -132,7 +132,7 @@ close_session:
 		exit(1);
 	}
 
-	ret = vaccel_sess_free(&sess);
+	ret = vaccel_session_free(&sess);
 	if (ret) {
 		vaccel_error("Could not close session");
 		exit(1);

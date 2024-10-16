@@ -268,7 +268,7 @@ static int noop_exec_with_resource(struct vaccel_session *sess,
 		return VACCEL_EINVAL;
 	}
 
-	if (!vaccel_sess_has_resource(sess, object)) {
+	if (!vaccel_session_has_resource(sess, object)) {
 		noop_error("Shared object is not registered with session\n");
 		return VACCEL_ENOENT;
 	}
@@ -315,7 +315,7 @@ static int noop_tf_session_load(struct vaccel_session *session,
 		return VACCEL_EINVAL;
 	}
 
-	if (!vaccel_sess_has_resource(session, model)) {
+	if (!vaccel_session_has_resource(session, model)) {
 		noop_error("Model is not registered with session\n");
 		return VACCEL_ENOENT;
 	}
@@ -448,7 +448,7 @@ static int noop_tflite_session_load(struct vaccel_session *session,
 		return VACCEL_EINVAL;
 	}
 
-	if (!vaccel_sess_has_resource(session, model)) {
+	if (!vaccel_session_has_resource(session, model)) {
 		noop_error("Model is not registered with session\n");
 		return VACCEL_ENOENT;
 	}

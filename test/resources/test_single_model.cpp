@@ -41,7 +41,7 @@ TEST_CASE("single_model_from_memory", "[resources_single_model]")
 	vaccel_info("Registered new resource: %ld", model.id);
 
 	struct vaccel_session sess;
-	ret = vaccel_sess_init(&sess, 0);
+	ret = vaccel_session_init(&sess, 0);
 	REQUIRE(ret == VACCEL_OK);
 
 	vaccel_info("Registering model %ld with session %u", model.id,
@@ -56,7 +56,7 @@ TEST_CASE("single_model_from_memory", "[resources_single_model]")
 	ret = vaccel_resource_destroy(&model);
 	REQUIRE(ret == VACCEL_OK);
 
-	ret = vaccel_sess_free(&sess);
+	ret = vaccel_session_free(&sess);
 	REQUIRE(ret == VACCEL_OK);
 
 	free(ptr);
@@ -76,7 +76,7 @@ TEST_CASE("single_model_from_file", "[resources_single_model]")
 	vaccel_info("Registered new resource: %ld", model.id);
 
 	struct vaccel_session sess;
-	ret = vaccel_sess_init(&sess, 0);
+	ret = vaccel_session_init(&sess, 0);
 	REQUIRE(ret == VACCEL_OK);
 
 	ret = vaccel_resource_register(&sess, &model);
@@ -88,7 +88,7 @@ TEST_CASE("single_model_from_file", "[resources_single_model]")
 	ret = vaccel_resource_destroy(&model);
 	REQUIRE(ret == VACCEL_OK);
 
-	ret = vaccel_sess_free(&sess);
+	ret = vaccel_session_free(&sess);
 	REQUIRE(ret == VACCEL_OK);
 
 	free(path);

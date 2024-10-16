@@ -62,7 +62,7 @@ int main(int argc, char *argv[])
 	high_threshold = atoi(argv[4]);
 
 	struct vaccel_session session;
-	ret = vaccel_sess_init(&session, 0);
+	ret = vaccel_session_init(&session, 0);
 	if (ret) {
 		fprintf(stderr, "Could not initialize vAccel session\n");
 		goto free_out;
@@ -99,7 +99,7 @@ int main(int argc, char *argv[])
 		max, time_diff_usec(t0, t1) / 10e3);
 
 close_sess:
-	vaccel_sess_free(&session);
+	vaccel_session_free(&session);
 free_out:
 	free(outdata);
 free_in:
