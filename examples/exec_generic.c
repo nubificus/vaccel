@@ -16,6 +16,7 @@ int main(int argc, char **argv)
 	struct vaccel_session sess;
 	int input;
 	int output = 0;
+	char *func = "mytestfunc";
 
 	if (argc < 3) {
 		vaccel_error(
@@ -34,8 +35,8 @@ int main(int argc, char **argv)
 	enum vaccel_op_type op_type = VACCEL_EXEC;
 	struct vaccel_arg read[4] = {
 		{ .size = sizeof(uint8_t), .buf = &op_type },
-		{ .size = strlen(argv[1]), .buf = argv[1] },
-		{ .size = strlen("mytestfunc"), .buf = "mytestfunc" },
+		{ .size = strlen(argv[1]) + 1, .buf = argv[1] },
+		{ .size = strlen(func) + 1, .buf = func },
 		{ .size = sizeof(input), .buf = &input }
 	};
 	struct vaccel_arg write[1] = {
