@@ -41,7 +41,7 @@ int main(int argc, char *argv[])
 	struct vaccel_resource object;
 	int ret;
 
-	ret = vaccel_resource_new(&object, argv[1], VACCEL_FILE_LIB);
+	ret = vaccel_resource_new(&object, argv[1], VACCEL_RESOURCE_LIB);
 	if (ret) {
 		vaccel_error("Could not create shared object resource: %s",
 			     strerror(ret));
@@ -64,12 +64,12 @@ int main(int argc, char *argv[])
 	printf("Initialized local session with id: %u\n",
 	       local_sess.session_id);
 
-	if (vaccel_resource_register(&local_sess, &object)) {
+	if (vaccel_resource_register(&object, &local_sess)) {
 		vaccel_error("Could register shared object to local session");
 		exit(1);
 	}
 
-	if (vaccel_resource_register(&virtio_sess, &object)) {
+	if (vaccel_resource_register(&object, &virtio_sess)) {
 		vaccel_error("Could register shared object to virtio session");
 		exit(1);
 	}
@@ -95,12 +95,12 @@ int main(int argc, char *argv[])
 		output1 = -1;
 	}
 
-	if (vaccel_resource_unregister(&local_sess, &object)) {
+	if (vaccel_resource_unregister(&object, &local_sess)) {
 		vaccel_error("Could not unregister object from local session");
 		exit(1);
 	}
 
-	if (vaccel_resource_unregister(&virtio_sess, &object)) {
+	if (vaccel_resource_unregister(&object, &virtio_sess)) {
 		vaccel_error("Could not unregister object from virtio session");
 		exit(1);
 	}

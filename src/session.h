@@ -39,7 +39,7 @@ struct session_resources {
 	/* Resources registered to this session. At the moment, this
 	 * is an array where each element holds a list of resources of
 	 * the same resource type */
-	list_t registered[VACCEL_RES_MAX];
+	list_t registered[VACCEL_RESOURCE_MAX];
 };
 
 int sessions_bootstrap(void);

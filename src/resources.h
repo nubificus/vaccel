@@ -22,12 +22,6 @@ void resource_refcount_inc(struct vaccel_resource *res);
 void resource_refcount_dec(struct vaccel_resource *res);
 int resource_create_rundir(struct vaccel_resource *res);
 int resource_destroy_rundir(struct vaccel_resource *res);
-int vaccel_resource_new_file(struct vaccel_resource *res, char *path,
-			     vaccel_resource_t type);
-int vaccel_resource_new_from_url(struct vaccel_resource *res, char *path,
-				 vaccel_resource_t type);
-int vaccel_resource_new_dir(struct vaccel_resource *res, char *path,
-			    vaccel_resource_t type);
 
 /* Helper macros for iterating lists of containers */
 #define for_each_vaccel_resource(iter, list) \

@@ -21,7 +21,8 @@ int main(int argc, char *argv[])
 
 	char *model_path = argv[1];
 
-	int ret = vaccel_resource_new(&model, model_path, VACCEL_FILE_DATA);
+	int ret =
+		vaccel_resource_new(&model, model_path, VACCEL_RESOURCE_MODEL);
 	if (ret) {
 		vaccel_error("Could not create model resource");
 		return ret;
@@ -36,7 +37,7 @@ int main(int argc, char *argv[])
 
 	printf("Initialized vAccel session %u\n", vsess.session_id);
 
-	ret = vaccel_resource_register(&vsess, &model);
+	ret = vaccel_resource_register(&model, &vsess);
 	if (ret) {
 		fprintf(stderr, "Could not register model with session\n");
 		goto close_session;
@@ -95,7 +96,7 @@ unload_session:
 	if (vaccel_tflite_session_delete(&vsess, &model))
 		fprintf(stderr, "Could not delete tf session\n");
 unregister_resource:
-	if (vaccel_resource_unregister(&vsess, &model))
+	if (vaccel_resource_unregister(&model, &vsess))
 		fprintf(stderr, "Could not unregister model with session\n");
 close_session:
 	if (vaccel_session_free(&vsess))

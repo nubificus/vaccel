@@ -32,7 +32,7 @@ static id_pool_t id_pool;
  * At the moment, this is an array where each element is a list of all
  * resources of the same time. We should think the data structure again.
  */
-static list_t live_resources[VACCEL_RES_MAX];
+static list_t live_resources[VACCEL_RESOURCE_MAX];
 
 int resources_bootstrap(void)
 {
@@ -40,7 +40,7 @@ int resources_bootstrap(void)
 	if (ret)
 		return ret;
 
-	for (int i = 0; i < VACCEL_RES_MAX; ++i)
+	for (int i = 0; i < VACCEL_RESOURCE_MAX; ++i)
 		list_init(&live_resources[i]);
 
 	initialized = true;
@@ -53,7 +53,7 @@ int resources_cleanup(void)
 	if (!initialized)
 		return VACCEL_OK;
 
-	for (int i = 0; i < VACCEL_RES_MAX; ++i) {
+	for (int i = 0; i < VACCEL_RESOURCE_MAX; ++i) {
 		struct vaccel_resource *res;
 		struct vaccel_resource *tmp;
 		for_each_vaccel_resource_safe(res, tmp, &live_resources[i])
@@ -70,7 +70,7 @@ int vaccel_resource_get_by_id(struct vaccel_resource **resource, vaccel_id_t id)
 	if (!initialized)
 		return VACCEL_EPERM;
 
-	for (int i = 0; i < VACCEL_RES_MAX; ++i) {
+	for (int i = 0; i < VACCEL_RESOURCE_MAX; ++i) {
 		struct vaccel_resource *res;
 		struct vaccel_resource *tmp;
 		for_each_vaccel_resource_safe(res, tmp, &live_resources[i]) {
@@ -187,6 +187,13 @@ int vaccel_resource_destroy(struct vaccel_resource *res)
 	if (!res)
 		return VACCEL_EINVAL;
 
+	/* Check if this resource is currently registered to a session.
+	 * We do not destroy currently-used resources */
+	if (atomic_load(&res->refcount)) {
+		vaccel_warn("Cannot destroy used resource %lld", res->id);
+		return VACCEL_EBUSY;
+	}
+
 	if (res->files) {
 		for (size_t i = 0; i < res->nr_files; i++) {
 			if (!res->files[i])
@@ -199,13 +206,6 @@ int vaccel_resource_destroy(struct vaccel_resource *res)
 	}
 	res->nr_files = 0;
 
-	/* Check if this resources is currently registered to a session.
-	 * We do not destroy currently-used resources */
-	if (atomic_load(&res->refcount)) {
-		vaccel_warn("Cannot destroy used resource %lld", res->id);
-		return VACCEL_EBUSY;
-	}
-
 	id_pool_release(&id_pool, res->id);
 
 	list_unlink_entry(&res->entry);
@@ -215,8 +215,16 @@ int vaccel_resource_destroy(struct vaccel_resource *res)
 		free(res->rundir);
 	}
 
-	if (res->path)
-		free(res->path);
+	if (res->paths) {
+		for (size_t i = 0; i < res->nr_paths; i++) {
+			if (!res->paths[i])
+				continue;
+
+			free(res->paths[i]);
+		}
+		free(res->paths);
+	}
+	res->nr_paths = 0;
 
 	if (res->deps || res->nr_deps)
 		vaccel_warn("Resource %lld has deps that will not be destroyed",
@@ -303,81 +311,107 @@ static int get_num_files(const char *path)
 	DIR *d;
 	struct dirent *dir;
 	int nr_files = 0;
+
+	// FIXME: print errors
+	if (!path)
+		return VACCEL_EINVAL;
+
 	d = opendir(path);
-	if (d) {
-		while ((dir = readdir(d)) != NULL) {
-			if (dir->d_type == DT_REG)
-				++nr_files;
-		}
-		closedir(d);
-	}
-	return nr_files;
-}
-
-static int set_resource_files(struct vaccel_resource *res)
-{
-	DIR *d;
-	struct dirent *dir;
-	int i = 0;
-	int ret;
-	char filepath[MAX_FILELEN] = { 0 };
-
-	if (!res || !res->path)
-		return VACCEL_EINVAL;
-
-	res->nr_files = get_num_files(res->path);
-	if (!res->nr_files)
-		return VACCEL_EINVAL;
-
-	res->files = (struct vaccel_file **)malloc(
-		res->nr_files * sizeof(struct vaccel_file *));
-	if (!res->files)
-		return VACCEL_ENOMEM;
-
-	d = opendir(res->path);
 	if (!d)
 		return VACCEL_EINVAL;
 
-	for (size_t j = 0; j < res->nr_files; ++j)
-		res->files[j] = NULL;
-
-	memcpy(filepath, res->path, strlen(res->path));
-	size_t baselen = strlen(res->path) + 1;
-	filepath[baselen - 1] = '/';
 	while ((dir = readdir(d)) != NULL) {
+		if (dir->d_type == DT_REG)
+			++nr_files;
+	}
+
+	closedir(d);
+
+	return nr_files;
+}
+
+static int resource_add_files_from_dir(struct vaccel_resource *res)
+{
+	DIR *d;
+	struct dirent *dir;
+	int ret;
+	struct vaccel_file **files;
+	size_t nr_files;
+	char filepath[MAX_FILELEN] = { 0 };
+
+	// FIXME: print errors
+	if (!res || !res->paths || res->nr_paths != 1)
+		return VACCEL_EINVAL;
+
+	nr_files = get_num_files(res->paths[0]);
+	if (!nr_files)
+		return VACCEL_EINVAL;
+
+	files = (struct vaccel_file **)malloc(nr_files *
+					      sizeof(struct vaccel_file *));
+	if (!files)
+		return VACCEL_ENOMEM;
+
+	d = opendir(res->paths[0]);
+	if (!d)
+		return VACCEL_EINVAL;
+
+	for (size_t i = 0; i < nr_files; i++)
+		files[i] = NULL;
+
+	size_t pathlen = strlen(res->paths[0]) + 1;
+	if (pathlen >= MAX_FILELEN)
+		return VACCEL_ENAMETOOLONG;
+
+	memcpy(filepath, res->paths[0], pathlen);
+	size_t baselen = strlen(filepath) + 1;
+	filepath[baselen - 1] = '/';
+	size_t i = 0;
+	while ((dir = readdir(d)) != NULL) {
+		if (i > nr_files) {
+			vaccel_error(
+				"Computed and actual file numbers differ (%zu vs %zu)",
+				res->nr_paths, i);
+			ret = EINVAL;
+			goto free;
+		}
 		if (dir->d_type == DT_REG) {
-			if (strlen(dir->d_name) + baselen >= MAX_FILELEN) {
+			size_t filenamelen = strlen(dir->d_name) + 1;
+			if (filenamelen + baselen >= MAX_FILELEN) {
 				ret = VACCEL_ENAMETOOLONG;
 				goto free;
 			}
 
-			memcpy(&filepath[baselen], dir->d_name,
-			       strlen(dir->d_name));
+			memcpy(&filepath[baselen], dir->d_name, filenamelen);
 
-			res->files[i] = (struct vaccel_file *)malloc(
+			files[i] = (struct vaccel_file *)malloc(
 				sizeof(struct vaccel_file));
-			if (!res->files[i]) {
+			if (!files[i]) {
 				ret = VACCEL_ENOMEM;
 				goto free;
 			}
 
-			ret = vaccel_file_new(res->files[i++], filepath);
+			ret = vaccel_file_new(files[i++], filepath);
 			if (ret)
 				goto free;
 		}
 		memset(&filepath[baselen], 0, MAX_FILELEN - baselen);
 	}
+
 	closedir(d);
+
+	res->files = files;
+	res->nr_files = nr_files;
 
 	return VACCEL_OK;
 
 free:
-	for (size_t j = 0; j < res->nr_files; ++j) {
-		if (!res->files[j])
+	for (size_t i = 0; i < res->nr_files; i++) {
+		if (!res->files[i])
 			continue;
 
-		vaccel_file_destroy(res->files[j]);
-		free(res->files[j]);
+		vaccel_file_destroy(res->files[i]);
+		free(res->files[i]);
 	}
 	free(res->files);
 	closedir(d);
@@ -385,67 +419,103 @@ free:
 	return ret;
 }
 
-int vaccel_resource_new(struct vaccel_resource *res, char *path,
-			vaccel_resource_t type)
+static int resource_add_files_from_local(struct vaccel_resource *res)
 {
-	if (!initialized)
-		return VACCEL_EPERM;
+	int ret;
+	struct vaccel_file **files;
 
-	if (!res || type >= VACCEL_RES_MAX || !path)
+	if (!res || !res->paths || !res->nr_paths)
 		return VACCEL_EINVAL;
 
-	if (is_url(path))
-		return vaccel_resource_new_from_url(res, path, type);
+	files = (struct vaccel_file **)malloc(res->nr_paths *
+					      sizeof(struct vaccel_file *));
+	if (!files)
+		return VACCEL_ENOMEM;
 
-	if (is_dir(path))
-		return vaccel_resource_new_dir(res, path, type);
+	for (size_t i = 0; i < res->nr_paths; i++)
+		files[i] = NULL;
 
-	if (is_file(path))
-		return vaccel_resource_new_file(res, path, type);
+	for (size_t i = 0; i < res->nr_paths; i++) {
+		if (!res->paths[i]) {
+			ret = VACCEL_EINVAL;
+			goto free;
+		}
 
-	return VACCEL_EINVAL;
+		files[i] = (struct vaccel_file *)malloc(
+			sizeof(struct vaccel_file));
+		if (!files[i]) {
+			ret = VACCEL_ENOMEM;
+			goto free;
+		}
+
+		ret = vaccel_file_new(files[i], res->paths[i]);
+		if (ret) {
+			ret = VACCEL_EINVAL;
+			goto free;
+		}
+	}
+
+	res->files = files;
+	res->nr_files = res->nr_paths;
+
+	return VACCEL_OK;
+
+free:
+	for (size_t i = 0; i < res->nr_paths; i++) {
+		if (!files[i])
+			continue;
+
+		vaccel_file_destroy(files[i]);
+		free(files[i]);
+	}
+	free(files);
+
+	return ret;
 }
 
-int vaccel_resource_new_file(struct vaccel_resource *res, char *path,
-			     vaccel_resource_t type)
+int vaccel_resource_new(struct vaccel_resource *res, char *path,
+			vaccel_resource_t type)
 {
 	int ret;
 
 	if (!initialized)
 		return VACCEL_EPERM;
 
-	if (!res || type >= VACCEL_RES_MAX || !path)
+	if (!res || type >= VACCEL_RESOURCE_MAX || !path)
 		return VACCEL_EINVAL;
 
 	res->id = id_pool_get(&id_pool);
 	if (res->id <= 0)
 		return VACCEL_EUSERS;
 
-	res->files =
-		(struct vaccel_file **)malloc(sizeof(struct vaccel_file *));
-	if (!res->files) {
+	res->paths = (char **)malloc(sizeof(char *));
+	if (!res->paths) {
 		ret = VACCEL_ENOMEM;
 		goto release_id;
 	}
 
-	res->files[0] =
-		(struct vaccel_file *)malloc(sizeof(struct vaccel_file));
-	if (!res->files[0]) {
-		free(res->files);
+	res->paths[0] = strdup(path);
+	if (!res->paths[0]) {
 		ret = VACCEL_ENOMEM;
-		goto release_id;
+		goto free;
 	}
+	res->nr_paths = 1;
 
-	ret = vaccel_file_new(*res->files, path);
-	if (ret)
-		goto free_mem;
+	if (is_url(path)) {
+		res->path_type = VACCEL_PATH_REMOTE;
+	} else if (is_dir(path)) {
+		res->path_type = VACCEL_PATH_DIR;
+	} else if (is_file(path)) {
+		res->path_type = VACCEL_PATH_LOCAL;
+	} else {
+		ret = VACCEL_EINVAL;
+		goto free;
+	}
 
 	res->remote_id = -1;
 	res->type = type;
-	res->file_type = FILE_LOCAL;
-	res->name = NULL;
-	res->path = strdup(path);
-	res->nr_files = 1;
+	res->files = NULL;
+	res->nr_files = 0;
 	res->deps = NULL;
 	res->nr_deps = 0;
 	res->rundir = NULL;
@@ -456,9 +526,8 @@ int vaccel_resource_new_file(struct vaccel_resource *res, char *path,
 
 	return VACCEL_OK;
 
-free_mem:
-	free(res->files[0]);
-	free(res->files);
+free:
+	free(res->paths);
 release_id:
 	id_pool_release(&id_pool, res->id);
 
@@ -473,7 +542,7 @@ int vaccel_resource_new_from_buf(struct vaccel_resource *res, void *buf,
 	if (!initialized)
 		return VACCEL_EPERM;
 
-	if (!res || type >= VACCEL_RES_MAX || !buf || !nr_bytes)
+	if (!res || type >= VACCEL_RESOURCE_MAX || !buf || !nr_bytes)
 		return VACCEL_EINVAL;
 
 	res->id = id_pool_get(&id_pool);
@@ -490,15 +559,14 @@ int vaccel_resource_new_from_buf(struct vaccel_resource *res, void *buf,
 	res->files[0] =
 		(struct vaccel_file *)malloc(sizeof(struct vaccel_file));
 	if (!res->files[0]) {
-		free(res->files);
 		ret = VACCEL_ENOMEM;
-		goto release_id;
+		goto free_files;
 	}
 
 	ret = vaccel_file_from_buffer(res->files[0], buf, nr_bytes, NULL, NULL,
 				      false, false);
 	if (ret)
-		goto free_mem;
+		goto free;
 
 	ret = resource_create_rundir(res);
 	if (ret)
@@ -512,9 +580,9 @@ int vaccel_resource_new_from_buf(struct vaccel_resource *res, void *buf,
 
 	res->remote_id = -1;
 	res->type = type;
-	res->file_type = FILE_LOCAL;
-	res->name = NULL;
-	res->path = NULL;
+	res->path_type = VACCEL_PATH_LOCAL;
+	res->paths = NULL;
+	res->nr_paths = 0;
 	res->nr_files = 1;
 	res->deps = NULL;
 	res->nr_deps = 0;
@@ -530,8 +598,9 @@ cleanup_rundir:
 	free(res->rundir);
 destroy_file:
 	vaccel_file_destroy(res->files[0]);
-free_mem:
+free:
 	free(res->files[0]);
+free_files:
 	free(res->files);
 release_id:
 	id_pool_release(&id_pool, res->id);
@@ -539,124 +608,44 @@ release_id:
 	return ret;
 }
 
-int vaccel_resource_new_from_url(struct vaccel_resource *res, char *path,
-				 vaccel_resource_t type)
-{
-	if (!initialized)
-		return VACCEL_EPERM;
-
-	if (!res || type >= VACCEL_RES_MAX || !path)
-		return VACCEL_EINVAL;
-
-	res->id = id_pool_get(&id_pool);
-	if (res->id <= 0)
-		return VACCEL_EUSERS;
-
-	res->remote_id = -1;
-	res->type = type;
-	res->file_type = FILE_REMOTE;
-	res->path = strdup(path);
-	res->name = NULL;
-	res->nr_files = 1;
-	res->deps = NULL;
-	res->nr_deps = 0;
-	res->rundir = NULL;
-	atomic_init(&res->refcount, 0);
-
-	list_init_entry(&res->entry);
-	list_add_tail(&live_resources[0], &res->entry);
-
-	return VACCEL_OK;
-}
-
-int vaccel_resource_new_dir(struct vaccel_resource *res, char *path,
-			    vaccel_resource_t type)
-{
-	int ret;
-
-	if (!initialized)
-		return VACCEL_EPERM;
-
-	if (!res || type >= VACCEL_RES_MAX || !path)
-		return VACCEL_EINVAL;
-
-	res->id = id_pool_get(&id_pool);
-	if (res->id <= 0)
-		return VACCEL_EUSERS;
-
-	res->path = strdup(path);
-	ret = set_resource_files(res);
-	if (ret)
-		goto release_id;
-
-	res->remote_id = -1;
-	res->type = type;
-	res->file_type = DIRECTORY;
-	res->name = NULL;
-	res->deps = NULL;
-	res->nr_deps = 0;
-	res->rundir = NULL;
-	atomic_init(&res->refcount, 0);
-
-	list_init_entry(&res->entry);
-	list_add_tail(&live_resources[0], &res->entry);
-
-	return VACCEL_OK;
-
-release_id:
-	id_pool_release(&id_pool, res->id);
-
-	return ret;
-}
-
 int vaccel_resource_new_multi(struct vaccel_resource *res, char **paths,
-			      vaccel_resource_t type, size_t nr_files)
+			      vaccel_resource_t type, size_t nr_paths)
 {
-	size_t i;
 	int ret;
 
 	if (!initialized)
 		return VACCEL_EPERM;
 
-	if (!res || type >= VACCEL_RES_MAX || !paths || !nr_files)
+	if (!res || type >= VACCEL_RESOURCE_MAX || !paths || !nr_paths)
 		return VACCEL_EINVAL;
 
 	res->id = id_pool_get(&id_pool);
-
 	if (res->id <= 0)
 		return VACCEL_EUSERS;
 
-	res->files = (struct vaccel_file **)malloc(
-		nr_files * sizeof(struct vaccel_file *));
-	if (!res->files)
-		return VACCEL_ENOMEM;
+	res->paths = (char **)malloc(nr_paths * sizeof(char *));
+	if (!res->paths) {
+		ret = VACCEL_ENOMEM;
+		goto release_id;
+	}
 
-	for (i = 0; i < nr_files; ++i) {
-		res->files[i] = NULL;
-		if (!paths[i]) {
-			ret = VACCEL_EINVAL;
-			goto free;
-		}
+	for (size_t i = 0; i < nr_paths; i++)
+		res->paths[i] = NULL;
 
-		res->files[i] = (struct vaccel_file *)malloc(
-			sizeof(struct vaccel_file));
-		if (!res->files[i]) {
+	for (size_t i = 0; i < nr_paths; i++) {
+		res->paths[i] = strdup(paths[i]);
+		if (!res->paths[i]) {
 			ret = VACCEL_ENOMEM;
 			goto free;
 		}
-
-		ret = vaccel_file_new(res->files[i], paths[i]);
-		if (ret) {
-			ret = VACCEL_EINVAL;
-			goto free;
-		}
 	}
+	res->nr_paths = nr_paths;
 
 	res->remote_id = -1;
 	res->type = type;
-	res->path = NULL;
-	res->file_type = FILE_LIST;
-	res->nr_files = nr_files;
+	res->path_type = VACCEL_PATH_LIST;
+	res->files = NULL;
+	res->nr_files = 0;
 	res->deps = NULL;
 	res->nr_deps = 0;
 	res->rundir = NULL;
@@ -668,20 +657,62 @@ int vaccel_resource_new_multi(struct vaccel_resource *res, char **paths,
 	return VACCEL_OK;
 
 free:
-	for (size_t j = 0; j < nr_files; ++j) {
-		if (!res->files[j])
+	for (size_t i = 0; i < nr_paths; i++) {
+		if (!res->paths[i])
 			continue;
 
-		vaccel_file_destroy(res->files[j]);
-		free(res->files[j]);
+		free(res->paths[i]);
 	}
-	free(res->files);
+	free(res->paths);
+release_id:
+	id_pool_release(&id_pool, res->id);
 
 	return ret;
 }
 
-int vaccel_path_by_name(struct vaccel_resource *res, const char *name,
-			char *dest)
+int vaccel_resource_register(struct vaccel_resource *res,
+			     struct vaccel_session *sess)
+{
+	int ret;
+
+	if (!initialized)
+		return VACCEL_EPERM;
+
+	if (!res || res->path_type >= VACCEL_PATH_MAX || !sess)
+		return VACCEL_EINVAL;
+
+	if (!res->nr_files) {
+		switch (res->path_type) {
+		case VACCEL_PATH_LOCAL:
+		case VACCEL_PATH_LIST:
+			ret = resource_add_files_from_local(res);
+			break;
+		case VACCEL_PATH_DIR:
+			ret = resource_add_files_from_dir(res);
+			break;
+		case VACCEL_PATH_REMOTE:
+			// TODO
+			vaccel_error("Resource from URL is not implemented");
+			ret = VACCEL_ENOTSUP;
+			break;
+		case VACCEL_PATH_MAX:
+			vaccel_error("Invalid path type");
+			ret = VACCEL_EINVAL;
+			break;
+		}
+		if (ret)
+			return ret;
+	}
+
+	ret = vaccel_session_register_resource(sess, res);
+	if (ret)
+		return ret;
+
+	return VACCEL_OK;
+}
+
+int vaccel_resource_get_path_by_name(struct vaccel_resource *res,
+				     const char *name, char *dest)
 {
 	if (!initialized)
 		return VACCEL_EPERM;
@@ -698,16 +729,13 @@ int vaccel_path_by_name(struct vaccel_resource *res, const char *name,
 	return VACCEL_ENOENT;
 }
 
-char *vaccel_resource_get_path(struct vaccel_resource *res)
+char *vaccel_resource_get_path_by_index(struct vaccel_resource *res, size_t idx)
 {
-	if (!initialized || !res)
+	if (!initialized || !res || !res->nr_files || !res->files)
 		return NULL;
 
-	if (!res->nr_files || !res->files || !(*res->files) ||
-	    !(*res->files)->path)
+	if (idx >= res->nr_files || !res->files[idx] || !res->files[idx]->path)
 		return NULL;
 
-	if (res->file_type == DIRECTORY || res->file_type == FILE_REMOTE)
-		return strdup(res->path);
-	return strdup((*res->files)->path);
+	return strdup(res->files[idx]->path);
 }

@@ -65,7 +65,7 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	ret = vaccel_resource_new(&object, argv[1], VACCEL_FILE_LIB);
+	ret = vaccel_resource_new(&object, argv[1], VACCEL_RESOURCE_LIB);
 	if (ret) {
 		vaccel_error("Could not create shared object resource: %s",
 			     strerror(ret));
@@ -80,7 +80,7 @@ int main(int argc, char *argv[])
 
 	printf("Initialized session with id: %u\n", sess.session_id);
 
-	ret = vaccel_resource_register(&sess, &object);
+	ret = vaccel_resource_register(&object, &sess);
 	if (ret) {
 		vaccel_error("Could register shared object to session");
 		exit(1);
@@ -161,7 +161,7 @@ close_session:
 		return 1;
 	}
 
-	ret = vaccel_resource_unregister(&sess, &object);
+	ret = vaccel_resource_unregister(&object, &sess);
 	if (ret) {
 		vaccel_error("Could not unregister object from session");
 		exit(1);
