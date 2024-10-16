@@ -11,8 +11,7 @@
 #include "../src/utils.h"
 #include <vaccel.h>
 
-#define INPUT_VAL 10
-#define ARGTYPE 42
+enum { INPUT_VAL = 10, ARGTYPE = 42 };
 
 int main(int argc, char *argv[])
 {
@@ -28,7 +27,7 @@ int main(int argc, char *argv[])
 
 	struct vaccel_resource resource;
 
-	int ret = vaccel_resource_new(&resource, argv[1], VACCEL_RESOURCE_LIB);
+	int ret = vaccel_resource_init(&resource, argv[1], VACCEL_RESOURCE_LIB);
 	if (ret) {
 		vaccel_error("Could not create shared object resource: %s",
 			     strerror(ret));
@@ -58,8 +57,8 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	ret = vaccel_resource_new_from_buf(&resource2, buff, len,
-					   VACCEL_RESOURCE_LIB);
+	ret = vaccel_resource_init_from_buf(&resource2, buff, len,
+					    VACCEL_RESOURCE_LIB, "lib.so");
 	if (ret) {
 		vaccel_error(
 			"Could not create shared object2 resource from buffer: %s",
@@ -120,13 +119,13 @@ close_session:
 		exit(1);
 	}
 
-	ret = vaccel_resource_destroy(&resource);
+	ret = vaccel_resource_release(&resource);
 	if (ret) {
 		vaccel_error("Could not destroy resource %llu", resource.id);
 		exit(1);
 	}
 
-	ret = vaccel_resource_destroy(&resource2);
+	ret = vaccel_resource_release(&resource2);
 	if (ret) {
 		vaccel_error("Could not destroy resource %llu", resource2.id);
 		exit(1);

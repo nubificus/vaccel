@@ -10,6 +10,7 @@
 #include "error.h"
 #include "log.h"
 #include "misc.h"
+#include "utils.h"
 #include "ops/blas.h"
 #include "ops/exec.h"
 #include "ops/fpga.h"
@@ -24,6 +25,8 @@
 #include "ops/vaccel_ops.h"
 #include "plugin.h"
 #include "session.h"
+#include "resource.h"
+#include "file.h"
 #include "vaccel_id.h"
 #include "vaccel_prof.h"
 

@@ -33,10 +33,10 @@ TEST_CASE("tf_saved_model_from_memory", "[resources_tf_saved_model]")
 	sprintf(path1, "%s%s", path, "saved_model.pb");
 	sprintf(path2, "%s%s", path, "variables/variables.index");
 
-	char *paths[] = { path1, path2, path2 };
+	const char *paths[] = { path1, path2, path2 };
 
-	ret = vaccel_resource_new_multi(&model, paths, VACCEL_RESOURCE_MODEL,
-					3);
+	ret = vaccel_resource_init_multi(&model, paths, 3,
+					 VACCEL_RESOURCE_MODEL);
 	REQUIRE(ret == VACCEL_OK);
 
 	vaccel_info("Registered new resource: %ld", model.id);
@@ -54,7 +54,7 @@ TEST_CASE("tf_saved_model_from_memory", "[resources_tf_saved_model]")
 	ret = vaccel_resource_unregister(&model, &sess);
 	REQUIRE(ret == VACCEL_OK);
 
-	ret = vaccel_resource_destroy(&model);
+	ret = vaccel_resource_release(&model);
 	REQUIRE(ret == VACCEL_OK);
 
 	ret = vaccel_session_free(&sess);
@@ -71,7 +71,7 @@ TEST_CASE("tf_saved_model_from_file", "[resources_tf_saved_model]")
 
 	struct vaccel_resource model;
 
-	ret = vaccel_resource_new(&model, path, VACCEL_RESOURCE_MODEL);
+	ret = vaccel_resource_init(&model, path, VACCEL_RESOURCE_MODEL);
 	REQUIRE(ret == VACCEL_OK);
 
 	vaccel_info("Registered new resource: %ld", model.id);
@@ -86,7 +86,7 @@ TEST_CASE("tf_saved_model_from_file", "[resources_tf_saved_model]")
 	ret = vaccel_resource_unregister(&model, &sess);
 	REQUIRE(ret == VACCEL_OK);
 
-	ret = vaccel_resource_destroy(&model);
+	ret = vaccel_resource_release(&model);
 	REQUIRE(ret == VACCEL_OK);
 
 	ret = vaccel_session_free(&sess);

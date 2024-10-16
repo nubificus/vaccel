@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "include/resources.h"
+#include "include/resource.h"
 #include "id_pool.h"
 #include "list.h"
 #include <stdint.h>
@@ -21,7 +21,7 @@ int resource_unset_deps(struct vaccel_resource *res);
 void resource_refcount_inc(struct vaccel_resource *res);
 void resource_refcount_dec(struct vaccel_resource *res);
 int resource_create_rundir(struct vaccel_resource *res);
-int resource_destroy_rundir(struct vaccel_resource *res);
+void resource_destroy_rundir(struct vaccel_resource *res);
 
 /* Helper macros for iterating lists of containers */
 #define for_each_vaccel_resource(iter, list) \

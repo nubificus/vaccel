@@ -7,8 +7,6 @@
 #include <stdio.h>
 #include <vaccel.h>
 
-#include "vaccel_file.h"
-
 #define exec_debug(fmt, ...) vaccel_debug("[exec] " fmt, ##__VA_ARGS__)
 #define exec_error(fmt, ...) vaccel_error("[exec] " fmt, ##__VA_ARGS__)
 
