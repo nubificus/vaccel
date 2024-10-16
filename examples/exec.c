@@ -23,9 +23,9 @@ int main(int argc, char *argv[])
 	}
 
 	sess.hint = VACCEL_PLUGIN_DEBUG;
-	ret = vaccel_sess_init(&sess, sess.hint);
+	ret = vaccel_session_init(&sess, sess.hint);
 	if (ret != VACCEL_OK) {
-		vaccel_error("Could not initialize session\n");
+		vaccel_error("Could not initialize session");
 		return 1;
 	}
 
@@ -42,15 +42,15 @@ int main(int argc, char *argv[])
 		ret = vaccel_exec(&sess, argv[1], "mytestfunc", read, 1, write,
 				  1);
 		if (ret) {
-			vaccel_error("Could not run op: %d\n", ret);
+			vaccel_error("Could not run op: %d", ret);
 			goto close_session;
 		}
 	}
 	printf("output(2x%d): %d\n", input, output);
 
 close_session:
-	if (vaccel_sess_free(&sess) != VACCEL_OK) {
-		vaccel_error("Could not clear session\n");
+	if (vaccel_session_free(&sess) != VACCEL_OK) {
+		vaccel_error("Could not clear session");
 		return 1;
 	}
 

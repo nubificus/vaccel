@@ -10,7 +10,7 @@ int main()
 	int ret;
 	struct vaccel_session sess;
 
-	ret = vaccel_sess_init(&sess, 0);
+	ret = vaccel_session_init(&sess, 0);
 	if (ret != VACCEL_OK) {
 		fprintf(stderr, "Could not initialize session\n");
 		return 1;
@@ -25,7 +25,7 @@ int main()
 	}
 
 close_session:
-	if (vaccel_sess_free(&sess) != VACCEL_OK) {
+	if (vaccel_session_free(&sess) != VACCEL_OK) {
 		fprintf(stderr, "Could not clear session\n");
 		return 1;
 	}

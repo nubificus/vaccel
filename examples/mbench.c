@@ -28,7 +28,7 @@ int main(int argc, char *argv[])
 	if (argc == 4)
 		iter = atoi(argv[3]);
 
-	ret = vaccel_sess_init(&sess, 0);
+	ret = vaccel_session_init(&sess, 0);
 	if (ret != VACCEL_OK) {
 		fprintf(stderr, "Could not initialize session\n");
 		return 1;
@@ -58,7 +58,7 @@ int main(int argc, char *argv[])
 
 close_session:
 	free(file);
-	if (vaccel_sess_free(&sess) != VACCEL_OK) {
+	if (vaccel_session_free(&sess) != VACCEL_OK) {
 		fprintf(stderr, "Could not clear session\n");
 		return 1;
 	}

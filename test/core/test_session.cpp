@@ -4,12 +4,12 @@
  * The code below performs unit testing to sessions.
  *
  * 1) sessions_bootstrap()
- * 2) vaccel_sess_init()
- * 3) vaccel_sess_update()
- * 4) vaccel_sess_free()
- * 5) vaccel_sess_unregister()
- * 6) vaccel_sess_register()
- * 7) vaccel_sess_has_resource)()
+ * 2) vaccel_session_init()
+ * 3) vaccel_session_update()
+ * 4) vaccel_session_free()
+ * 5) vaccel_session_unregister()
+ * 6) vaccel_session_register()
+ * 7) vaccel_session_has_resource)()
  * 8) session_cleanup()
  *
  */
@@ -93,7 +93,7 @@ TEST_CASE("session_init", "[session]")
 	sess.priv = nullptr;
 
 	// Test handling of null session
-	ret = vaccel_sess_init(nullptr, 1);
+	ret = vaccel_session_init(nullptr, 1);
 	REQUIRE(ret == VACCEL_EINVAL);
 	REQUIRE(sess.hint == 0);
 	REQUIRE(sess.session_id == 0);
@@ -101,21 +101,21 @@ TEST_CASE("session_init", "[session]")
 	REQUIRE(sess.priv == nullptr);
 
 	// Test session initialization and cleanup
-	ret = vaccel_sess_init(&sess, 1);
+	ret = vaccel_session_init(&sess, 1);
 	REQUIRE(ret == VACCEL_OK);
 	REQUIRE(sess.session_id);
 	REQUIRE(sess.hint == 1);
 	REQUIRE(sess.resources);
 	REQUIRE(sess.priv == nullptr);
 
-	ret = vaccel_sess_free(nullptr);
+	ret = vaccel_session_free(nullptr);
 	REQUIRE(ret == VACCEL_EINVAL);
 	REQUIRE(sess.hint == 1);
 	REQUIRE(sess.session_id);
 	REQUIRE(sess.resources);
 	REQUIRE(sess.priv == nullptr);
 
-	REQUIRE(vaccel_sess_free(&sess) == VACCEL_OK);
+	REQUIRE(vaccel_session_free(&sess) == VACCEL_OK);
 	REQUIRE(sess.session_id);
 	REQUIRE(sess.hint == 1);
 	REQUIRE(sess.resources == nullptr);
@@ -133,7 +133,7 @@ TEST_CASE("session_update_and_free", "[session]")
 
 	RESET_FAKE(get_virtio_plugin);
 
-	ret = vaccel_sess_init(&sess, 1);
+	ret = vaccel_session_init(&sess, 1);
 	REQUIRE(ret == VACCEL_OK);
 	REQUIRE(sess.session_id);
 	REQUIRE(sess.hint == 1);
@@ -141,21 +141,21 @@ TEST_CASE("session_update_and_free", "[session]")
 	REQUIRE(sess.priv == nullptr);
 
 	// Test session update
-	ret = vaccel_sess_update(&sess, 2);
+	ret = vaccel_session_update(&sess, 2);
 	REQUIRE(ret == VACCEL_OK);
 	REQUIRE(sess.session_id);
 	REQUIRE(sess.hint == 2);
 	REQUIRE(sess.resources);
 	REQUIRE(sess.priv == nullptr);
 
-	ret = vaccel_sess_update(nullptr, 2);
+	ret = vaccel_session_update(nullptr, 2);
 	REQUIRE(ret == VACCEL_EINVAL);
 	REQUIRE(sess.session_id);
 	REQUIRE(sess.hint == 2);
 	REQUIRE(sess.resources);
 	REQUIRE(sess.priv == nullptr);
 
-	ret = vaccel_sess_free(nullptr);
+	ret = vaccel_session_free(nullptr);
 	REQUIRE(ret == EINVAL);
 	REQUIRE(sess.session_id);
 	REQUIRE(sess.hint == 2);
@@ -163,7 +163,7 @@ TEST_CASE("session_update_and_free", "[session]")
 	REQUIRE(sess.priv == nullptr);
 
 	// Test session cleanup
-	REQUIRE(vaccel_sess_free(&sess) == VACCEL_OK);
+	REQUIRE(vaccel_session_free(&sess) == VACCEL_OK);
 	REQUIRE(sess.session_id);
 	REQUIRE(sess.hint == 2);
 	REQUIRE(sess.resources == nullptr);
@@ -182,7 +182,7 @@ TEST_CASE("session_unregister_null", "[session]")
 	sess.resources = nullptr;
 	sess.priv = nullptr;
 
-	ret = vaccel_sess_init(&sess, 1);
+	ret = vaccel_session_init(&sess, 1);
 	REQUIRE(ret == VACCEL_OK);
 	REQUIRE(sess.session_id);
 	REQUIRE(sess.hint == 1);
@@ -212,7 +212,7 @@ TEST_CASE("session_unregister_null", "[session]")
 	REQUIRE_FALSE(list_empty(&sess.resources->registered[res.type]));
 	REQUIRE(sess.priv == nullptr);
 
-	bool check_bool = vaccel_sess_has_resource(&sess, &res);
+	bool check_bool = vaccel_session_has_resource(&sess, &res);
 	REQUIRE(check_bool);
 
 	ret = vaccel_resource_unregister(nullptr, &res);
@@ -239,10 +239,10 @@ TEST_CASE("session_unregister_null", "[session]")
 	REQUIRE(list_empty(&sess.resources->registered[res.type]));
 	REQUIRE(sess.priv == nullptr);
 
-	check_bool = vaccel_sess_has_resource(&sess, &res);
+	check_bool = vaccel_session_has_resource(&sess, &res);
 	REQUIRE(!check_bool);
 
-	ret = vaccel_sess_free(&sess);
+	ret = vaccel_session_free(&sess);
 	REQUIRE(ret == VACCEL_OK);
 
 	REQUIRE(sess.session_id);
@@ -266,7 +266,7 @@ TEST_CASE("session_ops", "[session]")
 
 	RESET_FAKE(get_virtio_plugin);
 
-	ret = vaccel_sess_init(&test_sess, 1);
+	ret = vaccel_session_init(&test_sess, 1);
 	REQUIRE(VACCEL_OK == ret);
 
 	REQUIRE(ret == VACCEL_OK);
@@ -275,7 +275,7 @@ TEST_CASE("session_ops", "[session]")
 	REQUIRE(test_sess.resources);
 	REQUIRE(test_sess.priv == nullptr);
 
-	ret = vaccel_sess_update(&test_sess, 2);
+	ret = vaccel_session_update(&test_sess, 2);
 	REQUIRE(VACCEL_OK == ret);
 	REQUIRE(test_sess.session_id);
 	REQUIRE(test_sess.hint == 2);
@@ -297,7 +297,7 @@ TEST_CASE("session_ops", "[session]")
 	REQUIRE(list_empty(&test_sess.resources->registered[test_res.type]));
 	REQUIRE(test_sess.priv == nullptr);
 
-	ret = vaccel_sess_free(&test_sess);
+	ret = vaccel_session_free(&test_sess);
 	REQUIRE(VACCEL_OK == ret);
 	REQUIRE(test_sess.session_id);
 	REQUIRE(test_sess.hint == 2);
@@ -338,10 +338,10 @@ TEST_CASE("session_virtio", "[session]")
 
 	get_virtio_plugin_fake.return_val = &v_mock;
 
-	ret = vaccel_sess_init(&test_sess, 1 | VACCEL_REMOTE);
+	ret = vaccel_session_init(&test_sess, 1 | VACCEL_REMOTE);
 	REQUIRE(VACCEL_OK == ret);
 
-	ret = vaccel_sess_update(&test_sess, 2);
+	ret = vaccel_session_update(&test_sess, 2);
 	REQUIRE(VACCEL_OK == ret);
 
 	ret = vaccel_resource_register(&test_sess, &test_res);
@@ -350,7 +350,7 @@ TEST_CASE("session_virtio", "[session]")
 	ret = vaccel_resource_unregister(&test_sess, &test_res);
 	REQUIRE(VACCEL_OK == ret);
 
-	ret = vaccel_sess_free(&test_sess);
+	ret = vaccel_session_free(&test_sess);
 	REQUIRE(VACCEL_OK == ret);
 
 	// Ensure that the VirtIO plugin was called the expected number of times

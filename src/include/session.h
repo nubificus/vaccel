@@ -33,13 +33,13 @@ struct vaccel_session {
 };
 
 /* Initialize a new session with the runtime */
-int vaccel_sess_init(struct vaccel_session *sess, uint32_t flags);
+int vaccel_session_init(struct vaccel_session *sess, uint32_t flags);
 
 /* Update a session with new flags */
-int vaccel_sess_update(struct vaccel_session *sess, uint32_t flags);
+int vaccel_session_update(struct vaccel_session *sess, uint32_t flags);
 
 /* Tear down a session */
-int vaccel_sess_free(struct vaccel_session *sess);
+int vaccel_session_free(struct vaccel_session *sess);
 
 /* Register a resource with a session */
 int vaccel_resource_register(struct vaccel_session *sess,
@@ -47,11 +47,18 @@ int vaccel_resource_register(struct vaccel_session *sess,
 
 /* Unregister a resource from a session */
 int vaccel_resource_unregister(struct vaccel_session *sess,
-			       struct vaccel_resource *resource);
+			       struct vaccel_resource *res);
 
 /* Check if a resource is registered with a session */
-bool vaccel_sess_has_resource(const struct vaccel_session *sess,
-			      const struct vaccel_resource *resource);
+bool vaccel_session_has_resource(const struct vaccel_session *sess,
+				 const struct vaccel_resource *res);
+
+// Deprecated. To be removed
+int vaccel_sess_init(struct vaccel_session *sess, uint32_t flags);
+int vaccel_sess_update(struct vaccel_session *sess, uint32_t flags);
+int vaccel_sess_free(struct vaccel_session *sess);
+bool vaccel_sess_has_resource(struct vaccel_session *sess,
+			      struct vaccel_resource *res);
 
 #ifdef __cplusplus
 }

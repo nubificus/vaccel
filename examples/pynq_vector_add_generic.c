@@ -17,7 +17,7 @@ int main()
 	size_t len_b = sizeof(b) / sizeof(b[1]);
 	size_t len_c = (len_a > len_b ? len_a : len_b);
 
-	ret = vaccel_sess_init(&sess, 0);
+	ret = vaccel_session_init(&sess, 0);
 	if (ret != VACCEL_OK) {
 		fprintf(stderr, "Could not initialize session\n");
 		return 1;
@@ -44,7 +44,7 @@ int main()
 	}
 
 close_session:
-	if (vaccel_sess_free(&sess) != VACCEL_OK) {
+	if (vaccel_session_free(&sess) != VACCEL_OK) {
 		fprintf(stderr, "Could not clear session\n");
 		return 1;
 	}

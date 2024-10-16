@@ -34,7 +34,7 @@ TEST_CASE("exec", "[ops_exec]")
 	sess.resources = nullptr;
 	sess.hint = 0;
 
-	ret = vaccel_sess_init(&sess, VACCEL_PLUGIN_DEBUG);
+	ret = vaccel_session_init(&sess, VACCEL_PLUGIN_DEBUG);
 	REQUIRE(ret == VACCEL_OK);
 
 	struct vaccel_arg read[1] = {
@@ -54,7 +54,7 @@ TEST_CASE("exec", "[ops_exec]")
 	REQUIRE(sess.resources);
 	REQUIRE(sess.priv == nullptr);
 
-	ret = vaccel_sess_free(&sess);
+	ret = vaccel_session_free(&sess);
 	REQUIRE(ret == VACCEL_OK);
 
 	free(plugin_path);
@@ -73,7 +73,7 @@ TEST_CASE("exec_generic", "[ops_exec]")
 	int input = 10;
 	int output = 0;
 
-	ret = vaccel_sess_init(&sess, 0);
+	ret = vaccel_session_init(&sess, 0);
 	REQUIRE(ret == VACCEL_OK);
 
 	enum vaccel_op_type op_type = VACCEL_EXEC;
@@ -104,7 +104,7 @@ TEST_CASE("exec_generic", "[ops_exec]")
 	REQUIRE(sess.resources);
 	REQUIRE(sess.priv == nullptr);
 
-	ret = vaccel_sess_free(&sess);
+	ret = vaccel_session_free(&sess);
 	REQUIRE(ret == VACCEL_OK);
 
 	free(plugin_path);
@@ -153,14 +153,14 @@ TEST_CASE("exec_with_resource", "[ops_exec]")
 	sess2.resources = nullptr;
 	sess2.hint = 1;
 
-	ret = vaccel_sess_init(&sess, 0);
+	ret = vaccel_session_init(&sess, 0);
 	REQUIRE(ret == VACCEL_OK);
 	REQUIRE(sess.session_id);
 	REQUIRE(sess.hint == 0);
 	REQUIRE(sess.resources);
 	REQUIRE(sess.priv == nullptr);
 
-	ret = vaccel_sess_init(&sess2, 0);
+	ret = vaccel_session_init(&sess2, 0);
 	REQUIRE(ret == VACCEL_OK);
 	REQUIRE(sess2.session_id);
 	REQUIRE(sess2.hint == 0);
@@ -234,10 +234,10 @@ TEST_CASE("exec_with_resource", "[ops_exec]")
 	ret = vaccel_resource_destroy(&object2);
 	REQUIRE(ret == VACCEL_OK);
 
-	ret = vaccel_sess_free(&sess);
+	ret = vaccel_session_free(&sess);
 	REQUIRE(ret == VACCEL_OK);
 
-	ret = vaccel_sess_free(&sess2);
+	ret = vaccel_session_free(&sess2);
 	REQUIRE(ret == VACCEL_OK);
 
 	free(buff);

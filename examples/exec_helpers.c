@@ -31,7 +31,7 @@ int main(int argc, char *argv[])
 			     strerror(ret));
 		return 1;
 	}
-	ret = vaccel_sess_init(&sess, VACCEL_PLUGIN_DEBUG);
+	ret = vaccel_session_init(&sess, VACCEL_PLUGIN_DEBUG);
 
 	if (ret != VACCEL_OK) {
 		vaccel_error("Could not initialize session");
@@ -109,7 +109,7 @@ close_session:
 		return 1;
 	}
 
-	if (vaccel_sess_free(&sess) != VACCEL_OK) {
+	if (vaccel_session_free(&sess) != VACCEL_OK) {
 		vaccel_error("Could not clear session");
 		return 1;
 	}

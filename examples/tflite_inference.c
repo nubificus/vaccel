@@ -28,7 +28,7 @@ int main(int argc, char *argv[])
 	}
 	printf("Created new model %lld\n", model.id);
 
-	ret = vaccel_sess_init(&vsess, 0);
+	ret = vaccel_session_init(&vsess, 0);
 	if (ret) {
 		fprintf(stderr, "Could not initialize vAccel session\n");
 		goto destroy_resource;
@@ -98,7 +98,7 @@ unregister_resource:
 	if (vaccel_resource_unregister(&vsess, &model))
 		fprintf(stderr, "Could not unregister model with session\n");
 close_session:
-	if (vaccel_sess_free(&vsess))
+	if (vaccel_session_free(&vsess))
 		fprintf(stderr, "Could not clear session\n");
 destroy_resource:
 	vaccel_resource_destroy(&model);

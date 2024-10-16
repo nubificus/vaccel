@@ -109,7 +109,7 @@ TEST_CASE("tflite_inference", "[ops_tflite]")
 	REQUIRE_FALSE(model.files == nullptr);
 	INFO("model.path: " << model.path);
 
-	ret = vaccel_sess_init(&vsess, 0);
+	ret = vaccel_session_init(&vsess, 0);
 	REQUIRE(ret == VACCEL_OK);
 	REQUIRE_FALSE(vsess.session_id == 0);
 	REQUIRE_FALSE(vsess.resources == nullptr);
@@ -170,7 +170,7 @@ TEST_CASE("tflite_inference", "[ops_tflite]")
 	ret = vaccel_resource_unregister(&vsess, &model);
 	REQUIRE(ret == VACCEL_OK);
 
-	ret = vaccel_sess_free(&vsess);
+	ret = vaccel_session_free(&vsess);
 	REQUIRE(ret == VACCEL_OK);
 
 	ret = vaccel_resource_destroy(&model);

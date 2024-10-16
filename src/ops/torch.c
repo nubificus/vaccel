@@ -217,7 +217,7 @@ int vaccel_torch_jitload_forward(struct vaccel_session *sess,
 		"session:%u Looking for plugin implementing torch_jitload_forward operation",
 		sess->session_id);
 
-	if (!vaccel_sess_has_resource(sess, model)) {
+	if (!vaccel_session_has_resource(sess, model)) {
 		vaccel_error("Resource %u is not registered to session %u",
 			     model->id, sess->session_id);
 		return VACCEL_EPERM;

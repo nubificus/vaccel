@@ -182,13 +182,13 @@ int vaccel_resource_unregister(struct vaccel_session *sess,
 	return VACCEL_OK;
 }
 
-bool vaccel_sess_has_resource(const struct vaccel_session *sess,
-			      const struct vaccel_resource *res)
+bool vaccel_session_has_resource(const struct vaccel_session *sess,
+				 const struct vaccel_resource *res)
 {
 	return find_registered_resource(sess, res) != NULL;
 }
 
-static int initialize_session_resources(struct vaccel_session *sess)
+static int session_initialize_resources(struct vaccel_session *sess)
 {
 	if (!sess)
 		return VACCEL_EINVAL;
@@ -223,7 +223,7 @@ cleanup_res:
 	return ret;
 }
 
-static int cleanup_session_resources(struct vaccel_session *sess)
+static int session_cleanup_resources(struct vaccel_session *sess)
 {
 	if (!sess || !sess->resources)
 		return VACCEL_EINVAL;
@@ -257,7 +257,7 @@ static int cleanup_session_resources(struct vaccel_session *sess)
 	return VACCEL_OK;
 }
 
-int vaccel_sess_init(struct vaccel_session *sess, uint32_t flags)
+int vaccel_session_init(struct vaccel_session *sess, uint32_t flags)
 {
 	int ret;
 	struct vaccel_plugin *virtio = NULL;
@@ -294,7 +294,7 @@ int vaccel_sess_init(struct vaccel_session *sess, uint32_t flags)
 
 	sess->session_id = sess_id;
 
-	ret = initialize_session_resources(sess);
+	ret = session_initialize_resources(sess);
 	if (ret)
 		goto cleanup_session;
 
@@ -319,7 +319,7 @@ cleanup_session:
 	return ret;
 }
 
-int vaccel_sess_update(struct vaccel_session *sess, uint32_t flags)
+int vaccel_session_update(struct vaccel_session *sess, uint32_t flags)
 {
 	if (!sess)
 		return VACCEL_EINVAL;
@@ -354,7 +354,7 @@ int vaccel_sess_update(struct vaccel_session *sess, uint32_t flags)
 	return VACCEL_OK;
 }
 
-int vaccel_sess_free(struct vaccel_session *sess)
+int vaccel_session_free(struct vaccel_session *sess)
 {
 	int ret;
 
@@ -381,7 +381,7 @@ int vaccel_sess_free(struct vaccel_session *sess)
 		}
 	}
 
-	ret = cleanup_session_resources(sess);
+	ret = session_cleanup_resources(sess);
 	if (ret) {
 		vaccel_error("Could not cleanup session resources");
 		return ret;
@@ -394,4 +394,33 @@ int vaccel_sess_free(struct vaccel_session *sess)
 	vaccel_debug("session:%" PRIu32 " Free session", sess->session_id);
 
 	return VACCEL_OK;
+}
+
+int vaccel_sess_init(struct vaccel_session *sess, uint32_t flags)
+{
+	vaccel_warn("%s%s", "vaccel_sess_init() is deprecated. ",
+		    "Please use vaccel_session_init() instead.");
+	return vaccel_session_init(sess, flags);
+}
+
+int vaccel_sess_update(struct vaccel_session *sess, uint32_t flags)
+{
+	vaccel_warn("%s%s", "vaccel_sess_update() is deprecated. ",
+		    "Please use vaccel_session_update() instead.");
+	return vaccel_session_update(sess, flags);
+}
+
+int vaccel_sess_free(struct vaccel_session *sess)
+{
+	vaccel_warn("%s%s", "vaccel_sess_free() is deprecated. ",
+		    "Please use vaccel_session_free() instead.");
+	return vaccel_session_free(sess);
+}
+
+bool vaccel_sess_has_resource(struct vaccel_session *sess,
+			      struct vaccel_resource *res)
+{
+	vaccel_warn("%s%s", "vaccel_sess_has_resource() is deprecated. ",
+		    "Please use vaccel_session_has_resource() instead.");
+	return vaccel_session_has_resource(sess, res);
 }

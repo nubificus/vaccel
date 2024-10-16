@@ -54,7 +54,7 @@ TEST_CASE("min_max", "[ops_minmax]")
 	session.resources = nullptr;
 	session.priv = nullptr;
 
-	ret = vaccel_sess_init(&session, 0);
+	ret = vaccel_session_init(&session, 0);
 	REQUIRE(ret == VACCEL_OK);
 	REQUIRE(session.session_id);
 	REQUIRE(session.hint == 0);
@@ -76,7 +76,7 @@ TEST_CASE("min_max", "[ops_minmax]")
 		((double)(t1.tv_sec - t0.tv_sec) * 1000.0) +
 			((double)(t1.tv_nsec - t0.tv_nsec) / 1.0e6));
 
-	ret = vaccel_sess_free(&session);
+	ret = vaccel_session_free(&session);
 	REQUIRE(session.session_id);
 	REQUIRE(session.hint == 0);
 	REQUIRE(session.resources == nullptr);
@@ -122,7 +122,7 @@ TEST_CASE("min_max_generic", "[ops_minmax]")
 	session.resources = nullptr;
 	session.priv = nullptr;
 
-	ret = vaccel_sess_init(&session, 0);
+	ret = vaccel_session_init(&session, 0);
 	REQUIRE(ret == VACCEL_OK);
 	REQUIRE(session.session_id);
 	REQUIRE(session.hint == 0);
@@ -163,7 +163,7 @@ TEST_CASE("min_max_generic", "[ops_minmax]")
 		((double)(t1.tv_sec - t0.tv_sec) * 1000.0) +
 			((double)(t1.tv_nsec - t0.tv_nsec) / 1.0e6));
 
-	ret = vaccel_sess_free(&session);
+	ret = vaccel_session_free(&session);
 	REQUIRE(session.session_id);
 	REQUIRE(session.hint == 0);
 	REQUIRE(session.resources == nullptr);
