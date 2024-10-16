@@ -65,7 +65,7 @@ auto main(int argc, char **argv) -> int
 		exit(1);
 	}
 
-	ret = vaccel_resource_new(&model, model_path, VACCEL_RESOURCE_MODEL);
+	ret = vaccel_resource_init(&model, model_path, VACCEL_RESOURCE_MODEL);
 	if (ret != 0) {
 		vaccel_error("Could not create model resource");
 		return ret;
@@ -148,7 +148,7 @@ close_session:
 		fprintf(stderr, "Could not clear session\n");
 destroy_resource:
 	free(run_options.data);
-	vaccel_resource_destroy(&model);
+	vaccel_resource_release(&model);
 
 	return ret;
 }

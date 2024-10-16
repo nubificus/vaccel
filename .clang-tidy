@@ -21,3 +21,5 @@ SystemHeaders:   false
 CheckOptions:
   - key:   readability-function-cognitive-complexity.Threshold
     value: '30'
+  - key:   bugprone-reserved-identifier.AllowedIdentifiers
+    value: '_POSIX_C_SOURCE;_DEFAULT_SOURCE'

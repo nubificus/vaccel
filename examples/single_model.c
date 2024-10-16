@@ -30,7 +30,7 @@ int create_from_path(char *path)
 {
 	vaccel_info("Creating new model handle");
 	struct vaccel_resource model;
-	int ret = vaccel_resource_new(&model, path, VACCEL_RESOURCE_MODEL);
+	int ret = vaccel_resource_init(&model, path, VACCEL_RESOURCE_MODEL);
 	if (ret)
 		return ret;
 
@@ -58,7 +58,7 @@ int create_from_path(char *path)
 	}
 
 	vaccel_info("Destroying model %lld", model.id);
-	ret = vaccel_resource_destroy(&model);
+	ret = vaccel_resource_release(&model);
 	if (ret) {
 		vaccel_error("Could not destroy model resource");
 		return ret;
@@ -81,8 +81,8 @@ int create_from_in_mem(const char *path)
 		return VACCEL_ENOMEM;
 	}
 
-	ret = vaccel_resource_new_from_buf(&model, ptr, len,
-					   VACCEL_RESOURCE_MODEL);
+	ret = vaccel_resource_init_from_buf(&model, ptr, len,
+					    VACCEL_RESOURCE_MODEL, NULL);
 	if (ret) {
 		vaccel_error("Could not set file for model");
 		return ret;
@@ -112,7 +112,7 @@ int create_from_in_mem(const char *path)
 	}
 
 	vaccel_info("Destroying model %lld", model.id);
-	ret = vaccel_resource_destroy(&model);
+	ret = vaccel_resource_release(&model);
 	if (ret) {
 		vaccel_error("Could not destroy model");
 		return ret;

@@ -22,8 +22,7 @@
 #include <unistd.h>
 #include <vaccel.h>
 
-#define INPUT_VAL 10
-#define ARGTYPE 42
+enum { INPUT_VAL = 10, ARGTYPE = 42 };
 
 int main(int argc, char *argv[])
 {
@@ -41,7 +40,7 @@ int main(int argc, char *argv[])
 	struct vaccel_resource object;
 	int ret;
 
-	ret = vaccel_resource_new(&object, argv[1], VACCEL_RESOURCE_LIB);
+	ret = vaccel_resource_init(&object, argv[1], VACCEL_RESOURCE_LIB);
 	if (ret) {
 		vaccel_error("Could not create shared object resource: %s",
 			     strerror(ret));
@@ -105,7 +104,7 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	if (vaccel_resource_destroy(&object)) {
+	if (vaccel_resource_release(&object)) {
 		vaccel_error("Could not destroy resource");
 		exit(1);
 	}

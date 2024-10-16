@@ -131,13 +131,13 @@ TEST_CASE("exec_with_resource", "[ops_exec]")
 	struct vaccel_resource object2;
 	object2.paths = nullptr;
 
-	ret = vaccel_resource_new(&object, plugin_path, VACCEL_RESOURCE_LIB);
+	ret = vaccel_resource_init(&object, plugin_path, VACCEL_RESOURCE_LIB);
 	REQUIRE(ret == VACCEL_OK);
 	REQUIRE(object.paths);
 	REQUIRE(object.paths[0]);
 
-	ret = vaccel_resource_new_from_buf(&object2, (unsigned char *)buff, len,
-					   VACCEL_RESOURCE_LIB);
+	ret = vaccel_resource_init_from_buf(&object2, (unsigned char *)buff,
+					    len, VACCEL_RESOURCE_LIB, "lib.so");
 	REQUIRE(ret == VACCEL_OK);
 
 	struct vaccel_session sess;
@@ -229,10 +229,10 @@ TEST_CASE("exec_with_resource", "[ops_exec]")
 	REQUIRE(list_empty(&sess2.resources->registered[object2.type]));
 	REQUIRE(sess2.priv == nullptr);
 
-	ret = vaccel_resource_destroy(&object);
+	ret = vaccel_resource_release(&object);
 	REQUIRE(ret == VACCEL_OK);
 
-	ret = vaccel_resource_destroy(&object2);
+	ret = vaccel_resource_release(&object2);
 	REQUIRE(ret == VACCEL_OK);
 
 	ret = vaccel_session_free(&sess);

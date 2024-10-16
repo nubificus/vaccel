@@ -2,12 +2,9 @@
 
 #define _POSIX_C_SOURCE 200809L
 
-#include "vaccel_file.h"
-
 #include <inttypes.h>
 #include <stdio.h>
 #include <string.h>
-
 #include <vaccel.h>
 
 #define noop_debug(fmt, ...) vaccel_debug("[noop] " fmt, ##__VA_ARGS__)

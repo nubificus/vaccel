@@ -2,20 +2,18 @@
 
 #pragma once
 
-#include <stddef.h>
-
 #ifdef __cplusplus
 #include <atomic>
 typedef std::atomic<unsigned int> atomic_uint;
 #else
 #include <stdatomic.h>
 #endif
-
 #include "error.h"
-#include "vaccel_id.h"
+#include "file.h"
 #include "list.h"
-#include "vaccel_file.h"
 #include "session.h"
+#include "vaccel_id.h"
+#include <stddef.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -37,6 +35,9 @@ typedef enum {
 } vaccel_path_t;
 
 struct vaccel_resource {
+	/* an entry to add this resource in a list */
+	list_entry_t entry;
+
 	/* resource id */
 	vaccel_id_t id;
 
@@ -48,9 +49,6 @@ struct vaccel_resource {
 
 	/* type of the given path */
 	vaccel_path_t path_type;
-
-	/* an entry to add this resource in a list */
-	list_entry_t entry;
 
 	/* reference counter representing the number of sessions
 	 * to which this resource is registered to */
@@ -88,31 +86,68 @@ int vaccel_resource_deps_from_ids(struct vaccel_resource **deps,
 int vaccel_resource_set_deps_from_ids(struct vaccel_resource *res,
 				      vaccel_id_t *ids, size_t nr_ids);
 
-int vaccel_resource_new(struct vaccel_resource *res, char *path,
+/* Initialize resource */
+int vaccel_resource_init(struct vaccel_resource *res, const char *path,
+			 vaccel_resource_t type);
+
+/* Initialize resource with multiple file paths */
+int vaccel_resource_init_multi(struct vaccel_resource *res, const char **paths,
+			       size_t nr_paths, vaccel_resource_t type);
+
+/* Initialize resource from in-memory data */
+int vaccel_resource_init_from_buf(struct vaccel_resource *res, const void *buf,
+				  size_t nr_bytes, vaccel_resource_t type,
+				  const char *filename);
+
+/* Initialize resource from existing vaccel files */
+int vaccel_resource_init_from_files(struct vaccel_resource *res,
+				    const struct vaccel_file **files,
+				    size_t nr_files, vaccel_resource_t type);
+
+/* Release resource data */
+int vaccel_resource_release(struct vaccel_resource *res);
+
+/* Allocate and initialize resource */
+int vaccel_resource_new(struct vaccel_resource **res, const char *path,
 			vaccel_resource_t type);
 
-int vaccel_resource_new_from_buf(struct vaccel_resource *res, void *buf,
-				 size_t nr_bytes, vaccel_resource_t type);
+/* Allocate and initialize resource with multiple file paths */
+int vaccel_resource_multi_new(struct vaccel_resource **res, const char **paths,
+			      size_t nr_paths, vaccel_resource_t type);
 
-int vaccel_resource_new_multi(struct vaccel_resource *res, char **paths,
-			      vaccel_resource_t type, size_t nr_files);
+/* Allocate and initialize resource from in-memory data */
+int vaccel_resource_from_buf(struct vaccel_resource **res, const void *buf,
+			     size_t nr_bytes, vaccel_resource_t type);
 
-int vaccel_resource_destroy(struct vaccel_resource *res);
+/* Allocate and initialize resource from existing vaccel files */
+int vaccel_resource_from_files(struct vaccel_resource **res,
+			       const struct vaccel_file **files,
+			       size_t nr_files, vaccel_resource_t type);
 
+/* Release resource data and free resource created with
+ * vaccel_resource_new*() or vaccel_resource_from_*() */
+int vaccel_resource_delete(struct vaccel_resource *res);
+
+/* Register resource with session */
 int vaccel_resource_register(struct vaccel_resource *res,
 			     struct vaccel_session *sess);
 
-#define vaccel_resource_unregister(res, sess) \
-	vaccel_session_unregister_resource(sess, res)
+/* Unregister resource from session */
+int vaccel_resource_unregister(struct vaccel_resource *res,
+			       struct vaccel_session *sess);
 
+/* Get resource file path by name */
 int vaccel_resource_get_path_by_name(struct vaccel_resource *res,
 				     const char *name, char *dest);
 
+/* Get resource file path by index */
 char *vaccel_resource_get_path_by_index(struct vaccel_resource *res,
 					size_t idx);
 
+/* Get resource file path of first file */
 #define vaccel_resource_get_path(res) vaccel_resource_get_path_by_index(res, 0)
 
+/* Get resource by index from live resources */
 int vaccel_resource_get_by_id(struct vaccel_resource **resource,
 			      vaccel_id_t id);
 

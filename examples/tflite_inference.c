@@ -22,7 +22,7 @@ int main(int argc, char *argv[])
 	char *model_path = argv[1];
 
 	int ret =
-		vaccel_resource_new(&model, model_path, VACCEL_RESOURCE_MODEL);
+		vaccel_resource_init(&model, model_path, VACCEL_RESOURCE_MODEL);
 	if (ret) {
 		vaccel_error("Could not create model resource");
 		return ret;
@@ -102,7 +102,7 @@ close_session:
 	if (vaccel_session_free(&vsess))
 		fprintf(stderr, "Could not clear session\n");
 destroy_resource:
-	vaccel_resource_destroy(&model);
+	vaccel_resource_release(&model);
 
 	return ret;
 }
