@@ -10,6 +10,7 @@
 #include "../src/utils.h"
 #include <vaccel.h>
 
+
 int main(int argc, char *argv[])
 {
 	int ret;
@@ -37,15 +38,19 @@ int main(int argc, char *argv[])
 		goto close_session;
 
 	for (int i = 0; i < atoi(argv[2]); ++i) {
+		struct vaccel_prof_region inference_nested = VACCEL_PROF_REGION_INIT("inference_nested");
+		vaccel_prof_region_start(&inference_nested);
 		ret = vaccel_image_classification(
 			&sess, image, (unsigned char *)out_text,
 			(unsigned char *)out_imagename, image_size,
 			sizeof(out_text), sizeof(out_imagename));
+		vaccel_prof_region_stop(&inference_nested);
 		if (ret) {
 			fprintf(stderr, "Could not run op: %d\n", ret);
 			goto close_session;
 		}
 
+		vaccel_prof_region_print(&inference_nested);
 		if (i == 0)
 			printf("classification tags: %s\n", out_text);
 	}
