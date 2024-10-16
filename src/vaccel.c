@@ -28,7 +28,7 @@ static int load_backend_plugin(const char *path)
 	struct vaccel_plugin *plugin;
 	struct vaccel_plugin **plugin_p;
 
-	void *dl = dlopen(path, RTLD_LAZY);
+	void *dl = dlopen(path, RTLD_NOW | RTLD_GLOBAL);
 	if (!dl) {
 		vaccel_error("Could not dlopen plugin %s: %s", path, dlerror());
 		return VACCEL_ENOENT;
