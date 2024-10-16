@@ -1,7 +1,4 @@
 compiler = meson.get_compiler('cpp')
-if not compiler.has_argument('-std=c++2b')
-  error('A compiler supporting -std=c++2b is required to build the tests')
-endif
 
 conf = configuration_data()
 conf.set('SOURCE_ROOT', meson.project_source_root())
@@ -17,16 +14,7 @@ subdir('core')
 subdir('ops')
 subdir('resources')
 
-libtests_main = library('tests-main',
-  ['main.cpp', 'utils.cpp'],
-  cpp_args : vaccel_cargs,
-  include_directories : [tests_includes, vaccel_src_includes],
-  dependencies : libvaccel_private,
-  install : false)
-
-
-tests_cpp_args = [
-  '-std=c++2b',
+tests_cpp_args = vaccel_cpp_args + [
   '-DCATCH_CONFIG_FAST_COMPILE'
 ]
 
@@ -42,11 +30,18 @@ tests_env = [
 tests_env_noop = 'VACCEL_BACKENDS=' + libvaccel_noop.full_path()
 tests_env_exec = 'VACCEL_BACKENDS=' + libvaccel_exec.full_path()
 
+libtests_main = library('tests-main',
+  ['main.cpp', 'utils.cpp'],
+  cpp_args : tests_cpp_args,
+  include_directories : [tests_includes, vaccel_src_includes],
+  dependencies : libvaccel_private,
+  install : false)
+
 foreach t : tests_core_sources
   name = fs.stem(t)
   exe = executable(name,
     sources : t,
-    cpp_args : vaccel_cargs + tests_cpp_args,
+    cpp_args : tests_cpp_args,
     include_directories : [tests_includes, vaccel_src_includes],
     dependencies : libvaccel_private,
     link_with : libtests_main,
@@ -67,7 +62,7 @@ foreach t : tests_ops_sources + tests_res_sources
   name = fs.stem(t)
   exe = executable(name,
     sources : t,
-    cpp_args : vaccel_cargs + tests_cpp_args,
+    cpp_args : tests_cpp_args,
     include_directories : [tests_includes, vaccel_src_includes],
     dependencies : libvaccel_private,
     link_with : libtests_main,

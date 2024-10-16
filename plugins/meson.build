@@ -3,6 +3,8 @@ opt_plugin_noop = get_option('plugin-noop').enable_if(opt_tests.enabled()).enabl
 opt_plugin_exec = get_option('plugin-exec').enable_if(opt_tests.enabled()).enable_if(opt_plugins.enabled())
 opt_plugin_mbench = get_option('plugin-mbench').enable_if(opt_plugins.enabled())
 
+plugins_c_args = vaccel_c_args + '-Wno-unused'
+
 if opt_plugin_noop.enabled()
   subdir('noop')
 endif
