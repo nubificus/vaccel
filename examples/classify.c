@@ -18,11 +18,20 @@ int main(int argc, char *argv[])
 	size_t image_size;
 	char out_text[512];
 	char out_imagename[512];
+	struct vaccel_shared_object object;
+
 	struct vaccel_session sess;
 
-	if (argc != 3) {
-		fprintf(stderr, "Usage: %s filename #iterations\n", argv[0]);
+	if (argc != 4) {
+		fprintf(stderr, "Usage: %s filename #iterations model\n", argv[0]);
 		return 0;
+	}
+
+	ret = vaccel_shared_object_new(&object, argv[3]);
+	if (ret) {
+		fprintf(stderr, "Could not create shared object resource: %s",
+			strerror(ret));
+		exit(1);
 	}
 
 	ret = vaccel_sess_init(&sess, 0);
@@ -32,6 +41,12 @@ int main(int argc, char *argv[])
 	}
 
 	printf("Initialized session with id: %u\n", sess.session_id);
+
+	ret = vaccel_sess_register(&sess, object.resource);
+	if (ret) {
+		fprintf(stderr, "Could register shared object to session\n");
+		exit(1);
+	}
 
 	ret = read_file(argv[1], (void **)&image, &image_size);
 	if (ret)
@@ -55,12 +70,16 @@ int main(int argc, char *argv[])
 			printf("classification tags: %s\n", out_text);
 	}
 
+	if (vaccel_sess_unregister(&sess, object.resource) != VACCEL_OK)
+		fprintf(stderr, "Could not unregister model with session\n");
+
 close_session:
 	free(image);
 	if (vaccel_sess_free(&sess) != VACCEL_OK) {
 		fprintf(stderr, "Could not clear session\n");
 		return 1;
 	}
+	vaccel_shared_object_destroy(&object);
 
 	return ret;
 }
