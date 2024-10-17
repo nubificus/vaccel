@@ -70,16 +70,16 @@ int main(int argc, char *argv[])
 			printf("classification tags: %s\n", out_text);
 	}
 
+close_session:
 	if (vaccel_sess_unregister(&sess, object.resource) != VACCEL_OK)
 		fprintf(stderr, "Could not unregister model with session\n");
 
-close_session:
 	free(image);
+	vaccel_shared_object_destroy(&object);
 	if (vaccel_sess_free(&sess) != VACCEL_OK) {
 		fprintf(stderr, "Could not clear session\n");
 		return 1;
 	}
-	vaccel_shared_object_destroy(&object);
 
 	return ret;
 }

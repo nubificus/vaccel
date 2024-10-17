@@ -43,6 +43,7 @@ int vaccel_shared_object_new(struct vaccel_shared_object *object,
 
 	object->resource = res;
 
+	printf("New file: %s\n", object->file.path);
 	return VACCEL_OK;
 
 destroy_file:

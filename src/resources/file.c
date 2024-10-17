@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #define _POSIX_C_SOURCE 200809L
+#define _DEFAULT_SOURCE
 
 #include "resources.h"
 #include "error.h"
@@ -54,7 +55,7 @@ int vaccel_file_persist(struct vaccel_file *file, const char *dir,
 {
 	int ret;
 
-	vaccel_debug("Persisting file %s", filename);
+	vaccel_debug("Persisting file %s, will randomize", filename, randomize);
 
 	if (!file || !file->data | !file->size) {
 		vaccel_error("Invalid file");
@@ -75,7 +76,7 @@ int vaccel_file_persist(struct vaccel_file *file, const char *dir,
 	int path_len = 1;
 
 	if (randomize) {
-		path_len += snprintf(NULL, 0, "%s/%s.XXXXXX", dir, filename);
+		path_len += snprintf(NULL, 0, "%s/XXXXXX%s", dir, filename);
 	} else {
 		path_len += snprintf(NULL, 0, "%s/%s", dir, filename);
 	}
@@ -91,7 +92,7 @@ int vaccel_file_persist(struct vaccel_file *file, const char *dir,
 
 	/* No need to check that here, we know the length of the string */
 	if (randomize) {
-		snprintf(file->path, path_len, "%s/%s.XXXXXX", dir, filename);
+		snprintf(file->path, path_len, "%s/XXXXXX%s", dir, filename);
 	} else {
 		snprintf(file->path, path_len, "%s/%s", dir, filename);
 	}
@@ -102,7 +103,7 @@ int vaccel_file_persist(struct vaccel_file *file, const char *dir,
 	 */
 	FILE *fp;
 	if (randomize) {
-		int fd = mkstemp(file->path);
+		int fd = mkstemps(file->path, 6);
 		fp = fdopen(fd, "w+");
 	} else {
 		fp = fopen(file->path, "w+");
