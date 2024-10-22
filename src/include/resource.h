@@ -4,7 +4,9 @@
 
 #ifdef __cplusplus
 #include <atomic>
+#ifndef atomic_uint
 typedef std::atomic<unsigned int> atomic_uint;
+#endif
 #else
 #include <stdatomic.h>
 #endif

@@ -2,11 +2,6 @@
 
 #pragma once
 
-#include <atomic>
-
-using atomic_int = std::atomic<int>;
-using atomic_uint = std::atomic<unsigned int>;
-
 extern "C" {
 
 #define SOURCE_ROOT "@SOURCE_ROOT@"

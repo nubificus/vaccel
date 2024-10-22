@@ -31,7 +31,7 @@ tests_env_noop = 'VACCEL_BACKENDS=' + libvaccel_noop.full_path()
 tests_env_exec = 'VACCEL_BACKENDS=' + libvaccel_exec.full_path()
 
 libtests_main = library('tests-main',
-  ['main.cpp', 'utils.cpp'],
+  ['main.cpp', 'utils.cpp', utils_hpp],
   cpp_args : tests_cpp_args,
   include_directories : [tests_includes, vaccel_src_includes],
   dependencies : libvaccel_private,
