@@ -51,7 +51,7 @@ int vaccel_exec_with_resource(struct vaccel_session *sess,
 {
 	int ret;
 
-	if (!sess)
+	if (!sess || !resource)
 		return VACCEL_EINVAL;
 
 	vaccel_debug(
@@ -59,6 +59,12 @@ int vaccel_exec_with_resource(struct vaccel_session *sess,
 		sess->session_id);
 
 	vaccel_prof_region_start(&exec_res_op_stats);
+
+	if (!vaccel_sess_has_resource(sess, resource)) {
+		vaccel_error("Resource %u is not registered to session %u",
+			     resource->id, sess->session_id);
+		return VACCEL_EPERM;
+	}
 
 	// Get implementation
 	int (*plugin_op)() =

@@ -126,6 +126,12 @@ int vaccel_tflite_session_load(struct vaccel_session *sess,
 
 	vaccel_prof_region_start(&tflite_load_stats);
 
+	if (!vaccel_sess_has_resource(sess, model)) {
+		vaccel_error("Resource %u is not registered to session %u",
+			     model->id, sess->session_id);
+		return VACCEL_EPERM;
+	}
+
 	// Get implementation
 	int (*plugin_op)(struct vaccel_session *, struct vaccel_resource *) =
 		get_plugin_op(VACCEL_TFLITE_SESSION_LOAD, sess->hint);
@@ -163,6 +169,12 @@ int vaccel_tflite_session_run(struct vaccel_session *sess,
 
 	vaccel_prof_region_start(&tflite_session_run_stats);
 
+	if (!vaccel_sess_has_resource(sess, model)) {
+		vaccel_error("Resource %u is not registered to session %u",
+			     model->id, sess->session_id);
+		return VACCEL_EPERM;
+	}
+
 	// Get implementation
 	int (*plugin_op)(struct vaccel_session *,
 			 const struct vaccel_resource *,
@@ -197,6 +209,12 @@ int vaccel_tflite_session_delete(struct vaccel_session *sess,
 	vaccel_debug(
 		"session:%u Looking for plugin implementing tflite_session_delete operation",
 		sess->session_id);
+
+	if (!vaccel_sess_has_resource(sess, model)) {
+		vaccel_error("Resource %u is not registered to session %u",
+			     model->id, sess->session_id);
+		return VACCEL_EPERM;
+	}
 
 	int (*plugin_op)(struct vaccel_session *, struct vaccel_resource *) =
 		get_plugin_op(VACCEL_TFLITE_SESSION_DELETE, sess->hint);
