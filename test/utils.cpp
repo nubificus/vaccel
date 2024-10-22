@@ -2,8 +2,6 @@
 
 #include <string>
 
-extern "C" {
-
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,8 +10,9 @@ extern "C" {
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <utils.h>
 
-#include "utils.h"
+extern "C" {
 
 auto abs_path(const char *root, const char *file) -> char *
 {
