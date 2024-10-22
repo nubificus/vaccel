@@ -50,8 +50,8 @@ int vaccel_resource_unregister(struct vaccel_session *sess,
 			       struct vaccel_resource *resource);
 
 /* Check if a resource is registered with a session */
-bool vaccel_sess_has_resource(struct vaccel_session *sess,
-			      struct vaccel_resource *resource);
+bool vaccel_sess_has_resource(const struct vaccel_session *sess,
+			      const struct vaccel_resource *resource);
 
 #ifdef __cplusplus
 }
