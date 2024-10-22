@@ -114,8 +114,8 @@ int vaccel_resource_register(struct vaccel_session *sess,
 }
 
 static struct registered_resource *
-find_registered_resource(struct vaccel_session *sess,
-			 struct vaccel_resource *res)
+find_registered_resource(const struct vaccel_session *sess,
+			 const struct vaccel_resource *res)
 {
 	struct session_resources *resources = sess->resources;
 	list_t *list = &resources->registered[res->type];
@@ -182,8 +182,8 @@ int vaccel_resource_unregister(struct vaccel_session *sess,
 	return VACCEL_OK;
 }
 
-bool vaccel_sess_has_resource(struct vaccel_session *sess,
-			      struct vaccel_resource *res)
+bool vaccel_sess_has_resource(const struct vaccel_session *sess,
+			      const struct vaccel_resource *res)
 {
 	return find_registered_resource(sess, res) != NULL;
 }
