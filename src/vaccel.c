@@ -68,6 +68,10 @@ close_dl:
 	return ret;
 }
 
+int vaccel_plugin_load(const char *path) {
+	return load_backend_plugin(path);
+}
+
 static int load_backend_plugins(char *plugins)
 {
 	char *plugin;
