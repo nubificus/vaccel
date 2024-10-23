@@ -65,7 +65,7 @@ int resources_cleanup(void)
 	return id_pool_destroy(&id_pool);
 }
 
-int resource_get_by_id(struct vaccel_resource **resource, vaccel_id_t id)
+int vaccel_resource_get_by_id(struct vaccel_resource **resource, vaccel_id_t id)
 {
 	if (!initialized)
 		return VACCEL_EPERM;
@@ -136,7 +136,7 @@ int vaccel_resource_deps_from_ids(struct vaccel_resource **deps,
 
 	for (size_t i = 0; i < nr_ids; i++) {
 		struct vaccel_resource *res;
-		int ret = resource_get_by_id(&res, ids[i]);
+		int ret = vaccel_resource_get_by_id(&res, ids[i]);
 		if (ret)
 			return VACCEL_EINVAL;
 		deps[i] = res;

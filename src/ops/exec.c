@@ -112,7 +112,8 @@ int vaccel_exec_with_res_unpack(struct vaccel_session *sess,
 	/* Pop the first two arguments */
 	struct vaccel_resource *resource;
 
-	ret = resource_get_by_id(&resource, *(long long int *)read[0].buf);
+	ret = vaccel_resource_get_by_id(&resource,
+					*(long long int *)read[0].buf);
 	if (ret) {
 		vaccel_error("cannot find resource: %d", ret);
 		return ret;
