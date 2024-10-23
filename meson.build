@@ -8,9 +8,9 @@ project('vaccel', 'c', 'cpp',
     'scripts/common/generate-version.sh .',
     check: true).stdout().strip())
 
-vaccel_cargs = ['-Wall','-Wextra','-Werror']
-vaccel_cppargs = ['-std=c++2b']
-plugins_cargs = vaccel_cargs + '-Wno-unused'
+vaccel_common_args = ['-Wall','-Wextra','-Werror']
+vaccel_c_args = vaccel_common_args
+vaccel_cpp_args = vaccel_common_args
 
 libvaccel_version = meson.project_version().split('-')[0]
 

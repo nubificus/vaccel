@@ -10,7 +10,7 @@
 
 int create_session(struct vaccel_session *sess)
 {
-	int ret = vaccel_sess_init(sess, 0);
+	int ret = vaccel_session_init(sess, 0);
 	if (ret) {
 		vaccel_error("Could not initialize session");
 		return ret;
@@ -22,67 +22,47 @@ int create_session(struct vaccel_session *sess)
 
 int destroy_session(struct vaccel_session *sess)
 {
-	vaccel_sess_free(sess);
+	vaccel_session_free(sess);
 	return VACCEL_OK;
 }
 
-int create_from_path(const char *path)
+int create_from_path(char *path)
 {
 	vaccel_info("Creating new model handle");
-	struct vaccel_single_model *model = vaccel_single_model_new();
-	if (!model) {
-		vaccel_error("Could not create model");
-		return VACCEL_ENOMEM;
-	}
-
-	vaccel_info("Setting path of the model");
-	int ret = vaccel_single_model_set_path(model, path);
-	if (ret) {
-		vaccel_error("Could not load saved model");
+	struct vaccel_resource model;
+	int ret = vaccel_resource_init(&model, path, VACCEL_RESOURCE_MODEL);
+	if (ret)
 		return ret;
-	}
-
-	vaccel_info("Registering model resource with vAccel");
-	ret = vaccel_single_model_register(model);
-	if (ret) {
-		vaccel_error("Could not create model resource");
-		return ret;
-	}
-
-	vaccel_id_t model_id = vaccel_single_model_get_id(model);
-	vaccel_info("Registered new resource: %lld", model_id);
 
 	struct vaccel_session sess;
 	ret = create_session(&sess);
 	if (ret)
 		return ret;
 
-	vaccel_info("Registering model %lld with session %u", model_id,
+	vaccel_info("Registering model %lld with session %u", model.id,
 		    sess.session_id);
 
-	ret = vaccel_sess_register(&sess, model->resource);
+	ret = vaccel_resource_register(&model, &sess);
 	if (ret) {
 		vaccel_error("Could not register model to session");
 		return ret;
 	}
 
-	vaccel_info("Unregistering model %lld from session %u", model_id,
+	vaccel_info("Unregistering model %lld from session %u", model.id,
 		    sess.session_id);
 
-	ret = vaccel_sess_unregister(&sess, model->resource);
+	ret = vaccel_resource_unregister(&model, &sess);
 	if (ret) {
 		vaccel_error("Could not unregister model from session");
 		return ret;
 	}
 
-	vaccel_info("Destroying model %lld", model_id);
-	ret = vaccel_single_model_destroy(model);
+	vaccel_info("Destroying model %lld", model.id);
+	ret = vaccel_resource_release(&model);
 	if (ret) {
-		vaccel_error("Could not destroy model");
+		vaccel_error("Could not destroy model resource");
 		return ret;
 	}
-
-	free(model);
 
 	vaccel_info("Destroying session %u", sess.session_id);
 	return destroy_session(&sess);
@@ -91,11 +71,7 @@ int create_from_path(const char *path)
 int create_from_in_mem(const char *path)
 {
 	vaccel_info("Creating new model handle");
-	struct vaccel_single_model *model = vaccel_single_model_new();
-	if (!model) {
-		vaccel_error("Could not create model");
-		return VACCEL_ENOMEM;
-	}
+	struct vaccel_resource model;
 
 	unsigned char *ptr = NULL;
 	size_t len;
@@ -105,53 +81,43 @@ int create_from_in_mem(const char *path)
 		return VACCEL_ENOMEM;
 	}
 
-	ret = vaccel_single_model_set_file(model, NULL, ptr, len);
+	ret = vaccel_resource_init_from_buf(&model, ptr, len,
+					    VACCEL_RESOURCE_MODEL, NULL);
 	if (ret) {
 		vaccel_error("Could not set file for model");
 		return ret;
 	}
-
-	vaccel_info("Registering model resource with vAccel");
-	ret = vaccel_single_model_register(model);
-	if (ret) {
-		vaccel_error("Could not create model resource");
-		return ret;
-	}
-
-	vaccel_id_t model_id = vaccel_single_model_get_id(model);
-	vaccel_info("Registered new resource: %lld", model_id);
 
 	struct vaccel_session sess;
 	ret = create_session(&sess);
 	if (ret)
 		return ret;
 
-	vaccel_info("Registering model %lld with session %u", model_id,
+	vaccel_info("Registering model %lld with session %u", model.id,
 		    sess.session_id);
 
-	ret = vaccel_sess_register(&sess, model->resource);
+	ret = vaccel_resource_register(&model, &sess);
 	if (ret) {
 		vaccel_error("Could not register model to session");
 		return ret;
 	}
 
-	vaccel_info("Unregistering model %lld from session %u", model_id,
+	vaccel_info("Unregistering model %lld from session %u", model.id,
 		    sess.session_id);
 
-	ret = vaccel_sess_unregister(&sess, model->resource);
+	ret = vaccel_resource_unregister(&model, &sess);
 	if (ret) {
 		vaccel_error("Could not unregister model from session");
 		return ret;
 	}
 
-	vaccel_info("Destroying model %lld", model_id);
-	ret = vaccel_single_model_destroy(model);
+	vaccel_info("Destroying model %lld", model.id);
+	ret = vaccel_resource_release(&model);
 	if (ret) {
 		vaccel_error("Could not destroy model");
 		return ret;
 	}
 
-	free(model);
 	free(ptr);
 
 	vaccel_info("Destroying session %u", sess.session_id);
@@ -161,7 +127,7 @@ int create_from_in_mem(const char *path)
 int main(int argc, char *argv[])
 {
 	if (argc != 2) {
-		vaccel_info("usage: %s saved_model_path", argv[0]);
+		vaccel_info("usage: %s model_path", argv[0]);
 		return 0;
 	}
 

@@ -12,10 +12,10 @@
 #include <utils.hpp>
 
 #include "utils.h"
-#include <fcntl.h>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <fcntl.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -27,8 +27,7 @@ TEST_CASE("single_model_from_memory", "[resources_single_model]")
 	int ret;
 	char *path = abs_path(SOURCE_ROOT, "examples/models/tf/lstm2.tflite");
 
-	struct vaccel_single_model *model = vaccel_single_model_new();
-	REQUIRE(model);
+	struct vaccel_resource model;
 
 	size_t len;
 	unsigned char *ptr;
@@ -36,35 +35,31 @@ TEST_CASE("single_model_from_memory", "[resources_single_model]")
 	REQUIRE(ret == 0);
 	REQUIRE(len);
 
-	ret = vaccel_single_model_set_file(model, nullptr, ptr, len);
+	ret = vaccel_resource_init_from_buf(&model, ptr, len,
+					    VACCEL_RESOURCE_MODEL, nullptr);
 	REQUIRE(ret == VACCEL_OK);
 
-	ret = vaccel_single_model_register(model);
-	REQUIRE(ret == VACCEL_OK);
-
-	vaccel_id_t model_id = vaccel_single_model_get_id(model);
-	vaccel_info("Registered new resource: %ld", model_id);
+	vaccel_info("Registered new resource: %ld", model.id);
 
 	struct vaccel_session sess;
-	ret = vaccel_sess_init(&sess, 0);
+	ret = vaccel_session_init(&sess, 0);
 	REQUIRE(ret == VACCEL_OK);
 
-	vaccel_info("Registering model %ld with session %u", model_id,
+	vaccel_info("Registering model %ld with session %u", model.id,
 		    sess.session_id);
 
-	ret = vaccel_sess_register(&sess, model->resource);
+	ret = vaccel_resource_register(&model, &sess);
 	REQUIRE(ret == VACCEL_OK);
 
-	ret = vaccel_sess_unregister(&sess, model->resource);
+	ret = vaccel_resource_unregister(&model, &sess);
 	REQUIRE(ret == VACCEL_OK);
 
-	ret = vaccel_single_model_destroy(model);
+	ret = vaccel_resource_release(&model);
 	REQUIRE(ret == VACCEL_OK);
 
-	ret = vaccel_sess_free(&sess);
+	ret = vaccel_session_free(&sess);
 	REQUIRE(ret == VACCEL_OK);
 
-	free(model);
 	free(ptr);
 	free(path);
 }
@@ -74,34 +69,28 @@ TEST_CASE("single_model_from_file", "[resources_single_model]")
 	int ret;
 	char *path = abs_path(SOURCE_ROOT, "examples/models/tf/lstm2.tflite");
 
-	struct vaccel_single_model *model = vaccel_single_model_new();
-	REQUIRE(model);
+	struct vaccel_resource model;
 
-	ret = vaccel_single_model_set_path(model, path);
+	ret = vaccel_resource_init(&model, path, VACCEL_RESOURCE_MODEL);
 	REQUIRE(ret == VACCEL_OK);
 
-	ret = vaccel_single_model_register(model);
-	REQUIRE(ret == VACCEL_OK);
-
-	vaccel_id_t model_id = vaccel_single_model_get_id(model);
-	vaccel_info("Registered new resource: %ld", model_id);
+	vaccel_info("Registered new resource: %ld", model.id);
 
 	struct vaccel_session sess;
-	ret = vaccel_sess_init(&sess, 0);
+	ret = vaccel_session_init(&sess, 0);
 	REQUIRE(ret == VACCEL_OK);
 
-	ret = vaccel_sess_register(&sess, model->resource);
+	ret = vaccel_resource_register(&model, &sess);
 	REQUIRE(ret == VACCEL_OK);
 
-	ret = vaccel_sess_unregister(&sess, model->resource);
+	ret = vaccel_resource_unregister(&model, &sess);
 	REQUIRE(ret == VACCEL_OK);
 
-	ret = vaccel_single_model_destroy(model);
+	ret = vaccel_resource_release(&model);
 	REQUIRE(ret == VACCEL_OK);
 
-	ret = vaccel_sess_free(&sess);
+	ret = vaccel_session_free(&sess);
 	REQUIRE(ret == VACCEL_OK);
 
-	free(model);
 	free(path);
 }

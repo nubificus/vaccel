@@ -4,7 +4,7 @@
 
 #include "include/session.h"
 #include "list.h"
-#include "resources.h"
+#include "resource.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -39,11 +39,22 @@ struct session_resources {
 	/* Resources registered to this session. At the moment, this
 	 * is an array where each element holds a list of resources of
 	 * the same resource type */
-	list_t registered[VACCEL_RES_MAX];
+	list_t registered[VACCEL_RESOURCE_MAX];
 };
 
+/* Initialize shared session objects */
 int sessions_bootstrap(void);
+
+/* Cleanup shared session objects */
 int sessions_cleanup(void);
+
+/* Register a resource with a session */
+int session_register_resource(struct vaccel_session *sess,
+			      struct vaccel_resource *res);
+
+/* Unregister a resource from a session */
+int session_unregister_resource(struct vaccel_session *sess,
+				struct vaccel_resource *res);
 
 #ifdef __cplusplus
 }

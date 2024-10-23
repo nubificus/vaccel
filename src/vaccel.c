@@ -2,11 +2,6 @@
 
 #define _POSIX_C_SOURCE 200809L
 
-#include "plugin.h"
-#include "log.h"
-#include "resources.h"
-#include "session.h"
-#include "utils.h"
 #include "vaccel.h"
 
 #include <dlfcn.h>

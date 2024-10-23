@@ -62,12 +62,11 @@ int sessions_cleanup(void)
 	return VACCEL_OK;
 }
 
-int vaccel_sess_register(struct vaccel_session *sess,
-			 struct vaccel_resource *res)
+int session_register_resource(struct vaccel_session *sess,
+			      struct vaccel_resource *res)
 {
-	int ret;
-
-	if (!sess || !sess->resources || !res || res->type >= VACCEL_RES_MAX)
+	if (!sess || !sess->resources || !res ||
+	    res->type >= VACCEL_RESOURCE_MAX)
 		return VACCEL_EINVAL;
 
 	struct session_resources *resources = sess->resources;
@@ -75,60 +74,21 @@ int vaccel_sess_register(struct vaccel_session *sess,
 	if (!container)
 		return VACCEL_ENOMEM;
 
-	if (sess->is_virtio) {
-		struct vaccel_plugin *virtio = get_virtio_plugin();
-		if (virtio) {
-			ret = virtio->info->resource_new(res->type, res->data,
-							 &res->remote_id);
-
-			if (res->remote_id <= 0) {
-				vaccel_error(
-					"Could not create remote resource, remote_id <= 0");
-				free(container);
-				return VACCEL_EUSERS;
-			}
-
-			if (ret) {
-				vaccel_error(
-					"Could not create remote resource");
-				free(container);
-				return ret;
-			}
-
-			ret = virtio->info->sess_register(sess->remote_id,
-							  res->remote_id);
-			if (ret) {
-				vaccel_error(
-					"Could not register remote resource");
-				free(container);
-				return ret;
-			}
-		} else {
-			vaccel_error(
-				"Could not register resource to virtio session, no VirtIO Plugin loaded yet");
-			free(container);
-			return VACCEL_ENOTSUP;
-		}
-	}
-
 	container->res = res;
 	list_add_tail(&resources->registered[res->type], &container->entry);
 	resource_refcount_inc(res);
-
-	vaccel_debug("Registered resource %lld to session %" PRIu32, res->id,
-		     sess->session_id);
 
 	return VACCEL_OK;
 }
 
 static struct registered_resource *
-find_registered_resource(struct vaccel_session *sess,
-			 struct vaccel_resource *res)
+find_registered_resource(const struct vaccel_session *sess,
+			 const struct vaccel_resource *res)
 {
 	struct session_resources *resources = sess->resources;
 	list_t *list = &resources->registered[res->type];
 
-	struct registered_resource *iter;
+	struct registered_resource *iter = NULL;
 	for_each_session_resource(iter, list) {
 		if (iter->res == res)
 			return iter;
@@ -137,12 +97,10 @@ find_registered_resource(struct vaccel_session *sess,
 	return NULL;
 }
 
-int vaccel_sess_unregister(struct vaccel_session *sess,
-			   struct vaccel_resource *res)
+int session_unregister_resource(struct vaccel_session *sess,
+				struct vaccel_resource *res)
 {
-	int ret;
-
-	if (!sess || !res || res->type >= VACCEL_RES_MAX)
+	if (!sess || !res || res->type >= VACCEL_RESOURCE_MAX)
 		return VACCEL_EINVAL;
 
 	/* Check if resource is indeed registered to session */
@@ -155,48 +113,20 @@ int vaccel_sess_unregister(struct vaccel_session *sess,
 		return VACCEL_EINVAL;
 	}
 
-	if (sess->is_virtio) {
-		struct vaccel_plugin *virtio = get_virtio_plugin();
-		if (virtio) {
-			ret = virtio->info->sess_unregister(sess->remote_id,
-							    res->remote_id);
-			if (ret) {
-				vaccel_error(
-					"BUG: Could not unregister host-side resource %" PRIu32,
-					res->remote_id);
-				return ret;
-			}
-
-			ret = virtio->info->resource_destroy(res->remote_id);
-			if (ret) {
-				vaccel_warn(
-					"Could not destroy host-side resource %" PRIu32,
-					res->remote_id);
-			}
-		} else {
-			vaccel_error(
-				"Could not unregister resource for virtio session, no VirtIO Plugin loaded yet");
-			return VACCEL_ENOTSUP;
-		}
-	}
-
 	list_unlink_entry(&container->entry);
 	resource_refcount_dec(container->res);
 	free(container);
 
-	vaccel_debug("Unregistered resource %lld from session %" PRIu32,
-		     res->id, sess->session_id);
-
 	return VACCEL_OK;
 }
 
-bool vaccel_sess_has_resource(struct vaccel_session *sess,
-			      struct vaccel_resource *res)
+bool vaccel_session_has_resource(const struct vaccel_session *sess,
+				 const struct vaccel_resource *res)
 {
 	return find_registered_resource(sess, res) != NULL;
 }
 
-static int initialize_session_resources(struct vaccel_session *sess)
+static int session_initialize_resources(struct vaccel_session *sess)
 {
 	if (!sess)
 		return VACCEL_EINVAL;
@@ -221,7 +151,7 @@ static int initialize_session_resources(struct vaccel_session *sess)
 		goto cleanup_res;
 
 	sess->resources = res;
-	for (int i = 0; i < VACCEL_RES_MAX; ++i)
+	for (int i = 0; i < VACCEL_RESOURCE_MAX; ++i)
 		list_init(&res->registered[i]);
 
 	return VACCEL_OK;
@@ -231,18 +161,18 @@ cleanup_res:
 	return ret;
 }
 
-static int cleanup_session_resources(struct vaccel_session *sess)
+static int session_cleanup_resources(struct vaccel_session *sess)
 {
 	if (!sess || !sess->resources)
 		return VACCEL_EINVAL;
 
 	struct session_resources *resources = sess->resources;
-	for (int i = 0; i < VACCEL_RES_MAX; ++i) {
-		struct registered_resource *iter;
+	for (int i = 0; i < VACCEL_RESOURCE_MAX; ++i) {
+		struct registered_resource *iter = NULL;
 		struct registered_resource *tmp;
 		for_each_session_resource_safe(iter, tmp,
 					       &resources->registered[i]) {
-			int ret = vaccel_sess_unregister(sess, iter->res);
+			int ret = vaccel_resource_unregister(iter->res, sess);
 			if (ret) {
 				vaccel_error(
 					"Could not unregister resource from session");
@@ -265,7 +195,7 @@ static int cleanup_session_resources(struct vaccel_session *sess)
 	return VACCEL_OK;
 }
 
-int vaccel_sess_init(struct vaccel_session *sess, uint32_t flags)
+int vaccel_session_init(struct vaccel_session *sess, uint32_t flags)
 {
 	int ret;
 	struct vaccel_plugin *virtio = NULL;
@@ -302,7 +232,7 @@ int vaccel_sess_init(struct vaccel_session *sess, uint32_t flags)
 
 	sess->session_id = sess_id;
 
-	ret = initialize_session_resources(sess);
+	ret = session_initialize_resources(sess);
 	if (ret)
 		goto cleanup_session;
 
@@ -327,7 +257,7 @@ cleanup_session:
 	return ret;
 }
 
-int vaccel_sess_update(struct vaccel_session *sess, uint32_t flags)
+int vaccel_session_update(struct vaccel_session *sess, uint32_t flags)
 {
 	if (!sess)
 		return VACCEL_EINVAL;
@@ -362,7 +292,7 @@ int vaccel_sess_update(struct vaccel_session *sess, uint32_t flags)
 	return VACCEL_OK;
 }
 
-int vaccel_sess_free(struct vaccel_session *sess)
+int vaccel_session_free(struct vaccel_session *sess)
 {
 	int ret;
 
@@ -389,7 +319,7 @@ int vaccel_sess_free(struct vaccel_session *sess)
 		}
 	}
 
-	ret = cleanup_session_resources(sess);
+	ret = session_cleanup_resources(sess);
 	if (ret) {
 		vaccel_error("Could not cleanup session resources");
 		return ret;
@@ -402,4 +332,33 @@ int vaccel_sess_free(struct vaccel_session *sess)
 	vaccel_debug("session:%" PRIu32 " Free session", sess->session_id);
 
 	return VACCEL_OK;
+}
+
+int vaccel_sess_init(struct vaccel_session *sess, uint32_t flags)
+{
+	vaccel_warn("%s%s", "vaccel_sess_init() is deprecated. ",
+		    "Please use vaccel_session_init() instead.");
+	return vaccel_session_init(sess, flags);
+}
+
+int vaccel_sess_update(struct vaccel_session *sess, uint32_t flags)
+{
+	vaccel_warn("%s%s", "vaccel_sess_update() is deprecated. ",
+		    "Please use vaccel_session_update() instead.");
+	return vaccel_session_update(sess, flags);
+}
+
+int vaccel_sess_free(struct vaccel_session *sess)
+{
+	vaccel_warn("%s%s", "vaccel_sess_free() is deprecated. ",
+		    "Please use vaccel_session_free() instead.");
+	return vaccel_session_free(sess);
+}
+
+bool vaccel_sess_has_resource(struct vaccel_session *sess,
+			      struct vaccel_resource *res)
+{
+	vaccel_warn("%s%s", "vaccel_sess_has_resource() is deprecated. ",
+		    "Please use vaccel_session_has_resource() instead.");
+	return vaccel_session_has_resource(sess, res);
 }

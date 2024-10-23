@@ -203,7 +203,7 @@ int vaccel_torch_jitload_forward(struct vaccel_session *sess,
 
 // struct vaccel_arg *write -> char **tags
 int vaccel_torch_jitload_forward(struct vaccel_session *sess,
-				 const struct vaccel_single_model *model,
+				 const struct vaccel_resource *model,
 				 const struct vaccel_torch_buffer *run_options,
 				 struct vaccel_torch_tensor **in_tensor,
 				 int nr_read,
@@ -217,9 +217,15 @@ int vaccel_torch_jitload_forward(struct vaccel_session *sess,
 		"session:%u Looking for plugin implementing torch_jitload_forward operation",
 		sess->session_id);
 
+	if (!vaccel_session_has_resource(sess, model)) {
+		vaccel_error("Resource %u is not registered to session %u",
+			     model->id, sess->session_id);
+		return VACCEL_EPERM;
+	}
+
 	// struct vaccel_arg * -> char **
 	int (*plugin_op)(struct vaccel_session *,
-			 const struct vaccel_single_model *,
+			 const struct vaccel_resource *,
 			 const struct vaccel_torch_buffer *,
 			 struct vaccel_torch_tensor **, int,
 			 struct vaccel_torch_tensor **, int) =

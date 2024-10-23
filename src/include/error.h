@@ -14,7 +14,7 @@ enum {
 #define VACCEL_EINPROGRESS \
 	EINPROGRESS /* EINPROGRESS: Operation now in progress */
 #define VACCEL_EBUSY EBUSY /* EBUSY: Device or resource busy */
-#define VACCEL_EEXISTS EEXIST /* EEXIST: File exists */
+#define VACCEL_EEXIST EEXIST /* EEXIST: File exists */
 #define VACCEL_ENOENT ENOENT /* ENOENT:  No such file or directory */
 #define VACCEL_ELIBBAD \
 	ELIBBAD /* ELIBBAD: Accessing a corrupted shared library */

@@ -13,9 +13,9 @@
 #include <utils.hpp>
 
 #include "utils.h"
-#include <fcntl.h>
 #include <cstdio>
 #include <cstdlib>
+#include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -34,7 +34,7 @@ TEST_CASE("exec", "[ops_exec]")
 	sess.resources = nullptr;
 	sess.hint = 0;
 
-	ret = vaccel_sess_init(&sess, VACCEL_PLUGIN_DEBUG);
+	ret = vaccel_session_init(&sess, VACCEL_PLUGIN_DEBUG);
 	REQUIRE(ret == VACCEL_OK);
 
 	struct vaccel_arg read[1] = {
@@ -54,7 +54,7 @@ TEST_CASE("exec", "[ops_exec]")
 	REQUIRE(sess.resources);
 	REQUIRE(sess.priv == nullptr);
 
-	ret = vaccel_sess_free(&sess);
+	ret = vaccel_session_free(&sess);
 	REQUIRE(ret == VACCEL_OK);
 
 	free(plugin_path);
@@ -73,7 +73,7 @@ TEST_CASE("exec_generic", "[ops_exec]")
 	int input = 10;
 	int output = 0;
 
-	ret = vaccel_sess_init(&sess, 0);
+	ret = vaccel_session_init(&sess, 0);
 	REQUIRE(ret == VACCEL_OK);
 
 	enum vaccel_op_type op_type = VACCEL_EXEC;
@@ -104,7 +104,7 @@ TEST_CASE("exec_generic", "[ops_exec]")
 	REQUIRE(sess.resources);
 	REQUIRE(sess.priv == nullptr);
 
-	ret = vaccel_sess_free(&sess);
+	ret = vaccel_session_free(&sess);
 	REQUIRE(ret == VACCEL_OK);
 
 	free(plugin_path);
@@ -125,22 +125,20 @@ TEST_CASE("exec_with_resource", "[ops_exec]")
 	REQUIRE(buff);
 	REQUIRE(len);
 
-	struct vaccel_shared_object object;
-	object.resource = nullptr;
-	object.plugin_data = nullptr;
+	struct vaccel_resource object;
+	object.paths = nullptr;
 
-	struct vaccel_shared_object object2;
-	object2.resource = nullptr;
-	object2.plugin_data = nullptr;
+	struct vaccel_resource object2;
+	object2.paths = nullptr;
 
-	ret = vaccel_shared_object_new(&object, plugin_path);
+	ret = vaccel_resource_init(&object, plugin_path, VACCEL_RESOURCE_LIB);
 	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(object.resource);
+	REQUIRE(object.paths);
+	REQUIRE(object.paths[0]);
 
-	ret = vaccel_shared_object_new_from_buffer(&object2,
-						   (unsigned char *)buff, len);
+	ret = vaccel_resource_init_from_buf(&object2, (unsigned char *)buff,
+					    len, VACCEL_RESOURCE_LIB, "lib.so");
 	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(object2.resource);
 
 	struct vaccel_session sess;
 	sess.session_id = 0;
@@ -154,35 +152,35 @@ TEST_CASE("exec_with_resource", "[ops_exec]")
 	sess2.resources = nullptr;
 	sess2.hint = 1;
 
-	ret = vaccel_sess_init(&sess, 0);
+	ret = vaccel_session_init(&sess, 0);
 	REQUIRE(ret == VACCEL_OK);
 	REQUIRE(sess.session_id);
 	REQUIRE(sess.hint == 0);
 	REQUIRE(sess.resources);
 	REQUIRE(sess.priv == nullptr);
 
-	ret = vaccel_sess_init(&sess2, 0);
+	ret = vaccel_session_init(&sess2, 0);
 	REQUIRE(ret == VACCEL_OK);
 	REQUIRE(sess2.session_id);
 	REQUIRE(sess2.hint == 0);
 	REQUIRE(sess2.resources);
 	REQUIRE(sess2.priv == nullptr);
 
-	ret = vaccel_sess_register(&sess, object.resource);
+	ret = vaccel_resource_register(&object, &sess);
 	REQUIRE(ret == VACCEL_OK);
 	REQUIRE(sess.session_id);
 	REQUIRE(sess.hint == 0);
-	REQUIRE_FALSE(
-		list_empty(&sess.resources->registered[object.resource->type]));
+	REQUIRE_FALSE(list_empty(&sess.resources->registered[object.type]));
 	REQUIRE(sess.priv == nullptr);
+	REQUIRE(object.files);
 
-	ret = vaccel_sess_register(&sess2, object2.resource);
+	ret = vaccel_resource_register(&object2, &sess2);
 	REQUIRE(ret == VACCEL_OK);
 	REQUIRE(sess2.session_id);
 	REQUIRE(sess2.hint == 0);
-	REQUIRE_FALSE(list_empty(
-		&sess2.resources->registered[object2.resource->type]));
+	REQUIRE_FALSE(list_empty(&sess2.resources->registered[object2.type]));
 	REQUIRE(sess2.priv == nullptr);
+	REQUIRE(object2.files);
 
 	input = 10;
 	struct vaccel_arg read[1] = {
@@ -204,8 +202,7 @@ TEST_CASE("exec_with_resource", "[ops_exec]")
 	REQUIRE(ret == VACCEL_OK);
 	REQUIRE(sess.session_id);
 	REQUIRE(sess.hint == 0);
-	REQUIRE_FALSE(
-		list_empty(&sess.resources->registered[object.resource->type]));
+	REQUIRE_FALSE(list_empty(&sess.resources->registered[object.type]));
 	REQUIRE(sess.priv == nullptr);
 	REQUIRE(output1);
 
@@ -214,36 +211,34 @@ TEST_CASE("exec_with_resource", "[ops_exec]")
 	REQUIRE(ret == VACCEL_OK);
 	REQUIRE(sess2.session_id);
 	REQUIRE(sess2.hint == 0);
-	REQUIRE_FALSE(list_empty(
-		&sess2.resources->registered[object2.resource->type]));
+	REQUIRE_FALSE(list_empty(&sess2.resources->registered[object2.type]));
 	REQUIRE(sess2.priv == nullptr);
 	REQUIRE(output2);
 
-	ret = vaccel_sess_unregister(&sess, object.resource);
+	ret = vaccel_resource_unregister(&object, &sess);
 	REQUIRE(ret == VACCEL_OK);
 	REQUIRE(sess.session_id);
 	REQUIRE(sess.hint == 0);
-	REQUIRE(list_empty(&sess.resources->registered[object.resource->type]));
+	REQUIRE(list_empty(&sess.resources->registered[object.type]));
 	REQUIRE(sess.priv == nullptr);
 
-	ret = vaccel_sess_unregister(&sess2, object2.resource);
+	ret = vaccel_resource_unregister(&object2, &sess2);
 	REQUIRE(ret == VACCEL_OK);
 	REQUIRE(sess2.session_id);
 	REQUIRE(sess2.hint == 0);
-	REQUIRE(list_empty(
-		&sess2.resources->registered[object2.resource->type]));
+	REQUIRE(list_empty(&sess2.resources->registered[object2.type]));
 	REQUIRE(sess2.priv == nullptr);
 
-	ret = vaccel_shared_object_destroy(&object);
+	ret = vaccel_resource_release(&object);
 	REQUIRE(ret == VACCEL_OK);
 
-	ret = vaccel_shared_object_destroy(&object2);
+	ret = vaccel_resource_release(&object2);
 	REQUIRE(ret == VACCEL_OK);
 
-	ret = vaccel_sess_free(&sess);
+	ret = vaccel_session_free(&sess);
 	REQUIRE(ret == VACCEL_OK);
 
-	ret = vaccel_sess_free(&sess2);
+	ret = vaccel_session_free(&sess2);
 	REQUIRE(ret == VACCEL_OK);
 
 	free(buff);

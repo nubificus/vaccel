@@ -164,7 +164,7 @@ int register_plugin(struct vaccel_plugin *plugin)
 
 	if (entry_linked(&plugin->entry)) {
 		vaccel_error("Plugin already registered");
-		return VACCEL_EEXISTS;
+		return VACCEL_EEXIST;
 	}
 
 	if (!list_empty(&plugin->ops))

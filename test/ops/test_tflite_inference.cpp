@@ -91,7 +91,7 @@ TEST_CASE("tflite_tensor_ops", "[ops_tflite]")
 TEST_CASE("tflite_inference", "[ops_tflite]")
 {
 	struct vaccel_session vsess;
-	struct vaccel_single_model model;
+	struct vaccel_resource model;
 	int ret;
 	char *model_path =
 		abs_path(SOURCE_ROOT, "examples/models/tf/lstm2.tflite");
@@ -101,24 +101,15 @@ TEST_CASE("tflite_inference", "[ops_tflite]")
 	vsess.hint = 0;
 	vsess.priv = nullptr;
 
-	model.resource = nullptr;
-	model.path = nullptr;
-	model.plugin_data = nullptr;
+	model.paths = nullptr;
 
-	ret = vaccel_single_model_set_path(&model, model_path);
+	ret = vaccel_resource_init(&model, model_path, VACCEL_RESOURCE_MODEL);
 	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(model.resource == NULL);
-	REQUIRE_FALSE(model.path == nullptr);
-	REQUIRE(model.plugin_data == nullptr);
-	INFO("model.path: " << model.path);
+	REQUIRE_FALSE(model.paths == nullptr);
+	REQUIRE_FALSE(model.paths[0] == nullptr);
+	INFO("model.paths[0]: " << model.paths[0]);
 
-	ret = vaccel_single_model_register(&model);
-	REQUIRE(ret == VACCEL_OK);
-	REQUIRE_FALSE(model.path == nullptr);
-	REQUIRE(model.plugin_data == nullptr);
-	REQUIRE_FALSE(model.resource == NULL);
-
-	ret = vaccel_sess_init(&vsess, 0);
+	ret = vaccel_session_init(&vsess, 0);
 	REQUIRE(ret == VACCEL_OK);
 	REQUIRE_FALSE(vsess.session_id == 0);
 	REQUIRE_FALSE(vsess.resources == nullptr);
@@ -127,13 +118,14 @@ TEST_CASE("tflite_inference", "[ops_tflite]")
 
 	printf("Initialized vAccel session %u\n", vsess.session_id);
 
-	ret = vaccel_sess_register(&vsess, model.resource);
+	ret = vaccel_resource_register(&model, &vsess);
 	REQUIRE(ret == VACCEL_OK);
 	REQUIRE_FALSE(vsess.session_id == 0);
 	REQUIRE(vsess.hint == 0);
-	REQUIRE_FALSE(
-		list_empty(&vsess.resources->registered[model.resource->type]));
+	REQUIRE_FALSE(list_empty(&vsess.resources->registered[model.type]));
 	REQUIRE(vsess.priv == nullptr);
+	REQUIRE_FALSE(model.files == nullptr);
+	REQUIRE_FALSE(model.files[0] == nullptr);
 
 	ret = vaccel_tflite_session_load(&vsess, &model);
 	REQUIRE(ret == VACCEL_OK);
@@ -177,13 +169,13 @@ TEST_CASE("tflite_inference", "[ops_tflite]")
 	ret = vaccel_tflite_session_delete(&vsess, &model);
 	REQUIRE(ret == VACCEL_OK);
 
-	ret = vaccel_sess_unregister(&vsess, model.resource);
+	ret = vaccel_resource_unregister(&model, &vsess);
 	REQUIRE(ret == VACCEL_OK);
 
-	ret = vaccel_sess_free(&vsess);
+	ret = vaccel_session_free(&vsess);
 	REQUIRE(ret == VACCEL_OK);
 
-	ret = vaccel_single_model_destroy(&model);
+	ret = vaccel_resource_release(&model);
 	REQUIRE(ret == VACCEL_OK);
 
 	free(model_path);

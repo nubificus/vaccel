@@ -47,7 +47,7 @@ int main(int argc, char *argv[])
 
 	struct vaccel_session session;
 
-	int ret = vaccel_sess_init(&session, 0);
+	int ret = vaccel_session_init(&session, 0);
 	if (ret)
 		goto out_close;
 
@@ -62,7 +62,7 @@ int main(int argc, char *argv[])
 		fwrite(C, sizeof(float), (unsigned long)(M * N), data_fp);
 
 out:
-	vaccel_sess_free(&session);
+	vaccel_session_free(&session);
 out_close:
 	if (data_fp)
 		fclose(data_fp);

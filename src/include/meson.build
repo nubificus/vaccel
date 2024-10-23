@@ -17,18 +17,15 @@ vaccel_public_headers = files([
   'ops/tflite.h',
   'ops/torch.h',
   'ops/vaccel_ops.h',
-  'resources/shared_object.h',
-  'resources/single_model.h',
-  'resources/tf_saved_model.h',
   'session.h',
   'vaccel_args.h',
-  'vaccel_file.h',
+  'resource.h',
+  'file.h',
   'vaccel_id.h',
   'vaccel_prof.h',
   'list.h',
   'misc.h',
   'plugin.h',
-  'resources.h',
 ])
 
 vaccel_public_headers += include_vaccel_h

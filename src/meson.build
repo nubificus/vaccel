@@ -14,31 +14,29 @@ vaccel_headers = files([
   'session.h',
   'list.h',
   'id_pool.h',
-  'resources.h',
+  'resource.h',
+  'file.h',
   'vaccel_args.h',
 ])
 
-vaccel_utils_c = files('utils.c')
-vaccel_plugin_c = files('plugin.c')
 vaccel_sources = files([
   'log.c',
   'misc.c',
   'session.c',
-  'resources.c',
+  'resource.c',
+  'file.c',
   'vaccel.c',
   'id_pool.c',
   'utils.c',
+  'plugin.c',
   'vaccel_args.c',
 ])
 
 subdir('include')
-subdir('resources')
 subdir('ops')
 subdir('profiling')
 
-vaccel_sources += [
-  vaccel_plugin_c, vaccel_utils_c,
-  vaccel_headers, vaccel_h]
+vaccel_sources += [vaccel_headers, vaccel_h, vaccel_public_headers]
 vaccel_includes = include_directories('include')
 vaccel_src_includes = include_directories('.')
 
@@ -51,7 +49,7 @@ libvaccel_deps = [
 libvaccel = library('vaccel',
   vaccel_sources,
   version: libvaccel_version,
-  c_args : vaccel_cargs,
+  c_args : vaccel_c_args,
   include_directories : vaccel_includes,
   dependencies : libvaccel_deps,
   install : true)
