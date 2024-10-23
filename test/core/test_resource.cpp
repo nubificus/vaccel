@@ -8,7 +8,7 @@
  * 2) resource_new()
  * 3) resource_destroy()
  * 4) resource_create_rundir()
- * 5) resource_get_by_id()
+ * 5) vaccel_resource_get_by_id()
  *
  */
 
@@ -114,7 +114,7 @@ TEST_CASE("resource_find_by_id_fail", "[resources]")
 
 	// Attempt to find a resource by ID which fails (ID of 0 doesn't exist -
 	// starts at 1)
-	int ret = resource_get_by_id(&test_res, test_id);
+	int ret = vaccel_resource_get_by_id(&test_res, test_id);
 	REQUIRE(ret == VACCEL_EINVAL);
 }
 
@@ -140,7 +140,7 @@ TEST_CASE("resource_find_by_id", "[resources]")
 	struct vaccel_resource *result_resource = nullptr;
 	vaccel_id_t id_to_find = 1;
 
-	ret = resource_get_by_id(&result_resource, id_to_find);
+	ret = vaccel_resource_get_by_id(&result_resource, id_to_find);
 	REQUIRE(ret == VACCEL_OK);
 	REQUIRE(result_resource != nullptr);
 
@@ -311,7 +311,7 @@ TEST_CASE("resource_not_bootstrapped", "[resources]")
 	ret = vaccel_resource_new(&test_res, test_path, test_type);
 	REQUIRE(ret == VACCEL_EPERM);
 
-	ret = resource_get_by_id(&result_resource, id_to_find);
+	ret = vaccel_resource_get_by_id(&result_resource, id_to_find);
 	REQUIRE(ret == VACCEL_EPERM);
 
 	ret = vaccel_resource_destroy(&test_res);

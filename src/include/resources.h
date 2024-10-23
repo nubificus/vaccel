@@ -88,6 +88,9 @@ int vaccel_path_by_name(struct vaccel_resource *res, const char *name,
 			char *dest);
 char *vaccel_resource_get_path(struct vaccel_resource *res);
 
+int vaccel_resource_get_by_id(struct vaccel_resource **resource,
+			      vaccel_id_t id);
+
 #ifdef __cplusplus
 }
 #endif
