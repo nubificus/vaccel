@@ -92,16 +92,17 @@ static int check_plugin_version(const struct vaccel_plugin_info *pinfo)
 	if (ignore && (strcmp(ignore, "1") == 0 || strcmp(ignore, "true") == 0))
 		return VACCEL_OK;
 
-	if (!pinfo->vaccel_version)
+	if (!pinfo->vaccel_version) {
+		vaccel_error("The plugin has no vaccel version set");
 		return VACCEL_EINVAL;
-
+	}
 	int major;
 	int minor1;
 	int minor2;
 	char *extra = NULL;
 	if (parse_plugin_version(&major, &minor1, &minor2, &extra,
 				 pinfo->vaccel_version)) {
-		vaccel_error("Could not parse plugin's vaccelrt version");
+		vaccel_error("Could not parse plugin's vaccel version");
 		ret = VACCEL_EINVAL;
 		goto free_extra;
 	}
@@ -112,7 +113,7 @@ static int check_plugin_version(const struct vaccel_plugin_info *pinfo)
 	char *vextra = NULL;
 	if (parse_plugin_version(&vmajor, &vminor1, &vminor2, &vextra,
 				 VACCEL_VERSION)) {
-		vaccel_error("Could not parse vaccelrt version");
+		vaccel_error("Could not parse vaccel version");
 		ret = VACCEL_EINVAL;
 		goto free_vextra;
 	}
