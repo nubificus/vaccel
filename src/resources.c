@@ -56,7 +56,7 @@ int resources_cleanup(void)
 	for (int i = 0; i < VACCEL_RES_MAX; ++i) {
 		struct vaccel_resource *res;
 		struct vaccel_resource *tmp;
-		for_each_vaccel_resource_safe (res, tmp, &live_resources[i])
+		for_each_vaccel_resource_safe(res, tmp, &live_resources[i])
 			vaccel_resource_destroy(res);
 	}
 
@@ -73,7 +73,7 @@ int vaccel_resource_get_by_id(struct vaccel_resource **resource, vaccel_id_t id)
 	for (int i = 0; i < VACCEL_RES_MAX; ++i) {
 		struct vaccel_resource *res;
 		struct vaccel_resource *tmp;
-		for_each_vaccel_resource_safe (res, tmp, &live_resources[i]) {
+		for_each_vaccel_resource_safe(res, tmp, &live_resources[i]) {
 			if (id == res->id) {
 				*resource = res;
 				return VACCEL_OK;
