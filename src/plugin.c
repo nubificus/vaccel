@@ -92,9 +92,10 @@ static int check_plugin_version(const struct vaccel_plugin_info *pinfo)
 	if (ignore && (strcmp(ignore, "1") == 0 || strcmp(ignore, "true") == 0))
 		return VACCEL_OK;
 
-	if (!pinfo->vaccel_version)
+	if (!pinfo->vaccel_version) {
+		vaccel_error("The plugin has not set any version");
 		return VACCEL_EINVAL;
-
+	}
 	int major;
 	int minor1;
 	int minor2;
