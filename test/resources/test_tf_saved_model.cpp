@@ -11,7 +11,6 @@
 #include <catch.hpp>
 #include <utils.hpp>
 
-#include "utils.h"
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>

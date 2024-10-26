@@ -8,7 +8,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "../src/utils.h"
+#include "../src/utils/fs.h"
 #include <vaccel.h>
 
 enum { INPUT_VAL = 10, ARGTYPE = 42 };
@@ -51,7 +51,7 @@ int main(int argc, char *argv[])
 	struct vaccel_resource resource2;
 	size_t len;
 	unsigned char *buff;
-	ret = read_file(argv[1], (void **)&buff, &len);
+	ret = fs_file_read(argv[1], (void **)&buff, &len);
 	if (ret) {
 		vaccel_error("Could not read shared object file");
 		exit(1);

@@ -3,19 +3,19 @@
 #define _POSIX_C_SOURCE 200809L
 
 #include "vaccel.h"
-
 #include <dlfcn.h>
+#include <libgen.h>
+#include <limits.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
-enum { MAX_RUNDIR_PATH = 1024 };
-
 /* Runtime directory for holding resources related with the
  * runtime */
-static char rundir[MAX_RUNDIR_PATH];
+static char rundir[PATH_MAX];
 
 static int load_backend_plugin(const char *path)
 {
@@ -88,46 +88,32 @@ static int load_backend_plugins(char *plugins)
 
 static int create_vaccel_rundir(void)
 {
-	int ret = snprintf(rundir, MAX_RUNDIR_PATH, "/run/user/%u", getuid());
-	if (ret == MAX_RUNDIR_PATH) {
-		vaccel_fatal("rundir path '%s' too long", rundir);
+	/* Generate uid_t string */
+	char uid_str[NAME_MAX];
+	int ret = snprintf(uid_str, NAME_MAX, "%ju", (uintmax_t)getuid());
+	if (ret < 0) {
+		vaccel_error("Could not generate uid string for %ju: %s",
+			     (uintmax_t)getuid(), strerror(errno));
+		return ret;
+	}
+	if (ret == NAME_MAX) {
+		vaccel_error("Top-level rundir path too long", uid_str);
 		return VACCEL_ENAMETOOLONG;
 	}
 
-	if (!dir_exists(rundir)) {
-		vaccel_debug(
-			"User rundir does not exist. Will try to create it");
-		if (!dir_exists("/run/user")) {
-			vaccel_debug(
-				"/run/user dir does not exist. Will try to create it first");
-			ret = mkdir("/run/user", 0700);
-			if (ret) {
-				vaccel_fatal("Could not create user rundir: %s",
-					     strerror(errno));
-				return VACCEL_ENOENT;
-			}
-		}
-		ret = mkdir(rundir, 0700);
-		if (ret) {
-			vaccel_fatal("Could not create user rundir: %s",
-				     strerror(errno));
-			return VACCEL_ENOENT;
-		}
-
-		vaccel_debug("Created user rundir %s", rundir);
+	/* Generate parent vaccel dir string */
+	ret = path_init_from_parts(rundir, PATH_MAX, "/run/user", uid_str,
+				   "vaccel/", NULL);
+	if (ret) {
+		vaccel_error("Could not generate top-level rundir string");
+		return ret;
 	}
 
-	ret = snprintf(rundir, MAX_RUNDIR_PATH, "/run/user/%u/vaccel.XXXXXX",
-		       getuid());
-	if (ret == MAX_RUNDIR_PATH) {
-		vaccel_error("rundir path '%s' too big", rundir);
-		return VACCEL_ENAMETOOLONG;
-	}
-
-	char *dir = mkdtemp(rundir);
-	if (!dir) {
-		vaccel_error("Could not initialize top-level rundir: %s", dir);
-		return errno;
+	/* Create unique (random) rundir under /run/user/<uid>/vaccel */
+	ret = fs_dir_create_unique(rundir, PATH_MAX, NULL);
+	if (ret) {
+		vaccel_error("Could not create unique top-level rundir");
+		return ret;
 	}
 
 	vaccel_debug("Created top-level rundir: %s", rundir);
@@ -139,8 +125,8 @@ static int cleanup_vaccel_rundir(void)
 {
 	/* Try to cleanup the rundir. At the moment, we do not fail
 	 * if this fails, we just warn the user */
-	if (cleanup_rundir(rundir))
-		vaccel_warn("Could not cleanup rundir '%s'", rundir);
+	if (fs_dir_remove(rundir))
+		vaccel_warn("Could not remove rundir %s", rundir);
 
 	return VACCEL_OK;
 }

@@ -11,7 +11,6 @@
 #include <catch.hpp>
 #include <utils.hpp>
 
-#include "utils.h"
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -31,7 +30,7 @@ TEST_CASE("single_model_from_memory", "[resources_single_model]")
 
 	size_t len;
 	unsigned char *ptr;
-	ret = read_file(path, (void **)&ptr, &len);
+	ret = fs_file_read(path, (void **)&ptr, &len);
 	REQUIRE(ret == 0);
 	REQUIRE(len);
 

@@ -10,7 +10,7 @@
 
 #include <vaccel.h>
 extern "C" {
-#include "../src/utils.h"
+#include "../src/utils/fs.h"
 }
 #include <cstddef>
 #include <cstring>
@@ -72,7 +72,8 @@ auto main(int argc, char **argv) -> int
 	}
 
 	/* Read the image file */
-	ret = read_file(argv[1], (void **)&run_options.data, &run_options.size);
+	ret = fs_file_read(argv[1], (void **)&run_options.data,
+			   &run_options.size);
 	if (ret != VACCEL_OK) {
 		fprintf(stderr, "Could not load the image file: %d", ret);
 		goto close_session;

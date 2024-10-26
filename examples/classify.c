@@ -7,7 +7,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "../src/utils.h"
+#include "../src/utils/fs.h"
 #include <vaccel.h>
 
 int main(int argc, char *argv[])
@@ -32,7 +32,7 @@ int main(int argc, char *argv[])
 
 	printf("Initialized session with id: %u\n", sess.session_id);
 
-	ret = read_file(argv[1], (void **)&image, &image_size);
+	ret = fs_file_read(argv[1], (void **)&image, &image_size);
 	if (ret)
 		goto close_session;
 

@@ -10,11 +10,12 @@
 #include "list.h"
 #include "log.h"
 #include "plugin.h"
-#include "utils.h"
-
+#include "utils/fs.h"
+#include "utils/path.h"
 #include <assert.h>
 #include <dirent.h>
 #include <libgen.h>
+#include <limits.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -23,7 +24,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-enum { MAX_RESOURCES = 2048, MAX_RESOURCE_RUNDIR = 1024, MAX_FILELEN = 1024 };
+enum { VACCEL_RESOURCES_MAX = 2048 };
 
 static bool initialized = false;
 static id_pool_t id_pool;
@@ -36,7 +37,7 @@ static list_t live_resources[VACCEL_RESOURCE_MAX];
 
 int resources_bootstrap(void)
 {
-	int ret = id_pool_new(&id_pool, MAX_RESOURCES);
+	int ret = id_pool_new(&id_pool, VACCEL_RESOURCES_MAX);
 	if (ret)
 		return ret;
 
@@ -207,73 +208,48 @@ int resource_create_rundir(struct vaccel_resource *res)
 		return VACCEL_EINVAL;
 	}
 
-	const char *root_rundir = vaccel_rundir();
-
-	char rundir[MAX_RESOURCE_RUNDIR];
-	int len = snprintf(rundir, MAX_RESOURCE_RUNDIR, "%s/resource.%lld",
-			   root_rundir, res->id);
-	if (len == MAX_RESOURCE_RUNDIR) {
-		vaccel_error("rundir path '%s/resource.%lld' too long",
-			     root_rundir, res->id);
+	char res_dir[NAME_MAX];
+	int ret = snprintf(res_dir, NAME_MAX, "resource.%lld", res->id);
+	if (ret < 0) {
+		vaccel_error("Could not generate resource %lld rundir name",
+			     res->id);
+		return ret;
+	}
+	if (ret == NAME_MAX) {
+		vaccel_error("Resource %lls rundir name too long", res->id);
 		return VACCEL_ENAMETOOLONG;
 	}
 
-	int ret = mkdir(rundir, S_IRUSR | S_IWUSR | S_IXUSR);
+	char *rundir;
+	ret = path_from_parts(&rundir, vaccel_rundir(), res_dir, NULL);
 	if (ret) {
-		vaccel_error("Could not create rundir %s: %s", rundir,
-			     strerror(errno));
+		vaccel_error("Could not generate rundir path for resource %lld",
+			     res->id);
 		return ret;
 	}
 
-	res->rundir = strndup(rundir, MAX_RESOURCE_RUNDIR);
-	if (!res->rundir)
-		return VACCEL_ENOMEM;
+	ret = fs_dir_create(rundir);
+	if (ret) {
+		vaccel_error("Could not create rundir for resource %lld",
+			     res->id);
+		free(rundir);
+		return ret;
+	}
 
-	vaccel_debug("New rundir for resource %s", res->rundir);
+	res->rundir = rundir;
+
+	vaccel_debug("New rundir for resource %lld: %s", res->id, res->rundir);
 
 	return VACCEL_OK;
 }
 
 void resource_destroy_rundir(struct vaccel_resource *res)
 {
-	if (cleanup_rundir(res->rundir))
-		vaccel_warn("Could not cleanup rundir %s: %s", res->rundir,
+	if (fs_dir_remove(res->rundir))
+		vaccel_warn("Could not remove rundir %s: %s", res->rundir,
 			    strerror(errno));
 
 	free(res->rundir);
-}
-
-static bool path_is_dir(const char *path)
-{
-	if (!path)
-		return false;
-
-	struct stat path_stat;
-	if (stat(path, &path_stat) < 0)
-		return false;
-
-	return S_ISDIR(path_stat.st_mode);
-}
-
-static bool path_is_file(const char *path)
-{
-	if (!path)
-		return false;
-
-	struct stat path_stat;
-	if (stat(path, &path_stat) < 0)
-		return false;
-
-	return S_ISREG(path_stat.st_mode);
-}
-
-static bool path_is_url(const char *path)
-{
-	const char *prefix = "http://";
-	if (strncmp(path, prefix, strlen(prefix)) == 0)
-		return true;
-
-	return false;
 }
 
 static vaccel_path_t path_get_type(const char *path)
@@ -281,35 +257,13 @@ static vaccel_path_t path_get_type(const char *path)
 	if (path_is_url(path))
 		return VACCEL_PATH_REMOTE;
 
-	if (path_is_dir(path))
+	if (fs_path_is_dir(path))
 		return VACCEL_PATH_DIR;
 
-	if (path_is_file(path))
+	if (fs_path_is_file(path))
 		return VACCEL_PATH_LOCAL;
 
 	return VACCEL_PATH_MAX;
-}
-
-static int get_num_files(const char *path)
-{
-	// FIXME: print errors
-	if (!path)
-		return VACCEL_EINVAL;
-
-	DIR *d = opendir(path);
-	if (!d)
-		return VACCEL_EINVAL;
-
-	struct dirent *dir;
-	int nr_files = 0;
-	while ((dir = readdir(d)) != NULL) {
-		if (dir->d_type == DT_REG)
-			++nr_files;
-	}
-
-	closedir(d);
-
-	return nr_files;
 }
 
 static void delete_files(struct vaccel_file **files, size_t nr_files)
@@ -336,31 +290,31 @@ static int resource_add_files_from_dir(struct vaccel_resource *res,
 	if (!res || !res->paths || !res->paths[0] || res->nr_paths != 1)
 		return VACCEL_EINVAL;
 
-	size_t nr_dirfiles = get_num_files(res->paths[0]);
+	size_t nr_dirfiles = fs_dir_num_files(res->paths[0]);
 	if (!nr_dirfiles)
-		return VACCEL_EINVAL;
-
-	DIR *d = opendir(res->paths[0]);
-	if (!d)
 		return VACCEL_EINVAL;
 
 	struct vaccel_file **files = (struct vaccel_file **)malloc(
 		nr_dirfiles * sizeof(struct vaccel_file *));
-	if (!files) {
-		ret = VACCEL_ENOMEM;
-		goto close_dir;
-	}
+	if (!files)
+		return VACCEL_ENOMEM;
 
 	for (size_t i = 0; i < nr_dirfiles; i++)
 		files[i] = NULL;
 
-	size_t pathlen = strlen(res->paths[0]) + 1;
-	if (pathlen >= MAX_FILELEN) {
-		ret = VACCEL_ENAMETOOLONG;
+	DIR *d = opendir(res->paths[0]);
+	if (!d) {
+		ret = VACCEL_EINVAL;
 		goto free_files;
 	}
 
-	char filepath[MAX_FILELEN] = { 0 };
+	size_t pathlen = strlen(res->paths[0]) + 1;
+	if (pathlen >= PATH_MAX) {
+		ret = VACCEL_ENAMETOOLONG;
+		goto close_dir;
+	}
+
+	char filepath[PATH_MAX] = { 0 };
 	memcpy(filepath, res->paths[0], pathlen);
 	size_t baselen = strlen(filepath) + 1;
 	filepath[baselen - 1] = '/';
@@ -376,7 +330,7 @@ static int resource_add_files_from_dir(struct vaccel_resource *res,
 		}
 		if (dir->d_type == DT_REG) {
 			size_t filenamelen = strlen(dir->d_name) + 1;
-			if (filenamelen + baselen >= MAX_FILELEN) {
+			if (filenamelen + baselen >= PATH_MAX) {
 				ret = VACCEL_ENAMETOOLONG;
 				goto free;
 			}
@@ -395,7 +349,7 @@ static int resource_add_files_from_dir(struct vaccel_resource *res,
 					goto free;
 			}
 		}
-		memset(&filepath[baselen], 0, MAX_FILELEN - baselen);
+		memset(&filepath[baselen], 0, PATH_MAX - baselen);
 	}
 
 	closedir(d);
@@ -408,10 +362,10 @@ static int resource_add_files_from_dir(struct vaccel_resource *res,
 
 free:
 	delete_files(files, nr_files);
-free_files:
-	free(files);
 close_dir:
 	closedir(d);
+free_files:
+	free(files);
 
 	return ret;
 }

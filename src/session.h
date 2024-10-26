@@ -5,12 +5,11 @@
 #include "include/session.h"
 #include "list.h"
 #include "resource.h"
+#include <limits.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-enum { MAX_SESSION_RUNDIR_PATH = 512 };
 
 /* Struct used to represent a resource registered
  * to a session
@@ -34,7 +33,7 @@ struct registered_resource {
 struct session_resources {
 	/* Runtime directory for holding resources related with the
 	 * runtime */
-	char rundir[MAX_SESSION_RUNDIR_PATH];
+	char rundir[PATH_MAX];
 
 	/* Resources registered to this session. At the moment, this
 	 * is an array where each element holds a list of resources of

@@ -12,7 +12,7 @@
  * limitations under the License.
  */
 
-#include "../src/utils.h"
+#include "../src/utils/fs.h"
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
