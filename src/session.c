@@ -4,9 +4,10 @@
 #include "id_pool.h"
 #include "log.h"
 #include "plugin.h"
-#include "utils.h"
-
+#include "utils/fs.h"
+#include "utils/path.h"
 #include <inttypes.h>
+#include <limits.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -14,7 +15,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-enum { MAX_VACCEL_SESSIONS = 1024 };
+enum { VACCEL_SESSIONS_MAX = 1024 };
 
 struct {
 	/* true if the sessions subsystem has been initialized */
@@ -24,7 +25,7 @@ struct {
 	id_pool_t ids;
 
 	/* Active sessions */
-	struct vaccel_session *running_sessions[MAX_VACCEL_SESSIONS];
+	struct vaccel_session *running_sessions[VACCEL_SESSIONS_MAX];
 } sessions;
 
 static uint32_t get_sess_id(void)
@@ -39,11 +40,11 @@ static void put_sess_id(uint32_t id)
 
 int sessions_bootstrap(void)
 {
-	int ret = id_pool_new(&sessions.ids, MAX_VACCEL_SESSIONS);
+	int ret = id_pool_new(&sessions.ids, VACCEL_SESSIONS_MAX);
 	if (ret)
 		return ret;
 
-	for (size_t i = 0; i < MAX_VACCEL_SESSIONS; ++i)
+	for (size_t i = 0; i < VACCEL_SESSIONS_MAX; ++i)
 		sessions.running_sessions[i] = NULL;
 
 	sessions.initialized = true;
@@ -128,27 +129,50 @@ bool vaccel_session_has_resource(const struct vaccel_session *sess,
 
 static int session_initialize_resources(struct vaccel_session *sess)
 {
-	if (!sess)
+	if (!sess || !sess->session_id) {
+		vaccel_error(
+			"BUG! Trying to create rundir for invalid session");
 		return VACCEL_EINVAL;
+	}
 
 	struct session_resources *res = malloc(sizeof(*res));
 	if (!res)
 		return VACCEL_ENOMEM;
 
-	const char *root_rundir = vaccel_rundir();
-	int ret = snprintf(res->rundir, MAX_SESSION_RUNDIR_PATH,
-			   "%s/session.%" PRIu32, root_rundir,
+	char sess_dir[NAME_MAX];
+	int ret = snprintf(sess_dir, NAME_MAX, "session.%" PRIu32,
 			   sess->session_id);
-	if (ret == MAX_SESSION_RUNDIR_PATH) {
-		vaccel_error("rundir path '%s/session.%" PRIu32 "' too big",
-			     root_rundir, sess->session_id);
+	if (ret < 0) {
+		vaccel_error("Could not generate session %" PRIu32
+			     " rundir name",
+			     sess->session_id);
+		goto free;
+	}
+	if (ret == NAME_MAX) {
+		vaccel_error("Session %" PRIu32 " rundir name too long",
+			     sess->session_id);
 		ret = VACCEL_ENAMETOOLONG;
-		goto cleanup_res;
+		goto free;
 	}
 
-	ret = mkdir(res->rundir, 0700);
-	if (ret)
-		goto cleanup_res;
+	ret = path_init_from_parts(res->rundir, PATH_MAX, vaccel_rundir(),
+				   sess_dir, NULL);
+	if (ret) {
+		vaccel_error(
+			"Could not generate rundir path for session %" PRIu32,
+			sess->session_id);
+		goto free;
+	}
+
+	ret = fs_dir_create(res->rundir);
+	if (ret) {
+		vaccel_error("Could not create rundir for session %" PRIu32,
+			     sess->session_id);
+		goto free;
+	}
+
+	vaccel_debug("New rundir for session %" PRIu32 ": %s", sess->session_id,
+		     res->rundir);
 
 	sess->resources = res;
 	for (int i = 0; i < VACCEL_RESOURCE_MAX; ++i)
@@ -156,7 +180,7 @@ static int session_initialize_resources(struct vaccel_session *sess)
 
 	return VACCEL_OK;
 
-cleanup_res:
+free:
 	free(res);
 	return ret;
 }
@@ -183,7 +207,7 @@ static int session_cleanup_resources(struct vaccel_session *sess)
 
 	/* Try to cleanup the rundir. At the moment, we do not fail
 	 * if this fails, we just warn the user */
-	int ret = cleanup_rundir(sess->resources->rundir);
+	int ret = fs_dir_remove(sess->resources->rundir);
 	if (ret)
 		vaccel_warn(
 			"Could not cleanup rundir '%s' for session %" PRIu32,

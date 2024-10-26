@@ -5,9 +5,10 @@
 #include "error.h"
 #include "file.h"
 #include "log.h"
-#include "utils.h"
-
+#include "utils/fs.h"
+#include "utils/path.h"
 #include <errno.h>
+#include <limits.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -27,8 +28,6 @@
 int vaccel_file_persist(struct vaccel_file *file, const char *dir,
 			const char *filename, bool randomize)
 {
-	int ret;
-
 	if (!file || !file->data | !file->size) {
 		vaccel_error("Invalid file");
 		return VACCEL_EINVAL;
@@ -39,7 +38,7 @@ int vaccel_file_persist(struct vaccel_file *file, const char *dir,
 		return VACCEL_EINVAL;
 	}
 
-	if (!dir_exists(dir)) {
+	if (!fs_path_is_dir(dir)) {
 		vaccel_error("Invalid directory");
 		return VACCEL_ENOENT;
 	}
@@ -49,70 +48,71 @@ int vaccel_file_persist(struct vaccel_file *file, const char *dir,
 		return VACCEL_EEXIST;
 	}
 
-	/* Compute path len (+1 for '\0') */
-	int path_len = 1;
-	const char *p_path;
-	if (randomize) {
-		p_path = "%s/%s.XXXXXX";
-		path_len += snprintf(NULL, 0, p_path, dir, filename);
-	} else {
-		p_path = "%s/%s";
-		path_len += snprintf(NULL, 0, p_path, dir, filename);
-	}
-
 	file->path_owned = true;
-	file->path = malloc(path_len);
-	if (!file->path)
-		return VACCEL_ENOMEM;
 
-	FILE *fp;
-	/* Add a random value to the filename (if chosen) */
-	if (randomize) {
-		snprintf(file->path, path_len, p_path, dir, filename);
-
-		// FIXME: keep extension
-		int fd = mkstemp(file->path);
-		if (fd < 0) {
-			vaccel_error("Could not create file %s: %s", file->path,
-				     strerror(errno));
-			ret = VACCEL_EIO;
-			goto remove_file;
-		}
-
-		fp = fdopen(fd, "w+");
-	} else {
-		snprintf(file->path, path_len, p_path, dir, filename);
-
-		if (!access(file->path, F_OK)) {
-			ret = VACCEL_EEXIST;
-			goto free_path;
-		}
-
-		fp = fopen(file->path, "w+");
+	/* Generate fs path string */
+	char *fpath = NULL;
+	int ret = path_from_parts(&fpath, dir, filename, NULL);
+	if (ret) {
+		vaccel_error("Could not generate %s path string", filename);
+		return ret;
 	}
 
-	vaccel_debug("Persisting file %s to %s", filename, file->path);
+	int fd;
+	if (randomize) {
+		/* Create unique (random) file in the fs */
+		ret = fs_file_create_unique(fpath, 0, &file->path, &fd);
+		free(fpath);
+		if (ret) {
+			vaccel_error("Could not create unique file for %s: %s",
+				     filename, strerror(ret));
+			return ret;
+		}
+	} else {
+		/* Create file in the fs */
+		ret = fs_file_create(fpath, &fd);
+		if (ret && ret != VACCEL_EEXIST) {
+			vaccel_error("Could not create file %s", fpath);
+			free(fpath);
+			return ret;
+		}
 
-	/* Check if we managed to open the file */
+		/* If file exists in the fs create a unique file */
+		if (ret == VACCEL_EEXIST) {
+			vaccel_warn("File %s/%s exists", dir, filename);
+			vaccel_warn("Adding a random value to the filename");
+
+			ret = fs_file_create_unique(fpath, 0, &file->path, &fd);
+			free(fpath);
+			if (ret) {
+				vaccel_error(
+					"Could not create unique file for %s: %s",
+					filename, strerror(ret));
+				return ret;
+			}
+		} else {
+			file->path = fpath;
+		}
+	}
+
+	/* Extract filename from path */
+	ret = path_file_name(&file->name, file->path);
+	if (ret) {
+		vaccel_error("Could not extract filename from %s", file->path);
+		close(fd);
+		goto remove_file;
+	}
+
+	vaccel_debug("Persisting file %s to %s", file->name, file->path);
+
+	/* Write file->data buffer to the new file */
+	FILE *fp = fdopen(fd, "w+");
 	if (!fp) {
 		vaccel_error("Could not open file %s: %s", file->path,
 			     strerror(errno));
+		close(fd);
 		ret = VACCEL_EIO;
-		goto free_path;
-	}
-
-	/* Set filename */
-	char *name = strrchr(file->path, '/');
-	if (!name) {
-		vaccel_error("Could not determine filename from %s",
-			     file->path);
-		ret = VACCEL_EINVAL;
-		goto remove_file;
-	}
-	file->name = strdup(name + 1);
-	if (!file->name) {
-		ret = VACCEL_ENOMEM;
-		goto remove_file;
+		goto free_name;
 	}
 
 	if (fwrite(file->data, sizeof(char), file->size, fp) != file->size) {
@@ -120,7 +120,7 @@ int vaccel_file_persist(struct vaccel_file *file, const char *dir,
 			     strerror(errno));
 		fclose(fp);
 		ret = VACCEL_EIO;
-		goto remove_file;
+		goto free_name;
 	}
 
 	/* fwrite() is a buffered operation so we need to fclose() here.
@@ -128,26 +128,31 @@ int vaccel_file_persist(struct vaccel_file *file, const char *dir,
 	 * to disk before we try to mmap */
 	fclose(fp);
 
-	/* We deallocate the initial pointer and mmap a new one,
+	/* Deallocate the initial pointer and mmap a new one,
 	 * so that changes through the pointer are synced with the
 	 * file */
 	void *old_ptr = file->data;
 	size_t old_size = file->size;
-	ret = read_file_mmap(file->path, (void **)&file->data, &file->size);
+	ret = fs_file_read_mmap(file->path, (void **)&file->data, &file->size);
 	if (ret) {
 		vaccel_error("Could not re-map file");
 		file->data = old_ptr;
 		file->size = old_size;
-		goto remove_file;
+		goto free_name;
 	}
 
 	return VACCEL_OK;
 
+free_name:
+	free(file->name);
+	file->name = NULL;
 remove_file:
-	remove(file->path);
-free_path:
+	if (fs_file_remove(file->path))
+		vaccel_warn("Could not remove file %s", file->path);
+
 	free(file->path);
 	file->path = NULL;
+
 	return ret;
 }
 
@@ -217,12 +222,6 @@ int vaccel_file_init_from_buf(struct vaccel_file *file, const uint8_t *buf,
 		file->name = NULL;
 
 		int ret = vaccel_file_persist(file, dir, filename, randomize);
-		/* If file exists make randomize=true anyway */
-		if (ret == VACCEL_EEXIST && file->path == NULL) {
-			vaccel_warn("File %s/%s exists", dir, filename);
-			vaccel_warn("Adding a random value to the filename");
-			ret = vaccel_file_persist(file, dir, filename, true);
-		}
 		if (ret) {
 			free(file->name);
 			return ret;
@@ -374,7 +373,7 @@ int vaccel_file_read(struct vaccel_file *file)
 	if (!file->path)
 		return VACCEL_EINVAL;
 
-	return read_file_mmap(file->path, (void **)&file->data, &file->size);
+	return fs_file_read_mmap(file->path, (void **)&file->data, &file->size);
 }
 
 /* Get a pointer to the data of the file

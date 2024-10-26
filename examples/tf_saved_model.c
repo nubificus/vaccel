@@ -6,7 +6,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include "../src/utils.h"
+#include "../src/utils/fs.h"
 #include <vaccel.h>
 
 int create_session(struct vaccel_session *sess)

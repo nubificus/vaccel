@@ -5,7 +5,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include "../src/utils.h"
+#include "../src/utils/fs.h"
 #include <vaccel.h>
 
 int create_session(struct vaccel_session *sess)
@@ -75,7 +75,7 @@ int create_from_in_mem(const char *path)
 
 	unsigned char *ptr = NULL;
 	size_t len;
-	int ret = read_file(path, (void **)&ptr, &len);
+	int ret = fs_file_read(path, (void **)&ptr, &len);
 	if (ret) {
 		vaccel_error("Could not read model from path");
 		return VACCEL_ENOMEM;

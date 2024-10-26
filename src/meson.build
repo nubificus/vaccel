@@ -6,7 +6,6 @@ vaccel_h = configure_file(input : 'vaccel.h.in',
   configuration : conf)
 
 vaccel_headers = files([
-  'utils.h',
   'error.h',
   'log.h',
   'misc.h',
@@ -27,7 +26,6 @@ vaccel_sources = files([
   'file.c',
   'vaccel.c',
   'id_pool.c',
-  'utils.c',
   'plugin.c',
   'vaccel_args.c',
 ])
@@ -35,6 +33,7 @@ vaccel_sources = files([
 subdir('include')
 subdir('ops')
 subdir('profiling')
+subdir('utils')
 
 vaccel_sources += [vaccel_headers, vaccel_h, vaccel_public_headers]
 vaccel_includes = include_directories('include')

@@ -17,7 +17,6 @@
 #include <catch.hpp>
 #include <utils.hpp>
 
-#include "utils.h"
 #include <cstdio>
 #include <cstdlib>
 #include <fcntl.h>
@@ -48,7 +47,7 @@ TEST_CASE("classify_generic", "[ops_image]")
 	REQUIRE(sess.resources);
 	REQUIRE(sess.priv == nullptr);
 
-	ret = read_file(file_path, (void **)&image, &image_size);
+	ret = fs_file_read(file_path, (void **)&image, &image_size);
 	REQUIRE(ret == 0);
 	REQUIRE(image_size);
 	REQUIRE(&image);
@@ -108,7 +107,7 @@ TEST_CASE("depth_generic", "[ops_image]")
 	REQUIRE(sess.resources);
 	REQUIRE(sess.priv == nullptr);
 
-	ret = read_file(file_path, (void **)&image, &image_size);
+	ret = fs_file_read(file_path, (void **)&image, &image_size);
 	REQUIRE(ret == 0);
 	REQUIRE(image_size);
 	REQUIRE(&image);
@@ -164,7 +163,7 @@ TEST_CASE("detect_generic", "[ops_image]")
 	REQUIRE(sess.resources);
 	REQUIRE(sess.priv == nullptr);
 
-	ret = read_file(file_path, (void **)&image, &image_size);
+	ret = fs_file_read(file_path, (void **)&image, &image_size);
 	REQUIRE(ret == 0);
 	REQUIRE(image_size);
 	REQUIRE(&image);
@@ -222,7 +221,7 @@ TEST_CASE("pose_generic", "[ops_image]")
 	REQUIRE(sess.resources);
 	REQUIRE(sess.priv == nullptr);
 
-	ret = read_file(file_path, (void **)&image, &image_size);
+	ret = fs_file_read(file_path, (void **)&image, &image_size);
 	REQUIRE(ret == 0);
 	REQUIRE(image_size);
 	REQUIRE(&image);
@@ -279,7 +278,7 @@ TEST_CASE("segmentation_generic", "[ops_image]")
 	REQUIRE(sess.resources);
 	REQUIRE(sess.priv == nullptr);
 
-	ret = read_file(file_path, (void **)&image, &image_size);
+	ret = fs_file_read(file_path, (void **)&image, &image_size);
 	REQUIRE(ret == 0);
 	REQUIRE(image_size);
 	REQUIRE(&image);

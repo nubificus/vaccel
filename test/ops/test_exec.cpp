@@ -12,7 +12,6 @@
 #include <catch.hpp>
 #include <utils.hpp>
 
-#include "utils.h"
 #include <cstdio>
 #include <cstdlib>
 #include <fcntl.h>
@@ -120,7 +119,7 @@ TEST_CASE("exec_with_resource", "[ops_exec]")
 
 	size_t len = 0;
 	char *buff;
-	ret = read_file(plugin_path, (void **)&buff, &len);
+	ret = fs_file_read(plugin_path, (void **)&buff, &len);
 	REQUIRE(ret == 0);
 	REQUIRE(buff);
 	REQUIRE(len);
