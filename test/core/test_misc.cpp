@@ -18,7 +18,7 @@ DEFINE_FFF_GLOBALS;
 TEST_CASE("get_plugins", "[core_misc]")
 {
 	struct vaccel_session session;
-	session.session_id = 0;
+	session.id = 0;
 
 	SECTION("return correct implementation")
 	{

@@ -49,7 +49,7 @@ static int mbench_unpack(struct vaccel_session *session, const char *library,
 	int ret;
 	//void *buf;
 
-	vaccel_debug("Calling mbench for session %u", session->session_id);
+	vaccel_debug("Calling mbench for session %" PRId64, session->id);
 
 	if (strcmp("mbench", library) != 0 && strcmp("mbench", fn_symbol) != 0)
 		return VACCEL_EINVAL;

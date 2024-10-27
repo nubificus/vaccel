@@ -90,7 +90,7 @@ TEST_CASE("session_init", "[session]")
 
 	struct vaccel_session sess;
 	sess.hint = 0;
-	sess.session_id = 0;
+	sess.id = 0;
 	sess.resources = nullptr;
 	sess.priv = nullptr;
 
@@ -98,14 +98,14 @@ TEST_CASE("session_init", "[session]")
 	ret = vaccel_session_init(nullptr, 1);
 	REQUIRE(ret == VACCEL_EINVAL);
 	REQUIRE(sess.hint == 0);
-	REQUIRE(sess.session_id == 0);
+	REQUIRE(sess.id == 0);
 	REQUIRE(sess.resources == nullptr);
 	REQUIRE(sess.priv == nullptr);
 
 	// Test session initialization and cleanup
 	ret = vaccel_session_init(&sess, 1);
 	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(sess.session_id);
+	REQUIRE(sess.id);
 	REQUIRE(sess.hint == 1);
 	REQUIRE(sess.resources);
 	REQUIRE(sess.priv == nullptr);
@@ -113,12 +113,12 @@ TEST_CASE("session_init", "[session]")
 	ret = vaccel_session_free(nullptr);
 	REQUIRE(ret == VACCEL_EINVAL);
 	REQUIRE(sess.hint == 1);
-	REQUIRE(sess.session_id);
+	REQUIRE(sess.id);
 	REQUIRE(sess.resources);
 	REQUIRE(sess.priv == nullptr);
 
 	REQUIRE(vaccel_session_free(&sess) == VACCEL_OK);
-	REQUIRE(sess.session_id);
+	REQUIRE(sess.id);
 	REQUIRE(sess.hint == 1);
 	REQUIRE(sess.resources == nullptr);
 	REQUIRE(sess.priv == nullptr);
@@ -128,7 +128,7 @@ TEST_CASE("session_init", "[session]")
 TEST_CASE("session_update_and_free", "[session]")
 {
 	struct vaccel_session sess;
-	sess.session_id = 0;
+	sess.id = 0;
 	sess.resources = nullptr;
 	sess.priv = nullptr;
 	int ret;
@@ -137,7 +137,7 @@ TEST_CASE("session_update_and_free", "[session]")
 
 	ret = vaccel_session_init(&sess, 1);
 	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(sess.session_id);
+	REQUIRE(sess.id);
 	REQUIRE(sess.hint == 1);
 	REQUIRE(sess.resources);
 	REQUIRE(sess.priv == nullptr);
@@ -145,28 +145,28 @@ TEST_CASE("session_update_and_free", "[session]")
 	// Test session update
 	ret = vaccel_session_update(&sess, 2);
 	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(sess.session_id);
+	REQUIRE(sess.id);
 	REQUIRE(sess.hint == 2);
 	REQUIRE(sess.resources);
 	REQUIRE(sess.priv == nullptr);
 
 	ret = vaccel_session_update(nullptr, 2);
 	REQUIRE(ret == VACCEL_EINVAL);
-	REQUIRE(sess.session_id);
+	REQUIRE(sess.id);
 	REQUIRE(sess.hint == 2);
 	REQUIRE(sess.resources);
 	REQUIRE(sess.priv == nullptr);
 
 	ret = vaccel_session_free(nullptr);
 	REQUIRE(ret == EINVAL);
-	REQUIRE(sess.session_id);
+	REQUIRE(sess.id);
 	REQUIRE(sess.hint == 2);
 	REQUIRE(sess.resources);
 	REQUIRE(sess.priv == nullptr);
 
 	// Test session cleanup
 	REQUIRE(vaccel_session_free(&sess) == VACCEL_OK);
-	REQUIRE(sess.session_id);
+	REQUIRE(sess.id);
 	REQUIRE(sess.hint == 2);
 	REQUIRE(sess.resources == nullptr);
 	REQUIRE(sess.priv == nullptr);
@@ -180,13 +180,13 @@ TEST_CASE("session_unregister_null", "[session]")
 	RESET_FAKE(get_virtio_plugin);
 
 	struct vaccel_session sess;
-	sess.session_id = 0;
+	sess.id = 0;
 	sess.resources = nullptr;
 	sess.priv = nullptr;
 
 	ret = vaccel_session_init(&sess, 1);
 	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(sess.session_id);
+	REQUIRE(sess.id);
 	REQUIRE(sess.hint == 1);
 	REQUIRE(sess.resources);
 	REQUIRE(sess.priv == nullptr);
@@ -202,14 +202,14 @@ TEST_CASE("session_unregister_null", "[session]")
 	ret = session_register_resource(&sess, nullptr);
 	REQUIRE(ret == VACCEL_EINVAL);
 
-	REQUIRE(sess.session_id);
+	REQUIRE(sess.id);
 	REQUIRE(sess.hint == 1);
 	REQUIRE(sess.resources);
 	REQUIRE(sess.priv == nullptr);
 
 	ret = session_register_resource(&sess, &res);
 	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(sess.session_id);
+	REQUIRE(sess.id);
 	REQUIRE(sess.hint == 1);
 	REQUIRE_FALSE(list_empty(&sess.resources->registered[res.type]));
 	REQUIRE(sess.priv == nullptr);
@@ -222,7 +222,7 @@ TEST_CASE("session_unregister_null", "[session]")
 	ret = session_unregister_resource(&sess, nullptr);
 	REQUIRE(ret == VACCEL_EINVAL);
 
-	REQUIRE(sess.session_id);
+	REQUIRE(sess.id);
 	REQUIRE(sess.hint == 1);
 	REQUIRE_FALSE(list_empty(&sess.resources->registered[res.type]));
 	REQUIRE(sess.priv == nullptr);
@@ -236,7 +236,7 @@ TEST_CASE("session_unregister_null", "[session]")
 	res.id = 1;
 	ret = session_unregister_resource(&sess, &res);
 	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(sess.session_id);
+	REQUIRE(sess.id);
 	REQUIRE(sess.hint == 1);
 	REQUIRE(list_empty(&sess.resources->registered[res.type]));
 	REQUIRE(sess.priv == nullptr);
@@ -247,7 +247,7 @@ TEST_CASE("session_unregister_null", "[session]")
 	ret = vaccel_session_free(&sess);
 	REQUIRE(ret == VACCEL_OK);
 
-	REQUIRE(sess.session_id);
+	REQUIRE(sess.id);
 	REQUIRE(sess.hint == 1);
 	REQUIRE(sess.resources == nullptr);
 	REQUIRE(sess.priv == nullptr);
@@ -259,7 +259,7 @@ TEST_CASE("session_ops", "[session]")
 	int ret;
 	struct vaccel_session test_sess;
 	test_sess.hint = 0;
-	test_sess.session_id = 0;
+	test_sess.id = 0;
 	test_sess.resources = nullptr;
 	test_sess.priv = nullptr;
 	struct vaccel_resource test_res;
@@ -272,21 +272,21 @@ TEST_CASE("session_ops", "[session]")
 	REQUIRE(VACCEL_OK == ret);
 
 	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(test_sess.session_id);
+	REQUIRE(test_sess.id);
 	REQUIRE(test_sess.hint == 1);
 	REQUIRE(test_sess.resources);
 	REQUIRE(test_sess.priv == nullptr);
 
 	ret = vaccel_session_update(&test_sess, 2);
 	REQUIRE(VACCEL_OK == ret);
-	REQUIRE(test_sess.session_id);
+	REQUIRE(test_sess.id);
 	REQUIRE(test_sess.hint == 2);
 	REQUIRE(test_sess.resources);
 	REQUIRE(test_sess.priv == nullptr);
 
 	ret = session_register_resource(&test_sess, &test_res);
 	REQUIRE(VACCEL_OK == ret);
-	REQUIRE(test_sess.session_id);
+	REQUIRE(test_sess.id);
 	REQUIRE(test_sess.hint == 2);
 	REQUIRE_FALSE(
 		list_empty(&test_sess.resources->registered[test_res.type]));
@@ -294,14 +294,14 @@ TEST_CASE("session_ops", "[session]")
 
 	ret = session_unregister_resource(&test_sess, &test_res);
 	REQUIRE(VACCEL_OK == ret);
-	REQUIRE(test_sess.session_id);
+	REQUIRE(test_sess.id);
 	REQUIRE(test_sess.hint == 2);
 	REQUIRE(list_empty(&test_sess.resources->registered[test_res.type]));
 	REQUIRE(test_sess.priv == nullptr);
 
 	ret = vaccel_session_free(&test_sess);
 	REQUIRE(VACCEL_OK == ret);
-	REQUIRE(test_sess.session_id);
+	REQUIRE(test_sess.id);
 	REQUIRE(test_sess.hint == 2);
 	REQUIRE(test_sess.resources == nullptr);
 	REQUIRE(test_sess.priv == nullptr);
@@ -314,7 +314,7 @@ TEST_CASE("session_virtio", "[session]")
 	int ret;
 	struct vaccel_session test_sess;
 	test_sess.hint = 0;
-	test_sess.session_id = 1;
+	test_sess.id = 1;
 	test_sess.resources = nullptr;
 	test_sess.priv = nullptr;
 	struct vaccel_resource test_res;

@@ -52,16 +52,16 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	printf("Initialized virtio session with id: %u\n",
-	       virtio_sess.session_id);
+	printf("Initialized virtio session with id: %" PRId64 "\n",
+	       virtio_sess.id);
 
 	if (vaccel_session_init(&local_sess, 0)) {
 		vaccel_error("Could not create local session");
 		exit(1);
 	}
 
-	printf("Initialized local session with id: %u\n",
-	       local_sess.session_id);
+	printf("Initialized local session with id: %" PRId64 "\n",
+	       local_sess.id);
 
 	if (vaccel_resource_register(&object, &local_sess)) {
 		vaccel_error("Could register shared object to local session");

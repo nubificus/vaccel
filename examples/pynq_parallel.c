@@ -26,7 +26,7 @@ int main()
 		return 1;
 	}
 
-	printf("Initialized session with id: %u\n", sess.session_id);
+	printf("Initialized session with id: %" PRId64 "\n", sess.id);
 
 	ret = vaccel_fpga_parallel(&sess, a, b, c, d, len_a);
 	if (ret) {

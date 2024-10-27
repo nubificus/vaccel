@@ -25,8 +25,8 @@ int vaccel_exec(struct vaccel_session *sess, const char *library,
 	if (!sess)
 		return VACCEL_EINVAL;
 
-	vaccel_debug("session:%u Looking for plugin implementing exec",
-		     sess->session_id);
+	vaccel_debug("session:%" PRId64 " Looking for plugin implementing exec",
+		     sess->id);
 
 	vaccel_prof_region_start(&exec_op_stats);
 
@@ -54,15 +54,16 @@ int vaccel_exec_with_resource(struct vaccel_session *sess,
 	if (!sess || !resource)
 		return VACCEL_EINVAL;
 
-	vaccel_debug(
-		"session:%u Looking for plugin implementing exec with resource",
-		sess->session_id);
+	vaccel_debug("session:%" PRId64
+		     " Looking for plugin implementing exec with resource",
+		     sess->id);
 
 	vaccel_prof_region_start(&exec_res_op_stats);
 
 	if (!vaccel_session_has_resource(sess, resource)) {
-		vaccel_error("Resource %u is not registered to session %u",
-			     resource->id, sess->session_id);
+		vaccel_error("Resource %" PRId64
+			     " is not registered to session %" PRId64 "",
+			     resource->id, sess->id);
 		return VACCEL_EPERM;
 	}
 
@@ -112,8 +113,7 @@ int vaccel_exec_with_res_unpack(struct vaccel_session *sess,
 	/* Pop the first two arguments */
 	struct vaccel_resource *resource;
 
-	ret = vaccel_resource_get_by_id(&resource,
-					*(long long int *)read[0].buf);
+	ret = vaccel_resource_get_by_id(&resource, *(vaccel_id_t *)read[0].buf);
 	if (ret) {
 		vaccel_error("cannot find resource: %d", ret);
 		return ret;

@@ -19,7 +19,7 @@ TEST_CASE("fpga_add", "[ops_fpga]")
 {
 	int ret;
 	struct vaccel_session sess;
-	sess.session_id = 0;
+	sess.id = 0;
 	sess.priv = nullptr;
 	sess.resources = nullptr;
 	sess.hint = 1;
@@ -50,7 +50,7 @@ TEST_CASE("fpga_add", "[ops_fpga]")
 	{
 		ret = vaccel_session_init(&sess, 0);
 		REQUIRE(ret == VACCEL_OK);
-		REQUIRE(sess.session_id);
+		REQUIRE(sess.id);
 		REQUIRE(sess.hint == 0);
 		REQUIRE(sess.resources);
 		REQUIRE(sess.priv == nullptr);
@@ -74,7 +74,7 @@ TEST_CASE("fpga_copy", "[ops_fpga]")
 {
 	int ret;
 	struct vaccel_session sess;
-	sess.session_id = 0;
+	sess.id = 0;
 	sess.priv = nullptr;
 	sess.resources = nullptr;
 	sess.hint = 1;
@@ -95,7 +95,7 @@ TEST_CASE("fpga_copy", "[ops_fpga]")
 	{
 		ret = vaccel_session_init(&sess, 0);
 		REQUIRE(ret == VACCEL_OK);
-		REQUIRE(sess.session_id);
+		REQUIRE(sess.id);
 		REQUIRE(sess.hint == 0);
 		REQUIRE(sess.resources);
 		REQUIRE(sess.priv == nullptr);
@@ -113,7 +113,7 @@ TEST_CASE("fpga_mmult", "[ops_fpga]")
 {
 	int ret;
 	struct vaccel_session sess;
-	sess.session_id = 0;
+	sess.id = 0;
 	sess.priv = nullptr;
 	sess.resources = nullptr;
 	sess.hint = 1;
@@ -134,7 +134,7 @@ TEST_CASE("fpga_mmult", "[ops_fpga]")
 	{
 		ret = vaccel_session_init(&sess, 0);
 		REQUIRE(ret == VACCEL_OK);
-		REQUIRE(sess.session_id);
+		REQUIRE(sess.id);
 		REQUIRE(sess.hint == 0);
 		REQUIRE(sess.resources);
 		REQUIRE(sess.priv == nullptr);

@@ -16,7 +16,7 @@ int create_session(struct vaccel_session *sess)
 		return ret;
 	}
 
-	vaccel_info("New session: %u", sess->session_id);
+	vaccel_info("New session: %" PRId64, sess->id);
 	return VACCEL_OK;
 }
 
@@ -39,8 +39,8 @@ int create_from_path(char *path)
 	if (ret)
 		return ret;
 
-	vaccel_info("Registering model %lld with session %u", model.id,
-		    sess.session_id);
+	vaccel_info("Registering model %" PRId64 " with session %" PRId64,
+		    model.id, sess.id);
 
 	ret = vaccel_resource_register(&model, &sess);
 	if (ret) {
@@ -48,8 +48,8 @@ int create_from_path(char *path)
 		return ret;
 	}
 
-	vaccel_info("Unregistering model %lld from session %u", model.id,
-		    sess.session_id);
+	vaccel_info("Unregistering model %" PRId64 " from session %" PRId64,
+		    model.id, sess.id);
 
 	ret = vaccel_resource_unregister(&model, &sess);
 	if (ret) {
@@ -57,14 +57,14 @@ int create_from_path(char *path)
 		return ret;
 	}
 
-	vaccel_info("Destroying model %lld", model.id);
+	vaccel_info("Destroying model %" PRId64, model.id);
 	ret = vaccel_resource_release(&model);
 	if (ret) {
 		vaccel_error("Could not destroy model resource");
 		return ret;
 	}
 
-	vaccel_info("Destroying session %u", sess.session_id);
+	vaccel_info("Destroying session %" PRId64, sess.id);
 	return destroy_session(&sess);
 }
 
@@ -93,8 +93,8 @@ int create_from_in_mem(const char *path)
 	if (ret)
 		return ret;
 
-	vaccel_info("Registering model %lld with session %u", model.id,
-		    sess.session_id);
+	vaccel_info("Registering model %" PRId64 " with session %" PRId64,
+		    model.id, sess.id);
 
 	ret = vaccel_resource_register(&model, &sess);
 	if (ret) {
@@ -102,8 +102,8 @@ int create_from_in_mem(const char *path)
 		return ret;
 	}
 
-	vaccel_info("Unregistering model %lld from session %u", model.id,
-		    sess.session_id);
+	vaccel_info("Unregistering model %" PRId64 " from session %" PRId64,
+		    model.id, sess.id);
 
 	ret = vaccel_resource_unregister(&model, &sess);
 	if (ret) {
@@ -111,7 +111,7 @@ int create_from_in_mem(const char *path)
 		return ret;
 	}
 
-	vaccel_info("Destroying model %lld", model.id);
+	vaccel_info("Destroying model %" PRId64, model.id);
 	ret = vaccel_resource_release(&model);
 	if (ret) {
 		vaccel_error("Could not destroy model");
@@ -120,7 +120,7 @@ int create_from_in_mem(const char *path)
 
 	free(ptr);
 
-	vaccel_info("Destroying session %u", sess.session_id);
+	vaccel_info("Destroying session %" PRId64, sess.id);
 	return destroy_session(&sess);
 }
 

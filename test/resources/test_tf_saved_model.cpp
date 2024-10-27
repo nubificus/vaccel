@@ -38,14 +38,14 @@ TEST_CASE("tf_saved_model_from_memory", "[resources_tf_saved_model]")
 					 VACCEL_RESOURCE_MODEL);
 	REQUIRE(ret == VACCEL_OK);
 
-	vaccel_info("Registered new resource: %ld", model.id);
+	vaccel_info("Registered new resource: %" PRId64, model.id);
 
 	struct vaccel_session sess;
 	ret = vaccel_session_init(&sess, 0);
 	REQUIRE(ret == VACCEL_OK);
 
-	vaccel_info("Registering model %ld with session %u", model.id,
-		    sess.session_id);
+	vaccel_info("Registering model %" PRId64 " with session %" PRId64,
+		    model.id, sess.id);
 
 	ret = vaccel_resource_register(&model, &sess);
 	REQUIRE(ret == VACCEL_OK);
@@ -73,7 +73,7 @@ TEST_CASE("tf_saved_model_from_file", "[resources_tf_saved_model]")
 	ret = vaccel_resource_init(&model, path, VACCEL_RESOURCE_MODEL);
 	REQUIRE(ret == VACCEL_OK);
 
-	vaccel_info("Registered new resource: %ld", model.id);
+	vaccel_info("Registered new resource: %" PRId64, model.id);
 
 	struct vaccel_session sess;
 	ret = vaccel_session_init(&sess, 0);

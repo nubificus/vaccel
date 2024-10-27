@@ -14,6 +14,7 @@
 #include "utils/path.h"
 #include <assert.h>
 #include <dirent.h>
+#include <inttypes.h>
 #include <libgen.h>
 #include <limits.h>
 #include <stdbool.h>
@@ -209,28 +210,31 @@ int resource_create_rundir(struct vaccel_resource *res)
 	}
 
 	char res_dir[NAME_MAX];
-	int ret = snprintf(res_dir, NAME_MAX, "resource.%lld", res->id);
+	int ret = snprintf(res_dir, NAME_MAX, "resource.%" PRId64, res->id);
 	if (ret < 0) {
-		vaccel_error("Could not generate resource %lld rundir name",
+		vaccel_error("Could not generate resource %" PRId64
+			     " rundir name",
 			     res->id);
 		return ret;
 	}
 	if (ret == NAME_MAX) {
-		vaccel_error("Resource %lls rundir name too long", res->id);
+		vaccel_error("Resource " PRId64 " rundir name too long",
+			     res->id);
 		return VACCEL_ENAMETOOLONG;
 	}
 
 	char *rundir;
 	ret = path_from_parts(&rundir, vaccel_rundir(), res_dir, NULL);
 	if (ret) {
-		vaccel_error("Could not generate rundir path for resource %lld",
-			     res->id);
+		vaccel_error(
+			"Could not generate rundir path for resource %" PRId64,
+			res->id);
 		return ret;
 	}
 
 	ret = fs_dir_create(rundir);
 	if (ret) {
-		vaccel_error("Could not create rundir for resource %lld",
+		vaccel_error("Could not create rundir for resource %" PRId64,
 			     res->id);
 		free(rundir);
 		return ret;
@@ -238,7 +242,8 @@ int resource_create_rundir(struct vaccel_resource *res)
 
 	res->rundir = rundir;
 
-	vaccel_debug("New rundir for resource %lld: %s", res->id, res->rundir);
+	vaccel_debug("New rundir for resource %" PRId64 ": %s", res->id,
+		     res->rundir);
 
 	return VACCEL_OK;
 }
@@ -458,7 +463,7 @@ static int resource_init_common_with_paths(struct vaccel_resource *res,
 	list_init_entry(&res->entry);
 	list_add_tail(&live_resources[res->type], &res->entry);
 
-	vaccel_debug("Initialized resource %lld", res->id);
+	vaccel_debug("Initialized resource %" PRId64, res->id);
 
 	return VACCEL_OK;
 
@@ -492,7 +497,7 @@ static int resource_init_common_with_files(struct vaccel_resource *res,
 	list_init_entry(&res->entry);
 	list_add_tail(&live_resources[res->type], &res->entry);
 
-	vaccel_debug("Initialized resource %lld", res->id);
+	vaccel_debug("Initialized resource %" PRId64, res->id);
 
 	return VACCEL_OK;
 }
@@ -711,7 +716,7 @@ int vaccel_resource_release(struct vaccel_resource *res)
 	/* Check if this resource is currently registered to a session.
 	 * We do not destroy currently-used resources */
 	if (atomic_load(&res->refcount)) {
-		vaccel_error("Cannot destroy used resource %lld", res->id);
+		vaccel_error("Cannot destroy used resource %" PRId64, res->id);
 		return VACCEL_EBUSY;
 	}
 
@@ -745,7 +750,8 @@ int vaccel_resource_release(struct vaccel_resource *res)
 	res->nr_paths = 0;
 
 	if (res->deps || res->nr_deps)
-		vaccel_warn("Resource %lld has deps that will not be destroyed",
+		vaccel_warn("Resource %" PRId64
+			    " has deps that will not be destroyed",
 			    res->id);
 
 	return VACCEL_OK;
@@ -879,14 +885,12 @@ int vaccel_resource_register(struct vaccel_resource *res,
 		return ret;
 
 	if (sess->is_virtio) {
-		vaccel_debug(
-			"Registered resource %lld (remote id: %lld) with session %" PRIu32
-			" (remote id: %" PRIu32 ")",
-			res->id, res->remote_id, sess->session_id,
-			sess->remote_id);
+		vaccel_debug("session:%" PRId64 " Registered resource %" PRId64
+			     " with remote (id: %" PRId64 ")",
+			     sess->id, res->id, res->remote_id);
 	} else {
-		vaccel_debug("Registered resource %lld with session %" PRIu32,
-			     res->id, sess->session_id);
+		vaccel_debug("session:%" PRId64 " Registered resource %" PRId64,
+			     sess->id, res->id);
 	}
 
 	return VACCEL_OK;
@@ -897,9 +901,9 @@ int vaccel_resource_unregister(struct vaccel_resource *res,
 {
 	int ret = session_unregister_resource(sess, res);
 	if (ret) {
-		vaccel_error(
-			"Could not unregister resource %lld from session %" PRIu32,
-			res->id, sess->session_id);
+		vaccel_error("Could not unregister resource %" PRId64
+			     " from session %" PRId64,
+			     res->id, sess->id);
 		return ret;
 	}
 
@@ -909,7 +913,7 @@ int vaccel_resource_unregister(struct vaccel_resource *res,
 			ret = virtio->info->resource_unregister(res, sess);
 			if (ret) {
 				vaccel_error(
-					"Could not unregister remote resource %" PRIu32,
+					"Could not unregister remote resource %" PRId64,
 					res->remote_id);
 				return ret;
 			}
@@ -918,16 +922,10 @@ int vaccel_resource_unregister(struct vaccel_resource *res,
 				"Could not unregister resource for virtio session, no VirtIO Plugin loaded yet");
 			return VACCEL_ENOTSUP;
 		}
-
-		vaccel_debug(
-			"Unregistered resource %lld (remote id: %lld) from session %" PRIu32
-			" (remote id: %" PRIu32 ")",
-			res->id, res->remote_id, sess->session_id,
-			sess->remote_id);
-	} else {
-		vaccel_debug("Unregistered resource %lld from session %" PRIu32,
-			     res->id, sess->session_id);
 	}
+
+	vaccel_debug("session:%" PRId64 " Unregistered resource %" PRId64,
+		     sess->id, res->id);
 
 	return VACCEL_OK;
 }

@@ -17,7 +17,7 @@
 
 static int noop(struct vaccel_session *session)
 {
-	exec_debug("Calling no-op for session %u", session->session_id);
+	exec_debug("Calling no-op for session %" PRId64, session->id);
 	exec_debug("[noop]");
 
 	return VACCEL_OK;
@@ -32,7 +32,7 @@ static int exec(struct vaccel_session *session, const char *library,
 	int ret;
 	struct vaccel_arg *args;
 
-	exec_debug("Calling exec for session %u", session->session_id);
+	exec_debug("Calling exec for session %" PRId64, session->id);
 
 	exec_debug("library: %s", library);
 	dl = dlopen(library, RTLD_NOW);
@@ -91,8 +91,8 @@ static int exec_with_resource(struct vaccel_session *session,
 	char *library;
 	struct vaccel_arg *args;
 
-	exec_res_debug("Calling exec_with_resource for session %u",
-		       session->session_id);
+	exec_res_debug("Calling exec_with_resource for session %" PRId64,
+		       session->id);
 
 	library = vaccel_resource_get_path(resource);
 	if (library == NULL) {

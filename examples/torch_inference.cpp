@@ -85,7 +85,7 @@ auto main(int argc, char **argv) -> int
 		goto destroy_resource;
 	}
 
-	printf("Initialized vAccel session %u\n", sess.session_id);
+	printf("Initialized vAccel session %" PRId64 "\n", sess.id);
 
 	/* Take vaccel_session and vaccel_resource as inputs, 
 	 * register a resource with a session */

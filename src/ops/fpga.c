@@ -15,8 +15,9 @@ int vaccel_fpga_arraycopy(struct vaccel_session *sess, int array[],
 		return VACCEL_EINVAL;
 
 	vaccel_debug(
-		"session:%u Looking for plugin implementing fpga_arraycopy operation",
-		sess->session_id);
+		"session:%" PRId64
+		" Looking for plugin implementing fpga_arraycopy operation",
+		sess->id);
 
 	//Get implementation
 	int (*plugin_op)() = get_plugin_op(VACCEL_F_ARRAYCOPY, sess->hint);
@@ -56,9 +57,9 @@ int vaccel_fpga_mmult(struct vaccel_session *sess, float A_array[],
 	if (!sess)
 		return VACCEL_EINVAL;
 
-	vaccel_debug(
-		"session:%u Looking for plugin implementing fpga_mmult operation",
-		sess->session_id);
+	vaccel_debug("session:%" PRId64
+		     " Looking for plugin implementing fpga_mmult operation",
+		     sess->id);
 
 	//Get implementation
 	int (*plugin_op)() = get_plugin_op(VACCEL_F_MMULT, sess->hint);
@@ -99,9 +100,9 @@ int vaccel_fpga_parallel(struct vaccel_session *sess, float A_array[],
 	if (!sess)
 		return VACCEL_EINVAL;
 
-	vaccel_debug(
-		"session:%u Looking for plugin implementing fpga_parallel operation",
-		sess->session_id);
+	vaccel_debug("session:%" PRId64
+		     " Looking for plugin implementing fpga_parallel operation",
+		     sess->id);
 
 	//Get implementation
 	int (*plugin_op)() = get_plugin_op(VACCEL_F_PARALLEL, sess->hint);
@@ -146,8 +147,9 @@ int vaccel_fpga_vadd(struct vaccel_session *sess, float A[], float B[],
 		return VACCEL_EINVAL;
 
 	vaccel_debug(
-		"session:%u Looking for plugin implementing fpga_vector_add operation",
-		sess->session_id);
+		"session:%" PRId64
+		" Looking for plugin implementing fpga_vector_add operation",
+		sess->id);
 
 	//Get implementation
 	int (*plugin_op)() = get_plugin_op(VACCEL_F_VECTORADD, sess->hint);

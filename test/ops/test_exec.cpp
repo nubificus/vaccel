@@ -28,7 +28,7 @@ TEST_CASE("exec", "[ops_exec]")
 	int input = 10;
 	int output = 0;
 	struct vaccel_session sess;
-	sess.session_id = 0;
+	sess.id = 0;
 	sess.priv = nullptr;
 	sess.resources = nullptr;
 	sess.hint = 0;
@@ -48,7 +48,7 @@ TEST_CASE("exec", "[ops_exec]")
 
 	ret = vaccel_exec(&sess, plugin_path, function_name, read, 1, write, 1);
 	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(sess.session_id);
+	REQUIRE(sess.id);
 	REQUIRE(sess.hint == VACCEL_PLUGIN_DEBUG);
 	REQUIRE(sess.resources);
 	REQUIRE(sess.priv == nullptr);
@@ -64,7 +64,7 @@ TEST_CASE("exec_generic", "[ops_exec]")
 	int ret;
 
 	struct vaccel_session sess;
-	sess.session_id = 0;
+	sess.id = 0;
 	sess.priv = nullptr;
 	sess.resources = nullptr;
 	sess.hint = 0;
@@ -98,7 +98,7 @@ TEST_CASE("exec_generic", "[ops_exec]")
 	ret = vaccel_genop(&sess, read, 4, write, 1);
 	REQUIRE(ret == VACCEL_OK);
 	printf("output: %d\n", output);
-	REQUIRE(sess.session_id);
+	REQUIRE(sess.id);
 	REQUIRE(sess.hint == 0);
 	REQUIRE(sess.resources);
 	REQUIRE(sess.priv == nullptr);
@@ -140,34 +140,34 @@ TEST_CASE("exec_with_resource", "[ops_exec]")
 	REQUIRE(ret == VACCEL_OK);
 
 	struct vaccel_session sess;
-	sess.session_id = 0;
+	sess.id = 0;
 	sess.priv = nullptr;
 	sess.resources = nullptr;
 	sess.hint = 1;
 
 	struct vaccel_session sess2;
-	sess2.session_id = 0;
+	sess2.id = 0;
 	sess2.priv = nullptr;
 	sess2.resources = nullptr;
 	sess2.hint = 1;
 
 	ret = vaccel_session_init(&sess, 0);
 	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(sess.session_id);
+	REQUIRE(sess.id);
 	REQUIRE(sess.hint == 0);
 	REQUIRE(sess.resources);
 	REQUIRE(sess.priv == nullptr);
 
 	ret = vaccel_session_init(&sess2, 0);
 	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(sess2.session_id);
+	REQUIRE(sess2.id);
 	REQUIRE(sess2.hint == 0);
 	REQUIRE(sess2.resources);
 	REQUIRE(sess2.priv == nullptr);
 
 	ret = vaccel_resource_register(&object, &sess);
 	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(sess.session_id);
+	REQUIRE(sess.id);
 	REQUIRE(sess.hint == 0);
 	REQUIRE_FALSE(list_empty(&sess.resources->registered[object.type]));
 	REQUIRE(sess.priv == nullptr);
@@ -175,7 +175,7 @@ TEST_CASE("exec_with_resource", "[ops_exec]")
 
 	ret = vaccel_resource_register(&object2, &sess2);
 	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(sess2.session_id);
+	REQUIRE(sess2.id);
 	REQUIRE(sess2.hint == 0);
 	REQUIRE_FALSE(list_empty(&sess2.resources->registered[object2.type]));
 	REQUIRE(sess2.priv == nullptr);
@@ -199,7 +199,7 @@ TEST_CASE("exec_with_resource", "[ops_exec]")
 	ret = vaccel_exec_with_resource(&sess, &object, "mytestfunc", read, 1,
 					write, 1);
 	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(sess.session_id);
+	REQUIRE(sess.id);
 	REQUIRE(sess.hint == 0);
 	REQUIRE_FALSE(list_empty(&sess.resources->registered[object.type]));
 	REQUIRE(sess.priv == nullptr);
@@ -208,7 +208,7 @@ TEST_CASE("exec_with_resource", "[ops_exec]")
 	ret = vaccel_exec_with_resource(&sess2, &object2, "mytestfunc", read_2,
 					1, write_2, 1);
 	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(sess2.session_id);
+	REQUIRE(sess2.id);
 	REQUIRE(sess2.hint == 0);
 	REQUIRE_FALSE(list_empty(&sess2.resources->registered[object2.type]));
 	REQUIRE(sess2.priv == nullptr);
@@ -216,14 +216,14 @@ TEST_CASE("exec_with_resource", "[ops_exec]")
 
 	ret = vaccel_resource_unregister(&object, &sess);
 	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(sess.session_id);
+	REQUIRE(sess.id);
 	REQUIRE(sess.hint == 0);
 	REQUIRE(list_empty(&sess.resources->registered[object.type]));
 	REQUIRE(sess.priv == nullptr);
 
 	ret = vaccel_resource_unregister(&object2, &sess2);
 	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(sess2.session_id);
+	REQUIRE(sess2.id);
 	REQUIRE(sess2.hint == 0);
 	REQUIRE(list_empty(&sess2.resources->registered[object2.type]));
 	REQUIRE(sess2.priv == nullptr);

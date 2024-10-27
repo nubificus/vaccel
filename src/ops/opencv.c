@@ -15,8 +15,9 @@ int vaccel_opencv(struct vaccel_session *sess, struct vaccel_arg *read,
 		return VACCEL_EINVAL;
 
 	vaccel_debug(
-		"session:%u Looking for plugin implementing the Optical Flow operation",
-		sess->session_id);
+		"session:%" PRId64
+		" Looking for plugin implementing the Optical Flow operation",
+		sess->id);
 
 	//Get implementation
 	int (*plugin_op)() = get_plugin_op(VACCEL_OPENCV, sess->hint);

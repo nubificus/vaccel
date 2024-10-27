@@ -193,7 +193,7 @@ int vaccel_torch_jitload_forward(struct vaccel_session *sess,
 	if (!sess)
 		return VACCEL_EINVAL;
 	vaccel_debug("session:%u Looking for plugin implementing torch_jitload_forward operation",
-						sess->session_id);
+						sess->id);
 	int (*plugin_op)() = get_plugin_op(VACCEL_TORCH_JITLOAD_FORWARD);
 	if (!plugin_op)
 		return VACCEL_ENOTSUP;
@@ -214,12 +214,14 @@ int vaccel_torch_jitload_forward(struct vaccel_session *sess,
 		return VACCEL_EINVAL;
 
 	vaccel_debug(
-		"session:%u Looking for plugin implementing torch_jitload_forward operation",
-		sess->session_id);
+		"session:%" PRId64
+		" Looking for plugin implementing torch_jitload_forward operation",
+		sess->id);
 
 	if (!vaccel_session_has_resource(sess, model)) {
-		vaccel_error("Resource %u is not registered to session %u",
-			     model->id, sess->session_id);
+		vaccel_error("Resource %" PRId64
+			     " is not registered to session %" PRId64 "",
+			     model->id, sess->id);
 		return VACCEL_EPERM;
 	}
 
@@ -247,9 +249,9 @@ int vaccel_torch_sgemm(struct vaccel_session *sess,
 	if (!sess)
 		return VACCEL_EINVAL;
 
-	vaccel_debug(
-		"session:%u Looking for plugin implementing torch sgemm operation",
-		sess->session_id);
+	vaccel_debug("session:%" PRId64
+		     " Looking for plugin implementing torch sgemm operation",
+		     sess->id);
 	int (*plugin_op)(struct vaccel_session *, struct vaccel_torch_tensor **,
 			 struct vaccel_torch_tensor **,
 			 struct vaccel_torch_tensor **, int, int, int,

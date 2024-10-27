@@ -28,12 +28,12 @@ struct {
 	struct vaccel_session *running_sessions[VACCEL_SESSIONS_MAX];
 } sessions;
 
-static uint32_t get_sess_id(void)
+static vaccel_id_t get_sess_id(void)
 {
 	return id_pool_get(&sessions.ids);
 }
 
-static void put_sess_id(uint32_t id)
+static void put_sess_id(vaccel_id_t id)
 {
 	id_pool_release(&sessions.ids, id);
 }
@@ -109,8 +109,9 @@ int session_unregister_resource(struct vaccel_session *sess,
 		find_registered_resource(sess, res);
 
 	if (!container) {
-		vaccel_error("Resource %u not registered with session %" PRIu32,
-			     res->id, sess->session_id);
+		vaccel_error("Resource %" PRId64
+			     " not registered with session %" PRId64,
+			     res->id, sess->id);
 		return VACCEL_EINVAL;
 	}
 
@@ -129,7 +130,7 @@ bool vaccel_session_has_resource(const struct vaccel_session *sess,
 
 static int session_initialize_resources(struct vaccel_session *sess)
 {
-	if (!sess || !sess->session_id) {
+	if (!sess || !sess->id) {
 		vaccel_error(
 			"BUG! Trying to create rundir for invalid session");
 		return VACCEL_EINVAL;
@@ -140,17 +141,16 @@ static int session_initialize_resources(struct vaccel_session *sess)
 		return VACCEL_ENOMEM;
 
 	char sess_dir[NAME_MAX];
-	int ret = snprintf(sess_dir, NAME_MAX, "session.%" PRIu32,
-			   sess->session_id);
+	int ret = snprintf(sess_dir, NAME_MAX, "session.%" PRId64, sess->id);
 	if (ret < 0) {
-		vaccel_error("Could not generate session %" PRIu32
+		vaccel_error("Could not generate session %" PRId64
 			     " rundir name",
-			     sess->session_id);
+			     sess->id);
 		goto free;
 	}
 	if (ret == NAME_MAX) {
-		vaccel_error("Session %" PRIu32 " rundir name too long",
-			     sess->session_id);
+		vaccel_error("Session %" PRId64 " rundir name too long",
+			     sess->id);
 		ret = VACCEL_ENAMETOOLONG;
 		goto free;
 	}
@@ -159,19 +159,19 @@ static int session_initialize_resources(struct vaccel_session *sess)
 				   sess_dir, NULL);
 	if (ret) {
 		vaccel_error(
-			"Could not generate rundir path for session %" PRIu32,
-			sess->session_id);
+			"Could not generate rundir path for session %" PRId64,
+			sess->id);
 		goto free;
 	}
 
 	ret = fs_dir_create(res->rundir);
 	if (ret) {
-		vaccel_error("Could not create rundir for session %" PRIu32,
-			     sess->session_id);
+		vaccel_error("Could not create rundir for session %" PRId64,
+			     sess->id);
 		goto free;
 	}
 
-	vaccel_debug("New rundir for session %" PRIu32 ": %s", sess->session_id,
+	vaccel_debug("New rundir for session %" PRId64 ": %s", sess->id,
 		     res->rundir);
 
 	sess->resources = res;
@@ -210,8 +210,8 @@ static int session_cleanup_resources(struct vaccel_session *sess)
 	int ret = fs_dir_remove(sess->resources->rundir);
 	if (ret)
 		vaccel_warn(
-			"Could not cleanup rundir '%s' for session %" PRIu32,
-			sess->resources->rundir, sess->session_id);
+			"Could not cleanup rundir '%s' for session %" PRId64,
+			sess->resources->rundir, sess->id);
 
 	free(sess->resources);
 	sess->resources = NULL;
@@ -230,18 +230,23 @@ int vaccel_session_init(struct vaccel_session *sess, uint32_t flags)
 	if (!sessions.initialized)
 		return VACCEL_ESESS;
 
+	sess->id = get_sess_id();
+	if (!sess->id)
+		return VACCEL_ESESS;
+
 	virtio = get_virtio_plugin();
 	if ((flags & VACCEL_REMOTE) || (get_nr_plugins() == 1 && virtio)) {
 		if (!virtio) {
 			vaccel_error(
 				"Could not initialize VirtIO session, no VirtIO Plugin loaded yet");
-			return VACCEL_ENOTSUP;
+			ret = VACCEL_ENOTSUP;
+			goto release_id;
 		}
 
 		ret = virtio->info->sess_init(sess, flags & (~VACCEL_REMOTE));
 		if (ret) {
 			vaccel_error("Could not create host-side session");
-			return ret;
+			goto release_id;
 		}
 
 		sess->is_virtio = true;
@@ -249,22 +254,19 @@ int vaccel_session_init(struct vaccel_session *sess, uint32_t flags)
 		sess->is_virtio = false;
 	}
 
-	uint32_t sess_id = get_sess_id();
-
-	if (!sess_id)
-		return VACCEL_ESESS;
-
-	sess->session_id = sess_id;
-
 	ret = session_initialize_resources(sess);
 	if (ret)
 		goto cleanup_session;
 
 	sess->hint = flags;
+	sessions.running_sessions[sess->id - 1] = sess;
 
-	vaccel_debug("session:%" PRIu32 " New session", sess->session_id);
-
-	sessions.running_sessions[sess->session_id - 1] = sess;
+	if (sess->is_virtio)
+		vaccel_debug("session:%" PRId64
+			     " Initialized with remote (id: %" PRId64 ")",
+			     sess->id, sess->remote_id);
+	else
+		vaccel_debug("session:%" PRId64 " Initialized", sess->id);
 
 	return VACCEL_OK;
 
@@ -275,8 +277,8 @@ cleanup_session:
 				"BUG: Could not cleanup host-side session");
 		}
 	}
-
-	put_sess_id(sess->session_id);
+release_id:
+	put_sess_id(sess->id);
 
 	return ret;
 }
@@ -310,8 +312,8 @@ int vaccel_session_update(struct vaccel_session *sess, uint32_t flags)
 		sess->hint = flags;
 	}
 
-	vaccel_debug("session:%" PRIu32 " update with flags: %u",
-		     sess->session_id, flags);
+	vaccel_debug("session:%" PRId64 " Updated with flags: %u", sess->id,
+		     flags);
 
 	return VACCEL_OK;
 }
@@ -349,11 +351,11 @@ int vaccel_session_free(struct vaccel_session *sess)
 		return ret;
 	}
 
-	put_sess_id(sess->session_id);
+	put_sess_id(sess->id);
 
-	sessions.running_sessions[sess->session_id - 1] = NULL;
+	sessions.running_sessions[sess->id - 1] = NULL;
 
-	vaccel_debug("session:%" PRIu32 " Free session", sess->session_id);
+	vaccel_debug("session:%" PRId64 " Freed", sess->id);
 
 	return VACCEL_OK;
 }

@@ -60,13 +60,13 @@ TEST_CASE("sgemm", "[ops_blas]")
 
 	// Initialize a VAccel session
 	struct vaccel_session session;
-	session.session_id = 1;
+	session.id = 1;
 	session.resources = nullptr;
 	session.priv = nullptr;
 
 	int ret = vaccel_session_init(&session, 0);
 	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(session.session_id);
+	REQUIRE(session.id);
 	REQUIRE(session.hint == 0);
 	REQUIRE(session.resources);
 	REQUIRE(session.priv == nullptr);
@@ -81,7 +81,7 @@ TEST_CASE("sgemm", "[ops_blas]")
 	// Free the VAccel session
 	ret = vaccel_session_free(&session);
 
-	REQUIRE(session.session_id);
+	REQUIRE(session.id);
 	REQUIRE(session.hint == 0);
 	REQUIRE(session.resources == nullptr);
 	REQUIRE(session.priv == nullptr);

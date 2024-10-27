@@ -27,7 +27,7 @@ int main(int argc, char *argv[])
 		vaccel_error("Could not create model resource");
 		return ret;
 	}
-	printf("Created new model %lld\n", model.id);
+	printf("Created new model %" PRId64 "\n", model.id);
 
 	ret = vaccel_session_init(&vsess, 0);
 	if (ret) {
@@ -35,7 +35,7 @@ int main(int argc, char *argv[])
 		goto destroy_resource;
 	}
 
-	printf("Initialized vAccel session %u\n", vsess.session_id);
+	printf("Initialized vAccel session %" PRId64 "\n", vsess.id);
 
 	ret = vaccel_resource_register(&model, &vsess);
 	if (ret) {
