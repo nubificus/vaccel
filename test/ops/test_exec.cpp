@@ -53,7 +53,7 @@ TEST_CASE("exec", "[ops_exec]")
 	REQUIRE(sess.resources);
 	REQUIRE(sess.priv == nullptr);
 
-	ret = vaccel_session_free(&sess);
+	ret = vaccel_session_release(&sess);
 	REQUIRE(ret == VACCEL_OK);
 
 	free(plugin_path);
@@ -103,7 +103,7 @@ TEST_CASE("exec_generic", "[ops_exec]")
 	REQUIRE(sess.resources);
 	REQUIRE(sess.priv == nullptr);
 
-	ret = vaccel_session_free(&sess);
+	ret = vaccel_session_release(&sess);
 	REQUIRE(ret == VACCEL_OK);
 
 	free(plugin_path);
@@ -234,10 +234,10 @@ TEST_CASE("exec_with_resource", "[ops_exec]")
 	ret = vaccel_resource_release(&object2);
 	REQUIRE(ret == VACCEL_OK);
 
-	ret = vaccel_session_free(&sess);
+	ret = vaccel_session_release(&sess);
 	REQUIRE(ret == VACCEL_OK);
 
-	ret = vaccel_session_free(&sess2);
+	ret = vaccel_session_release(&sess2);
 	REQUIRE(ret == VACCEL_OK);
 
 	free(buff);

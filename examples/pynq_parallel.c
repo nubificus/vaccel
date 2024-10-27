@@ -43,7 +43,7 @@ int main()
 	}
 
 close_session:
-	if (vaccel_session_free(&sess) != VACCEL_OK) {
+	if (vaccel_session_release(&sess) != VACCEL_OK) {
 		fprintf(stderr, "Could not clear session\n");
 		return 1;
 	}

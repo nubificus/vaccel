@@ -99,7 +99,7 @@ unregister_resource:
 	if (vaccel_resource_unregister(&model, &vsess))
 		fprintf(stderr, "Could not unregister model with session\n");
 close_session:
-	if (vaccel_session_free(&vsess))
+	if (vaccel_session_release(&vsess))
 		fprintf(stderr, "Could not clear session\n");
 destroy_resource:
 	vaccel_resource_release(&model);

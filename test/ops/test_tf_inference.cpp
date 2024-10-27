@@ -121,7 +121,7 @@ TEST_CASE("tf_inference", "[ops_tf]")
 	ret = vaccel_resource_unregister(&model, &vsess);
 	REQUIRE(ret == VACCEL_OK);
 
-	ret = vaccel_session_free(&vsess);
+	ret = vaccel_session_release(&vsess);
 	REQUIRE(ret == VACCEL_OK);
 
 	ret = vaccel_resource_release(&model);

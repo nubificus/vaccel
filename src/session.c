@@ -57,10 +57,12 @@ int sessions_cleanup(void)
 	if (!sessions.initialized)
 		return VACCEL_OK;
 
-	id_pool_destroy(&sessions.ids);
+	for (int i = 0; i < VACCEL_SESSIONS_MAX; ++i)
+		vaccel_session_release(sessions.running_sessions[i]);
+
 	sessions.initialized = false;
 
-	return VACCEL_OK;
+	return id_pool_destroy(&sessions.ids);
 }
 
 int session_register_resource(struct vaccel_session *sess,
@@ -243,7 +245,8 @@ int vaccel_session_init(struct vaccel_session *sess, uint32_t flags)
 			goto release_id;
 		}
 
-		ret = virtio->info->sess_init(sess, flags & (~VACCEL_REMOTE));
+		ret = virtio->info->session_init(sess,
+						 flags & (~VACCEL_REMOTE));
 		if (ret) {
 			vaccel_error("Could not create host-side session");
 			goto release_id;
@@ -272,7 +275,7 @@ int vaccel_session_init(struct vaccel_session *sess, uint32_t flags)
 
 cleanup_session:
 	if (sess->is_virtio) {
-		if (virtio->info->sess_free(sess)) {
+		if (virtio->info->session_release(sess)) {
 			vaccel_error(
 				"BUG: Could not cleanup host-side session");
 		}
@@ -296,7 +299,7 @@ int vaccel_session_update(struct vaccel_session *sess, uint32_t flags)
 	if (sess->is_virtio) {
 		struct vaccel_plugin *virtio = get_virtio_plugin();
 		if (virtio) {
-			int ret = virtio->info->sess_update(
+			int ret = virtio->info->session_update(
 				sess, flags & (~VACCEL_REMOTE));
 			if (ret) {
 				vaccel_error(
@@ -318,7 +321,7 @@ int vaccel_session_update(struct vaccel_session *sess, uint32_t flags)
 	return VACCEL_OK;
 }
 
-int vaccel_session_free(struct vaccel_session *sess)
+int vaccel_session_release(struct vaccel_session *sess)
 {
 	int ret;
 
@@ -333,7 +336,7 @@ int vaccel_session_free(struct vaccel_session *sess)
 	if (sess->is_virtio) {
 		struct vaccel_plugin *virtio = get_virtio_plugin();
 		if (virtio) {
-			ret = virtio->info->sess_free(sess);
+			ret = virtio->info->session_release(sess);
 			if (ret) {
 				vaccel_warn(
 					"Could not cleanup host-side session");
@@ -355,7 +358,7 @@ int vaccel_session_free(struct vaccel_session *sess)
 
 	sessions.running_sessions[sess->id - 1] = NULL;
 
-	vaccel_debug("session:%" PRId64 " Freed", sess->id);
+	vaccel_debug("session:%" PRId64 " Released", sess->id);
 
 	return VACCEL_OK;
 }
@@ -377,8 +380,8 @@ int vaccel_sess_update(struct vaccel_session *sess, uint32_t flags)
 int vaccel_sess_free(struct vaccel_session *sess)
 {
 	vaccel_warn("%s%s", "vaccel_sess_free() is deprecated. ",
-		    "Please use vaccel_session_free() instead.");
-	return vaccel_session_free(sess);
+		    "Please use vaccel_session_release() instead.");
+	return vaccel_session_release(sess);
 }
 
 bool vaccel_sess_has_resource(struct vaccel_session *sess,

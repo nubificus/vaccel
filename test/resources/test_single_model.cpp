@@ -56,7 +56,7 @@ TEST_CASE("single_model_from_memory", "[resources_single_model]")
 	ret = vaccel_resource_release(&model);
 	REQUIRE(ret == VACCEL_OK);
 
-	ret = vaccel_session_free(&sess);
+	ret = vaccel_session_release(&sess);
 	REQUIRE(ret == VACCEL_OK);
 
 	free(ptr);
@@ -88,7 +88,7 @@ TEST_CASE("single_model_from_file", "[resources_single_model]")
 	ret = vaccel_resource_release(&model);
 	REQUIRE(ret == VACCEL_OK);
 
-	ret = vaccel_session_free(&sess);
+	ret = vaccel_session_release(&sess);
 	REQUIRE(ret == VACCEL_OK);
 
 	free(path);

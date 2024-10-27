@@ -121,7 +121,7 @@ int main(int argc, char *argv[])
 		fwrite(C, sizeof(float), (unsigned long)(m * n), data_fp);
 
 out:
-	vaccel_session_free(&session);
+	vaccel_session_release(&session);
 free_out_3:
 	free(C);
 free_out_2:

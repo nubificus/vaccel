@@ -145,7 +145,7 @@ unregister_session:
 	if (vaccel_resource_unregister(&model, &sess) != VACCEL_OK)
 		fprintf(stderr, "Could not unregister model with session\n");
 close_session:
-	if (vaccel_session_free(&sess) != VACCEL_OK)
+	if (vaccel_session_release(&sess) != VACCEL_OK)
 		fprintf(stderr, "Could not clear session\n");
 destroy_resource:
 	free(run_options.data);

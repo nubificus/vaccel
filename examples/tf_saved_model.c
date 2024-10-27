@@ -23,7 +23,7 @@ int create_session(struct vaccel_session *sess)
 
 int destroy_session(struct vaccel_session *sess)
 {
-	vaccel_session_free(sess);
+	vaccel_session_release(sess);
 	return VACCEL_OK;
 }
 

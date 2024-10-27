@@ -24,6 +24,6 @@ TEST_CASE("noop", "[ops_noop]")
 	ret = vaccel_noop(&sess);
 	REQUIRE(ret == VACCEL_OK);
 
-	ret = vaccel_session_free(&sess);
+	ret = vaccel_session_release(&sess);
 	REQUIRE(ret == VACCEL_OK);
 }

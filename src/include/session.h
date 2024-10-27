@@ -17,6 +17,9 @@ struct vaccel_session {
 	/* id of the session */
 	vaccel_id_t id;
 
+	/* id of the remote session */
+	vaccel_id_t remote_id;
+
 	/* session-specific resources */
 	struct session_resources *resources;
 
@@ -28,9 +31,6 @@ struct vaccel_session {
 
 	/* local or virtio option */
 	bool is_virtio;
-
-	/* id of the remote session */
-	vaccel_id_t remote_id;
 };
 
 /* Initialize a new session with the runtime */
@@ -40,7 +40,7 @@ int vaccel_session_init(struct vaccel_session *sess, uint32_t flags);
 int vaccel_session_update(struct vaccel_session *sess, uint32_t flags);
 
 /* Tear down a session */
-int vaccel_session_free(struct vaccel_session *sess);
+int vaccel_session_release(struct vaccel_session *sess);
 
 /* Check if a resource is registered with a session */
 bool vaccel_session_has_resource(const struct vaccel_session *sess,

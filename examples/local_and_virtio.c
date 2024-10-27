@@ -109,12 +109,12 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	if (vaccel_session_free(&local_sess)) {
+	if (vaccel_session_release(&local_sess)) {
 		vaccel_error("Could not close session");
 		exit(1);
 	}
 
-	if (vaccel_session_free(&virtio_sess)) {
+	if (vaccel_session_release(&virtio_sess)) {
 		vaccel_error("Could not close session");
 		exit(1);
 	}
