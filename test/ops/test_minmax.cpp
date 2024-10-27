@@ -76,7 +76,7 @@ TEST_CASE("min_max", "[ops_minmax]")
 		((double)(t1.tv_sec - t0.tv_sec) * 1000.0) +
 			((double)(t1.tv_nsec - t0.tv_nsec) / 1.0e6));
 
-	ret = vaccel_session_free(&session);
+	ret = vaccel_session_release(&session);
 	REQUIRE(session.id);
 	REQUIRE(session.hint == 0);
 	REQUIRE(session.resources == nullptr);
@@ -163,7 +163,7 @@ TEST_CASE("min_max_generic", "[ops_minmax]")
 		((double)(t1.tv_sec - t0.tv_sec) * 1000.0) +
 			((double)(t1.tv_nsec - t0.tv_nsec) / 1.0e6));
 
-	ret = vaccel_session_free(&session);
+	ret = vaccel_session_release(&session);
 	REQUIRE(session.id);
 	REQUIRE(session.hint == 0);
 	REQUIRE(session.resources == nullptr);

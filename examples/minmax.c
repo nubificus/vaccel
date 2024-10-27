@@ -84,7 +84,7 @@ int main(int argc, char *argv[])
 		max, time_diff_usec(t0, t1) / 10e3);
 
 close_sess:
-	vaccel_session_free(&session);
+	vaccel_session_release(&session);
 free_out:
 	free(outdata);
 free_in:

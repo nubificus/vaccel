@@ -79,7 +79,7 @@ TEST_CASE("sgemm", "[ops_blas]")
 	// fwrite(C, sizeof(float), M * N, data_fp);
 
 	// Free the VAccel session
-	ret = vaccel_session_free(&session);
+	ret = vaccel_session_release(&session);
 
 	REQUIRE(session.id);
 	REQUIRE(session.hint == 0);

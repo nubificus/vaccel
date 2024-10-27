@@ -62,7 +62,7 @@ int main(int argc, char *argv[])
 		fwrite(C, sizeof(float), (unsigned long)(M * N), data_fp);
 
 out:
-	vaccel_session_free(&session);
+	vaccel_session_release(&session);
 out_close:
 	if (data_fp)
 		fclose(data_fp);

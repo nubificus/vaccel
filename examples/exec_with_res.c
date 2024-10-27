@@ -133,7 +133,7 @@ close_session:
 		exit(1);
 	}
 
-	ret = vaccel_session_free(&sess);
+	ret = vaccel_session_release(&sess);
 	if (ret) {
 		vaccel_error("Could not close session");
 		exit(1);

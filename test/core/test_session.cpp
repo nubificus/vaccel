@@ -6,7 +6,7 @@
  * 1) sessions_bootstrap()
  * 2) vaccel_session_init()
  * 3) vaccel_session_update()
- * 4) vaccel_session_free()
+ * 4) vaccel_session_release()
  * 5) session_register_resource()
  * 6) session_unregister_resource()
  * 7) vaccel_session_has_resource)()
@@ -32,7 +32,7 @@ enum { MAX_VACCEL_SESSIONS = 1024 };
 // Mock functions for session initialization and cleanup
 auto mock_sess_init(struct vaccel_session *sess, uint32_t flags) -> int
 {
-	(void)sess;
+	sess->remote_id = 1;
 	(void)flags;
 	return 0;
 }
@@ -110,14 +110,14 @@ TEST_CASE("session_init", "[session]")
 	REQUIRE(sess.resources);
 	REQUIRE(sess.priv == nullptr);
 
-	ret = vaccel_session_free(nullptr);
+	ret = vaccel_session_release(nullptr);
 	REQUIRE(ret == VACCEL_EINVAL);
 	REQUIRE(sess.hint == 1);
 	REQUIRE(sess.id);
 	REQUIRE(sess.resources);
 	REQUIRE(sess.priv == nullptr);
 
-	REQUIRE(vaccel_session_free(&sess) == VACCEL_OK);
+	REQUIRE(vaccel_session_release(&sess) == VACCEL_OK);
 	REQUIRE(sess.id);
 	REQUIRE(sess.hint == 1);
 	REQUIRE(sess.resources == nullptr);
@@ -157,7 +157,7 @@ TEST_CASE("session_update_and_free", "[session]")
 	REQUIRE(sess.resources);
 	REQUIRE(sess.priv == nullptr);
 
-	ret = vaccel_session_free(nullptr);
+	ret = vaccel_session_release(nullptr);
 	REQUIRE(ret == EINVAL);
 	REQUIRE(sess.id);
 	REQUIRE(sess.hint == 2);
@@ -165,7 +165,7 @@ TEST_CASE("session_update_and_free", "[session]")
 	REQUIRE(sess.priv == nullptr);
 
 	// Test session cleanup
-	REQUIRE(vaccel_session_free(&sess) == VACCEL_OK);
+	REQUIRE(vaccel_session_release(&sess) == VACCEL_OK);
 	REQUIRE(sess.id);
 	REQUIRE(sess.hint == 2);
 	REQUIRE(sess.resources == nullptr);
@@ -244,7 +244,7 @@ TEST_CASE("session_unregister_null", "[session]")
 	check_bool = vaccel_session_has_resource(&sess, &res);
 	REQUIRE(!check_bool);
 
-	ret = vaccel_session_free(&sess);
+	ret = vaccel_session_release(&sess);
 	REQUIRE(ret == VACCEL_OK);
 
 	REQUIRE(sess.id);
@@ -299,7 +299,7 @@ TEST_CASE("session_ops", "[session]")
 	REQUIRE(list_empty(&test_sess.resources->registered[test_res.type]));
 	REQUIRE(test_sess.priv == nullptr);
 
-	ret = vaccel_session_free(&test_sess);
+	ret = vaccel_session_release(&test_sess);
 	REQUIRE(VACCEL_OK == ret);
 	REQUIRE(test_sess.id);
 	REQUIRE(test_sess.hint == 2);
@@ -327,9 +327,9 @@ TEST_CASE("session_virtio", "[session]")
 	// Create a mock plugin
 	struct vaccel_plugin_info v_mock_info;
 	v_mock_info.name = "fake_virtio";
-	v_mock_info.sess_init = mock_sess_init;
-	v_mock_info.sess_free = mock_sess_free;
-	v_mock_info.sess_update = mock_sess_update;
+	v_mock_info.session_init = mock_sess_init;
+	v_mock_info.session_release = mock_sess_free;
+	v_mock_info.session_update = mock_sess_update;
 	v_mock_info.resource_register = mock_resource_register;
 	v_mock_info.resource_unregister = mock_resource_unregister;
 
@@ -350,7 +350,7 @@ TEST_CASE("session_virtio", "[session]")
 	ret = session_unregister_resource(&test_sess, &test_res);
 	REQUIRE(VACCEL_OK == ret);
 
-	ret = vaccel_session_free(&test_sess);
+	ret = vaccel_session_release(&test_sess);
 	REQUIRE(VACCEL_OK == ret);
 
 	// Ensure that the VirtIO plugin was called the expected number of times

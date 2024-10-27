@@ -49,7 +49,7 @@ int main(int argc, char *argv[])
 	printf("output(2x%d): %d\n", input, output);
 
 close_session:
-	if (vaccel_session_free(&sess) != VACCEL_OK) {
+	if (vaccel_session_release(&sess) != VACCEL_OK) {
 		vaccel_error("Could not clear session");
 		return 1;
 	}

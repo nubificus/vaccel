@@ -167,7 +167,7 @@ close_session:
 		exit(1);
 	}
 
-	if (vaccel_session_free(&sess) != VACCEL_OK) {
+	if (vaccel_session_release(&sess) != VACCEL_OK) {
 		vaccel_error("Could not clear session");
 		return 1;
 	}

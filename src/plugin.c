@@ -145,7 +145,7 @@ free_extra:
 
 static int is_virtio_plugin(const struct vaccel_plugin_info *pinfo)
 {
-	return pinfo->sess_init && pinfo->sess_free;
+	return pinfo->session_init && pinfo->session_release;
 }
 
 int register_plugin(struct vaccel_plugin *plugin)

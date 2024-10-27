@@ -59,8 +59,8 @@ TEST_CASE("get_all_available_functions", "[core_plugin]")
 	plugin.info->init = init;
 	plugin.info->fini = fini;
 	plugin.info->is_virtio = false;
-	plugin.info->sess_init = nullptr;
-	plugin.info->sess_free = nullptr;
+	plugin.info->session_init = nullptr;
+	plugin.info->session_release = nullptr;
 	plugin.info->type = VACCEL_PLUGIN_GENERIC;
 
 	vaccel_op operation;
@@ -105,8 +105,8 @@ TEST_CASE("register_multiple_functions", "[core_plugin]")
 	plugin.info->init = init;
 	plugin.info->fini = fini;
 	plugin.info->is_virtio = false;
-	plugin.info->sess_init = nullptr;
-	plugin.info->sess_free = nullptr;
+	plugin.info->session_init = nullptr;
+	plugin.info->session_release = nullptr;
 	plugin.info->type = VACCEL_PLUGIN_GENERIC;
 
 	size_t operation_array_size = 2;
@@ -180,8 +180,8 @@ TEST_CASE("register_plugin_ops", "[core_plugin]")
 	plugin.info->init = init;
 	plugin.info->fini = fini;
 	plugin.info->is_virtio = false;
-	plugin.info->sess_init = nullptr;
-	plugin.info->sess_free = nullptr;
+	plugin.info->session_init = nullptr;
+	plugin.info->session_release = nullptr;
 	plugin.info->type = VACCEL_PLUGIN_GENERIC;
 
 	vaccel_op operation;
@@ -268,8 +268,8 @@ TEST_CASE("register_plugin_vaccel_versions", "[core_plugin]")
 	plugin.info->init = init;
 	plugin.info->fini = fini;
 	plugin.info->is_virtio = false;
-	plugin.info->sess_init = nullptr;
-	plugin.info->sess_free = nullptr;
+	plugin.info->session_init = nullptr;
+	plugin.info->session_release = nullptr;
 	plugin.info->type = VACCEL_PLUGIN_GENERIC;
 
 	vaccel_op operation;
