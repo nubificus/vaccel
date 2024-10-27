@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "id.h"
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -14,7 +15,7 @@ struct vaccel_resource;
 
 struct vaccel_session {
 	/* id of the session */
-	uint32_t session_id;
+	vaccel_id_t id;
 
 	/* session-specific resources */
 	struct session_resources *resources;
@@ -29,7 +30,7 @@ struct vaccel_session {
 	bool is_virtio;
 
 	/* id of the remote session */
-	uint32_t remote_id;
+	vaccel_id_t remote_id;
 };
 
 /* Initialize a new session with the runtime */

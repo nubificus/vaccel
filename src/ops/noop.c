@@ -19,8 +19,8 @@ int vaccel_noop(struct vaccel_session *sess)
 	if (!sess)
 		return VACCEL_EINVAL;
 
-	vaccel_debug("session:%u Looking for plugin implementing noop",
-		     sess->session_id);
+	vaccel_debug("session:%" PRId64 " Looking for plugin implementing noop",
+		     sess->id);
 
 	vaccel_prof_region_start(&noop_op_stats);
 

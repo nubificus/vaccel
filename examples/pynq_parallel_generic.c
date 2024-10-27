@@ -27,7 +27,7 @@ int main()
 		return 1;
 	}
 
-	printf("Initialized session with id: %u\n", sess.session_id);
+	printf("Initialized session with id: %" PRId64 "\n", sess.id);
 
 	enum vaccel_op_type op_type = VACCEL_F_PARALLEL;
 	struct vaccel_arg read[3] = {

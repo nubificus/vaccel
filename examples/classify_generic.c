@@ -30,7 +30,7 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	printf("Initialized session with id: %u\n", sess.session_id);
+	printf("Initialized session with id: %" PRId64 "\n", sess.id);
 
 	ret = fs_file_read(argv[1], (void **)&image, &image_size);
 	if (ret)

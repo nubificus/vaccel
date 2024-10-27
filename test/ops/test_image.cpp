@@ -35,14 +35,14 @@ TEST_CASE("classify", "[ops_image]")
 	char out_imagename[512];
 
 	struct vaccel_session sess;
-	sess.session_id = 0;
+	sess.id = 0;
 	sess.priv = nullptr;
 	sess.resources = nullptr;
 	sess.hint = 1;
 
 	ret = vaccel_session_init(&sess, 0);
 	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(sess.session_id);
+	REQUIRE(sess.id);
 	REQUIRE(sess.hint == 0);
 	REQUIRE(sess.resources);
 	REQUIRE(sess.priv == nullptr);
@@ -77,14 +77,14 @@ TEST_CASE("depth", "[ops_image]")
 	char out_imagename[512];
 
 	struct vaccel_session sess;
-	sess.session_id = 0;
+	sess.id = 0;
 	sess.priv = nullptr;
 	sess.resources = nullptr;
 	sess.hint = 1;
 
 	ret = vaccel_session_init(&sess, 0);
 	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(sess.session_id);
+	REQUIRE(sess.id);
 	REQUIRE(sess.hint == 0);
 	REQUIRE(sess.resources);
 	REQUIRE(sess.priv == nullptr);
@@ -115,14 +115,14 @@ TEST_CASE("detect", "[ops_image]")
 	char out_imagename[512];
 
 	struct vaccel_session sess;
-	sess.session_id = 0;
+	sess.id = 0;
 	sess.priv = nullptr;
 	sess.resources = nullptr;
 	sess.hint = 1;
 
 	ret = vaccel_session_init(&sess, 0);
 	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(sess.session_id);
+	REQUIRE(sess.id);
 	REQUIRE(sess.hint == 0);
 	REQUIRE(sess.resources);
 	REQUIRE(sess.priv == nullptr);
@@ -154,14 +154,14 @@ TEST_CASE("pose", "[ops_image]")
 	char out_imagename[512];
 
 	struct vaccel_session sess;
-	sess.session_id = 1;
+	sess.id = 1;
 	sess.priv = nullptr;
 	sess.resources = nullptr;
 	sess.hint = 1;
 
 	ret = vaccel_session_init(&sess, 0);
 	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(sess.session_id == 1);
+	REQUIRE(sess.id == 1);
 	REQUIRE(sess.hint == 0);
 	REQUIRE(sess.resources);
 	REQUIRE(sess.priv == nullptr);
@@ -178,7 +178,7 @@ TEST_CASE("pose", "[ops_image]")
 
 	ret = vaccel_session_free(&sess);
 	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(sess.session_id == 1);
+	REQUIRE(sess.id == 1);
 	REQUIRE(sess.hint == 0);
 	REQUIRE(sess.resources == nullptr);
 	REQUIRE(sess.priv == nullptr);
@@ -196,14 +196,14 @@ TEST_CASE("segmentation", "[ops_image]")
 	char out_imagename[512];
 
 	struct vaccel_session sess;
-	sess.session_id = 0;
+	sess.id = 0;
 	sess.priv = nullptr;
 	sess.resources = nullptr;
 	sess.hint = 1;
 
 	ret = vaccel_session_init(&sess, 0);
 	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(sess.session_id);
+	REQUIRE(sess.id);
 	REQUIRE(sess.hint == 0);
 	REQUIRE(sess.resources);
 	REQUIRE(sess.priv == nullptr);

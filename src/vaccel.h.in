@@ -25,7 +25,7 @@
 #include "session.h"
 #include "resource.h"
 #include "file.h"
-#include "vaccel_id.h"
+#include "id.h"
 #include "vaccel_prof.h"
 
 const char *vaccel_rundir(void);

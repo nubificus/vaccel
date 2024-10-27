@@ -21,7 +21,7 @@ vaccel_public_headers = files([
   'vaccel_args.h',
   'resource.h',
   'file.h',
-  'vaccel_id.h',
+  'id.h',
   'vaccel_prof.h',
   'list.h',
   'misc.h',

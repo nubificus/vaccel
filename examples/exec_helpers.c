@@ -37,15 +37,15 @@ int main(int argc, char *argv[])
 		vaccel_error("Could not initialize session");
 		return 1;
 	}
-	printf("Initialized session with id: %u\n", sess.session_id);
+	printf("Initialized session with id: %" PRId64 "\n", sess.id);
 	ret = vaccel_resource_register(&object, &sess);
 	if (ret) {
 		vaccel_error("Could register shared object to session");
 		return 1;
 	}
 
-	printf("Registered resource %llu to session %u\n", object.id,
-	       sess.session_id);
+	printf("Registered resource %" PRId64 " to session %" PRId64 "\n",
+	       object.id, sess.id);
 
 	struct vaccel_arg_list *read = vaccel_args_init(1);
 	struct vaccel_arg_list *write = vaccel_args_init(1);

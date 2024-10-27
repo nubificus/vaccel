@@ -4,4 +4,4 @@
 
 #include <stdint.h>
 
-typedef long long int vaccel_id_t;
+typedef int64_t vaccel_id_t;

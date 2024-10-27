@@ -40,7 +40,7 @@ int main(int argc, char *argv[])
 		vaccel_error("Could not create new shared object");
 		exit(1);
 	}
-	printf("Initialized session with id: %u\n", sess.session_id);
+	printf("Initialized session with id: %" PRId64 "\n", sess.id);
 
 	ret = vaccel_resource_register(&resource, &sess);
 	if (ret) {
@@ -121,13 +121,15 @@ close_session:
 
 	ret = vaccel_resource_release(&resource);
 	if (ret) {
-		vaccel_error("Could not destroy resource %llu", resource.id);
+		vaccel_error("Could not destroy resource %" PRId64,
+			     resource.id);
 		exit(1);
 	}
 
 	ret = vaccel_resource_release(&resource2);
 	if (ret) {
-		vaccel_error("Could not destroy resource %llu", resource2.id);
+		vaccel_error("Could not destroy resource %" PRId64,
+			     resource2.id);
 		exit(1);
 	}
 

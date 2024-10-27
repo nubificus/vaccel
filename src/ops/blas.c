@@ -22,8 +22,9 @@ int vaccel_sgemm(struct vaccel_session *sess, long long int m, long long int n,
 	if (!sess)
 		return VACCEL_EINVAL;
 
-	vaccel_debug("session:%u Looking for plugin implementing BLAS SGEMM",
-		     sess->session_id);
+	vaccel_debug("session:%" PRId64
+		     " Looking for plugin implementing BLAS SGEMM",
+		     sess->id);
 
 	vaccel_prof_region_start(&blas_op_stats);
 

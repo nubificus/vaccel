@@ -16,8 +16,8 @@ int vaccel_minmax(struct vaccel_session *sess, const double *indata, int ndata,
 	if (!sess)
 		return VACCEL_EINVAL;
 
-	vaccel_debug("session:%u Looking for plugin implementing %s",
-		     sess->session_id, vaccel_op_type_str(VACCEL_MINMAX));
+	vaccel_debug("session:%" PRId64 " Looking for plugin implementing %s",
+		     sess->id, vaccel_op_type_str(VACCEL_MINMAX));
 
 	int (*plugin_op)(struct vaccel_session *sess, const double *indata,
 			 int ndata, int low_threshold, int high_threshold,

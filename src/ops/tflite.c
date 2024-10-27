@@ -121,14 +121,16 @@ int vaccel_tflite_session_load(struct vaccel_session *sess,
 	}
 
 	vaccel_debug(
-		"session:%u Looking for plugin implementing tflite_session_load operation",
-		sess->session_id);
+		"session:%" PRId64
+		" Looking for plugin implementing tflite_session_load operation",
+		sess->id);
 
 	vaccel_prof_region_start(&tflite_load_stats);
 
 	if (!vaccel_session_has_resource(sess, model)) {
-		vaccel_error("Resource %u is not registered to session %u",
-			     model->id, sess->session_id);
+		vaccel_error("Resource %" PRId64
+			     " is not registered to session %" PRId64 "",
+			     model->id, sess->id);
 		return VACCEL_EPERM;
 	}
 
@@ -164,14 +166,16 @@ int vaccel_tflite_session_run(struct vaccel_session *sess,
 	}
 
 	vaccel_debug(
-		"session:%u Looking for plugin implementing tflite_session_run operation",
-		sess->session_id);
+		"session:%" PRId64
+		" Looking for plugin implementing tflite_session_run operation",
+		sess->id);
 
 	vaccel_prof_region_start(&tflite_session_run_stats);
 
 	if (!vaccel_session_has_resource(sess, model)) {
-		vaccel_error("Resource %u is not registered to session %u",
-			     model->id, sess->session_id);
+		vaccel_error("Resource %" PRId64
+			     " is not registered to session %" PRId64 "",
+			     model->id, sess->id);
 		return VACCEL_EPERM;
 	}
 
@@ -207,12 +211,14 @@ int vaccel_tflite_session_delete(struct vaccel_session *sess,
 	}
 
 	vaccel_debug(
-		"session:%u Looking for plugin implementing tflite_session_delete operation",
-		sess->session_id);
+		"session:%" PRId64
+		" Looking for plugin implementing tflite_session_delete operation",
+		sess->id);
 
 	if (!vaccel_session_has_resource(sess, model)) {
-		vaccel_error("Resource %u is not registered to session %u",
-			     model->id, sess->session_id);
+		vaccel_error("Resource %" PRId64
+			     " is not registered to session %" PRId64 "",
+			     model->id, sess->id);
 		return VACCEL_EPERM;
 	}
 

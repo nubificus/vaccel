@@ -12,7 +12,7 @@
 
 static int noop_noop(struct vaccel_session *sess)
 {
-	noop_debug("Calling no-op for session %u", sess->session_id);
+	noop_debug("Calling no-op for session %" PRId64 "", sess->id);
 
 	return VACCEL_OK;
 }
@@ -22,7 +22,7 @@ static int noop_sgemm(struct vaccel_session *sess, long long int m,
 		      long long int lda, float *b, long long int ldb,
 		      float beta, float *c, long long int ldc)
 {
-	noop_debug("Calling sgemm for session %u", sess->session_id);
+	noop_debug("Calling sgemm for session %" PRId64 "", sess->id);
 
 	noop_debug("Dumping arguments for sgemm:");
 	noop_debug("m: %lld n: %lld k: %lld", m, n, k);
@@ -45,7 +45,7 @@ int noop_minmax(struct vaccel_session *sess, const double *indata, int ndata,
 	if (!sess)
 		return VACCEL_EINVAL;
 
-	noop_debug("Calling minmax for session %u", sess->session_id);
+	noop_debug("Calling minmax for session %" PRId64 "", sess->id);
 
 	noop_debug("Dumping arguments for minmax: ndata:%d", ndata);
 	noop_debug("low: %d high: %d ", low_threshold, high_threshold);
@@ -69,8 +69,8 @@ static int noop_img_class(struct vaccel_session *sess, const void *img,
 	}
 	int ret;
 
-	noop_debug("Calling Image classification for session %u",
-		   sess->session_id);
+	noop_debug("Calling Image classification for session %" PRId64 "",
+		   sess->id);
 
 	noop_debug("Dumping arguments for Image classification:");
 	noop_debug("len_img: %zu", len_img);
@@ -105,7 +105,7 @@ static int noop_img_detect(struct vaccel_session *sess, const void *img,
 	}
 	int ret;
 
-	noop_debug("Calling Image detection for session %u", sess->session_id);
+	noop_debug("Calling Image detection for session %" PRId64 "", sess->id);
 
 	noop_debug("Dumping arguments for Image detection:");
 	noop_debug("len_img: %zu", len_img);
@@ -132,8 +132,8 @@ static int noop_img_segme(struct vaccel_session *sess, const void *img,
 	}
 	int ret;
 
-	noop_debug("Calling Image segmentation for session %u",
-		   sess->session_id);
+	noop_debug("Calling Image segmentation for session %" PRId64 "",
+		   sess->id);
 
 	noop_debug("Dumping arguments for Image segmentation:");
 	noop_debug("len_img: %zu", len_img);
@@ -160,7 +160,7 @@ static int noop_img_pose(struct vaccel_session *sess, const void *img,
 	}
 	int ret;
 
-	noop_debug("Calling Image pose for session %u", sess->session_id);
+	noop_debug("Calling Image pose for session %" PRId64 "", sess->id);
 
 	noop_debug("Dumping arguments for Image pose:");
 	noop_debug("len_img: %zu", len_img);
@@ -187,7 +187,7 @@ static int noop_img_depth(struct vaccel_session *sess, const void *img,
 	}
 	int ret;
 
-	noop_debug("Calling Image depth for session %u", sess->session_id);
+	noop_debug("Calling Image depth for session %" PRId64 "", sess->id);
 
 	noop_debug("Dumping arguments for Image depth:");
 	noop_debug("len_img: %zu", len_img);
@@ -232,7 +232,7 @@ static int noop_exec(struct vaccel_session *sess, const char *library,
 		return VACCEL_EINVAL;
 	}
 
-	noop_debug("Calling exec for session %u", sess->session_id);
+	noop_debug("Calling exec for session %" PRId64 "", sess->id);
 
 	noop_debug("Dumping arguments for exec:");
 	noop_debug("library: %s symbol: %s", library, fn_symbol);
@@ -270,8 +270,8 @@ static int noop_exec_with_resource(struct vaccel_session *sess,
 		return VACCEL_ENOENT;
 	}
 
-	noop_debug("Calling exec_with_resource for session %u",
-		   sess->session_id);
+	noop_debug("Calling exec_with_resource for session %" PRId64 "",
+		   sess->id);
 
 	char *library;
 	library = vaccel_resource_get_path(object);
@@ -538,7 +538,7 @@ static int noop_tflite_session_delete(struct vaccel_session *session,
 static int v_arraycopy(struct vaccel_session *session, const int *a, int *b,
 		       size_t c)
 {
-	noop_debug("Calling v_arraycopy for session %u", session->session_id);
+	noop_debug("Calling v_arraycopy for session %" PRId64 "", session->id);
 
 	noop_debug("Dumping arguments for v_arracycopy:");
 	noop_debug("size: %zu ", c);
@@ -554,7 +554,7 @@ static int v_arraycopy(struct vaccel_session *session, const int *a, int *b,
 static int v_vectoradd(struct vaccel_session *session, const float *a,
 		       const float *b, float *c, size_t len_a, size_t len_b)
 {
-	noop_debug("Calling v_vectoradd for session %u", session->session_id);
+	noop_debug("Calling v_vectoradd for session %" PRId64 "", session->id);
 
 	noop_debug("Dumping arguments for v_vectoradd:");
 	noop_debug("len_a: %zu len_b: %zu ", len_a, len_b);
@@ -571,7 +571,7 @@ static int v_parallel(struct vaccel_session *session, const float *a,
 		      const float *b, float *add_out, float *mult_out,
 		      size_t len_a)
 {
-	noop_debug("Calling v_parallel for session %u", session->session_id);
+	noop_debug("Calling v_parallel for session %" PRId64 "", session->id);
 
 	noop_debug("Dumping arguments for v_parallel:");
 	noop_debug("len_a: %zu", len_a);
@@ -588,7 +588,7 @@ static int v_parallel(struct vaccel_session *session, const float *a,
 static int v_mmult(struct vaccel_session *session, float *a, float *b,
 		   float *c_out, size_t len_a)
 {
-	noop_debug("Calling v_mmult for session %u", session->session_id);
+	noop_debug("Calling v_mmult for session %" PRId64 "", session->id);
 
 	noop_debug("Dumping arguments for v_mmult:");
 	noop_debug("len_a: %zu", len_a);
@@ -617,8 +617,8 @@ static int noop_torch_jitload_forward(
 		return VACCEL_EINVAL;
 	}
 
-	noop_debug("Calling jitload_forward for session %u",
-		   session->session_id);
+	noop_debug("Calling jitload_forward for session %" PRId64 "",
+		   session->id);
 
 	noop_debug("Number of inputs: %d", nr_read);
 	for (int i = 0; i < nr_read; ++i) {
@@ -695,7 +695,7 @@ static int noop_torch_sgemm(struct vaccel_session *session,
 		return VACCEL_EINVAL;
 	}
 
-	noop_debug("Calling torch_sgemm for session %u", session->session_id);
+	noop_debug("Calling torch_sgemm for session %" PRId64 "", session->id);
 	noop_debug("Dumping arguments for torch_sgemm:");
 	noop_debug("m: %d n: %d k: %d", M, N, K);
 	return VACCEL_OK;
@@ -705,7 +705,7 @@ static int noop_opencv(struct vaccel_session *sess, struct vaccel_arg *read,
 		       size_t nr_read, struct vaccel_arg *write,
 		       size_t nr_write)
 {
-	noop_debug("Calling opencv for session %u", sess->session_id);
+	noop_debug("Calling opencv for session %" PRId64 "", sess->id);
 
 	noop_debug("Dumping arguments for opencv:");
 	noop_debug("nr_read: %zu nr_write: %zu", nr_read, nr_write);

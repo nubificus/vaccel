@@ -29,7 +29,7 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-	printf("Initialized session with id: %u\n", sess.session_id);
+	printf("Initialized session with id: %" PRId64 "\n", sess.id);
 
 	input = 10; /* some random input value */
 	enum vaccel_op_type op_type = VACCEL_EXEC;

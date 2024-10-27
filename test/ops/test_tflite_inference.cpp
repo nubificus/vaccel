@@ -96,7 +96,7 @@ TEST_CASE("tflite_inference", "[ops_tflite]")
 	char *model_path =
 		abs_path(SOURCE_ROOT, "examples/models/tf/lstm2.tflite");
 
-	vsess.session_id = 0;
+	vsess.id = 0;
 	vsess.resources = nullptr;
 	vsess.hint = 0;
 	vsess.priv = nullptr;
@@ -111,16 +111,16 @@ TEST_CASE("tflite_inference", "[ops_tflite]")
 
 	ret = vaccel_session_init(&vsess, 0);
 	REQUIRE(ret == VACCEL_OK);
-	REQUIRE_FALSE(vsess.session_id == 0);
+	REQUIRE_FALSE(vsess.id == 0);
 	REQUIRE_FALSE(vsess.resources == nullptr);
 	REQUIRE(vsess.hint == 0);
 	REQUIRE(vsess.priv == nullptr);
 
-	printf("Initialized vAccel session %u\n", vsess.session_id);
+	printf("Initialized vAccel session %" PRId64 "\n", vsess.id);
 
 	ret = vaccel_resource_register(&model, &vsess);
 	REQUIRE(ret == VACCEL_OK);
-	REQUIRE_FALSE(vsess.session_id == 0);
+	REQUIRE_FALSE(vsess.id == 0);
 	REQUIRE(vsess.hint == 0);
 	REQUIRE_FALSE(list_empty(&vsess.resources->registered[model.type]));
 	REQUIRE(vsess.priv == nullptr);

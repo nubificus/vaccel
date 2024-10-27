@@ -34,7 +34,7 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	printf("Initialized session with id: %u\n", sess.session_id);
+	printf("Initialized session with id: %" PRId64 "\n", sess.id);
 
 	ret = fs_file_read(argv[2], (void **)&file, &file_size);
 	if (ret)
