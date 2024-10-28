@@ -87,8 +87,6 @@ struct vaccel_plugin_info {
 	int (*session_init)(struct vaccel_session *sess, uint32_t flags);
 	int (*session_update)(struct vaccel_session *sess, uint32_t flags);
 	int (*session_release)(struct vaccel_session *sess);
-	int (*resource_set_deps)(struct vaccel_resource *res,
-				 struct vaccel_resource **deps, size_t nr_deps);
 	int (*resource_register)(struct vaccel_resource *res,
 				 struct vaccel_session *sess);
 	int (*resource_unregister)(struct vaccel_resource *res,

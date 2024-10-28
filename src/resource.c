@@ -86,101 +86,6 @@ int vaccel_resource_get_by_id(struct vaccel_resource **resource, vaccel_id_t id)
 	return VACCEL_EINVAL;
 }
 
-int resource_set_deps(struct vaccel_resource *res,
-		      struct vaccel_resource **deps, size_t nr_deps)
-{
-	if (!res || !deps || !nr_deps)
-		return VACCEL_EINVAL;
-
-	struct vaccel_plugin *virtio = get_virtio_plugin();
-	if (virtio) {
-		int err = virtio->info->resource_set_deps(res, deps, nr_deps);
-		if (err)
-			return err;
-	}
-
-	res->deps = deps;
-	res->nr_deps = nr_deps;
-
-	return VACCEL_OK;
-}
-
-int vaccel_resource_get_deps(struct vaccel_resource ***deps, size_t *nr_deps,
-			     struct vaccel_resource *res)
-{
-	if (!deps || !nr_deps || !res)
-		return VACCEL_EINVAL;
-
-	*deps = res->deps;
-	*nr_deps = res->nr_deps;
-
-	return VACCEL_OK;
-}
-
-int vaccel_resource_deps_to_ids(vaccel_id_t *ids, struct vaccel_resource **deps,
-				size_t nr_deps)
-{
-	if (!ids || !deps || !nr_deps)
-		return VACCEL_EINVAL;
-
-	for (size_t i = 0; i < nr_deps; i++) {
-		ids[i] = deps[i]->id;
-	}
-
-	return VACCEL_OK;
-}
-
-int vaccel_resource_deps_from_ids(struct vaccel_resource **deps,
-				  vaccel_id_t *ids, size_t nr_ids)
-{
-	if (!deps || !ids || !nr_ids)
-		return VACCEL_EINVAL;
-
-	for (size_t i = 0; i < nr_ids; i++) {
-		struct vaccel_resource *res;
-		int ret = vaccel_resource_get_by_id(&res, ids[i]);
-		if (ret)
-			return VACCEL_EINVAL;
-		deps[i] = res;
-	}
-
-	return VACCEL_OK;
-}
-
-int vaccel_resource_set_deps_from_ids(struct vaccel_resource *res,
-				      vaccel_id_t *ids, size_t nr_ids)
-{
-	if (!res || !ids || !nr_ids)
-		return VACCEL_EINVAL;
-
-	struct vaccel_resource **deps =
-		(struct vaccel_resource **)malloc(sizeof(*deps) * nr_ids);
-	if (!deps)
-		return VACCEL_ENOMEM;
-
-	int ret = vaccel_resource_deps_from_ids(deps, ids, nr_ids);
-	if (ret) {
-		free(deps);
-		return VACCEL_ENOMEM;
-	}
-
-	res->deps = deps;
-	res->nr_deps = nr_ids;
-
-	return VACCEL_OK;
-}
-
-int resource_unset_deps(struct vaccel_resource *res)
-{
-	if (!res)
-		return VACCEL_EINVAL;
-
-	res->deps = NULL;
-	res->nr_deps = 0;
-
-	return VACCEL_OK;
-}
-
 void resource_refcount_inc(struct vaccel_resource *res)
 {
 	if (!res) {
@@ -455,8 +360,6 @@ static int resource_init_common_with_paths(struct vaccel_resource *res,
 	res->type = type;
 	res->files = NULL;
 	res->nr_files = 0;
-	res->deps = NULL;
-	res->nr_deps = 0;
 	res->rundir = NULL;
 	atomic_init(&res->refcount, 0);
 
@@ -490,8 +393,6 @@ static int resource_init_common_with_files(struct vaccel_resource *res,
 	res->path_type = VACCEL_PATH_LOCAL;
 	res->paths = NULL;
 	res->nr_paths = 0;
-	res->deps = NULL;
-	res->nr_deps = 0;
 	atomic_init(&res->refcount, 0);
 
 	list_init_entry(&res->entry);
@@ -748,11 +649,6 @@ int vaccel_resource_release(struct vaccel_resource *res)
 		res->paths = NULL;
 	}
 	res->nr_paths = 0;
-
-	if (res->deps || res->nr_deps)
-		vaccel_warn("Resource %" PRId64
-			    " has deps that will not be destroyed",
-			    res->id);
 
 	return VACCEL_OK;
 }
