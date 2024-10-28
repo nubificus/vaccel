@@ -70,23 +70,7 @@ struct vaccel_resource {
 
 	/* number of file entities represented by the resource */
 	size_t nr_files;
-
-	struct vaccel_resource **deps;
-
-	size_t nr_deps;
 };
-
-int vaccel_resource_get_deps(struct vaccel_resource ***deps, size_t *nr_deps,
-			     struct vaccel_resource *res);
-
-int vaccel_resource_deps_to_ids(vaccel_id_t *ids, struct vaccel_resource **deps,
-				size_t nr_deps);
-
-int vaccel_resource_deps_from_ids(struct vaccel_resource **deps,
-				  vaccel_id_t *ids, size_t nr_ids);
-
-int vaccel_resource_set_deps_from_ids(struct vaccel_resource *res,
-				      vaccel_id_t *ids, size_t nr_ids);
 
 /* Initialize resource */
 int vaccel_resource_init(struct vaccel_resource *res, const char *path,

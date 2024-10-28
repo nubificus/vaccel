@@ -273,15 +273,24 @@ static int noop_exec_with_resource(struct vaccel_session *sess,
 	noop_debug("Calling exec_with_resource for session %" PRId64 "",
 		   sess->id);
 
-	char *library;
-	library = vaccel_resource_get_path(object);
-	if (library == NULL) {
-		vaccel_error("Could not get path from resource");
-		return EINVAL;
+	noop_debug("Dumping arguments for exec_with_resource:");
+
+	size_t nr_deps = object->nr_files - 1;
+	for (size_t i = 0; i < nr_deps; i++) {
+		char *dep_library = object->files[i]->path;
+		if (dep_library == NULL) {
+			vaccel_error("Could not get path of file %zu", i);
+			return VACCEL_EINVAL;
+		}
+		noop_debug("dep library: %s", dep_library);
 	}
 
-	noop_debug("object file path: %s", library);
-	noop_debug("Dumping arguments for exec_with_resource:");
+	char *library = object->files[nr_deps]->path;
+	if (library == NULL) {
+		vaccel_error("Could not get path of file %zu", nr_deps);
+		return VACCEL_EINVAL;
+	}
+
 	noop_debug("library: %s symbol: %s", library, fn_symbol);
 	noop_debug("nr_read: %zu nr_write: %zu", nr_read, nr_write);
 
@@ -292,8 +301,6 @@ static int noop_exec_with_resource(struct vaccel_session *sess,
 
 		exec_gen_dummy_output(read, write);
 	}
-
-	free(library);
 
 	return VACCEL_OK;
 }
