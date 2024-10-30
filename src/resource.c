@@ -86,6 +86,17 @@ int vaccel_resource_get_by_id(struct vaccel_resource **resource, vaccel_id_t id)
 	return VACCEL_EINVAL;
 }
 
+static void get_resource_id(struct vaccel_resource *res)
+{
+	res->id = id_pool_get(&id_pool);
+}
+
+static void put_resource_id(struct vaccel_resource *res)
+{
+	id_pool_release(&id_pool, res->id);
+	res->id = -1;
+}
+
 void resource_refcount_inc(struct vaccel_resource *res)
 {
 	if (!res) {
@@ -104,6 +115,16 @@ void resource_refcount_dec(struct vaccel_resource *res)
 	}
 
 	atomic_fetch_sub(&res->refcount, 1);
+}
+
+long int vaccel_resource_refcount(const struct vaccel_resource *res)
+{
+	if (!res) {
+		vaccel_error("BUG! Refcounting invalid resource");
+		return -VACCEL_EINVAL;
+	}
+
+	return atomic_load(&res->refcount);
 }
 
 int resource_create_rundir(struct vaccel_resource *res)
@@ -160,6 +181,7 @@ void resource_destroy_rundir(struct vaccel_resource *res)
 			    strerror(errno));
 
 	free(res->rundir);
+	res->rundir = NULL;
 }
 
 static vaccel_path_t path_get_type(const char *path)
@@ -186,9 +208,29 @@ static void delete_files(struct vaccel_file **files, size_t nr_files)
 			continue;
 
 		int ret = vaccel_file_delete(files[i]);
-		if (ret)
+		if (ret) {
 			vaccel_warn("Could not delete file %zu", i);
+			continue;
+		}
+		files[i] = NULL;
 	}
+}
+
+static int resource_populate_file_data(struct vaccel_resource *res)
+{
+	if (!res || !res->files || !res->nr_files)
+		return VACCEL_EINVAL;
+
+	for (size_t i = 0; i < res->nr_files; i++) {
+		if (!res->files[i])
+			return VACCEL_EINVAL;
+
+		int ret = vaccel_file_read(res->files[i]);
+		if (ret)
+			return ret;
+	}
+
+	return VACCEL_OK;
 }
 
 static int resource_add_files_from_dir(struct vaccel_resource *res,
@@ -197,20 +239,31 @@ static int resource_add_files_from_dir(struct vaccel_resource *res,
 	int ret;
 
 	// FIXME: print errors
-	if (!res || !res->paths || !res->paths[0] || res->nr_paths != 1)
+
+	if (!res)
+		return VACCEL_EINVAL;
+
+	/* If files exist only populate the file data if chosen */
+	if (res->files && res->nr_files) {
+		if (with_data)
+			return resource_populate_file_data(res);
+		return VACCEL_OK;
+	}
+
+	if (!res->paths || !res->paths[0] || res->nr_paths != 1)
 		return VACCEL_EINVAL;
 
 	size_t nr_dirfiles = fs_dir_num_files(res->paths[0]);
 	if (!nr_dirfiles)
 		return VACCEL_EINVAL;
 
-	struct vaccel_file **files = (struct vaccel_file **)malloc(
+	res->files = (struct vaccel_file **)malloc(
 		nr_dirfiles * sizeof(struct vaccel_file *));
-	if (!files)
+	if (!res->files)
 		return VACCEL_ENOMEM;
 
 	for (size_t i = 0; i < nr_dirfiles; i++)
-		files[i] = NULL;
+		res->files[i] = NULL;
 
 	DIR *d = opendir(res->paths[0]);
 	if (!d) {
@@ -247,35 +300,34 @@ static int resource_add_files_from_dir(struct vaccel_resource *res,
 
 			memcpy(&filepath[baselen], dir->d_name, filenamelen);
 
-			ret = vaccel_file_new(&files[nr_files], filepath);
+			ret = vaccel_file_new(&res->files[nr_files], filepath);
 			if (ret)
 				goto free;
 
 			++nr_files;
-
-			if (with_data) {
-				ret = vaccel_file_read(files[nr_files - 1]);
-				if (ret)
-					goto free;
-			}
 		}
 		memset(&filepath[baselen], 0, PATH_MAX - baselen);
 	}
-
 	closedir(d);
-
 	assert(nr_dirfiles == nr_files);
-	res->files = files;
 	res->nr_files = nr_files;
+
+	if (with_data) {
+		ret = resource_populate_file_data(res);
+		if (ret)
+			goto free;
+	}
 
 	return VACCEL_OK;
 
 free:
-	delete_files(files, nr_files);
+	delete_files(res->files, nr_files);
 close_dir:
 	closedir(d);
 free_files:
-	free(files);
+	free(res->files);
+	res->files = NULL;
+	res->nr_files = 0;
 
 	return ret;
 }
@@ -283,19 +335,28 @@ free_files:
 static int resource_add_files_from_local(struct vaccel_resource *res,
 					 bool with_data)
 {
-	int ret;
-
-	if (!res || !res->paths || !res->nr_paths)
+	if (!res)
 		return VACCEL_EINVAL;
 
-	struct vaccel_file **files = (struct vaccel_file **)malloc(
+	/* If files exist only populate the file data if chosen */
+	if (res->files && res->nr_files) {
+		if (with_data)
+			return resource_populate_file_data(res);
+		return VACCEL_OK;
+	}
+
+	if (!res->paths || !res->nr_paths)
+		return VACCEL_EINVAL;
+
+	res->files = (struct vaccel_file **)malloc(
 		res->nr_paths * sizeof(struct vaccel_file *));
-	if (!files)
+	if (!res->files)
 		return VACCEL_ENOMEM;
 
 	for (size_t i = 0; i < res->nr_paths; i++)
-		files[i] = NULL;
+		res->files[i] = NULL;
 
+	int ret;
 	size_t nr_files = 0;
 	for (size_t i = 0; i < res->nr_paths; i++) {
 		if (!res->paths[i]) {
@@ -303,58 +364,55 @@ static int resource_add_files_from_local(struct vaccel_resource *res,
 			goto free;
 		}
 
-		ret = vaccel_file_new(&files[i], res->paths[i]);
+		ret = vaccel_file_new(&res->files[i], res->paths[i]);
 		if (ret)
 			goto free;
 
 		++nr_files;
-
-		if (with_data) {
-			ret = vaccel_file_read(files[i]);
-			if (ret)
-				goto free;
-		}
 	}
-
 	assert(res->nr_paths == nr_files);
-	res->files = files;
 	res->nr_files = nr_files;
+
+	if (with_data) {
+		ret = resource_populate_file_data(res);
+		if (ret)
+			goto free;
+	}
 
 	return VACCEL_OK;
 
 free:
-	delete_files(files, nr_files);
-	free(files);
+	delete_files(res->files, nr_files);
+	free(res->files);
+	res->files = NULL;
+	res->nr_files = 0;
 
 	return ret;
 }
 
 static int resource_init_common_with_paths(struct vaccel_resource *res,
-					   char **paths, size_t nr_paths,
 					   vaccel_resource_t type)
 {
 	int ret;
 
-	if (!res || !paths || !nr_paths || type >= VACCEL_RESOURCE_MAX)
+	if (!res || !res->paths || !res->nr_paths ||
+	    type >= VACCEL_RESOURCE_MAX)
 		return VACCEL_EINVAL;
 
-	res->id = id_pool_get(&id_pool);
+	get_resource_id(res);
 	if (res->id <= 0)
 		return VACCEL_EUSERS;
 
-	if (nr_paths > 1) {
+	if (res->nr_paths > 1) {
 		// TODO: make this bitwise to hold specific path type
 		res->path_type = VACCEL_PATH_LIST;
 	} else {
-		res->path_type = path_get_type(paths[0]);
+		res->path_type = path_get_type(res->paths[0]);
 		if (res->path_type == VACCEL_PATH_MAX) {
 			ret = VACCEL_EINVAL;
 			goto release_id;
 		}
 	}
-
-	res->paths = paths;
-	res->nr_paths = nr_paths;
 
 	res->remote_id = -1;
 	res->type = type;
@@ -371,22 +429,17 @@ static int resource_init_common_with_paths(struct vaccel_resource *res,
 	return VACCEL_OK;
 
 release_id:
-	id_pool_release(&id_pool, res->id);
+	put_resource_id(res);
 
 	return ret;
 }
 
 static int resource_init_common_with_files(struct vaccel_resource *res,
-					   struct vaccel_file **files,
-					   size_t nr_files,
 					   vaccel_resource_t type)
 {
-	if (!res || !files || !nr_files || type >= VACCEL_RESOURCE_MAX ||
-	    !res->rundir || !res->id)
+	if (!res || !res->files || !res->nr_files ||
+	    type >= VACCEL_RESOURCE_MAX || !res->rundir || !res->id)
 		return VACCEL_EINVAL;
-
-	res->files = files;
-	res->nr_files = nr_files;
 
 	res->remote_id = -1;
 	res->type = type;
@@ -414,26 +467,29 @@ int vaccel_resource_init(struct vaccel_resource *res, const char *path,
 	if (!res || !path || type >= VACCEL_RESOURCE_MAX)
 		return VACCEL_EINVAL;
 
-	char **r_paths = (char **)malloc(sizeof(char *));
-	if (!r_paths)
+	res->paths = (char **)malloc(sizeof(char *));
+	if (!res->paths)
 		return VACCEL_ENOMEM;
 
-	r_paths[0] = strdup(path);
-	if (!r_paths[0]) {
+	res->paths[0] = strdup(path);
+	if (!res->paths[0]) {
 		ret = VACCEL_ENOMEM;
 		goto free_paths;
 	}
+	res->nr_paths = 1;
 
-	ret = resource_init_common_with_paths(res, r_paths, 1, type);
+	ret = resource_init_common_with_paths(res, type);
 	if (ret)
 		goto free;
 
 	return VACCEL_OK;
 
 free:
-	free(r_paths[0]);
+	free(res->paths[0]);
 free_paths:
-	free(r_paths);
+	free(res->paths);
+	res->paths = NULL;
+	res->nr_paths = 0;
 
 	return ret;
 }
@@ -449,12 +505,12 @@ int vaccel_resource_init_multi(struct vaccel_resource *res, const char **paths,
 	if (!res || !paths || !nr_paths || type >= VACCEL_RESOURCE_MAX)
 		return VACCEL_EINVAL;
 
-	char **r_paths = (char **)malloc(nr_paths * sizeof(char *));
-	if (!r_paths)
+	res->paths = (char **)malloc(nr_paths * sizeof(char *));
+	if (!res->paths)
 		return VACCEL_ENOMEM;
 
 	for (size_t i = 0; i < nr_paths; i++)
-		r_paths[i] = NULL;
+		res->paths[i] = NULL;
 
 	for (size_t i = 0; i < nr_paths; i++) {
 		if (!paths[i]) {
@@ -462,14 +518,15 @@ int vaccel_resource_init_multi(struct vaccel_resource *res, const char **paths,
 			goto free;
 		}
 
-		r_paths[i] = strdup(paths[i]);
-		if (!r_paths[i]) {
+		res->paths[i] = strdup(paths[i]);
+		if (!res->paths[i]) {
 			ret = VACCEL_ENOMEM;
 			goto free;
 		}
 	}
+	res->nr_paths = nr_paths;
 
-	ret = resource_init_common_with_paths(res, r_paths, nr_paths, type);
+	ret = resource_init_common_with_paths(res, type);
 	if (ret)
 		goto free;
 
@@ -477,12 +534,14 @@ int vaccel_resource_init_multi(struct vaccel_resource *res, const char **paths,
 
 free:
 	for (size_t i = 0; i < nr_paths; i++) {
-		if (!r_paths[i])
+		if (!res->paths[i])
 			continue;
 
-		free(r_paths[i]);
+		free(res->paths[i]);
 	}
-	free(r_paths);
+	free(res->paths);
+	res->paths = NULL;
+	res->nr_paths = 0;
 
 	return ret;
 }
@@ -499,13 +558,13 @@ int vaccel_resource_init_from_buf(struct vaccel_resource *res, const void *buf,
 	if (!res || !buf || !nr_bytes || type >= VACCEL_RESOURCE_MAX)
 		return VACCEL_EINVAL;
 
-	res->id = id_pool_get(&id_pool);
+	get_resource_id(res);
 	if (res->id <= 0)
 		return VACCEL_EUSERS;
 
-	struct vaccel_file **r_files =
+	res->files =
 		(struct vaccel_file **)malloc(sizeof(struct vaccel_file *));
-	if (!r_files) {
+	if (!res->files) {
 		ret = VACCEL_ENOMEM;
 		goto release_id;
 	}
@@ -515,29 +574,32 @@ int vaccel_resource_init_from_buf(struct vaccel_resource *res, const void *buf,
 		goto free_files;
 
 	if (filename != NULL) {
-		ret = vaccel_file_from_buf(&r_files[0], buf, nr_bytes, filename,
-					   res->rundir, false);
+		ret = vaccel_file_from_buf(&res->files[0], buf, nr_bytes,
+					   filename, res->rundir, false);
 	} else {
-		ret = vaccel_file_from_buf(&r_files[0], buf, nr_bytes, "file",
-					   res->rundir, true);
+		ret = vaccel_file_from_buf(&res->files[0], buf, nr_bytes,
+					   "file", res->rundir, true);
 	}
 	if (ret)
 		goto cleanup_rundir;
+	res->nr_files = 1;
 
-	ret = resource_init_common_with_files(res, r_files, 1, type);
+	ret = resource_init_common_with_files(res, type);
 	if (ret)
 		goto delete_file;
 
 	return VACCEL_OK;
 
 delete_file:
-	delete_files(r_files, 1);
+	delete_files(res->files, res->nr_files);
 cleanup_rundir:
 	resource_destroy_rundir(res);
 free_files:
-	free(r_files);
+	free(res->files);
+	res->files = NULL;
+	res->nr_files = 0;
 release_id:
-	id_pool_release(&id_pool, res->id);
+	put_resource_id(res);
 
 	return ret;
 }
@@ -554,19 +616,19 @@ int vaccel_resource_init_from_files(struct vaccel_resource *res,
 	if (!res || !files || !nr_files || type >= VACCEL_RESOURCE_MAX)
 		return VACCEL_EINVAL;
 
-	res->id = id_pool_get(&id_pool);
+	get_resource_id(res);
 	if (res->id <= 0)
 		return VACCEL_EUSERS;
 
-	struct vaccel_file **r_files = (struct vaccel_file **)malloc(
+	res->files = (struct vaccel_file **)malloc(
 		nr_files * sizeof(struct vaccel_file *));
-	if (!r_files) {
+	if (!res->files) {
 		ret = VACCEL_ENOMEM;
 		goto release_id;
 	}
 
 	for (size_t i = 0; i < nr_files; i++)
-		r_files[i] = NULL;
+		res->files[i] = NULL;
 
 	ret = resource_create_rundir(res);
 	if (ret)
@@ -574,12 +636,12 @@ int vaccel_resource_init_from_files(struct vaccel_resource *res,
 
 	size_t nr_r_files = 0;
 	for (size_t i = 0; i < nr_files; i++) {
-		if (!files[i]) {
+		if (!files[i] || !files[i]->size || !files[i]->data) {
 			ret = VACCEL_EINVAL;
 			goto free;
 		}
 
-		ret = vaccel_file_from_buf(&r_files[i], files[i]->data,
+		ret = vaccel_file_from_buf(&res->files[i], files[i]->data,
 					   files[i]->size, files[i]->name,
 					   res->rundir, false);
 		if (ret)
@@ -588,20 +650,23 @@ int vaccel_resource_init_from_files(struct vaccel_resource *res,
 		++nr_r_files;
 	}
 	assert(nr_r_files == nr_files);
+	res->nr_files = nr_files;
 
-	ret = resource_init_common_with_files(res, r_files, nr_r_files, type);
+	ret = resource_init_common_with_files(res, type);
 	if (ret)
 		goto free;
 
 	return VACCEL_OK;
 
 free:
-	delete_files(r_files, nr_r_files);
+	delete_files(res->files, nr_r_files);
 	resource_destroy_rundir(res);
 free_files:
-	free(r_files);
+	free(res->files);
+	res->files = NULL;
+	res->nr_files = 0;
 release_id:
-	id_pool_release(&id_pool, res->id);
+	put_resource_id(res);
 
 	return ret;
 }
@@ -614,10 +679,15 @@ int vaccel_resource_release(struct vaccel_resource *res)
 	if (!res)
 		return VACCEL_EINVAL;
 
+	if (res->id <= 0) {
+		vaccel_error("Cannot release uninitialized resource");
+		return VACCEL_EINVAL;
+	}
+
 	/* Check if this resource is currently registered to a session.
 	 * We do not destroy currently-used resources */
-	if (atomic_load(&res->refcount)) {
-		vaccel_error("Cannot destroy used resource %" PRId64, res->id);
+	if (vaccel_resource_refcount(res)) {
+		vaccel_error("Cannot release used resource %" PRId64, res->id);
 		return VACCEL_EBUSY;
 	}
 
@@ -627,11 +697,6 @@ int vaccel_resource_release(struct vaccel_resource *res)
 		res->files = NULL;
 	}
 	res->nr_files = 0;
-
-	id_pool_release(&id_pool, res->id);
-	res->id = -1;
-
-	list_unlink_entry(&res->entry);
 
 	if (res->rundir) {
 		resource_destroy_rundir(res);
@@ -649,6 +714,12 @@ int vaccel_resource_release(struct vaccel_resource *res)
 		res->paths = NULL;
 	}
 	res->nr_paths = 0;
+
+	list_unlink_entry(&res->entry);
+
+	vaccel_debug("Released resource %" PRId64, res->id);
+
+	put_resource_id(res);
 
 	return VACCEL_OK;
 }
@@ -733,31 +804,28 @@ int vaccel_resource_register(struct vaccel_resource *res,
 	if (!res || res->path_type >= VACCEL_PATH_MAX || !sess)
 		return VACCEL_EINVAL;
 
-	if (!res->nr_files) {
-		switch (res->path_type) {
-		case VACCEL_PATH_LOCAL:
-		case VACCEL_PATH_LIST:
-			ret = resource_add_files_from_local(res,
-							    sess->is_virtio);
-			break;
-		case VACCEL_PATH_DIR:
-			ret = resource_add_files_from_dir(res, sess->is_virtio);
-			break;
-		case VACCEL_PATH_REMOTE:
-			// TODO:
-			// ret = resource_add_files_from_remote(res, !sess->is_virtio);
-			vaccel_error("Resource from URL is not implemented");
-			ret = VACCEL_ENOTSUP;
-			break;
-		case VACCEL_PATH_MAX:
-			vaccel_error("Invalid path type");
-			ret = VACCEL_EINVAL;
-			break;
-		}
-		if (ret) {
-			vaccel_error("Failed to add resource files: %d", ret);
-			return ret;
-		}
+	switch (res->path_type) {
+	case VACCEL_PATH_LOCAL:
+	case VACCEL_PATH_LIST:
+		ret = resource_add_files_from_local(res, sess->is_virtio);
+		break;
+	case VACCEL_PATH_DIR:
+		ret = resource_add_files_from_dir(res, sess->is_virtio);
+		break;
+	case VACCEL_PATH_REMOTE:
+		// TODO:
+		// ret = resource_add_files_from_remote(res, !sess->is_virtio);
+		vaccel_error("Resource from URL is not implemented");
+		ret = VACCEL_ENOTSUP;
+		break;
+	case VACCEL_PATH_MAX:
+		vaccel_error("Invalid path type");
+		ret = VACCEL_EINVAL;
+		break;
+	}
+	if (ret) {
+		vaccel_error("Failed to add resource files: %d", ret);
+		return ret;
 	}
 
 	if (sess->is_virtio) {
@@ -766,12 +834,16 @@ int vaccel_resource_register(struct vaccel_resource *res,
 			ret = virtio->info->resource_register(res, sess);
 			if (res->remote_id <= 0 || ret) {
 				vaccel_error(
-					"Could not register remote resource");
+					"session:%" PRId64
+					" Could not register remote resource",
+					sess->id);
 				return ret;
 			}
 		} else {
 			vaccel_error(
-				"Could not register resource to virtio session, no VirtIO Plugin loaded yet");
+				"session:%" PRId64
+				" Could not register remote resource: no VirtIO Plugin loaded yet",
+				sess->id);
 			return VACCEL_ENOTSUP;
 		}
 	}
@@ -779,6 +851,8 @@ int vaccel_resource_register(struct vaccel_resource *res,
 	ret = session_register_resource(sess, res);
 	if (ret)
 		return ret;
+
+	resource_refcount_inc(res);
 
 	if (sess->is_virtio) {
 		vaccel_debug("session:%" PRId64 " Registered resource %" PRId64
@@ -795,13 +869,26 @@ int vaccel_resource_register(struct vaccel_resource *res,
 int vaccel_resource_unregister(struct vaccel_resource *res,
 			       struct vaccel_session *sess)
 {
+	if (!initialized)
+		return VACCEL_EPERM;
+
+	if (!res || !sess)
+		return VACCEL_EINVAL;
+
+	if (res->id <= 0) {
+		vaccel_error("Cannot unregister uninitialized resource");
+		return VACCEL_EINVAL;
+	}
+
 	int ret = session_unregister_resource(sess, res);
 	if (ret) {
-		vaccel_error("Could not unregister resource %" PRId64
-			     " from session %" PRId64,
-			     res->id, sess->id);
+		vaccel_error("session:%" PRId64
+			     " Could not unregister resource %" PRId64,
+			     sess->id, res->id);
 		return ret;
 	}
+
+	resource_refcount_dec(res);
 
 	if (sess->is_virtio) {
 		struct vaccel_plugin *virtio = get_virtio_plugin();
@@ -809,13 +896,17 @@ int vaccel_resource_unregister(struct vaccel_resource *res,
 			ret = virtio->info->resource_unregister(res, sess);
 			if (ret) {
 				vaccel_error(
-					"Could not unregister remote resource %" PRId64,
-					res->remote_id);
+					"session:%" PRId64
+					" Could not unregister remote resource %" PRId64,
+					sess->id, res->remote_id);
 				return ret;
 			}
 		} else {
 			vaccel_error(
-				"Could not unregister resource for virtio session, no VirtIO Plugin loaded yet");
+				"session:%" PRId64
+				" Could not unregister remote resource %" PRId64
+				": no VirtIO Plugin loaded yet",
+				sess->id, res->remote_id);
 			return VACCEL_ENOTSUP;
 		}
 	}

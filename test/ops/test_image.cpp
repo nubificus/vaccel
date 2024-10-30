@@ -178,7 +178,7 @@ TEST_CASE("pose", "[ops_image]")
 
 	ret = vaccel_session_release(&sess);
 	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(sess.id == 1);
+	REQUIRE(sess.id == -1);
 	REQUIRE(sess.hint == 0);
 	REQUIRE(sess.resources == nullptr);
 	REQUIRE(sess.priv == nullptr);
