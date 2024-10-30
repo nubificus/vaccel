@@ -12,9 +12,9 @@ typedef std::atomic<unsigned int> atomic_uint;
 #endif
 #include "error.h"
 #include "file.h"
+#include "id.h"
 #include "list.h"
 #include "session.h"
-#include "id.h"
 #include <stddef.h>
 
 #ifdef __cplusplus
@@ -71,6 +71,9 @@ struct vaccel_resource {
 	/* number of file entities represented by the resource */
 	size_t nr_files;
 };
+
+/* Get refcount atomically */
+long int vaccel_resource_refcount(const struct vaccel_resource *res);
 
 /* Initialize resource */
 int vaccel_resource_init(struct vaccel_resource *res, const char *path,

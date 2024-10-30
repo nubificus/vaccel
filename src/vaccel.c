@@ -182,8 +182,8 @@ __attribute__((constructor)) static void vaccel_init(void)
 __attribute__((destructor)) static void vaccel_fini(void)
 {
 	vaccel_debug("Shutting down vAccel");
-	plugins_shutdown();
-	resources_cleanup();
 	sessions_cleanup();
+	resources_cleanup();
+	plugins_shutdown();
 	cleanup_vaccel_rundir();
 }

@@ -28,14 +28,15 @@ struct {
 	struct vaccel_session *running_sessions[VACCEL_SESSIONS_MAX];
 } sessions;
 
-static vaccel_id_t get_sess_id(void)
+static void get_session_id(struct vaccel_session *sess)
 {
-	return id_pool_get(&sessions.ids);
+	sess->id = id_pool_get(&sessions.ids);
 }
 
-static void put_sess_id(vaccel_id_t id)
+static void put_session_id(struct vaccel_session *sess)
 {
-	id_pool_release(&sessions.ids, id);
+	id_pool_release(&sessions.ids, sess->id);
+	sess->id = -1;
 }
 
 int sessions_bootstrap(void)
@@ -65,25 +66,6 @@ int sessions_cleanup(void)
 	return id_pool_destroy(&sessions.ids);
 }
 
-int session_register_resource(struct vaccel_session *sess,
-			      struct vaccel_resource *res)
-{
-	if (!sess || !sess->resources || !res ||
-	    res->type >= VACCEL_RESOURCE_MAX)
-		return VACCEL_EINVAL;
-
-	struct session_resources *resources = sess->resources;
-	struct registered_resource *container = malloc(sizeof(*container));
-	if (!container)
-		return VACCEL_ENOMEM;
-
-	container->res = res;
-	list_add_tail(&resources->registered[res->type], &container->entry);
-	resource_refcount_inc(res);
-
-	return VACCEL_OK;
-}
-
 static struct registered_resource *
 find_registered_resource(const struct vaccel_session *sess,
 			 const struct vaccel_resource *res)
@@ -100,25 +82,51 @@ find_registered_resource(const struct vaccel_session *sess,
 	return NULL;
 }
 
+int session_register_resource(struct vaccel_session *sess,
+			      struct vaccel_resource *res)
+{
+	if (!sess || !sess->resources || !res ||
+	    res->type >= VACCEL_RESOURCE_MAX)
+		return VACCEL_EINVAL;
+
+	/* Check if resource is already registered with session */
+	struct registered_resource *container =
+		find_registered_resource(sess, res);
+	if (container) {
+		vaccel_error("session:%" PRId64 " Resource %" PRId64
+			     " already registered",
+			     sess->id, res->id);
+		return VACCEL_EINVAL;
+	}
+
+	struct session_resources *resources = sess->resources;
+	container = malloc(sizeof(*container));
+	if (!container)
+		return VACCEL_ENOMEM;
+
+	container->res = res;
+	list_add_tail(&resources->registered[res->type], &container->entry);
+
+	return VACCEL_OK;
+}
+
 int session_unregister_resource(struct vaccel_session *sess,
 				struct vaccel_resource *res)
 {
 	if (!sess || !res || res->type >= VACCEL_RESOURCE_MAX)
 		return VACCEL_EINVAL;
 
-	/* Check if resource is indeed registered to session */
+	/* Check if resource is indeed registered with session */
 	struct registered_resource *container =
 		find_registered_resource(sess, res);
-
 	if (!container) {
-		vaccel_error("Resource %" PRId64
-			     " not registered with session %" PRId64,
-			     res->id, sess->id);
+		vaccel_error("session:%" PRId64 " Resource %" PRId64
+			     " not registered",
+			     sess->id, res->id);
 		return VACCEL_EINVAL;
 	}
 
 	list_unlink_entry(&container->entry);
-	resource_refcount_dec(container->res);
 	free(container);
 
 	return VACCEL_OK;
@@ -232,7 +240,7 @@ int vaccel_session_init(struct vaccel_session *sess, uint32_t flags)
 	if (!sessions.initialized)
 		return VACCEL_ESESS;
 
-	sess->id = get_sess_id();
+	get_session_id(sess);
 	if (!sess->id)
 		return VACCEL_ESESS;
 
@@ -265,11 +273,11 @@ int vaccel_session_init(struct vaccel_session *sess, uint32_t flags)
 	sessions.running_sessions[sess->id - 1] = sess;
 
 	if (sess->is_virtio)
-		vaccel_debug("session:%" PRId64
-			     " Initialized with remote (id: %" PRId64 ")",
+		vaccel_debug("Initialized session %" PRId64
+			     " with remote (id: %" PRId64 ")",
 			     sess->id, sess->remote_id);
 	else
-		vaccel_debug("session:%" PRId64 " Initialized", sess->id);
+		vaccel_debug("Initialized session %" PRId64, sess->id);
 
 	return VACCEL_OK;
 
@@ -281,7 +289,7 @@ cleanup_session:
 		}
 	}
 release_id:
-	put_sess_id(sess->id);
+	put_session_id(sess);
 
 	return ret;
 }
@@ -331,6 +339,11 @@ int vaccel_session_release(struct vaccel_session *sess)
 	if (!sessions.initialized)
 		return VACCEL_ESESS;
 
+	if (sess->id <= 0) {
+		vaccel_error("Cannot release uninitialized session");
+		return VACCEL_EINVAL;
+	}
+
 	/* if we're using virtio as a plugin offload the session cleanup to the
 	 * host */
 	if (sess->is_virtio) {
@@ -339,11 +352,11 @@ int vaccel_session_release(struct vaccel_session *sess)
 			ret = virtio->info->session_release(sess);
 			if (ret) {
 				vaccel_warn(
-					"Could not cleanup host-side session");
+					"Could not release host-side session");
 			}
 		} else {
 			vaccel_error(
-				"Could not free VirtIO session, no VirtIO Plugin loaded yet");
+				"Could not release VirtIO session, no VirtIO Plugin loaded yet");
 			return VACCEL_ENOTSUP;
 		}
 	}
@@ -354,11 +367,11 @@ int vaccel_session_release(struct vaccel_session *sess)
 		return ret;
 	}
 
-	put_sess_id(sess->id);
-
 	sessions.running_sessions[sess->id - 1] = NULL;
 
-	vaccel_debug("session:%" PRId64 " Released", sess->id);
+	vaccel_debug("Released session %" PRId64, sess->id);
+
+	put_session_id(sess);
 
 	return VACCEL_OK;
 }
