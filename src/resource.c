@@ -11,6 +11,7 @@
 #include "log.h"
 #include "plugin.h"
 #include "utils/fs.h"
+#include "utils/net.h"
 #include "utils/path.h"
 #include <assert.h>
 #include <dirent.h>
@@ -332,21 +333,51 @@ free_files:
 	return ret;
 }
 
-static int resource_add_files_from_local(struct vaccel_resource *res,
-					 bool with_data)
+static int download_file(const char *path, const char *fs_dir,
+			 size_t fs_path_size, char *fs_path)
+{
+	char *filename;
+	int ret = path_file_name(&filename, path);
+	if (ret)
+		return ret;
+
+	ret = path_init_from_parts(fs_path, fs_path_size, fs_dir, filename,
+				   NULL);
+	free(filename);
+	if (ret)
+		return ret;
+
+	ret = net_file_download(path, fs_path);
+	if (ret) {
+		if (ret == VACCEL_EREMOTEIO)
+			fs_file_remove(fs_path);
+		return ret;
+	}
+
+	return ret;
+}
+
+static int resource_add_files(struct vaccel_resource *res, bool remote,
+			      bool download)
 {
 	if (!res)
 		return VACCEL_EINVAL;
 
-	/* If files exist only populate the file data if chosen */
-	if (res->files && res->nr_files) {
-		if (with_data)
-			return resource_populate_file_data(res);
+	if (res->files && res->nr_files)
 		return VACCEL_OK;
-	}
 
 	if (!res->paths || !res->nr_paths)
 		return VACCEL_EINVAL;
+
+	if (remote && !download)
+		return VACCEL_OK;
+
+	int ret;
+	if (!res->rundir) {
+		ret = resource_create_rundir(res);
+		if (ret)
+			goto cleanup_rundir;
+	}
 
 	res->files = (struct vaccel_file **)malloc(
 		res->nr_paths * sizeof(struct vaccel_file *));
@@ -356,7 +387,6 @@ static int resource_add_files_from_local(struct vaccel_resource *res,
 	for (size_t i = 0; i < res->nr_paths; i++)
 		res->files[i] = NULL;
 
-	int ret;
 	size_t nr_files = 0;
 	for (size_t i = 0; i < res->nr_paths; i++) {
 		if (!res->paths[i]) {
@@ -364,20 +394,29 @@ static int resource_add_files_from_local(struct vaccel_resource *res,
 			goto free;
 		}
 
-		ret = vaccel_file_new(&res->files[i], res->paths[i]);
-		if (ret)
-			goto free;
+		if (remote) {
+			char path[PATH_MAX];
+			ret = download_file(res->paths[i], res->rundir,
+					    PATH_MAX, path);
+			if (ret) {
+				goto free;
+			}
+
+			ret = vaccel_file_new(&res->files[i], path);
+			if (ret)
+				goto free;
+			/* Mark the path as owned so it will be deleted on release */
+			res->files[i]->path_owned = true;
+		} else {
+			ret = vaccel_file_new(&res->files[i], res->paths[i]);
+			if (ret)
+				goto free;
+		}
 
 		++nr_files;
 	}
 	assert(res->nr_paths == nr_files);
 	res->nr_files = nr_files;
-
-	if (with_data) {
-		ret = resource_populate_file_data(res);
-		if (ret)
-			goto free;
-	}
 
 	return VACCEL_OK;
 
@@ -386,8 +425,35 @@ free:
 	free(res->files);
 	res->files = NULL;
 	res->nr_files = 0;
+cleanup_rundir:
+	resource_destroy_rundir(res);
 
 	return ret;
+}
+
+static int resource_add_files_from_local(struct vaccel_resource *res,
+					 bool with_data)
+{
+	if (!res)
+		return VACCEL_EINVAL;
+
+	int ret = resource_add_files(res, false, false);
+	if (ret)
+		return ret;
+
+	if (with_data)
+		return resource_populate_file_data(res);
+
+	return VACCEL_OK;
+}
+
+static int resource_add_files_from_remote(struct vaccel_resource *res,
+					  bool download)
+{
+	if (!res)
+		return VACCEL_EINVAL;
+
+	return resource_add_files(res, true, download);
 }
 
 static int resource_init_common_with_paths(struct vaccel_resource *res,
@@ -813,10 +879,10 @@ int vaccel_resource_register(struct vaccel_resource *res,
 		ret = resource_add_files_from_dir(res, sess->is_virtio);
 		break;
 	case VACCEL_PATH_REMOTE:
-		// TODO:
-		// ret = resource_add_files_from_remote(res, !sess->is_virtio);
-		vaccel_error("Resource from URL is not implemented");
-		ret = VACCEL_ENOTSUP;
+		ret = resource_add_files_from_remote(res, !sess->is_virtio);
+		if (ret == VACCEL_ENOTSUP)
+			vaccel_error(
+				"Adding remote resource files requires building with libcurl");
 		break;
 	case VACCEL_PATH_MAX:
 		vaccel_error("Invalid path type");

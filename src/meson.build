@@ -44,6 +44,7 @@ libvaccel_deps = [
   threads_dep,
   dependency('dl'),
   libslog_dep,
+  libcurl_dep,
 ]
 libvaccel = library('vaccel',
   vaccel_sources,
