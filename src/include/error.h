@@ -31,3 +31,4 @@ enum {
 #define VACCEL_EROFS EROFS /* Read-only file system */
 #define VACCEL_EACCES EACCES /* Permission denied */
 #define VACCEL_EBADF EBADF /* Bad file number */
+#define VACCEL_EREMOTEIO EREMOTEIO /* Remote I/O error */

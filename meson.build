@@ -20,6 +20,11 @@ opt_examples = get_option('examples').enable_if(opt_tests.enabled())
 slog_subproj = subproject('slog')
 libslog_dep = dependency('slog')
 
+libcurl_dep = dependency('libcurl', required : false)
+if libcurl_dep.found()
+  vaccel_c_args += '-DLIBCURL'
+endif
+
 subdir('src')
 subdir('plugins')
 subdir('python')
