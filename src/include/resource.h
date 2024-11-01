@@ -71,6 +71,10 @@ struct vaccel_resource {
 	size_t nr_files;
 };
 
+/* Get resource by index from live resources */
+int vaccel_resource_get_by_id(struct vaccel_resource **resource,
+			      vaccel_id_t id);
+
 /* Get refcount atomically */
 long int vaccel_resource_refcount(const struct vaccel_resource *res);
 
@@ -123,21 +127,6 @@ int vaccel_resource_register(struct vaccel_resource *res,
 /* Unregister resource from session */
 int vaccel_resource_unregister(struct vaccel_resource *res,
 			       struct vaccel_session *sess);
-
-/* Get resource file path by name */
-int vaccel_resource_get_path_by_name(struct vaccel_resource *res,
-				     const char *name, char *dest);
-
-/* Get resource file path by index */
-char *vaccel_resource_get_path_by_index(struct vaccel_resource *res,
-					size_t idx);
-
-/* Get resource file path of first file */
-#define vaccel_resource_get_path(res) vaccel_resource_get_path_by_index(res, 0)
-
-/* Get resource by index from live resources */
-int vaccel_resource_get_by_id(struct vaccel_resource **resource,
-			      vaccel_id_t id);
 
 #ifdef __cplusplus
 }

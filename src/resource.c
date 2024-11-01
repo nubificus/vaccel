@@ -970,32 +970,3 @@ int vaccel_resource_unregister(struct vaccel_resource *res,
 
 	return VACCEL_OK;
 }
-
-int vaccel_resource_get_path_by_name(struct vaccel_resource *res,
-				     const char *name, char *dest)
-{
-	if (!initialized)
-		return VACCEL_EPERM;
-
-	if (!res || !name || !dest)
-		return VACCEL_EINVAL;
-
-	for (size_t i = 0; i < res->nr_files; i++) {
-		if (strcmp(basename(res->files[i]->path), name) == 0) {
-			strcpy(dest, res->files[i]->path);
-			return VACCEL_OK;
-		}
-	}
-	return VACCEL_ENOENT;
-}
-
-char *vaccel_resource_get_path_by_index(struct vaccel_resource *res, size_t idx)
-{
-	if (!initialized || !res || !res->nr_files || !res->files)
-		return NULL;
-
-	if (idx >= res->nr_files || !res->files[idx] || !res->files[idx]->path)
-		return NULL;
-
-	return strdup(res->files[idx]->path);
-}
