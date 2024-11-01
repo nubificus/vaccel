@@ -237,10 +237,6 @@ static int resource_populate_file_data(struct vaccel_resource *res)
 static int resource_add_files_from_dir(struct vaccel_resource *res,
 				       bool with_data)
 {
-	int ret;
-
-	// FIXME: print errors
-
 	if (!res)
 		return VACCEL_EINVAL;
 
@@ -255,8 +251,11 @@ static int resource_add_files_from_dir(struct vaccel_resource *res,
 		return VACCEL_EINVAL;
 
 	size_t nr_dirfiles = fs_dir_num_files(res->paths[0]);
-	if (!nr_dirfiles)
+	if (!nr_dirfiles) {
+		vaccel_error("Could not get number of files in %s",
+			     res->paths[0]);
 		return VACCEL_EINVAL;
+	}
 
 	res->files = (struct vaccel_file **)malloc(
 		nr_dirfiles * sizeof(struct vaccel_file *));
@@ -266,8 +265,11 @@ static int resource_add_files_from_dir(struct vaccel_resource *res,
 	for (size_t i = 0; i < nr_dirfiles; i++)
 		res->files[i] = NULL;
 
+	int ret;
 	DIR *d = opendir(res->paths[0]);
 	if (!d) {
+		vaccel_error("Could not open dir %s: %s", res->paths[0],
+			     strerror(errno));
 		ret = VACCEL_EINVAL;
 		goto free_files;
 	}
@@ -302,8 +304,12 @@ static int resource_add_files_from_dir(struct vaccel_resource *res,
 			memcpy(&filepath[baselen], dir->d_name, filenamelen);
 
 			ret = vaccel_file_new(&res->files[nr_files], filepath);
-			if (ret)
+			if (ret) {
+				vaccel_error(
+					"Could not create vaccel_file for %s",
+					filepath);
 				goto free;
+			}
 
 			++nr_files;
 		}
@@ -315,8 +321,10 @@ static int resource_add_files_from_dir(struct vaccel_resource *res,
 
 	if (with_data) {
 		ret = resource_populate_file_data(res);
-		if (ret)
+		if (ret) {
+			vaccel_error("Could not populate resource file data");
 			goto free;
+		}
 	}
 
 	return VACCEL_OK;
@@ -399,18 +407,28 @@ static int resource_add_files(struct vaccel_resource *res, bool remote,
 			ret = download_file(res->paths[i], res->rundir,
 					    PATH_MAX, path);
 			if (ret) {
+				vaccel_error("Could not download file from %s",
+					     res->paths[i]);
 				goto free;
 			}
 
 			ret = vaccel_file_new(&res->files[i], path);
-			if (ret)
+			if (ret) {
+				vaccel_error(
+					"Could not create vaccel_file for %s",
+					path);
 				goto free;
+			}
 			/* Mark the path as owned so it will be deleted on release */
 			res->files[i]->path_owned = true;
 		} else {
 			ret = vaccel_file_new(&res->files[i], res->paths[i]);
-			if (ret)
+			if (ret) {
+				vaccel_error(
+					"Could not create vaccel_file for %s",
+					res->paths[i]);
 				goto free;
+			}
 		}
 
 		++nr_files;
@@ -582,8 +600,10 @@ int vaccel_resource_init_multi(struct vaccel_resource *res, const char **paths,
 	res->nr_paths = nr_paths;
 
 	ret = resource_init_with_paths(res, type);
-	if (ret)
+	if (ret) {
+		vaccel_error("Could not initialize resource");
 		goto free;
+	}
 
 	return VACCEL_OK;
 
@@ -635,13 +655,17 @@ int vaccel_resource_init_from_buf(struct vaccel_resource *res, const void *buf,
 		ret = vaccel_file_from_buf(&res->files[0], buf, nr_bytes,
 					   "file", res->rundir, true);
 	}
-	if (ret)
+	if (ret) {
+		vaccel_error("Could not create vaccel_file from buffer");
 		goto cleanup_rundir;
+	}
 	res->nr_files = 1;
 
 	ret = resource_init_with_files(res, type);
-	if (ret)
+	if (ret) {
+		vaccel_error("Could not initialize resource");
 		goto delete_file;
+	}
 
 	return VACCEL_OK;
 
@@ -691,7 +715,8 @@ int vaccel_resource_init_from_files(struct vaccel_resource *res,
 
 	size_t nr_r_files = 0;
 	for (size_t i = 0; i < nr_files; i++) {
-		if (!files[i] || !files[i]->size || !files[i]->data) {
+		if (!files[i] || !files[i]->size || !files[i]->data ||
+		    !files[i]->name) {
 			ret = VACCEL_EINVAL;
 			goto free;
 		}
@@ -699,8 +724,11 @@ int vaccel_resource_init_from_files(struct vaccel_resource *res,
 		ret = vaccel_file_from_buf(&res->files[i], files[i]->data,
 					   files[i]->size, files[i]->name,
 					   res->rundir, false);
-		if (ret)
+		if (ret) {
+			vaccel_error(
+				"Could not create vaccel_file from buffer");
 			goto free;
+		}
 
 		++nr_r_files;
 	}
@@ -708,8 +736,10 @@ int vaccel_resource_init_from_files(struct vaccel_resource *res,
 	res->nr_files = nr_files;
 
 	ret = resource_init_with_files(res, type);
-	if (ret)
+	if (ret) {
+		vaccel_error("Could not initialize resource");
 		goto free;
+	}
 
 	return VACCEL_OK;
 
@@ -878,7 +908,7 @@ int vaccel_resource_register(struct vaccel_resource *res,
 		break;
 	}
 	if (ret) {
-		vaccel_error("Failed to add resource files: %d", ret);
+		vaccel_error("Failed to add resource files");
 		return ret;
 	}
 
