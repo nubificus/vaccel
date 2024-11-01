@@ -456,12 +456,12 @@ static int resource_add_files_from_remote(struct vaccel_resource *res,
 	return resource_add_files(res, true, download);
 }
 
-static int resource_init_common_with_paths(struct vaccel_resource *res,
-					   vaccel_resource_t type)
+static int resource_init_with_paths(struct vaccel_resource *res,
+				    vaccel_resource_t type)
 {
 	int ret;
 
-	if (!res || !res->paths || !res->nr_paths ||
+	if (!res || !res->paths || !res->nr_paths || !res->paths[0] ||
 	    type >= VACCEL_RESOURCE_MAX)
 		return VACCEL_EINVAL;
 
@@ -469,12 +469,33 @@ static int resource_init_common_with_paths(struct vaccel_resource *res,
 	if (res->id <= 0)
 		return VACCEL_EUSERS;
 
-	if (res->nr_paths > 1) {
-		// TODO: make this bitwise to hold specific path type
-		res->path_type = VACCEL_PATH_LIST;
-	} else {
-		res->path_type = path_get_type(res->paths[0]);
-		if (res->path_type == VACCEL_PATH_MAX) {
+	res->path_type = path_get_type(res->paths[0]);
+	if (res->path_type == VACCEL_PATH_MAX) {
+		ret = VACCEL_EINVAL;
+		goto release_id;
+	}
+	/* Verify all paths are of the same type */
+	for (size_t i = 1; i < res->nr_paths; i++) {
+		if (!res->paths[i]) {
+			ret = VACCEL_EINVAL;
+			goto release_id;
+		}
+
+		vaccel_path_t path_type = path_get_type(res->paths[i]);
+		if (path_type == VACCEL_PATH_MAX) {
+			vaccel_error("Path %zu has invalid type", i);
+			ret = VACCEL_EINVAL;
+			goto release_id;
+		}
+		if (path_type == VACCEL_PATH_DIR) {
+			vaccel_error(
+				"Resources with multiple directory paths are not supported");
+			ret = VACCEL_ENOTSUP;
+			goto release_id;
+		}
+		if (path_type != res->path_type) {
+			vaccel_error(
+				"Resource paths cannot be of different types");
 			ret = VACCEL_EINVAL;
 			goto release_id;
 		}
@@ -500,8 +521,8 @@ release_id:
 	return ret;
 }
 
-static int resource_init_common_with_files(struct vaccel_resource *res,
-					   vaccel_resource_t type)
+static int resource_init_with_files(struct vaccel_resource *res,
+				    vaccel_resource_t type)
 {
 	if (!res || !res->files || !res->nr_files ||
 	    type >= VACCEL_RESOURCE_MAX || !res->rundir || !res->id)
@@ -525,39 +546,7 @@ static int resource_init_common_with_files(struct vaccel_resource *res,
 int vaccel_resource_init(struct vaccel_resource *res, const char *path,
 			 vaccel_resource_t type)
 {
-	int ret;
-
-	if (!initialized)
-		return VACCEL_EPERM;
-
-	if (!res || !path || type >= VACCEL_RESOURCE_MAX)
-		return VACCEL_EINVAL;
-
-	res->paths = (char **)malloc(sizeof(char *));
-	if (!res->paths)
-		return VACCEL_ENOMEM;
-
-	res->paths[0] = strdup(path);
-	if (!res->paths[0]) {
-		ret = VACCEL_ENOMEM;
-		goto free_paths;
-	}
-	res->nr_paths = 1;
-
-	ret = resource_init_common_with_paths(res, type);
-	if (ret)
-		goto free;
-
-	return VACCEL_OK;
-
-free:
-	free(res->paths[0]);
-free_paths:
-	free(res->paths);
-	res->paths = NULL;
-	res->nr_paths = 0;
-
-	return ret;
+	return vaccel_resource_init_multi(res, &path, 1, type);
 }
 
 int vaccel_resource_init_multi(struct vaccel_resource *res, const char **paths,
@@ -592,7 +581,7 @@ int vaccel_resource_init_multi(struct vaccel_resource *res, const char **paths,
 	}
 	res->nr_paths = nr_paths;
 
-	ret = resource_init_common_with_paths(res, type);
+	ret = resource_init_with_paths(res, type);
 	if (ret)
 		goto free;
 
@@ -650,7 +639,7 @@ int vaccel_resource_init_from_buf(struct vaccel_resource *res, const void *buf,
 		goto cleanup_rundir;
 	res->nr_files = 1;
 
-	ret = resource_init_common_with_files(res, type);
+	ret = resource_init_with_files(res, type);
 	if (ret)
 		goto delete_file;
 
@@ -718,7 +707,7 @@ int vaccel_resource_init_from_files(struct vaccel_resource *res,
 	assert(nr_r_files == nr_files);
 	res->nr_files = nr_files;
 
-	ret = resource_init_common_with_files(res, type);
+	ret = resource_init_with_files(res, type);
 	if (ret)
 		goto free;
 
@@ -872,7 +861,6 @@ int vaccel_resource_register(struct vaccel_resource *res,
 
 	switch (res->path_type) {
 	case VACCEL_PATH_LOCAL:
-	case VACCEL_PATH_LIST:
 		ret = resource_add_files_from_local(res, sess->is_virtio);
 		break;
 	case VACCEL_PATH_DIR:

@@ -32,7 +32,6 @@ typedef enum {
 	VACCEL_PATH_LOCAL = 0,
 	VACCEL_PATH_REMOTE,
 	VACCEL_PATH_DIR,
-	VACCEL_PATH_LIST,
 	VACCEL_PATH_MAX
 } vaccel_path_t;
 
