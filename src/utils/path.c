@@ -178,7 +178,7 @@ int path_file_name_add_random_suffix(char *path, size_t *ext_len,
 			     base_path, strerror(errno));
 		return ret;
 	}
-	if (ret == PATH_MAX) {
+	if (ret >= PATH_MAX) {
 		vaccel_error("Random suffix path too long for %s", base_path);
 		return VACCEL_ENAMETOOLONG;
 	}
