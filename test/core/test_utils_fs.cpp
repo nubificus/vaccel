@@ -19,8 +19,19 @@
 
 #include <catch.hpp>
 #include <sys/mman.h>
+#include <unistd.h>
 #include <utils.hpp>
 #include <vaccel.h>
+
+int process_files_callback(const char *path, int idx, va_list args)
+{
+	char **paths = va_arg(args, char **);
+	if (paths == nullptr)
+		return VACCEL_EINVAL;
+
+	paths[idx] = strdup(path);
+	return VACCEL_OK;
+}
 
 TEST_CASE("fs_path_exists", "[utils/fs]")
 {
@@ -141,52 +152,87 @@ TEST_CASE("fs_path_is_file", "[utils/fs]")
 
 TEST_CASE("fs_ops", "[utils/fs]")
 {
-	char *dirname = abs_path(BUILD_ROOT, "my_dir1/my_dir2");
-	char *filepath = abs_path(BUILD_ROOT, "my_dir1/my_dir2/my_file");
-	int ret;
+	char rootpath[PATH_MAX];
+	char dirpath[PATH_MAX];
+	char filepath1[PATH_MAX];
+	char filepath2[PATH_MAX];
+
+	int ret = path_init_from_parts(rootpath, PATH_MAX, vaccel_rundir(),
+				       "test", NULL);
+	REQUIRE(ret == VACCEL_OK);
+	ret = path_init_from_parts(dirpath, PATH_MAX, rootpath, "test_dir1",
+				   NULL);
+	REQUIRE(ret == VACCEL_OK);
+	ret = path_init_from_parts(filepath1, PATH_MAX, dirpath, "test_file1",
+				   NULL);
+	REQUIRE(ret == VACCEL_OK);
+	ret = path_init_from_parts(filepath2, PATH_MAX, dirpath, "test_file2",
+				   NULL);
+	REQUIRE(ret == VACCEL_OK);
 
 	SECTION("Create directory")
 	{
-		ret = fs_dir_create(dirname);
+		ret = fs_dir_create(dirpath);
 		REQUIRE(ret == VACCEL_OK);
-		REQUIRE(fs_path_is_dir(dirname));
+		REQUIRE(fs_path_is_dir(dirpath));
 	}
 
 	SECTION("Number of files (0)")
 	{
-		REQUIRE(0 == fs_dir_num_files(dirname));
+		REQUIRE(0 == fs_dir_process_files(dirpath, nullptr));
 	}
 
-	SECTION("Create file")
+	SECTION("Create files")
 	{
-		REQUIRE(VACCEL_OK == fs_file_create(filepath, nullptr));
-		REQUIRE(fs_path_is_file(filepath));
+		REQUIRE(VACCEL_OK == fs_file_create(filepath1, nullptr));
+		REQUIRE(fs_path_is_file(filepath1));
+		int fd;
+		REQUIRE(VACCEL_OK == fs_file_create(filepath2, &fd));
+		REQUIRE(fd > 0);
+		REQUIRE(fs_path_is_file(filepath2));
+		close(fd);
 	}
 
-	SECTION("Number of files (1)")
+	SECTION("Number of files (2)")
 	{
-		REQUIRE(1 == fs_dir_num_files(dirname));
+		REQUIRE(2 == fs_dir_process_files(dirpath, nullptr));
 	}
 
-	SECTION("Remove file")
+	SECTION("Get dir file paths (2)")
 	{
-		REQUIRE(VACCEL_OK == fs_file_remove(filepath));
-		REQUIRE(false == fs_path_is_file(filepath));
+		char *paths[2];
+		for (auto &path : paths)
+			path = nullptr;
+		REQUIRE(2 == fs_dir_process_files(
+				     dirpath, process_files_callback, paths));
+		for (auto &path : paths) {
+			REQUIRE(path != nullptr);
+			REQUIRE((strcmp(path, filepath1) == 0 ||
+				 strcmp(path, filepath2) == 0));
+			free(path);
+		}
+	}
+
+	SECTION("Remove files")
+	{
+		REQUIRE(VACCEL_OK == fs_file_remove(filepath1));
+		REQUIRE(false == fs_path_is_file(filepath1));
+		REQUIRE(VACCEL_OK == fs_file_remove(filepath2));
+		REQUIRE(false == fs_path_is_file(filepath2));
 	}
 
 	SECTION("Number of files (0)")
 	{
-		REQUIRE(0 == fs_dir_num_files(dirname));
+		REQUIRE(0 == fs_dir_process_files(dirpath, nullptr));
 	}
 
 	SECTION("Remove directory")
 	{
-		REQUIRE(VACCEL_OK == fs_dir_remove(dirname));
-		REQUIRE(false == fs_path_is_dir(dirname));
+		REQUIRE(VACCEL_OK == fs_dir_remove(dirpath));
+		REQUIRE(false == fs_path_is_dir(dirpath));
+		REQUIRE(VACCEL_OK == fs_dir_remove(rootpath));
+		REQUIRE(false == fs_path_is_dir(rootpath));
 	}
-
-	free(dirname);
-	free(filepath);
 }
 
 TEST_CASE("fs_file_reading", "[utils/fs]")

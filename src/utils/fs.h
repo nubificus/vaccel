@@ -2,12 +2,15 @@
 
 #pragma once
 
+#include <stdarg.h>
 #include <stdbool.h>
 #include <stddef.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+typedef int (*fs_path_callback_t)(const char *path, int idx, va_list args);
 
 /* Check if path exists */
 bool fs_path_exists(const char *path);
@@ -18,8 +21,8 @@ bool fs_path_is_dir(const char *path);
 /* Check if path is an existing file */
 bool fs_path_is_file(const char *path);
 
-/* Get number of top-level files in directory */
-int fs_dir_num_files(const char *path);
+/* Process files in directory path recursively with func */
+int fs_dir_process_files(const char *path, fs_path_callback_t func, ...);
 
 /* Create a directory in the fs recursively (if it does't exist) */
 int fs_dir_create(const char *path);

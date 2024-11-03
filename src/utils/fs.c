@@ -48,30 +48,89 @@ bool fs_path_is_file(const char *path)
 	return (stat(path, &st) == 0) && S_ISREG(st.st_mode);
 }
 
-int fs_dir_num_files(const char *path)
+static int dir_process_files(const char *path, fs_path_callback_t func,
+			     int *idx, va_list args)
 {
-	if (!path) {
-		vaccel_error("Invalid path");
-		return VACCEL_EINVAL;
-	}
+	if (!path || !idx)
+		return -VACCEL_EINVAL;
 
-	DIR *d = opendir(path);
-	if (!d) {
+	DIR *dir = opendir(path);
+	if (!dir) {
 		vaccel_error("Could not open dir %s: %s", path,
 			     strerror(errno));
-		return VACCEL_EINVAL;
+		return -errno;
 	}
 
-	struct dirent *dir;
-	int nr_files = 0;
-	while ((dir = readdir(d)) != NULL) {
-		if (dir->d_type == DT_REG)
-			++nr_files;
+	int ret = 0;
+	struct dirent *d;
+	while ((d = readdir(dir)) != NULL) {
+		/* Skip '.' and '..' */
+		if (strcmp(d->d_name, ".") == 0 || strcmp(d->d_name, "..") == 0)
+			continue;
+
+		/* +2 for '/' and '\0' */
+		size_t entity_path_len = strlen(path) + strlen(d->d_name) + 2;
+		if (entity_path_len > PATH_MAX) {
+			vaccel_error("Entity path for %s too long", d->d_name);
+			ret = -VACCEL_ENAMETOOLONG;
+			break;
+		}
+
+		char entity_path[PATH_MAX];
+		ret = snprintf(entity_path, PATH_MAX, "%s/%s", path, d->d_name);
+		if (ret < 0) {
+			vaccel_error("Could not generate path for %s: %s",
+				     d->d_name, strerror(errno));
+			ret = -errno;
+			break;
+		}
+
+		struct stat st;
+		if (stat(entity_path, &st) < 0) {
+			vaccel_error("Unable to stat path %s: %s", entity_path,
+				     strerror(errno));
+			ret = -errno;
+			break;
+		}
+
+		if (S_ISDIR(st.st_mode)) {
+			/* Recursively enter directories */
+			ret = dir_process_files(entity_path, func, idx, args);
+			if (ret < 0)
+				break;
+		} else if (S_ISREG(st.st_mode)) {
+			/* If we find a file and func != NULL execute the func */
+			if (func) {
+				va_list func_args;
+				/* Copy the arg list here so we do not corrupt
+				 * it during recursion */
+				va_copy(func_args, args);
+				ret = func(entity_path, *idx, func_args);
+				va_end(func_args);
+				if (ret) {
+					ret = -ret;
+					break;
+				}
+			}
+			(*idx)++;
+		}
 	}
 
-	closedir(d);
+	closedir(dir);
 
-	return nr_files;
+	return (ret >= 0) ? *idx : ret;
+}
+
+int fs_dir_process_files(const char *path, fs_path_callback_t func, ...)
+{
+	va_list args;
+	va_start(args, func);
+
+	int index = 0;
+	int ret = dir_process_files(path, func, &index, args);
+
+	va_end(args);
+	return ret;
 }
 
 int fs_dir_create(const char *path)

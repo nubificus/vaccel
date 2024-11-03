@@ -28,4 +28,12 @@
 #include "id.h"
 #include "vaccel_prof.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 const char *vaccel_rundir(void);
+
+#ifdef __cplusplus
+}
+#endif
