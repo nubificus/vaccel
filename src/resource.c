@@ -18,6 +18,7 @@
 #include <inttypes.h>
 #include <libgen.h>
 #include <limits.h>
+#include <stdarg.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -234,6 +235,32 @@ static int resource_populate_file_data(struct vaccel_resource *res)
 	return VACCEL_OK;
 }
 
+static int add_dir_files_callback(const char *path, int idx, va_list args)
+{
+	if (!path || idx < 0)
+		return VACCEL_EINVAL;
+
+	struct vaccel_resource *res = va_arg(args, struct vaccel_resource *);
+	if (res == NULL)
+		return VACCEL_EINVAL;
+	int nr_files = va_arg(args, int);
+	if (nr_files <= 0)
+		return VACCEL_EINVAL;
+
+	if (idx >= nr_files) {
+		vaccel_error(
+			"Files to process are more than expected (%s vs %zu)",
+			idx, nr_files);
+		return VACCEL_EINVAL;
+	}
+
+	int ret = vaccel_file_new(&res->files[idx], path);
+	if (ret)
+		vaccel_error("Could not create vaccel_file for %s", path);
+
+	return ret;
+}
+
 static int resource_add_files_from_dir(struct vaccel_resource *res,
 				       bool with_data)
 {
@@ -250,8 +277,9 @@ static int resource_add_files_from_dir(struct vaccel_resource *res,
 	if (!res->paths || !res->paths[0] || res->nr_paths != 1)
 		return VACCEL_EINVAL;
 
-	size_t nr_dirfiles = fs_dir_num_files(res->paths[0]);
-	if (!nr_dirfiles) {
+	/* Get number of dir files */
+	int nr_dirfiles = fs_dir_process_files(res->paths[0], NULL);
+	if (nr_dirfiles < 0) {
 		vaccel_error("Could not get number of files in %s",
 			     res->paths[0]);
 		return VACCEL_EINVAL;
@@ -262,62 +290,21 @@ static int resource_add_files_from_dir(struct vaccel_resource *res,
 	if (!res->files)
 		return VACCEL_ENOMEM;
 
-	for (size_t i = 0; i < nr_dirfiles; i++)
+	for (int i = 0; i < nr_dirfiles; i++)
 		res->files[i] = NULL;
 
-	int ret;
-	DIR *d = opendir(res->paths[0]);
-	if (!d) {
-		vaccel_error("Could not open dir %s: %s", res->paths[0],
-			     strerror(errno));
-		ret = VACCEL_EINVAL;
-		goto free_files;
+	/* Create vaccel_file struct for file paths. If the files are in
+	 * subdirectories they will be persisted in a flat directory remotely */
+	int ret = fs_dir_process_files(res->paths[0], add_dir_files_callback,
+				       res, nr_dirfiles, NULL);
+	if (ret < 0) {
+		vaccel_error("Could not process files from dir %s",
+			     res->paths[0]);
+		goto free;
 	}
 
-	size_t pathlen = strlen(res->paths[0]) + 1;
-	if (pathlen >= PATH_MAX) {
-		ret = VACCEL_ENAMETOOLONG;
-		goto close_dir;
-	}
-
-	char filepath[PATH_MAX] = { 0 };
-	memcpy(filepath, res->paths[0], pathlen);
-	size_t baselen = strlen(filepath) + 1;
-	filepath[baselen - 1] = '/';
-	size_t nr_files = 0;
-	struct dirent *dir;
-	while ((dir = readdir(d)) != NULL) {
-		if (nr_files > nr_dirfiles) {
-			vaccel_error(
-				"Computed and actual file numbers differ (%zu vs %zu)",
-				nr_dirfiles, nr_files);
-			ret = VACCEL_EINVAL;
-			goto free;
-		}
-		if (dir->d_type == DT_REG) {
-			size_t filenamelen = strlen(dir->d_name) + 1;
-			if (filenamelen + baselen >= PATH_MAX) {
-				ret = VACCEL_ENAMETOOLONG;
-				goto free;
-			}
-
-			memcpy(&filepath[baselen], dir->d_name, filenamelen);
-
-			ret = vaccel_file_new(&res->files[nr_files], filepath);
-			if (ret) {
-				vaccel_error(
-					"Could not create vaccel_file for %s",
-					filepath);
-				goto free;
-			}
-
-			++nr_files;
-		}
-		memset(&filepath[baselen], 0, PATH_MAX - baselen);
-	}
-	closedir(d);
-	assert(nr_dirfiles == nr_files);
-	res->nr_files = nr_files;
+	assert(nr_dirfiles == ret);
+	res->nr_files = nr_dirfiles;
 
 	if (with_data) {
 		ret = resource_populate_file_data(res);
@@ -330,10 +317,7 @@ static int resource_add_files_from_dir(struct vaccel_resource *res,
 	return VACCEL_OK;
 
 free:
-	delete_files(res->files, nr_files);
-close_dir:
-	closedir(d);
-free_files:
+	delete_files(res->files, res->nr_files);
 	free(res->files);
 	res->files = NULL;
 	res->nr_files = 0;
@@ -997,6 +981,49 @@ int vaccel_resource_unregister(struct vaccel_resource *res,
 
 	vaccel_debug("session:%" PRId64 " Unregistered resource %" PRId64,
 		     sess->id, res->id);
+
+	return VACCEL_OK;
+}
+
+int vaccel_resource_directory(struct vaccel_resource *res, char *out_path,
+			      size_t out_path_size, char **alloc_path)
+{
+	if (!res || (!alloc_path && !out_path))
+		return VACCEL_EINVAL;
+
+	if (res->id <= 0) {
+		vaccel_error(
+			"Cannot return directory for uninitialized resource");
+		return VACCEL_EINVAL;
+	}
+
+	if (res->path_type != VACCEL_PATH_DIR) {
+		vaccel_error(
+			"Cannot return directory for resource not created from a directory");
+		return VACCEL_ENOTSUP;
+	}
+
+	const char *dir;
+	if (res->rundir) {
+		dir = res->rundir;
+	} else {
+		if (!res->nr_paths || !res->paths || !res->paths[0])
+			return VACCEL_EINVAL;
+		dir = res->paths[0];
+	}
+
+	if (alloc_path == NULL) {
+		if (strlen(dir) >= out_path_size) {
+			vaccel_error(
+				"Buffer size too small for directory path");
+			return VACCEL_EINVAL;
+		}
+		strncpy(out_path, dir, out_path_size);
+	} else {
+		*alloc_path = strdup(dir);
+		if (!*alloc_path)
+			return VACCEL_ENOMEM;
+	}
 
 	return VACCEL_OK;
 }
