@@ -17,8 +17,6 @@ examples_sources = files([
   'sgemm_generic.c',
   'minmax.c',
   'minmax_generic.c',
-  'single_model.c',
-  'tf_saved_model.c',
   'tf_inference.c',
   'tflite_inference.c',
   'torch_inference.cpp',
