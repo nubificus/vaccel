@@ -125,7 +125,11 @@ int vaccel_tflite_session_load(struct vaccel_session *sess,
 		" Looking for plugin implementing tflite_session_load operation",
 		sess->id);
 
-	vaccel_prof_region_start(&tflite_load_stats);
+	if (model->type != VACCEL_RESOURCE_MODEL) {
+		vaccel_error(
+			"Invalid resource type: expected VACCEL_RESOURCE_MODEL");
+		return VACCEL_EINVAL;
+	}
 
 	if (!vaccel_session_has_resource(sess, model)) {
 		vaccel_error("Resource %" PRId64
@@ -133,6 +137,8 @@ int vaccel_tflite_session_load(struct vaccel_session *sess,
 			     model->id, sess->id);
 		return VACCEL_EPERM;
 	}
+
+	vaccel_prof_region_start(&tflite_load_stats);
 
 	// Get implementation
 	int (*plugin_op)(struct vaccel_session *, struct vaccel_resource *) =
@@ -170,7 +176,11 @@ int vaccel_tflite_session_run(struct vaccel_session *sess,
 		" Looking for plugin implementing tflite_session_run operation",
 		sess->id);
 
-	vaccel_prof_region_start(&tflite_session_run_stats);
+	if (model->type != VACCEL_RESOURCE_MODEL) {
+		vaccel_error(
+			"Invalid resource type: expected VACCEL_RESOURCE_MODEL");
+		return VACCEL_EINVAL;
+	}
 
 	if (!vaccel_session_has_resource(sess, model)) {
 		vaccel_error("Resource %" PRId64
@@ -178,6 +188,8 @@ int vaccel_tflite_session_run(struct vaccel_session *sess,
 			     model->id, sess->id);
 		return VACCEL_EPERM;
 	}
+
+	vaccel_prof_region_start(&tflite_session_run_stats);
 
 	// Get implementation
 	int (*plugin_op)(struct vaccel_session *,
@@ -214,6 +226,12 @@ int vaccel_tflite_session_delete(struct vaccel_session *sess,
 		"session:%" PRId64
 		" Looking for plugin implementing tflite_session_delete operation",
 		sess->id);
+
+	if (model->type != VACCEL_RESOURCE_MODEL) {
+		vaccel_error(
+			"Invalid resource type: expected VACCEL_RESOURCE_MODEL");
+		return VACCEL_EINVAL;
+	}
 
 	if (!vaccel_session_has_resource(sess, model)) {
 		vaccel_error("Resource %" PRId64

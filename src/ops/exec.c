@@ -58,7 +58,11 @@ int vaccel_exec_with_resource(struct vaccel_session *sess,
 		     " Looking for plugin implementing exec with resource",
 		     sess->id);
 
-	vaccel_prof_region_start(&exec_res_op_stats);
+	if (resource->type != VACCEL_RESOURCE_LIB) {
+		vaccel_error(
+			"Invalid resource type: expected VACCEL_RESOURCE_LIB");
+		return VACCEL_EINVAL;
+	}
 
 	if (!vaccel_session_has_resource(sess, resource)) {
 		vaccel_error("Resource %" PRId64
@@ -66,6 +70,8 @@ int vaccel_exec_with_resource(struct vaccel_session *sess,
 			     resource->id, sess->id);
 		return VACCEL_EPERM;
 	}
+
+	vaccel_prof_region_start(&exec_res_op_stats);
 
 	// Get implementation
 	int (*plugin_op)() =

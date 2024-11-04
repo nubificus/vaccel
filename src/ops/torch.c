@@ -218,6 +218,12 @@ int vaccel_torch_jitload_forward(struct vaccel_session *sess,
 		" Looking for plugin implementing torch_jitload_forward operation",
 		sess->id);
 
+	if (model->type != VACCEL_RESOURCE_MODEL) {
+		vaccel_error(
+			"Invalid resource type: expected VACCEL_RESOURCE_MODEL");
+		return VACCEL_EINVAL;
+	}
+
 	if (!vaccel_session_has_resource(sess, model)) {
 		vaccel_error("Resource %" PRId64
 			     " is not registered to session %" PRId64 "",
