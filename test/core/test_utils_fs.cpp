@@ -170,11 +170,51 @@ TEST_CASE("fs_ops", "[utils/fs]")
 				   NULL);
 	REQUIRE(ret == VACCEL_OK);
 
+	SECTION("Create existing dir")
+	{
+		char *dir = abs_path(BUILD_ROOT, "examples");
+		REQUIRE(VACCEL_EEXIST == fs_dir_create(dir));
+		free(dir);
+	}
+
+	SECTION("Create existing file")
+	{
+		char *existing_file =
+			abs_path(BUILD_ROOT, "examples/libmytestlib.so");
+		ret = fs_file_create(existing_file, NULL);
+		REQUIRE(VACCEL_EEXIST == ret);
+		free(existing_file);
+	}
+
 	SECTION("Create directory")
 	{
 		ret = fs_dir_create(dirpath);
 		REQUIRE(ret == VACCEL_OK);
 		REQUIRE(fs_path_is_dir(dirpath));
+	}
+
+	SECTION("Create directory - unique")
+	{
+		char *dir = abs_path(BUILD_ROOT, "my_dir");
+		char *final_dir;
+		REQUIRE(VACCEL_OK ==
+			fs_dir_create_unique(dir, 256, &final_dir));
+		REQUIRE(fs_path_is_dir(final_dir));
+		REQUIRE(VACCEL_OK == fs_dir_remove(final_dir));
+		free(final_dir);
+		free(dir);
+	}
+
+	SECTION("Create file - unique")
+	{
+		char *new_file = abs_path(BUILD_ROOT, "unq");
+		char *final_path;
+		ret = fs_file_create_unique(new_file, 256, &final_path, NULL);
+		REQUIRE(VACCEL_OK == ret);
+		REQUIRE(fs_path_is_file(final_path));
+		REQUIRE(VACCEL_OK == fs_file_remove(final_path));
+		free(new_file);
+		free(final_path);
 	}
 
 	SECTION("Number of files (0)")
