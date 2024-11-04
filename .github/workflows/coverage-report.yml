@@ -142,7 +142,7 @@ jobs:
         id: generate-md-file
         if: ${{ inputs.commit == true }}
         run: |
-          COVERAGE_FILE="docs/coverage/src_coverage/coverage.md"
+          COVERAGE_FILE="docs/tests/coverage/coverage.md"
           pycobertura show \
             "$(find "${{ steps.set-repo-dirs.outputs.repo }}/build_${{ matrix.build-type }}" \
               -name "coverage*.xml")" \
