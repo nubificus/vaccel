@@ -73,10 +73,6 @@ eval "${WRAPPER_CMD}" "${EXAMPLES_DIR}/pynq_parallel"
 eval "${WRAPPER_CMD}" "${EXAMPLES_DIR}/pynq_parallel_generic"
 eval "${WRAPPER_CMD}" "${EXAMPLES_DIR}/pynq_vector_add"
 eval "${WRAPPER_CMD}" "${EXAMPLES_DIR}/pynq_vector_add_generic"
-eval "${WRAPPER_CMD}" "${EXAMPLES_DIR}/single_model" \
-	"${SHARE_DIR}/models/tf/frozen_graph.pb"
-eval "${WRAPPER_CMD}" "${EXAMPLES_DIR}/tf_saved_model" \
-	"${SHARE_DIR}/models/tf/lstm2"
 eval "${WRAPPER_CMD}" "${EXAMPLES_DIR}/tf_inference" \
 	"${SHARE_DIR}/models/tf/lstm2"
 eval "${WRAPPER_CMD}" "${EXAMPLES_DIR}/tflite_inference" \
@@ -84,7 +80,7 @@ eval "${WRAPPER_CMD}" "${EXAMPLES_DIR}/tflite_inference" \
 eval "${WRAPPER_CMD}" "${EXAMPLES_DIR}/torch_inference" \
 	"${SHARE_DIR}/images/example.jpg" \
 	"${SHARE_DIR}/models/torch/cnn_trace.pt"
-eval "${WRAPPER_CMD}" "${EXAMPLES_DIR}/mbench 1" \
+eval "${WRAPPER_CMD}" "${EXAMPLES_DIR}/mbench" 1 \
 	"${SHARE_DIR}/images/example.jpg"
 eval "${WRAPPER_CMD}" "${EXAMPLES_DIR}/exec" \
 	"${TESTLIB_DIR}/libmytestlib.so" 1
