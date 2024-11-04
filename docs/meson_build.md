@@ -83,8 +83,8 @@ created with at least:
 ```bash
 meson setup -Dtests=enabled -Db_coverage=true <build_dir>
 ```
-After following the printed suggestion for creating a `gcovr.cfg`, a coverage
-report can be generated with:
+After compiling ```build``` and following the printed suggestion for creating a
+`gcovr.cfg`, a coverage report can be generated with:
 ```bash
 meson test -C <build_dir>
 ninja coverage-text -C <build_dir>
