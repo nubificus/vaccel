@@ -21,15 +21,15 @@ bool path_is_url(const char *path)
 	if (!path)
 		return false;
 
-#ifdef LIBCURL
-	return net_path_is_url(path);
-#endif
-
 	const char *http_prefix = "http://";
 	const char *https_prefix = "https://";
 
-	return strncmp(path, http_prefix, strlen(http_prefix)) == 0 ||
-	       strncmp(path, https_prefix, strlen(https_prefix)) == 0;
+	if (strncmp(path, http_prefix, strlen(http_prefix)) == 0 ||
+	    strncmp(path, https_prefix, strlen(https_prefix)) == 0) {
+		return net_path_is_url(path);
+	}
+
+	return false;
 }
 
 int path_init_from_parts(char *path, size_t size, const char *first_part, ...)

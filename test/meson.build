@@ -1,8 +1,14 @@
-compiler = meson.get_compiler('cpp')
+repo_info_script = meson.project_source_root() / 'scripts/get-repo-info.sh'
 
 conf = configuration_data()
 conf.set('SOURCE_ROOT', meson.project_source_root())
 conf.set('BUILD_ROOT', meson.project_build_root())
+conf.set('REPO_URL',
+  run_command(repo_info_script, 'url', check: true).stdout().strip())
+conf.set('REPO_BRANCH',
+  run_command(repo_info_script, 'branch', check: true).stdout().strip())
+conf.set('REPO_RAWURL',
+  run_command(repo_info_script, 'rawurl', check: true).stdout().strip())
 
 utils_hpp = configure_file(input : 'utils.hpp.in',
   output : 'utils.hpp',
@@ -81,6 +87,7 @@ foreach t : tests_ops_sources + tests_res_sources
   endif
 endforeach
 
+compiler = meson.get_compiler('cpp')
 gcovr_cfg = '''
 To enable coverage measurements configure with option:
 -Db_coverage=true

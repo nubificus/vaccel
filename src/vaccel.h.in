@@ -5,10 +5,10 @@
 #define VACCEL_VERSION "@VACCEL_VERSION@"
 
 #include "error.h"
+#include "file.h"
+#include "id.h"
 #include "log.h"
 #include "misc.h"
-#include "utils/fs.h"
-#include "utils/path.h"
 #include "ops/blas.h"
 #include "ops/exec.h"
 #include "ops/fpga.h"
@@ -22,10 +22,11 @@
 #include "ops/torch.h"
 #include "ops/vaccel_ops.h"
 #include "plugin.h"
-#include "session.h"
 #include "resource.h"
-#include "file.h"
-#include "id.h"
+#include "session.h"
+#include "utils/fs.h"
+#include "utils/net.h"
+#include "utils/path.h"
 #include "vaccel_prof.h"
 
 #ifdef __cplusplus
