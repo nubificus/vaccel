@@ -9,5 +9,7 @@ tests_core_sources = files([
   'test_session.cpp',
   'test_vaccel.cpp',
   'test_utils_fs.cpp',
-  'test_utils_path.cpp'
+  'test_utils_path.cpp',
+  'test_utils_net_curl.cpp',
+  'test_utils_net_nocurl.cpp',
 ])

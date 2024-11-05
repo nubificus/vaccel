@@ -23,6 +23,7 @@ libslog_dep = dependency('slog')
 libcurl_dep = dependency('libcurl', required : false)
 if libcurl_dep.found()
   vaccel_c_args += '-DLIBCURL'
+  vaccel_cpp_args += '-DLIBCURL'
 endif
 
 subdir('src')

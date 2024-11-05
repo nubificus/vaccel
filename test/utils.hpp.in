@@ -6,6 +6,9 @@ extern "C" {
 
 #define SOURCE_ROOT "@SOURCE_ROOT@"
 #define BUILD_ROOT "@BUILD_ROOT@"
+#define REPO_URL "@REPO_URL@"
+#define REPO_BRANCH "@REPO_BRANCH@"
+#define REPO_RAWURL "@REPO_RAWURL@"
 
 auto abs_path(const char *root, const char *file) -> char *;
 auto read_file_from_dir(const char *dir, const char *path,

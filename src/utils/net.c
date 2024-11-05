@@ -6,21 +6,18 @@
 #include "fs.h"
 #include "log.h"
 #include "path.h"
+#include <limits.h>
+#include <string.h>
 
 #ifdef LIBCURL
 
 #include <curl/curl.h>
 #include <errno.h>
-#include <limits.h>
 #include <stdbool.h>
-#include <string.h>
 
-bool net_path_is_url(const char *path)
+bool net_curl_path_is_url(const char *path)
 {
 	bool is_url = false;
-
-	if (!path)
-		return is_url;
 
 	CURLU *curl = curl_url();
 	if (!curl) {
@@ -37,12 +34,9 @@ bool net_path_is_url(const char *path)
 	return is_url;
 }
 
-bool net_path_exists(const char *path)
+bool net_curl_path_exists(const char *path)
 {
 	bool exists = false;
-
-	if (!path)
-		return exists;
 
 	CURL *curl = curl_easy_init();
 	if (!curl) {
@@ -174,24 +168,8 @@ static int download_progress_callback(void *p, curl_off_t dltotal,
 	return 0;
 }
 
-int net_file_download(const char *path, const char *download_path)
+int net_curl_file_download(const char *path, const char *download_path)
 {
-	if (!path || !download_path)
-		return VACCEL_EINVAL;
-
-	if (strlen(download_path) + 1 > PATH_MAX) {
-		vaccel_error("Path %s name too long", path);
-		return VACCEL_ENAMETOOLONG;
-	}
-
-	if (fs_path_is_file(download_path))
-		return VACCEL_EEXIST;
-
-	if (fs_path_exists(download_path)) {
-		vaccel_error("Path %s exists but is not a file", path);
-		return VACCEL_EINVAL;
-	}
-
 	CURL *curl = curl_easy_init();
 	if (!curl)
 		return VACCEL_ENOMEM;
@@ -233,23 +211,70 @@ int net_file_download(const char *path, const char *download_path)
 
 #else
 
-bool net_path_is_url(const char *path)
+bool net_nocurl_path_is_url(const char *path)
+{
+	(void)path;
+	return true;
+}
+
+bool net_nocurl_path_exists(const char *path)
 {
 	(void)path;
 	return false;
 }
 
-bool net_path_exists(const char *path)
-{
-	(void)path;
-	return false;
-}
-
-int net_file_download(const char *path, const char *download_path)
+int net_nocurl_file_download(const char *path, const char *download_path)
 {
 	(void)path;
 	(void)download_path;
 	return VACCEL_ENOTSUP;
 }
 
+#endif /* LIBCURL */
+
+bool net_path_is_url(const char *path)
+{
+	if (!path)
+		return false;
+#ifdef LIBCURL
+	return net_curl_path_is_url(path);
+#else
+	return net_nocurl_path_is_url(path);
 #endif
+}
+
+bool net_path_exists(const char *path)
+{
+	if (!path)
+		return false;
+#ifdef LIBCURL
+	return net_curl_path_exists(path);
+#else
+	return net_nocurl_path_exists(path);
+#endif
+}
+
+int net_file_download(const char *path, const char *download_path)
+{
+	if (!path || !download_path)
+		return VACCEL_EINVAL;
+
+	if (strlen(download_path) + 1 > PATH_MAX) {
+		vaccel_error("Path %s name too long", path);
+		return VACCEL_ENAMETOOLONG;
+	}
+
+	if (fs_path_is_file(download_path))
+		return VACCEL_EEXIST;
+
+	if (fs_path_exists(download_path)) {
+		vaccel_error("Path %s exists but is not a file", path);
+		return VACCEL_EINVAL;
+	}
+
+#ifdef LIBCURL
+	return net_curl_file_download(path, download_path);
+#else
+	return net_nocurl_file_download(path, download_path);
+#endif
+}
