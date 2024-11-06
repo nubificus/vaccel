@@ -33,7 +33,7 @@ int process_files_callback(const char *path, int idx, va_list args)
 	return VACCEL_OK;
 }
 
-TEST_CASE("fs_path_exists", "[utils/fs]")
+TEST_CASE("fs_path_exists", "[utils][fs]")
 {
 	char *existing_file = abs_path(BUILD_ROOT, "examples/libmytestlib.so");
 	char *non_existing_file =
@@ -72,7 +72,7 @@ TEST_CASE("fs_path_exists", "[utils/fs]")
 	free(non_existing_dir);
 }
 
-TEST_CASE("fs_path_is_dir", "[utils/fs]")
+TEST_CASE("fs_path_is_dir", "[utils][fs]")
 {
 	char *existing_file = abs_path(BUILD_ROOT, "examples/libmytestlib.so");
 	char *non_existing_file =
@@ -111,7 +111,7 @@ TEST_CASE("fs_path_is_dir", "[utils/fs]")
 	free(non_existing_dir);
 }
 
-TEST_CASE("fs_path_is_file", "[utils/fs]")
+TEST_CASE("fs_path_is_file", "[utils][fs]")
 {
 	char *existing_file = abs_path(BUILD_ROOT, "examples/libmytestlib.so");
 	char *non_existing_file =
@@ -150,7 +150,7 @@ TEST_CASE("fs_path_is_file", "[utils/fs]")
 	free(non_existing_dir);
 }
 
-TEST_CASE("fs_ops", "[utils/fs]")
+TEST_CASE("fs_ops", "[utils][fs]")
 {
 	char rootpath[PATH_MAX];
 	char dirpath[PATH_MAX];
@@ -158,16 +158,16 @@ TEST_CASE("fs_ops", "[utils/fs]")
 	char filepath2[PATH_MAX];
 
 	int ret = path_init_from_parts(rootpath, PATH_MAX, vaccel_rundir(),
-				       "test", NULL);
+				       "test", nullptr);
 	REQUIRE(ret == VACCEL_OK);
 	ret = path_init_from_parts(dirpath, PATH_MAX, rootpath, "test_dir1",
-				   NULL);
+				   nullptr);
 	REQUIRE(ret == VACCEL_OK);
 	ret = path_init_from_parts(filepath1, PATH_MAX, dirpath, "test_file1",
-				   NULL);
+				   nullptr);
 	REQUIRE(ret == VACCEL_OK);
 	ret = path_init_from_parts(filepath2, PATH_MAX, dirpath, "test_file2",
-				   NULL);
+				   nullptr);
 	REQUIRE(ret == VACCEL_OK);
 
 	SECTION("Create existing dir")
@@ -181,7 +181,7 @@ TEST_CASE("fs_ops", "[utils/fs]")
 	{
 		char *existing_file =
 			abs_path(BUILD_ROOT, "examples/libmytestlib.so");
-		ret = fs_file_create(existing_file, NULL);
+		ret = fs_file_create(existing_file, nullptr);
 		REQUIRE(VACCEL_EEXIST == ret);
 		free(existing_file);
 	}
@@ -209,7 +209,8 @@ TEST_CASE("fs_ops", "[utils/fs]")
 	{
 		char *new_file = abs_path(BUILD_ROOT, "unq");
 		char *final_path;
-		ret = fs_file_create_unique(new_file, 256, &final_path, NULL);
+		ret = fs_file_create_unique(new_file, 256, &final_path,
+					    nullptr);
 		REQUIRE(VACCEL_OK == ret);
 		REQUIRE(fs_path_is_file(final_path));
 		REQUIRE(VACCEL_OK == fs_file_remove(final_path));
@@ -275,7 +276,7 @@ TEST_CASE("fs_ops", "[utils/fs]")
 	}
 }
 
-TEST_CASE("fs_file_reading", "[utils/fs]")
+TEST_CASE("fs_file_reading", "[utils][fs]")
 {
 	char *existing_file = abs_path(BUILD_ROOT, "examples/libmytestlib.so");
 	int ret;

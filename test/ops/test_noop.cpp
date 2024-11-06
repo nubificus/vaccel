@@ -13,7 +13,7 @@
 #include <cstdlib>
 #include <vaccel.h>
 
-TEST_CASE("noop", "[ops_noop]")
+TEST_CASE("noop", "[ops][noop]")
 {
 	int ret;
 	struct vaccel_session sess;

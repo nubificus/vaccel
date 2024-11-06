@@ -17,7 +17,7 @@
 
 #define min(a, b) ((a) < (b) ? (a) : (b))
 
-TEST_CASE("tf_inference", "[ops_tf]")
+TEST_CASE("tf_inference", "[ops][tf]")
 {
 	struct vaccel_session vsess;
 	struct vaccel_resource model;

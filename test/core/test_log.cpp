@@ -16,7 +16,7 @@
 #include <cstring>
 #include <vaccel.h>
 
-TEST_CASE("log_level", "[log]")
+TEST_CASE("log_level", "[core][log]")
 {
 	int ret = vaccel_log_init();
 	REQUIRE(ret == VACCEL_OK);

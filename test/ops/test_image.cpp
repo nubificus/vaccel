@@ -25,7 +25,7 @@
 #include <unistd.h>
 #include <vaccel.h>
 
-TEST_CASE("classify", "[ops_image]")
+TEST_CASE("classify", "[ops][image]")
 {
 	char *file_path = abs_path(SOURCE_ROOT, "examples/images/example.jpg");
 	int ret;
@@ -68,7 +68,7 @@ TEST_CASE("classify", "[ops_image]")
 	free(image);
 }
 
-TEST_CASE("depth", "[ops_image]")
+TEST_CASE("depth", "[ops][image]")
 {
 	char *file_path = abs_path(SOURCE_ROOT, "examples/images/example.jpg");
 	int ret;
@@ -106,7 +106,7 @@ TEST_CASE("depth", "[ops_image]")
 	free(image);
 }
 
-TEST_CASE("detect", "[ops_image]")
+TEST_CASE("detect", "[ops][image]")
 {
 	char *file_path = abs_path(SOURCE_ROOT, "examples/images/example.jpg");
 	int ret;
@@ -145,7 +145,7 @@ TEST_CASE("detect", "[ops_image]")
 	free(image);
 }
 
-TEST_CASE("pose", "[ops_image]")
+TEST_CASE("pose", "[ops][image]")
 {
 	char *file_path = abs_path(SOURCE_ROOT, "examples/images/example.jpg");
 	int ret;
@@ -187,7 +187,7 @@ TEST_CASE("pose", "[ops_image]")
 	free(image);
 }
 
-TEST_CASE("segmentation", "[ops_image]")
+TEST_CASE("segmentation", "[ops][image]")
 {
 	char *file_path = abs_path(SOURCE_ROOT, "examples/images/example.jpg");
 	int ret;

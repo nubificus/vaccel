@@ -88,7 +88,7 @@ auto deser(void *buf, uint32_t bytes) -> void *
     *  
     */
 
-TEST_CASE("exec_helpers", "[ops_exec_helpers]")
+TEST_CASE("exec_helpers", "[ops][arg_helpers]")
 {
 	int ret = 0;
 	struct mydata mydata_instance;

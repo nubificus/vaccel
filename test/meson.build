@@ -18,7 +18,7 @@ tests_includes = include_directories('.', 'fff', 'catch2')
 
 subdir('core')
 subdir('ops')
-subdir('resources')
+subdir('utils')
 
 tests_cpp_args = vaccel_cpp_args + [
   '-DCATCH_CONFIG_FAST_COMPILE'
@@ -43,7 +43,7 @@ libtests_main = library('tests-main',
   dependencies : libvaccel_private,
   install : false)
 
-foreach t : tests_core_sources
+foreach t : tests_core_sources + tests_utils_sources
   name = fs.stem(t)
   exe = executable(name,
     sources : t,
@@ -64,7 +64,7 @@ foreach t : tests_core_sources
   endif
 endforeach
 
-foreach t : tests_ops_sources + tests_res_sources
+foreach t : tests_ops_sources
   name = fs.stem(t)
   exe = executable(name,
     sources : t,

@@ -16,7 +16,7 @@
 
 enum { MAX_SESSIONS = 1024, MAX_RESOURCES = 2048, MAX_RESOURCE_RUNDIR = 1024 };
 
-TEST_CASE("bootstrap_plugin", "[core_bootstrap]")
+TEST_CASE("bootstrap_plugin", "[core][bootstrap]")
 {
 	int ret;
 	ret = plugins_bootstrap();
@@ -26,7 +26,7 @@ TEST_CASE("bootstrap_plugin", "[core_bootstrap]")
 	REQUIRE(ret == VACCEL_OK);
 }
 
-TEST_CASE("bootstrap_resource", "[core_bootstrap]")
+TEST_CASE("bootstrap_resource", "[core][bootstrap]")
 {
 	id_pool_t id_pool;
 	list_t live_resources[VACCEL_RESOURCE_MAX];
@@ -47,7 +47,7 @@ TEST_CASE("bootstrap_resource", "[core_bootstrap]")
 	REQUIRE(ret == VACCEL_OK);
 }
 
-TEST_CASE("bootstrap_session", "[core_bootstrap]")
+TEST_CASE("bootstrap_session", "[core][bootstrap]")
 {
 	struct {
 		bool initialized;

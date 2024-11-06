@@ -43,7 +43,7 @@ static auto exec_op() -> int
 	return 3;
 }
 
-TEST_CASE("get_all_available_functions", "[core_plugin]")
+TEST_CASE("get_all_available_functions", "[core][plugin]")
 {
 	int ret;
 	vaccel_plugin plugin;
@@ -89,7 +89,7 @@ TEST_CASE("get_all_available_functions", "[core_plugin]")
 	REQUIRE(ret == VACCEL_OK);
 }
 
-TEST_CASE("register_multiple_functions", "[core_plugin]")
+TEST_CASE("register_multiple_functions", "[core][plugin]")
 {
 	int ret;
 	vaccel_plugin plugin;
@@ -164,7 +164,7 @@ TEST_CASE("register_multiple_functions", "[core_plugin]")
 	REQUIRE(ret == VACCEL_OK);
 }
 
-TEST_CASE("register_plugin_ops", "[core_plugin]")
+TEST_CASE("register_plugin_ops", "[core][plugin]")
 {
 	int ret;
 	vaccel_plugin plugin;
@@ -245,7 +245,7 @@ TEST_CASE("register_plugin_ops", "[core_plugin]")
 	}
 }
 
-TEST_CASE("register_plugin_vaccel_versions", "[core_plugin]")
+TEST_CASE("register_plugin_vaccel_versions", "[core][plugin]")
 {
 	int ret;
 	int major;

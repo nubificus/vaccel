@@ -17,7 +17,7 @@
 
 #define min(a, b) ((a) < (b) ? (a) : (b))
 
-TEST_CASE("tflite_tensor_ops", "[ops_tflite]")
+TEST_CASE("tflite_tensor_ops", "[ops][tflite]")
 {
 	int32_t dims[] = { 1, 30 };
 
@@ -88,7 +88,7 @@ TEST_CASE("tflite_tensor_ops", "[ops_tflite]")
 	REQUIRE(ret == VACCEL_EINVAL);
 }
 
-TEST_CASE("tflite_inference", "[ops_tflite]")
+TEST_CASE("tflite_inference", "[ops][tflite]")
 {
 	struct vaccel_session vsess;
 	struct vaccel_resource model;

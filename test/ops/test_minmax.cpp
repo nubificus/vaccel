@@ -23,7 +23,7 @@
 	((double)(t).tv_nsec / 10e3 + (double)(t).tv_sec * 10e6)
 #define time_diff_usec(t0, t1) (timespec_usec((t1)) - timespec_usec((t0)))
 
-TEST_CASE("min_max", "[ops_minmax]")
+TEST_CASE("min_max", "[ops][minmax]")
 {
 	char *path = abs_path(SOURCE_ROOT, "examples/input/input_2048.csv");
 	double min;
@@ -91,7 +91,7 @@ TEST_CASE("min_max", "[ops_minmax]")
 	free(path);
 }
 
-TEST_CASE("min_max_generic", "[ops_minmax]")
+TEST_CASE("min_max_generic", "[ops][minmax]")
 {
 	char *path = abs_path(SOURCE_ROOT, "examples/input/input_2048.csv");
 	double min;

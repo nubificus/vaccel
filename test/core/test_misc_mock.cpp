@@ -19,7 +19,7 @@ extern "C" {
 FAKE_VALUE_FUNC(int, get_available_plugins, enum vaccel_op_type);
 }
 
-TEST_CASE("get_plugins_mock", "[core_misc]")
+TEST_CASE("get_plugins_mock", "[core][misc][mock]")
 {
 	struct vaccel_session session;
 	session.id = 123;
