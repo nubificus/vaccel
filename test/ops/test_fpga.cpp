@@ -15,7 +15,7 @@
 
 #include <vaccel.h>
 
-TEST_CASE("fpga_add", "[ops_fpga]")
+TEST_CASE("fpga_add", "[ops][fpga]")
 {
 	int ret;
 	struct vaccel_session sess;
@@ -70,7 +70,7 @@ TEST_CASE("fpga_add", "[ops_fpga]")
 	}
 }
 
-TEST_CASE("fpga_copy", "[ops_fpga]")
+TEST_CASE("fpga_copy", "[ops][fpga]")
 {
 	int ret;
 	struct vaccel_session sess;
@@ -109,7 +109,7 @@ TEST_CASE("fpga_copy", "[ops_fpga]")
 	}
 }
 
-TEST_CASE("fpga_mmult", "[ops_fpga]")
+TEST_CASE("fpga_mmult", "[ops][fpga]")
 {
 	int ret;
 	struct vaccel_session sess;

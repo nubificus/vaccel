@@ -15,7 +15,7 @@ DEFINE_FFF_GLOBALS;
 
 #include <vaccel.h>
 
-TEST_CASE("get_plugins", "[core_misc]")
+TEST_CASE("get_plugins", "[core][misc]")
 {
 	struct vaccel_session session;
 	session.id = 0;

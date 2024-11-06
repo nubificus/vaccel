@@ -22,7 +22,7 @@ DEFINE_FFF_GLOBALS;
 #include <unistd.h>
 #include <vaccel.h>
 
-TEST_CASE("constructor_and_destructor", "[vaccel]")
+TEST_CASE("constructor_and_destructor", "[core][vaccel]")
 {
 	int ret;
 

@@ -18,7 +18,7 @@ DEFINE_FFF_GLOBALS;
 #include <vaccel.h>
 
 // Test case for creating a new ID pool
-TEST_CASE("id_pool_new", "[core_id_pool]")
+TEST_CASE("id_pool_new", "[core][id_pool]")
 {
 	id_pool_t test_pool;
 	test_pool.ids = nullptr;
@@ -50,7 +50,7 @@ TEST_CASE("id_pool_new", "[core_id_pool]")
 }
 
 // Test case for destroying an ID pool
-TEST_CASE("id_pool_destroy", "[core_id_pool]")
+TEST_CASE("id_pool_destroy", "[core][id_pool]")
 {
 	// Check if the pool is successfully destroyed
 	SECTION("id_pool successfully destroyed")
@@ -75,7 +75,7 @@ TEST_CASE("id_pool_destroy", "[core_id_pool]")
 }
 
 // Test case for retrieving IDs from the pool
-TEST_CASE("id_pool_get", "[core_id_pool]")
+TEST_CASE("id_pool_get", "[core][id_pool]")
 {
 	// Check successful retrieval of IDs when the pool has a count of 3
 	SECTION("working id_pool_get - with count to 0")
@@ -128,7 +128,7 @@ TEST_CASE("id_pool_get", "[core_id_pool]")
 }
 
 // Test case for releasing IDs back into the pool
-TEST_CASE("id_pool_release", "[core_id_pool]")
+TEST_CASE("id_pool_release", "[core][id_pool]")
 {
 	// Check if ID 1 is successfully released back into the pool
 	SECTION("id 1 is released back into pool")

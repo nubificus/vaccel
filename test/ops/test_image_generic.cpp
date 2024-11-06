@@ -25,7 +25,7 @@
 #include <unistd.h>
 #include <vaccel.h>
 
-TEST_CASE("classify_generic", "[ops_image]")
+TEST_CASE("classify_generic", "[ops][image][generic]")
 {
 	char *file_path = abs_path(SOURCE_ROOT, "examples/images/example.jpg");
 	int ret;
@@ -86,7 +86,7 @@ TEST_CASE("classify_generic", "[ops_image]")
 	free(image);
 }
 
-TEST_CASE("depth_generic", "[ops_image]")
+TEST_CASE("depth_generic", "[ops][image][generic]")
 {
 	char *file_path = abs_path(SOURCE_ROOT, "examples/images/example.jpg");
 	int ret;
@@ -142,7 +142,7 @@ TEST_CASE("depth_generic", "[ops_image]")
 	free(image);
 }
 
-TEST_CASE("detect_generic", "[ops_image]")
+TEST_CASE("detect_generic", "[ops][image][generic]")
 {
 	char *file_path = abs_path(SOURCE_ROOT, "examples/images/example.jpg");
 	int ret;
@@ -200,7 +200,7 @@ TEST_CASE("detect_generic", "[ops_image]")
 	free(image);
 }
 
-TEST_CASE("pose_generic", "[ops_image]")
+TEST_CASE("pose_generic", "[ops][image][generic]")
 {
 	char *file_path = abs_path(SOURCE_ROOT, "examples/images/example.jpg");
 	int ret;
@@ -257,7 +257,7 @@ TEST_CASE("pose_generic", "[ops_image]")
 	free(image);
 }
 
-TEST_CASE("segmentation_generic", "[ops_image]")
+TEST_CASE("segmentation_generic", "[ops][image][generic]")
 {
 	char *file_path = abs_path(SOURCE_ROOT, "examples/images/example.jpg");
 	int ret;

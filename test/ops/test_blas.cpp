@@ -41,7 +41,7 @@ void init(int m, int n, int k, float *A, float *B, float *C)
 }
 }
 
-TEST_CASE("sgemm", "[ops_blas]")
+TEST_CASE("sgemm", "[ops][blas]")
 {
 	// Open a file stream for output data
 	// FILE* data_fp = NULL;

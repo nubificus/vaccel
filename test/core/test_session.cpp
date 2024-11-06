@@ -82,7 +82,7 @@ auto mock_resource_destroy(vaccel_id_t id) -> int
 }
 
 // Test case for session initialization
-TEST_CASE("session_init", "[session]")
+TEST_CASE("session_init", "[core][session]")
 {
 	int ret;
 
@@ -125,7 +125,7 @@ TEST_CASE("session_init", "[session]")
 }
 
 // Test case for session update and cleanup
-TEST_CASE("session_update_and_free", "[session]")
+TEST_CASE("session_update_and_free", "[core][session]")
 {
 	struct vaccel_session sess;
 	sess.id = 0;
@@ -173,7 +173,7 @@ TEST_CASE("session_update_and_free", "[session]")
 }
 
 // Test case for unregistering a session with null parameters
-TEST_CASE("session_unregister_null", "[session]")
+TEST_CASE("session_unregister_null", "[core][session]")
 {
 	int ret;
 
@@ -254,7 +254,7 @@ TEST_CASE("session_unregister_null", "[session]")
 }
 
 // Test case for session initialization, update, registration, and cleanup
-TEST_CASE("session_ops", "[session]")
+TEST_CASE("session_ops", "[core][session]")
 {
 	int ret;
 	struct vaccel_session test_sess;
@@ -309,7 +309,7 @@ TEST_CASE("session_ops", "[session]")
 
 // Test case for session initialization, update, registration, and cleanup with
 // a VirtIO plugin
-TEST_CASE("session_virtio", "[session]")
+TEST_CASE("session_virtio", "[core][session]")
 {
 	int ret;
 	struct vaccel_session test_sess;

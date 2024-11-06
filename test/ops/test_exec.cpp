@@ -22,7 +22,7 @@
 
 // TODO: Add arg_helpers tests
 
-TEST_CASE("exec", "[ops_exec]")
+TEST_CASE("exec", "[ops][exec]")
 {
 	int ret;
 	int input = 10;
@@ -59,7 +59,7 @@ TEST_CASE("exec", "[ops_exec]")
 	free(plugin_path);
 }
 
-TEST_CASE("exec_generic", "[ops_exec]")
+TEST_CASE("exec_generic", "[ops][exec]")
 {
 	int ret;
 
@@ -109,7 +109,7 @@ TEST_CASE("exec_generic", "[ops_exec]")
 	free(plugin_path);
 }
 
-TEST_CASE("exec_with_resource", "[ops_exec]")
+TEST_CASE("exec_with_resource", "[ops][exec]")
 {
 	int input;
 	int output1 = 0;

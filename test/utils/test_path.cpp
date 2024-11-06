@@ -17,7 +17,7 @@
 #include <utils.hpp>
 #include <vaccel.h>
 
-TEST_CASE("path_is_url", "[utils/path]")
+TEST_CASE("path_is_url", "[utils][path]")
 {
 	const char *url = "http://nubificus.co.uk";
 	const char *word = "hello world";
@@ -33,7 +33,7 @@ TEST_CASE("path_is_url", "[utils/path]")
 	}
 }
 
-TEST_CASE("path_from_parts", "[utils/path]")
+TEST_CASE("path_from_parts", "[utils][path]")
 {
 	int ret;
 
@@ -88,7 +88,7 @@ TEST_CASE("path_from_parts", "[utils/path]")
 	}
 }
 
-TEST_CASE("path_file_name", "[utils/path]")
+TEST_CASE("path_file_name", "[utils][path]")
 {
 	char *buf;
 	int ret;
@@ -112,7 +112,7 @@ TEST_CASE("path_file_name", "[utils/path]")
 	free(buf);
 }
 
-TEST_CASE("path_file_name_add_random_suffix", "[utils/path]")
+TEST_CASE("path_file_name_add_random_suffix", "[utils][path]")
 {
 	char buf[128] = { 0 };
 	size_t ext_len;

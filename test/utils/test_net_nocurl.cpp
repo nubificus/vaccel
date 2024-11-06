@@ -24,7 +24,7 @@ FAKE_VALUE_FUNC(bool, net_curl_path_exists, const char *);
 FAKE_VALUE_FUNC(int, net_curl_file_download, const char *, const char *);
 }
 
-TEST_CASE("net_path_is_url", "[utils/net][nocurl]")
+TEST_CASE("net_path_is_url", "[utils][net][nocurl]")
 {
 	const char *url = "http://nubificus.co.uk";
 	const char *word = "hello world";
@@ -66,7 +66,7 @@ TEST_CASE("net_path_is_url", "[utils/net][nocurl]")
 	}
 }
 
-TEST_CASE("net_path_exists", "[utils/net][nocurl]")
+TEST_CASE("net_path_exists", "[utils][net][nocurl]")
 {
 	const char *existent_url = "http://nubificus.co.uk";
 	const char *non_existent_url = "http://nubificus.co.uk.not";
@@ -109,7 +109,7 @@ TEST_CASE("net_path_exists", "[utils/net][nocurl]")
 	}
 }
 
-TEST_CASE("net_file_download", "[utils/net][nocurl]")
+TEST_CASE("net_file_download", "[utils][net][nocurl]")
 {
 	char existent_url[PATH_MAX];
 	char non_existent_url[PATH_MAX];

@@ -94,7 +94,7 @@ int string_in_list(const char *target, const char **list, int list_size)
 	return 0;
 }
 
-TEST_CASE("vaccel_resource_init from directory", "[resources]")
+TEST_CASE("vaccel_resource_init from directory", "[core][resource]")
 {
 	int ret;
 	char *dir_path =
@@ -181,7 +181,7 @@ TEST_CASE("vaccel_resource_init from directory", "[resources]")
 	free(dir_path);
 }
 
-TEST_CASE("vaccel_resource_init_multi", "[resources]")
+TEST_CASE("vaccel_resource_init_multi", "[core][resource]")
 {
 	int ret;
 	char *file1 = abs_path(
@@ -265,7 +265,7 @@ TEST_CASE("vaccel_resource_init_multi", "[resources]")
 	free(file2);
 }
 
-TEST_CASE("resource from files", "[resources]")
+TEST_CASE("resource from files", "[core][resource]")
 {
 	int ret;
 	char *path1 = abs_path(
@@ -360,7 +360,7 @@ TEST_CASE("resource from files", "[resources]")
 	free(path2);
 }
 
-TEST_CASE("vaccel_resource_init_from_buf", "[resources]")
+TEST_CASE("vaccel_resource_init_from_buf", "[core][resource]")
 {
 	int ret;
 	char *file = abs_path(BUILD_ROOT, "examples/libmytestlib.so");
@@ -431,7 +431,7 @@ TEST_CASE("vaccel_resource_init_from_buf", "[resources]")
 	free(file);
 }
 
-TEST_CASE("vaccel_resource_init - from url", "[resources]")
+TEST_CASE("vaccel_resource_init - from url", "[core][resource]")
 {
 	int ret;
 	const char *url =
@@ -525,7 +525,7 @@ TEST_CASE("vaccel_resource_init - from url", "[resources]")
 }
 
 // Test case for resource destruction
-TEST_CASE("resource_destroy", "[resources]")
+TEST_CASE("resource_destroy", "[core][resource]")
 {
 	int ret;
 	struct vaccel_resource res;
@@ -566,7 +566,7 @@ TEST_CASE("resource_destroy", "[resources]")
 }
 
 // Test case for resource creation and rundir creation
-TEST_CASE("resource_create", "[resources]")
+TEST_CASE("resource_create", "[core][resource]")
 {
 	int ret;
 	struct vaccel_resource res;
@@ -606,7 +606,7 @@ TEST_CASE("resource_create", "[resources]")
 }
 
 // Test case for finding a resource by ID (failure case)
-TEST_CASE("resource_find_by_id_fail", "[resources]")
+TEST_CASE("resource_find_by_id_fail", "[core][resource]")
 {
 	struct vaccel_resource *test_res = nullptr;
 	vaccel_id_t test_id = 0;
@@ -618,7 +618,7 @@ TEST_CASE("resource_find_by_id_fail", "[resources]")
 }
 
 // Test case for finding a resource by ID (success case)
-TEST_CASE("resource_find_by_id", "[resources]")
+TEST_CASE("resource_find_by_id", "[core][resource]")
 {
 	int ret;
 	struct vaccel_resource test_res;
@@ -661,7 +661,7 @@ TEST_CASE("resource_find_by_id", "[resources]")
 	free(test_path);
 }
 
-TEST_CASE("resource_not_bootstrapped", "[resources]")
+TEST_CASE("resource_not_bootstrapped", "[core][resource]")
 {
 	int ret;
 	struct vaccel_resource test_res;
