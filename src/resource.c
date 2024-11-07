@@ -328,14 +328,13 @@ free:
 static int download_file(const char *path, const char *fs_dir,
 			 size_t fs_path_size, char *fs_path)
 {
-	char *filename;
-	int ret = path_file_name(&filename, path);
+	char filename[NAME_MAX];
+	int ret = path_file_name(path, filename, NAME_MAX, NULL);
 	if (ret)
 		return ret;
 
 	ret = path_init_from_parts(fs_path, fs_path_size, fs_dir, filename,
 				   NULL);
-	free(filename);
 	if (ret)
 		return ret;
 

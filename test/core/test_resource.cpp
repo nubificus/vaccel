@@ -119,10 +119,9 @@ TEST_CASE("vaccel_resource_init from directory", "[core][resource]")
 		REQUIRE(res.files[i]->path);
 		REQUIRE(fs_path_is_file(res.files[i]->path));
 
-		char *filename = NULL;
-		path_file_name(&filename, res.files[i]->path);
+		char filename[NAME_MAX];
+		path_file_name(res.files[i]->path, filename, NAME_MAX, nullptr);
 		REQUIRE(string_in_list(filename, dir_files, 4));
-		free(filename);
 	}
 
 	/* resource directory */

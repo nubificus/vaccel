@@ -96,7 +96,7 @@ int vaccel_file_persist(struct vaccel_file *file, const char *dir,
 	}
 
 	/* Extract filename from path */
-	ret = path_file_name(&file->name, file->path);
+	ret = path_file_name(file->path, NULL, 0, &file->name);
 	if (ret) {
 		vaccel_error("Could not extract filename from %s", file->path);
 		close(fd);

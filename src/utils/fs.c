@@ -381,8 +381,8 @@ int fs_file_create_unique(char *path, size_t size, char **final_path, int *fd)
 
 	/* Insert random suffix to filename */
 	size_t ext_len;
-	int ret = path_file_name_add_random_suffix(out_path, &ext_len, in_path,
-						   suffix);
+	int ret = path_file_name_add_random_suffix(out_path, path_len, &ext_len,
+						   in_path, suffix);
 	if (ret)
 		goto free;
 

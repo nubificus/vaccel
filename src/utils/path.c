@@ -129,9 +129,9 @@ int path_from_parts(char **path, const char *first_part, ...)
 	return VACCEL_OK;
 }
 
-int path_file_name(char **name, const char *path)
+int path_file_name(const char *path, char *name, size_t size, char **alloc_name)
 {
-	if (!name || !path)
+	if (!path || (!name && !alloc_name) || (!size && !alloc_name))
 		return VACCEL_EINVAL;
 
 	/* Find the last occurrence of '/'.
@@ -146,17 +146,26 @@ int path_file_name(char **name, const char *path)
 	}
 
 	/* Copy and return filename */
-	*name = strndup(name_pos, name_len);
-	if (!*name)
-		return VACCEL_ENOMEM;
+	if (alloc_name == NULL) {
+		if (name_len >= size) {
+			vaccel_error("Filename %s does not fit into buf",
+				     name_pos);
+			return VACCEL_EINVAL;
+		}
+		strncpy(name, name_pos, size);
+	} else {
+		*alloc_name = strndup(name_pos, name_len);
+		if (!*alloc_name)
+			return VACCEL_ENOMEM;
+	}
 
 	return VACCEL_OK;
 }
 
-int path_file_name_add_random_suffix(char *path, size_t *ext_len,
+int path_file_name_add_random_suffix(char *path, size_t size, size_t *ext_len,
 				     const char *base_path, const char *suffix)
 {
-	if (!path || !ext_len || !base_path || !suffix)
+	if (!path || !ext_len || !base_path || !suffix || !size)
 		return VACCEL_EINVAL;
 
 	/* Extract filename */
@@ -169,9 +178,14 @@ int path_file_name_add_random_suffix(char *path, size_t *ext_len,
 	size_t base_len = ext ? (size_t)(ext - base_path) : strlen(base_path);
 	*ext_len = ext ? strlen(ext) : 0;
 	size_t path_len = base_len + strlen(suffix) + *ext_len + 1;
+	if (path_len > size) {
+		vaccel_error("Suffixed path for %s does not fit into buf",
+			     base_path);
+		return VACCEL_EINVAL;
+	}
 
 	/* Add path suffix before the extension (if any) */
-	int ret = snprintf(path, path_len, "%.*s%s%s", (int)base_len, base_path,
+	int ret = snprintf(path, size, "%.*s%s%s", (int)base_len, base_path,
 			   suffix, ext ? ext : "");
 	if (ret < 0) {
 		vaccel_error("Could not insert random suffix for %s: %s",
