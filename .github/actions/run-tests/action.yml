@@ -33,7 +33,7 @@ runs:
           valgrind_cmd+=" --max-stackframe=3150000 --error-exitcode=1"
           meson test \
             --wrap="$valgrind_cmd" \
-            -t 5 \
+            -t 6 \
             --print-errorlogs \
             -C ${{ inputs.build-path }}
       shell: bash

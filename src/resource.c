@@ -795,13 +795,22 @@ int vaccel_resource_release(struct vaccel_resource *res)
 int vaccel_resource_new(struct vaccel_resource **res, const char *path,
 			vaccel_resource_t type)
 {
+	return vaccel_resource_multi_new(res, &path, 1, type);
+}
+
+int vaccel_resource_multi_new(struct vaccel_resource **res, const char **paths,
+			      size_t nr_paths, vaccel_resource_t type)
+{
+	if (!res)
+		return VACCEL_EINVAL;
+
 	struct vaccel_resource *r = (struct vaccel_resource *)malloc(
 		sizeof(struct vaccel_resource));
 	if (!r)
 		return VACCEL_ENOMEM;
 
-	int ret = vaccel_resource_init(r, path, type);
-	if (!ret) {
+	int ret = vaccel_resource_init_multi(r, paths, nr_paths, type);
+	if (ret) {
 		free(r);
 		return ret;
 	}
@@ -811,16 +820,21 @@ int vaccel_resource_new(struct vaccel_resource **res, const char *path,
 	return VACCEL_OK;
 }
 
-int vaccel_resource_multi_new(struct vaccel_resource **res, const char **paths,
-			      size_t nr_paths, vaccel_resource_t type)
+int vaccel_resource_from_buf(struct vaccel_resource **res, const void *buf,
+			     size_t nr_bytes, vaccel_resource_t type,
+			     const char *filename)
 {
+	if (!res)
+		return VACCEL_EINVAL;
+
 	struct vaccel_resource *r = (struct vaccel_resource *)malloc(
 		sizeof(struct vaccel_resource));
 	if (!r)
 		return VACCEL_ENOMEM;
 
-	int ret = vaccel_resource_init_multi(r, paths, nr_paths, type);
-	if (!ret) {
+	int ret =
+		vaccel_resource_init_from_buf(r, buf, nr_bytes, type, filename);
+	if (ret) {
 		free(r);
 		return ret;
 	}
@@ -834,13 +848,16 @@ int vaccel_resource_from_files(struct vaccel_resource **res,
 			       const struct vaccel_file **files,
 			       size_t nr_files, vaccel_resource_t type)
 {
+	if (!res)
+		return VACCEL_EINVAL;
+
 	struct vaccel_resource *r = (struct vaccel_resource *)malloc(
 		sizeof(struct vaccel_resource));
 	if (!r)
 		return VACCEL_ENOMEM;
 
 	int ret = vaccel_resource_init_from_files(r, files, nr_files, type);
-	if (!ret) {
+	if (ret) {
 		free(r);
 		return ret;
 	}

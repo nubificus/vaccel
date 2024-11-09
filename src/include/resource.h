@@ -109,7 +109,8 @@ int vaccel_resource_multi_new(struct vaccel_resource **res, const char **paths,
 
 /* Allocate and initialize resource from in-memory data */
 int vaccel_resource_from_buf(struct vaccel_resource **res, const void *buf,
-			     size_t nr_bytes, vaccel_resource_t type);
+			     size_t nr_bytes, vaccel_resource_t type,
+			     const char *filename);
 
 /* Allocate and initialize resource from existing vaccel files */
 int vaccel_resource_from_files(struct vaccel_resource **res,
