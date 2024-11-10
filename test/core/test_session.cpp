@@ -16,70 +16,17 @@
 
 #include <catch.hpp>
 #include <fff.h>
+#include <mock_virtio.hpp>
 #include <utils.hpp>
+#include <vaccel.h>
 
 DEFINE_FFF_GLOBALS;
 
-#include <vaccel.h>
-
 extern "C" {
 FAKE_VALUE_FUNC(struct vaccel_plugin *, get_virtio_plugin);
-FAKE_VALUE_FUNC(struct vaccel_session *, sess_free);
 }
 
 enum { MAX_VACCEL_SESSIONS = 1024 };
-
-// Mock functions for session initialization and cleanup
-auto mock_sess_init(struct vaccel_session *sess, uint32_t flags) -> int
-{
-	sess->remote_id = 1;
-	(void)flags;
-	return 0;
-}
-
-auto mock_sess_update(struct vaccel_session *sess, uint32_t flags) -> int
-{
-	(void)sess;
-	(void)flags;
-	return 0;
-}
-
-auto mock_sess_free(struct vaccel_session *sess) -> int
-{
-	(void)sess;
-	return 0;
-}
-
-auto mock_resource_register(struct vaccel_resource *res,
-			    struct vaccel_session *sess) -> int
-{
-	res->remote_id = 1;
-	(void)sess;
-	return 0;
-}
-
-auto mock_resource_unregister(struct vaccel_resource *res,
-			      struct vaccel_session *sess) -> int
-{
-	(void)res;
-	(void)sess;
-	return 0;
-}
-
-auto mock_resource_new(vaccel_resource_t type, void *data,
-		       vaccel_id_t *id) -> int
-{
-	(void)type;
-	(void)data;
-	*id = 1;
-	return 0;
-}
-
-auto mock_resource_destroy(vaccel_id_t id) -> int
-{
-	(void)id;
-	return 0;
-}
 
 // Test case for session initialization
 TEST_CASE("session_init", "[core][session]")
@@ -324,19 +271,7 @@ TEST_CASE("session_virtio", "[core][session]")
 
 	RESET_FAKE(get_virtio_plugin);
 
-	// Create a mock plugin
-	struct vaccel_plugin_info v_mock_info;
-	v_mock_info.name = "fake_virtio";
-	v_mock_info.session_init = mock_sess_init;
-	v_mock_info.session_release = mock_sess_free;
-	v_mock_info.session_update = mock_sess_update;
-	v_mock_info.resource_register = mock_resource_register;
-	v_mock_info.resource_unregister = mock_resource_unregister;
-
-	struct vaccel_plugin v_mock;
-	v_mock.info = &v_mock_info;
-
-	get_virtio_plugin_fake.return_val = &v_mock;
+	get_virtio_plugin_fake.custom_fake = mock_virtio_get_virtio_plugin;
 
 	ret = vaccel_session_init(&test_sess, 1 | VACCEL_REMOTE);
 	REQUIRE(VACCEL_OK == ret);
