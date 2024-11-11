@@ -28,7 +28,7 @@
 int vaccel_file_persist(struct vaccel_file *file, const char *dir,
 			const char *filename, bool randomize)
 {
-	if (!file || !file->data | !file->size) {
+	if (!file || !file->data || !file->size) {
 		vaccel_error("Invalid file");
 		return VACCEL_EINVAL;
 	}
@@ -165,25 +165,20 @@ int vaccel_file_init(struct vaccel_file *file, const char *path)
 	if (!file || !path)
 		return VACCEL_EINVAL;
 
-	if (access(path, R_OK)) {
-		vaccel_error("Cannot access file: %s", path);
-		return errno;
+	if (!fs_path_is_file(path)) {
+		vaccel_error("Invalid file %s", path);
+		return VACCEL_EINVAL;
 	}
 
 	file->path = strdup(path);
 	if (!file->path)
 		return VACCEL_ENOMEM;
 
-	char *file_name = strrchr(file->path, '/');
-	if (!file_name) {
-		vaccel_error("Could not determine filename from %s", path);
+	int ret = path_file_name(file->path, NULL, 0, &file->name);
+	if (ret) {
+		vaccel_error("Could not extract filename from %s", file->path);
 		free(file->path);
-		return VACCEL_EINVAL;
-	}
-	file->name = strdup(file_name + 1);
-	if (!file->name) {
-		free(file->path);
-		return VACCEL_ENOMEM;
+		return ret;
 	}
 
 	file->path_owned = false;
@@ -214,23 +209,18 @@ int vaccel_file_init_from_buf(struct vaccel_file *file, const uint8_t *buf,
 		return VACCEL_EINVAL;
 	}
 
+	file->name = NULL;
 	file->path = NULL;
+	file->path_owned = false;
 	file->data = (uint8_t *)buf;
 	file->size = size;
 
-	if (dir) {
-		file->name = NULL;
+	if (dir)
+		return vaccel_file_persist(file, dir, filename, randomize);
 
-		int ret = vaccel_file_persist(file, dir, filename, randomize);
-		if (ret) {
-			free(file->name);
-			return ret;
-		}
-	} else {
-		file->name = strdup(filename);
-		if (!file->name)
-			return VACCEL_ENOMEM;
-	}
+	file->name = strdup(filename);
+	if (!file->name)
+		return VACCEL_ENOMEM;
 
 	return VACCEL_OK;
 }
@@ -247,8 +237,14 @@ int vaccel_file_release(struct vaccel_file *file)
 	if (!file)
 		return VACCEL_EINVAL;
 
-	if (!vaccel_file_initialized(file))
-		return VACCEL_OK;
+	if (!vaccel_file_initialized(file)) {
+		vaccel_error("Cannot release uninitialized file");
+		return VACCEL_EINVAL;
+	}
+
+	if (file->name)
+		free(file->name);
+	file->name = NULL;
 
 	/* Just a file with data we got from the user. Nothing to do */
 	if (!file->path)
@@ -265,18 +261,20 @@ int vaccel_file_release(struct vaccel_file *file)
 			return ret;
 		}
 	}
+	file->data = NULL;
+	file->size = 0;
 
 	/* If we own the path to the file, just remove it from the
 	 * file system */
 	if (file->path_owned) {
 		vaccel_debug("Removing file %s", file->path);
-		if (remove(file->path))
-			vaccel_warn("Could not remove file %s from rundir: %s",
-				    file->path, strerror(errno));
+		if (fs_file_remove(file->path))
+			vaccel_warn("Could not remove file %s", file->path);
 	}
+	file->path_owned = false;
 
-	free(file->name);
 	free(file->path);
+	file->path = NULL;
 
 	return VACCEL_OK;
 }
@@ -289,6 +287,9 @@ int vaccel_file_release(struct vaccel_file *file)
  */
 int vaccel_file_new(struct vaccel_file **file, const char *path)
 {
+	if (!file)
+		return VACCEL_EINVAL;
+
 	struct vaccel_file *f =
 		(struct vaccel_file *)malloc(sizeof(struct vaccel_file));
 	if (!f)
@@ -314,6 +315,9 @@ int vaccel_file_from_buf(struct vaccel_file **file, const uint8_t *buf,
 			 size_t size, const char *filename, const char *dir,
 			 bool randomize)
 {
+	if (!file)
+		return VACCEL_EINVAL;
+
 	struct vaccel_file *f =
 		(struct vaccel_file *)malloc(sizeof(struct vaccel_file));
 	if (!f)
@@ -391,7 +395,9 @@ uint8_t *vaccel_file_data(struct vaccel_file *file, size_t *size)
 		if (vaccel_file_read(file))
 			return NULL;
 
-	*size = file->size;
+	if (size)
+		*size = file->size;
+
 	return file->data;
 }
 
