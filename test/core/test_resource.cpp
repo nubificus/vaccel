@@ -101,7 +101,7 @@ TEST_CASE("resource_from_directory_path", "[core][resource]")
 	REQUIRE(res.files == nullptr);
 	REQUIRE(res.nr_files == 0);
 	REQUIRE(res.type == VACCEL_RESOURCE_DATA);
-	REQUIRE(res.path_type == VACCEL_PATH_DIR);
+	REQUIRE(res.path_type == VACCEL_PATH_LOCAL_DIR);
 	REQUIRE(res.nr_paths == 1);
 	REQUIRE(res.rundir == nullptr);
 	REQUIRE_FALSE(list_empty(&res.entry));
@@ -117,7 +117,7 @@ TEST_CASE("resource_from_directory_path", "[core][resource]")
 	REQUIRE(alloc_res->files == nullptr);
 	REQUIRE(alloc_res->nr_files == 0);
 	REQUIRE(alloc_res->type == VACCEL_RESOURCE_DATA);
-	REQUIRE(alloc_res->path_type == VACCEL_PATH_DIR);
+	REQUIRE(alloc_res->path_type == VACCEL_PATH_LOCAL_DIR);
 	REQUIRE(alloc_res->nr_paths == 1);
 	REQUIRE(alloc_res->rundir == nullptr);
 	REQUIRE_FALSE(list_empty(&alloc_res->entry));
@@ -305,7 +305,7 @@ TEST_CASE("resource_from_file_paths", "[core][resource]")
 	REQUIRE(res.id == 1);
 	REQUIRE(res.remote_id == -1);
 	REQUIRE(res.type == VACCEL_RESOURCE_DATA);
-	REQUIRE(res.path_type == VACCEL_PATH_LOCAL);
+	REQUIRE(res.path_type == VACCEL_PATH_LOCAL_FILE);
 	REQUIRE(res.nr_paths == 2);
 	REQUIRE(res.paths);
 	for (size_t i = 0; i < res.nr_paths; i++) {
@@ -328,7 +328,7 @@ TEST_CASE("resource_from_file_paths", "[core][resource]")
 	REQUIRE(alloc_res->id == 2);
 	REQUIRE(alloc_res->remote_id == -1);
 	REQUIRE(alloc_res->type == VACCEL_RESOURCE_DATA);
-	REQUIRE(alloc_res->path_type == VACCEL_PATH_LOCAL);
+	REQUIRE(alloc_res->path_type == VACCEL_PATH_LOCAL_FILE);
 	REQUIRE(alloc_res->nr_paths == 2);
 	REQUIRE(alloc_res->paths);
 	for (size_t i = 0; i < alloc_res->nr_paths; i++) {
@@ -494,7 +494,7 @@ TEST_CASE("resource_from_url_path", "[core][resource]")
 	REQUIRE(res.id == 1);
 	REQUIRE(res.remote_id == -1);
 	REQUIRE(res.type == VACCEL_RESOURCE_DATA);
-	REQUIRE(res.path_type == VACCEL_PATH_REMOTE);
+	REQUIRE(res.path_type == VACCEL_PATH_REMOTE_FILE);
 	REQUIRE(res.nr_paths == 1);
 	REQUIRE(res.paths);
 	REQUIRE(res.paths[0]);
@@ -512,7 +512,7 @@ TEST_CASE("resource_from_url_path", "[core][resource]")
 	REQUIRE(alloc_res->id == 2);
 	REQUIRE(alloc_res->remote_id == -1);
 	REQUIRE(alloc_res->type == VACCEL_RESOURCE_DATA);
-	REQUIRE(alloc_res->path_type == VACCEL_PATH_REMOTE);
+	REQUIRE(alloc_res->path_type == VACCEL_PATH_REMOTE_FILE);
 	REQUIRE(alloc_res->nr_paths == 1);
 	REQUIRE(alloc_res->paths);
 	REQUIRE(alloc_res->paths[0]);
@@ -672,7 +672,7 @@ TEST_CASE("resource_from_buffer", "[core][resource]")
 	REQUIRE(res.id == 1);
 	REQUIRE(res.remote_id == -1);
 	REQUIRE(res.type == VACCEL_RESOURCE_LIB);
-	REQUIRE(res.path_type == VACCEL_PATH_LOCAL);
+	REQUIRE(res.path_type == VACCEL_PATH_LOCAL_FILE);
 	REQUIRE(res.nr_paths == 0);
 	REQUIRE(res.files);
 	REQUIRE(res.files[0]);
@@ -690,7 +690,7 @@ TEST_CASE("resource_from_buffer", "[core][resource]")
 	REQUIRE(alloc_res->id == 2);
 	REQUIRE(alloc_res->remote_id == -1);
 	REQUIRE(alloc_res->type == VACCEL_RESOURCE_LIB);
-	REQUIRE(alloc_res->path_type == VACCEL_PATH_LOCAL);
+	REQUIRE(alloc_res->path_type == VACCEL_PATH_LOCAL_FILE);
 	REQUIRE(alloc_res->nr_paths == 0);
 	REQUIRE(alloc_res->files);
 	REQUIRE(alloc_res->files[0]);
@@ -795,7 +795,7 @@ TEST_CASE("resource_from_files", "[core][resource]")
 	REQUIRE(res.id == 1);
 	REQUIRE(res.remote_id == -1);
 	REQUIRE(res.type == VACCEL_RESOURCE_DATA);
-	REQUIRE(res.path_type == VACCEL_PATH_LOCAL);
+	REQUIRE(res.path_type == VACCEL_PATH_LOCAL_FILE);
 	REQUIRE(res.paths == nullptr);
 	REQUIRE(res.nr_paths == 0);
 	REQUIRE(res.rundir);
@@ -814,7 +814,7 @@ TEST_CASE("resource_from_files", "[core][resource]")
 	REQUIRE(alloc_res->id == 2);
 	REQUIRE(alloc_res->remote_id == -1);
 	REQUIRE(alloc_res->type == VACCEL_RESOURCE_DATA);
-	REQUIRE(alloc_res->path_type == VACCEL_PATH_LOCAL);
+	REQUIRE(alloc_res->path_type == VACCEL_PATH_LOCAL_FILE);
 	REQUIRE(alloc_res->paths == nullptr);
 	REQUIRE(alloc_res->nr_paths == 0);
 	REQUIRE(alloc_res->rundir);

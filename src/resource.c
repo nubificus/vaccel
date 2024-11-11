@@ -186,20 +186,6 @@ void resource_destroy_rundir(struct vaccel_resource *res)
 	res->rundir = NULL;
 }
 
-static vaccel_path_t path_get_type(const char *path)
-{
-	if (path_is_url(path))
-		return VACCEL_PATH_REMOTE;
-
-	if (fs_path_is_dir(path))
-		return VACCEL_PATH_DIR;
-
-	if (fs_path_is_file(path))
-		return VACCEL_PATH_LOCAL;
-
-	return VACCEL_PATH_MAX;
-}
-
 static void delete_files(struct vaccel_file **files, size_t nr_files)
 {
 	if (!files)
@@ -460,47 +446,9 @@ static int resource_add_files_from_remote(struct vaccel_resource *res,
 static int resource_init_with_paths(struct vaccel_resource *res,
 				    vaccel_resource_t type)
 {
-	int ret;
-
 	if (!res || !res->paths || !res->nr_paths || !res->paths[0] ||
 	    type >= VACCEL_RESOURCE_MAX)
 		return VACCEL_EINVAL;
-
-	get_resource_id(res);
-	if (res->id <= 0)
-		return VACCEL_EUSERS;
-
-	res->path_type = path_get_type(res->paths[0]);
-	if (res->path_type == VACCEL_PATH_MAX) {
-		ret = VACCEL_EINVAL;
-		goto release_id;
-	}
-	/* Verify all paths are of the same type */
-	for (size_t i = 1; i < res->nr_paths; i++) {
-		if (!res->paths[i]) {
-			ret = VACCEL_EINVAL;
-			goto release_id;
-		}
-
-		vaccel_path_t path_type = path_get_type(res->paths[i]);
-		if (path_type == VACCEL_PATH_MAX) {
-			vaccel_error("Path %zu has invalid type", i);
-			ret = VACCEL_EINVAL;
-			goto release_id;
-		}
-		if (path_type == VACCEL_PATH_DIR) {
-			vaccel_error(
-				"Resources with multiple directory paths are not supported");
-			ret = VACCEL_ENOTSUP;
-			goto release_id;
-		}
-		if (path_type != res->path_type) {
-			vaccel_error(
-				"Resource paths cannot be of different types");
-			ret = VACCEL_EINVAL;
-			goto release_id;
-		}
-	}
 
 	res->remote_id = -1;
 	res->type = type;
@@ -515,11 +463,6 @@ static int resource_init_with_paths(struct vaccel_resource *res,
 	vaccel_debug("Initialized resource %" PRId64, res->id);
 
 	return VACCEL_OK;
-
-release_id:
-	put_resource_id(res);
-
-	return ret;
 }
 
 static int resource_init_with_files(struct vaccel_resource *res,
@@ -531,7 +474,7 @@ static int resource_init_with_files(struct vaccel_resource *res,
 
 	res->remote_id = -1;
 	res->type = type;
-	res->path_type = VACCEL_PATH_LOCAL;
+	res->path_type = VACCEL_PATH_LOCAL_FILE;
 	res->paths = NULL;
 	res->nr_paths = 0;
 	atomic_init(&res->refcount, 0);
@@ -561,22 +504,51 @@ int vaccel_resource_init_multi(struct vaccel_resource *res, const char **paths,
 	if (!res || !paths || !nr_paths || type >= VACCEL_RESOURCE_MAX)
 		return VACCEL_EINVAL;
 
+	get_resource_id(res);
+	if (res->id <= 0)
+		return VACCEL_EUSERS;
+
 	res->paths = (char **)malloc(nr_paths * sizeof(char *));
-	if (!res->paths)
-		return VACCEL_ENOMEM;
+	if (!res->paths) {
+		ret = VACCEL_ENOMEM;
+		goto release_id;
+	}
 
 	for (size_t i = 0; i < nr_paths; i++)
 		res->paths[i] = NULL;
 
-	for (size_t i = 0; i < nr_paths; i++) {
+	if (!paths[0]) {
+		ret = VACCEL_EINVAL;
+		goto free;
+	}
+	ret = path_from_uri(&res->paths[0], &res->path_type, paths[0]);
+	if (ret) {
+		vaccel_error("Could not parse URI for %s", paths[0]);
+		goto free;
+	}
+
+	for (size_t i = 1; i < nr_paths; i++) {
 		if (!paths[i]) {
 			ret = VACCEL_EINVAL;
 			goto free;
 		}
 
-		res->paths[i] = strdup(paths[i]);
-		if (!res->paths[i]) {
-			ret = VACCEL_ENOMEM;
+		vaccel_path_t type;
+		ret = path_from_uri(&res->paths[i], &type, paths[i]);
+		if (ret) {
+			vaccel_error("Could not parse URI for %s", paths[i]);
+			goto free;
+		}
+		if (type == VACCEL_PATH_LOCAL_DIR) {
+			vaccel_error(
+				"Resources with multiple directory paths are not supported");
+			ret = VACCEL_ENOTSUP;
+			goto free;
+		}
+		if (type != res->path_type) {
+			vaccel_error(
+				"Resource paths cannot be of different types");
+			ret = VACCEL_EINVAL;
 			goto free;
 		}
 	}
@@ -600,6 +572,8 @@ free:
 	free(res->paths);
 	res->paths = NULL;
 	res->nr_paths = 0;
+release_id:
+	put_resource_id(res);
 
 	return ret;
 }
@@ -890,13 +864,13 @@ int vaccel_resource_register(struct vaccel_resource *res,
 		return VACCEL_EINVAL;
 
 	switch (res->path_type) {
-	case VACCEL_PATH_LOCAL:
+	case VACCEL_PATH_LOCAL_FILE:
 		ret = resource_add_files_from_local(res, sess->is_virtio);
 		break;
-	case VACCEL_PATH_DIR:
+	case VACCEL_PATH_LOCAL_DIR:
 		ret = resource_add_files_from_dir(res, sess->is_virtio);
 		break;
-	case VACCEL_PATH_REMOTE:
+	case VACCEL_PATH_REMOTE_FILE:
 		ret = resource_add_files_from_remote(res, !sess->is_virtio);
 		if (ret == VACCEL_ENOTSUP)
 			vaccel_error(
@@ -1013,7 +987,7 @@ int vaccel_resource_directory(struct vaccel_resource *res, char *out_path,
 		return VACCEL_EINVAL;
 	}
 
-	if (res->path_type != VACCEL_PATH_DIR) {
+	if (res->path_type != VACCEL_PATH_LOCAL_DIR) {
 		vaccel_error(
 			"Cannot return directory for resource not created from a directory");
 		return VACCEL_ENOTSUP;
