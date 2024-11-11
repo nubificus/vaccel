@@ -15,6 +15,7 @@ typedef std::atomic<unsigned int> atomic_uint;
 #include "id.h"
 #include "list.h"
 #include "session.h"
+#include "utils/path.h"
 #include <stddef.h>
 
 #ifdef __cplusplus
@@ -27,13 +28,6 @@ typedef enum {
 	VACCEL_RESOURCE_MODEL,
 	VACCEL_RESOURCE_MAX
 } vaccel_resource_t;
-
-typedef enum {
-	VACCEL_PATH_LOCAL = 0,
-	VACCEL_PATH_REMOTE,
-	VACCEL_PATH_DIR,
-	VACCEL_PATH_MAX
-} vaccel_path_t;
 
 struct vaccel_resource {
 	/* an entry to add this resource in a list */

@@ -4,7 +4,9 @@
 #define _DEFAULT_SOURCE
 
 #include "error.h"
+#include "fs.h"
 #include "log.h"
+#include "net.h"
 #include "path.h"
 #include <errno.h>
 #include <limits.h>
@@ -14,22 +16,173 @@
 #include <stdlib.h>
 #include <string.h>
 
-extern bool net_path_is_url(const char *path);
+static bool uri_is_remote(const char *uri)
+{
+	if (!uri)
+		return false;
+
+	const char *https_prefix = "https";
+	const char *http_prefix = "http";
+	const char *ftp_prefix = "ftp";
+
+	if (strncmp(uri, https_prefix, strlen(https_prefix)) == 0 ||
+	    strncmp(uri, http_prefix, strlen(http_prefix)) == 0 ||
+	    strncmp(uri, ftp_prefix, strlen(ftp_prefix)) == 0) {
+		return true;
+	}
+
+	return false;
+}
+
+static bool uri_is_local(const char *uri)
+{
+	if (!uri)
+		return false;
+
+	const char *local_prefix = "file";
+
+	if (strncmp(uri, local_prefix, strlen(local_prefix)) == 0) {
+		return true;
+	}
+
+	return false;
+}
+
+static int parse_uri(const char **path, vaccel_path_t *type, const char *uri)
+{
+	if (!uri || (!path && !type))
+		return VACCEL_EINVAL;
+
+	const char *out_path = NULL;
+	vaccel_path_t out_type = VACCEL_PATH_MAX;
+
+	const char *separator = strstr(uri, "://");
+
+	if (separator && uri_is_remote(uri)) {
+		/* uri is remote */
+		out_path = uri;
+		if (net_path_is_url(out_path))
+			out_type = VACCEL_PATH_REMOTE_FILE;
+	} else if ((separator && uri_is_local(uri)) || !separator) {
+		/* uri is local */
+		if (separator) {
+			out_path = separator + 3;
+		} else {
+			vaccel_warn(
+				"Path does not seem to have a `<prefix>://`");
+			vaccel_warn("Assuming %s is a local path", uri);
+			out_path = uri;
+		}
+		if (fs_path_is_dir(out_path)) {
+			out_type = VACCEL_PATH_LOCAL_DIR;
+		} else if (fs_path_is_file(out_path)) {
+			out_type = VACCEL_PATH_LOCAL_FILE;
+		}
+	}
+	if (out_path == NULL) {
+		vaccel_error("Unsupported URI prefix for %s", uri);
+		return VACCEL_EINVAL;
+	}
+	if (out_type == VACCEL_PATH_MAX) {
+		vaccel_error("Invalid path %s", out_path);
+		return VACCEL_EINVAL;
+	}
+	if (strlen(out_path) > PATH_MAX) {
+		vaccel_error("Path %s too long", out_path);
+		return VACCEL_ENAMETOOLONG;
+	}
+
+	if (path != NULL)
+		*path = out_path;
+	if (type != NULL)
+		*type = out_type;
+
+	return VACCEL_OK;
+}
+
+int path_init_from_uri(char *path, size_t size, vaccel_path_t *type,
+		       const char *uri)
+{
+	if (!uri || (path && !size) || (!path && !type))
+		return VACCEL_EINVAL;
+
+	const char *out_path;
+	vaccel_path_t out_type;
+	int ret = parse_uri(&out_path, &out_type, uri);
+	if (ret)
+		return ret;
+
+	if (path != NULL) {
+		if (strlen(out_path) >= size) {
+			vaccel_error("Path %s does not fit into buf", out_path);
+			return VACCEL_ENAMETOOLONG;
+		}
+		strncpy(path, out_path, size);
+	}
+	if (type != NULL)
+		*type = out_type;
+
+	return VACCEL_OK;
+}
+
+int path_from_uri(char **path, vaccel_path_t *type, const char *uri)
+{
+	if (!uri || (!path && !type))
+		return VACCEL_EINVAL;
+
+	const char *out_path;
+	vaccel_path_t out_type;
+	int ret = parse_uri(&out_path, &out_type, uri);
+	if (ret)
+		return ret;
+
+	if (path != NULL) {
+		*path = strdup(out_path);
+		if (*path == NULL)
+			return VACCEL_ENOMEM;
+	}
+	if (type != NULL)
+		*type = out_type;
+
+	return VACCEL_OK;
+}
 
 bool path_is_url(const char *path)
 {
 	if (!path)
 		return false;
 
-	const char *http_prefix = "http://";
-	const char *https_prefix = "https://";
+	vaccel_path_t type;
+	if (path_from_uri(NULL, &type, path) != VACCEL_OK)
+		return false;
 
-	if (strncmp(path, http_prefix, strlen(http_prefix)) == 0 ||
-	    strncmp(path, https_prefix, strlen(https_prefix)) == 0) {
+	if (type == VACCEL_PATH_REMOTE_FILE)
 		return net_path_is_url(path);
-	}
 
 	return false;
+}
+
+int path_type(const char *path, vaccel_path_t *type)
+{
+	if (!path || !type)
+		return VACCEL_EINVAL;
+
+	if (path_is_url(path)) {
+		*type = VACCEL_PATH_REMOTE_FILE;
+		return VACCEL_OK;
+	}
+
+	if (fs_path_is_dir(path)) {
+		*type = VACCEL_PATH_LOCAL_DIR;
+		return VACCEL_OK;
+	}
+
+	if (fs_path_is_file(path)) {
+		*type = VACCEL_PATH_LOCAL_FILE;
+		return VACCEL_OK;
+	}
+
+	return VACCEL_ENOTSUP;
 }
 
 int path_init_from_parts(char *path, size_t size, const char *first_part, ...)
@@ -150,7 +303,7 @@ int path_file_name(const char *path, char *name, size_t size, char **alloc_name)
 		if (name_len >= size) {
 			vaccel_error("Filename %s does not fit into buf",
 				     name_pos);
-			return VACCEL_EINVAL;
+			return VACCEL_ENAMETOOLONG;
 		}
 		strncpy(name, name_pos, size);
 	} else {
@@ -181,7 +334,7 @@ int path_file_name_add_random_suffix(char *path, size_t size, size_t *ext_len,
 	if (path_len > size) {
 		vaccel_error("Suffixed path for %s does not fit into buf",
 			     base_path);
-		return VACCEL_EINVAL;
+		return VACCEL_ENAMETOOLONG;
 	}
 
 	/* Add path suffix before the extension (if any) */
