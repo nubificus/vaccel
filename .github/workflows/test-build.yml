@@ -47,8 +47,6 @@ jobs:
     env:
       ARCH: ${{ fromJson(inputs.runner-arch-map)[0][matrix.arch] }}
       DOWNLOAD_PATH: ${{github.workspace}}/artifacts/downloads/${{fromJson(inputs.runner-arch-map)[0][matrix.arch]}}/${{matrix.build-type}}
-      CC: gcc-12
-      CXX: g++-12
     steps:
       - name: Checkout .github directory
         uses: actions/checkout@v4

@@ -36,9 +36,6 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
-    env:
-      CC: gcc-12
-      CXX: g++-12
     steps:
       - name: Checkout .github directory
         uses: actions/checkout@v4
@@ -84,7 +81,6 @@ jobs:
           build-path: build_${{ matrix.build-type }}
           source-path: ${{ steps.set-repo-dirs.outputs.repo }}
           coverage: 'true'
-          gcov: 'gcov-12'
 
       - name: Checkout default_branch
         uses: actions/checkout@v4
@@ -95,6 +91,9 @@ jobs:
 
       - name: Build project @default_branch
         if: ${{ inputs.comment-diff == true }}
+        env:
+          CC: gcc-12
+          CXX: g++-12
         uses: ./.github/actions/build
         with:
           build-path: build_${{ matrix.build-type }}
@@ -105,6 +104,9 @@ jobs:
 
       - name: Generate coverage report @default_branch
         if: ${{ inputs.comment-diff == true }}
+        env:
+          CC: gcc-12
+          CXX: g++-12
         uses: ./.github/actions/run-tests
         with:
           build-path: build_${{ matrix.build-type }}
