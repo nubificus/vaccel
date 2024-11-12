@@ -66,6 +66,12 @@ TEST_CASE("fs_path_exists", "[utils][fs]")
 		REQUIRE(ret == false);
 	}
 
+	SECTION("Invalid arguments")
+	{
+		ret = fs_path_exists(nullptr);
+		REQUIRE(ret == false);
+	}
+
 	free(existing_file);
 	free(non_existing_file);
 	free(existing_dir);
@@ -102,6 +108,12 @@ TEST_CASE("fs_path_is_dir", "[utils][fs]")
 	SECTION("Non existing directory")
 	{
 		ret = fs_path_is_dir(non_existing_dir);
+		REQUIRE(ret == false);
+	}
+
+	SECTION("Invalid arguments")
+	{
+		ret = fs_path_is_dir(nullptr);
 		REQUIRE(ret == false);
 	}
 
@@ -144,6 +156,12 @@ TEST_CASE("fs_path_is_file", "[utils][fs]")
 		REQUIRE(ret == false);
 	}
 
+	SECTION("Invalid arguments")
+	{
+		ret = fs_path_is_file(nullptr);
+		REQUIRE(ret == false);
+	}
+
 	free(existing_file);
 	free(non_existing_file);
 	free(existing_dir);
@@ -170,22 +188,6 @@ TEST_CASE("fs_ops", "[utils][fs]")
 				   nullptr);
 	REQUIRE(ret == VACCEL_OK);
 
-	SECTION("Create existing dir")
-	{
-		char *dir = abs_path(BUILD_ROOT, "examples");
-		REQUIRE(VACCEL_EEXIST == fs_dir_create(dir));
-		free(dir);
-	}
-
-	SECTION("Create existing file")
-	{
-		char *existing_file =
-			abs_path(BUILD_ROOT, "examples/libmytestlib.so");
-		ret = fs_file_create(existing_file, nullptr);
-		REQUIRE(VACCEL_EEXIST == ret);
-		free(existing_file);
-	}
-
 	SECTION("Create directory")
 	{
 		ret = fs_dir_create(dirpath);
@@ -193,50 +195,35 @@ TEST_CASE("fs_ops", "[utils][fs]")
 		REQUIRE(fs_path_is_dir(dirpath));
 	}
 
-	SECTION("Create directory - unique")
+	SECTION("Create existing directory")
 	{
-		char *dir = abs_path(BUILD_ROOT, "my_dir");
-		char *final_dir;
-		REQUIRE(VACCEL_OK ==
-			fs_dir_create_unique(dir, 256, &final_dir));
-		REQUIRE(fs_path_is_dir(final_dir));
-		REQUIRE(VACCEL_OK == fs_dir_remove(final_dir));
-		free(final_dir);
-		free(dir);
-	}
-
-	SECTION("Create file - unique")
-	{
-		char *new_file = abs_path(BUILD_ROOT, "unq");
-		char *final_path;
-		ret = fs_file_create_unique(new_file, 256, &final_path,
-					    nullptr);
-		REQUIRE(VACCEL_OK == ret);
-		REQUIRE(fs_path_is_file(final_path));
-		REQUIRE(VACCEL_OK == fs_file_remove(final_path));
-		free(new_file);
-		free(final_path);
+		REQUIRE(fs_dir_create(dirpath) == VACCEL_EEXIST);
 	}
 
 	SECTION("Number of files (0)")
 	{
-		REQUIRE(0 == fs_dir_process_files(dirpath, nullptr));
+		REQUIRE(fs_dir_process_files(dirpath, nullptr) == 0);
 	}
 
 	SECTION("Create files")
 	{
-		REQUIRE(VACCEL_OK == fs_file_create(filepath1, nullptr));
+		REQUIRE(fs_file_create(filepath1, nullptr) == VACCEL_OK);
 		REQUIRE(fs_path_is_file(filepath1));
 		int fd;
-		REQUIRE(VACCEL_OK == fs_file_create(filepath2, &fd));
+		REQUIRE(fs_file_create(filepath2, &fd) == VACCEL_OK);
 		REQUIRE(fd > 0);
 		REQUIRE(fs_path_is_file(filepath2));
 		close(fd);
 	}
 
+	SECTION("Create existing file")
+	{
+		REQUIRE(fs_file_create(filepath1, nullptr) == VACCEL_EEXIST);
+	}
+
 	SECTION("Number of files (2)")
 	{
-		REQUIRE(2 == fs_dir_process_files(dirpath, nullptr));
+		REQUIRE(fs_dir_process_files(dirpath, nullptr) == 2);
 	}
 
 	SECTION("Get dir file paths (2)")
@@ -244,8 +231,9 @@ TEST_CASE("fs_ops", "[utils][fs]")
 		char *paths[2];
 		for (auto &path : paths)
 			path = nullptr;
-		REQUIRE(2 == fs_dir_process_files(
-				     dirpath, process_files_callback, paths));
+		ret = fs_dir_process_files(dirpath, process_files_callback,
+					   paths);
+		REQUIRE(ret == 2);
 		for (auto &path : paths) {
 			REQUIRE(path != nullptr);
 			REQUIRE((strcmp(path, filepath1) == 0 ||
@@ -256,27 +244,98 @@ TEST_CASE("fs_ops", "[utils][fs]")
 
 	SECTION("Remove files")
 	{
-		REQUIRE(VACCEL_OK == fs_file_remove(filepath1));
-		REQUIRE(false == fs_path_is_file(filepath1));
-		REQUIRE(VACCEL_OK == fs_file_remove(filepath2));
-		REQUIRE(false == fs_path_is_file(filepath2));
+		REQUIRE(fs_file_remove(filepath1) == VACCEL_OK);
+		REQUIRE(fs_path_is_file(filepath1) == false);
+		REQUIRE(fs_file_remove(filepath2) == VACCEL_OK);
+		REQUIRE(fs_path_is_file(filepath2) == false);
 	}
 
 	SECTION("Number of files (0)")
 	{
-		REQUIRE(0 == fs_dir_process_files(dirpath, nullptr));
+		REQUIRE(fs_dir_process_files(dirpath, nullptr) == 0);
+	}
+
+	SECTION("Create file - unique")
+	{
+		char *final_path;
+		ret = fs_file_create_unique(filepath1, 0, &final_path, nullptr);
+		REQUIRE(ret == VACCEL_OK);
+		REQUIRE(fs_path_is_file(final_path));
+		REQUIRE(fs_file_remove(final_path) == VACCEL_OK);
+		free(final_path);
+
+		ret = fs_file_create_unique(filepath1, PATH_MAX, nullptr,
+					    nullptr);
+		REQUIRE(ret == VACCEL_OK);
+		REQUIRE(fs_path_is_file(filepath1));
+		REQUIRE(fs_file_remove(filepath1) == VACCEL_OK);
+	}
+
+	SECTION("Invalid arguments")
+	{
+		REQUIRE(fs_file_create(filepath1, nullptr) == VACCEL_OK);
+
+		char *final_path;
+		char toolong_path[PATH_MAX + 1] = { '\0' };
+		memset(toolong_path, 'a', sizeof(toolong_path) - 1);
+		REQUIRE(fs_dir_create(nullptr) == VACCEL_EINVAL);
+		REQUIRE(fs_dir_create(toolong_path) == VACCEL_ENAMETOOLONG);
+		REQUIRE(fs_dir_create(filepath1) == VACCEL_ENOTDIR);
+
+		REQUIRE(fs_dir_create_unique(nullptr, PATH_MAX, &final_path) ==
+			VACCEL_EINVAL);
+		REQUIRE(fs_dir_create_unique(dirpath, 0, nullptr) ==
+			VACCEL_EINVAL);
+		REQUIRE(fs_dir_create_unique(toolong_path, PATH_MAX, nullptr) ==
+			VACCEL_ENAMETOOLONG);
+
+		REQUIRE(fs_file_create(nullptr, nullptr) == VACCEL_EINVAL);
+		REQUIRE(fs_file_create(toolong_path, nullptr) ==
+			VACCEL_ENAMETOOLONG);
+		REQUIRE(fs_file_create(dirpath, nullptr) == VACCEL_EINVAL);
+
+		REQUIRE(fs_file_create_unique(nullptr, 0, &final_path,
+					      nullptr) == VACCEL_EINVAL);
+		REQUIRE(fs_file_create_unique(filepath1, 0, nullptr, nullptr) ==
+			VACCEL_EINVAL);
+		REQUIRE(fs_file_create_unique(toolong_path, PATH_MAX, nullptr,
+					      nullptr) == VACCEL_ENAMETOOLONG);
+
+		REQUIRE(fs_file_remove(nullptr) == VACCEL_EINVAL);
+
+		REQUIRE(fs_dir_remove(nullptr) == VACCEL_EINVAL);
+
+		REQUIRE(fs_dir_process_files(nullptr, nullptr) ==
+			-VACCEL_EINVAL);
+
+		REQUIRE(fs_file_remove(filepath1) == VACCEL_OK);
 	}
 
 	SECTION("Remove directory")
 	{
-		REQUIRE(VACCEL_OK == fs_dir_remove(dirpath));
-		REQUIRE(false == fs_path_is_dir(dirpath));
-		REQUIRE(VACCEL_OK == fs_dir_remove(rootpath));
-		REQUIRE(false == fs_path_is_dir(rootpath));
+		REQUIRE(fs_dir_remove(dirpath) == VACCEL_OK);
+		REQUIRE(fs_path_is_dir(dirpath) == false);
+		REQUIRE(fs_dir_remove(rootpath) == VACCEL_OK);
+		REQUIRE(fs_path_is_dir(rootpath) == false);
+	}
+
+	SECTION("Create directory - unique")
+	{
+		char *final_dir;
+		ret = fs_dir_create_unique(dirpath, 0, &final_dir);
+		REQUIRE(ret == VACCEL_OK);
+		REQUIRE(fs_path_is_dir(final_dir));
+		REQUIRE(fs_dir_remove(final_dir) == VACCEL_OK);
+		free(final_dir);
+
+		ret = fs_dir_create_unique(dirpath, PATH_MAX, nullptr);
+		REQUIRE(ret == VACCEL_OK);
+		REQUIRE(fs_path_is_dir(dirpath));
+		REQUIRE(fs_dir_remove(dirpath) == VACCEL_OK);
 	}
 }
 
-TEST_CASE("fs_file_reading", "[utils][fs]")
+TEST_CASE("fs_file_read", "[utils][fs]")
 {
 	char *existing_file = abs_path(BUILD_ROOT, "examples/libmytestlib.so");
 	int ret;
@@ -286,18 +345,34 @@ TEST_CASE("fs_file_reading", "[utils][fs]")
 	size_t std_size;
 
 	ret = fs_file_read(existing_file, (void **)&std_handle, &std_size);
-	REQUIRE(0 == ret);
+	REQUIRE(ret == VACCEL_OK);
 
 	ret = fs_file_read_mmap(existing_file, (void **)&mmap_handle,
 				&mmap_size);
-	REQUIRE(0 == ret);
+	REQUIRE(ret == VACCEL_OK);
 
 	REQUIRE(std_size == mmap_size);
 
 	for (size_t i = 0; i < std_size; i++) {
 		REQUIRE(std_handle[i] == mmap_handle[i]);
 	}
-	REQUIRE(0 == munmap(mmap_handle, mmap_size));
+	REQUIRE(munmap(mmap_handle, mmap_size) == 0);
+
+	SECTION("Invalid arguments")
+	{
+		ret = fs_file_read(nullptr, (void **)&std_handle, &std_size);
+		REQUIRE(ret == VACCEL_EINVAL);
+
+		ret = fs_file_read(existing_file, nullptr, &std_size);
+		REQUIRE(ret == VACCEL_EINVAL);
+
+		ret = fs_file_read_mmap(nullptr, (void **)&mmap_handle,
+					&mmap_size);
+		REQUIRE(ret == VACCEL_EINVAL);
+
+		ret = fs_file_read_mmap(existing_file, nullptr, &mmap_size);
+		REQUIRE(ret == VACCEL_EINVAL);
+	}
 
 	free(std_handle);
 	free(existing_file);
