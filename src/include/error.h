@@ -32,3 +32,4 @@ enum {
 #define VACCEL_EACCES EACCES /* Permission denied */
 #define VACCEL_EBADF EBADF /* Bad file number */
 #define VACCEL_EREMOTEIO EREMOTEIO /* Remote I/O error */
+#define VACCEL_EFAULT EFAULT /* Bad address */

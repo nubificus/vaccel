@@ -300,6 +300,9 @@ free:
 
 int fs_dir_remove(const char *path)
 {
+	if (!path)
+		return VACCEL_EINVAL;
+
 	if (rmdir(path))
 		return errno;
 
@@ -428,6 +431,9 @@ free:
 
 int fs_file_remove(const char *path)
 {
+	if (!path)
+		return VACCEL_EINVAL;
+
 	if (remove(path))
 		return errno;
 
@@ -436,10 +442,10 @@ int fs_file_remove(const char *path)
 
 int fs_file_read(const char *path, void **data, size_t *size)
 {
-	int fd;
-	int ret;
+	if (!path || !data)
+		return VACCEL_EINVAL;
 
-	fd = open(path, O_RDONLY);
+	int fd = open(path, O_RDONLY);
 	if (fd == -1) {
 		vaccel_error("Could not open file %s: %s", path,
 			     strerror(errno));
@@ -448,7 +454,7 @@ int fs_file_read(const char *path, void **data, size_t *size)
 
 	/* Find the size of the file */
 	struct stat stat;
-	ret = fstat(fd, &stat);
+	int ret = fstat(fd, &stat);
 	if (ret < 0) {
 		vaccel_error("Could not fstat file %s: %s", path,
 			     strerror(errno));
@@ -485,19 +491,23 @@ int fs_file_read(const char *path, void **data, size_t *size)
 	}
 
 	*data = buff;
-	*size = ptr;
+	if (size)
+		*size = ptr;
 
 close_file:
 	close(fd);
-	return ret;
+
+	if (ret)
+		return ret;
+	return VACCEL_OK;
 }
 
 int fs_file_read_mmap(const char *path, void **data, size_t *size)
 {
-	int fd;
-	int ret;
+	if (!path || !data)
+		return VACCEL_EINVAL;
 
-	fd = open(path, O_RDONLY);
+	int fd = open(path, O_RDONLY);
 	if (fd == -1) {
 		vaccel_error("Could not open file %s: %s", path,
 			     strerror(errno));
@@ -506,7 +516,7 @@ int fs_file_read_mmap(const char *path, void **data, size_t *size)
 
 	/* Find the size of the file */
 	struct stat stat;
-	ret = fstat(fd, &stat);
+	int ret = fstat(fd, &stat);
 	if (ret < 0) {
 		vaccel_error("Could not fstat file %s: %s", path,
 			     strerror(errno));
@@ -529,9 +539,13 @@ int fs_file_read_mmap(const char *path, void **data, size_t *size)
 	}
 
 	*data = ptr;
-	*size = stat.st_size;
+	if (size)
+		*size = stat.st_size;
 
 close_file:
 	close(fd);
-	return ret;
+
+	if (ret)
+		return ret;
+	return VACCEL_OK;
 }
