@@ -29,12 +29,15 @@ tests_args = [
   '--warn NoAssertions',
 ]
 
-tests_env = [
-  'VACCEL_DEBUG_LEVEL=4',
-]
+tests_env = environment()
+tests_env.set('VACCEL_DEBUG_LEVEL', '4')
+tests_env.set('VACCEL_BACKENDS','')
 
-tests_env_noop = 'VACCEL_BACKENDS=' + libvaccel_noop.full_path()
-tests_env_exec = 'VACCEL_BACKENDS=' + libvaccel_exec.full_path()
+tests_env_noop = tests_env
+tests_env_noop.set('VACCEL_BACKENDS', libvaccel_noop.full_path())
+tests_env_exec = tests_env
+tests_env_exec.set('VACCEL_BACKENDS', libvaccel_exec.full_path())
+tests_env_exec.set('VACCEL_EXEC_DLCLOSE', '1')
 
 libtests_main = library('tests-main',
   ['main.cpp', 'utils.cpp', utils_hpp, 'mock_virtio.cpp', 'mock_virtio.hpp'],
@@ -56,9 +59,11 @@ foreach t : tests_core_sources + tests_utils_sources
   test(name, exe, args : tests_args, env : tests_env, is_parallel : false)
   if name == 'test_log'
     foreach l : range(1, 4)
+      tests_env_log = tests_env
+      tests_env_log.set('VACCEL_DEBUG_LEVEL', l.to_string())
       test('@0@+@1@@2@'.format(name, 'level', l), exe,
         args : tests_args,
-        env : 'VACCEL_DEBUG_LEVEL=' + l.to_string(),
+        env : tests_env_log,
         is_parallel : false)
     endforeach
   endif
@@ -76,13 +81,13 @@ foreach t : tests_ops_sources
 
   test(name + '+noop', exe,
     args : tests_args,
-    env : tests_env + tests_env_noop,
+    env : tests_env_noop,
     is_parallel : false)
 
   if name.contains('exec')
     test(name + '+exec', exe,
       args : tests_args,
-      env : tests_env + tests_env_exec + 'VACCEL_EXEC_DLCLOSE=1',
+      env : tests_env_exec,
       is_parallel : false)
   endif
 endforeach
