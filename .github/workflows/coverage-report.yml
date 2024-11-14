@@ -149,7 +149,9 @@ jobs:
             "$(find "${{ steps.set-repo-dirs.outputs.repo }}/build_${{ matrix.build-type }}" \
               -name "coverage*.xml")" \
             --format markdown --output "coverage.md"
-          printf "%s\n\n" "# Tests coverage report" \
+          printf "%s\n%s\n\n" \
+            '<!-- markdownlint-disable-file MD013 -->' \
+            '# Tests coverage report' \
             > "${{ steps.set-repo-dirs.outputs.repo }}/$COVERAGE_FILE"
           cat coverage.md >> "${{ steps.set-repo-dirs.outputs.repo }}/$COVERAGE_FILE"
           rm -f coverage.md
