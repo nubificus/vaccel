@@ -127,10 +127,10 @@ jobs:
 
       - name: PR comment with file
         if: ${{ inputs.comment-diff == true }}
-        uses: thollander/actions-comment-pull-request@v2
+        uses: thollander/actions-comment-pull-request@v3
         with:
-          filePath: ./coverage_diff.md
-          comment_tag: coverage
+          file-path: ./coverage_diff.md
+          comment-tag: coverage
           mode: recreate
 
       - name: Generate markdown file
