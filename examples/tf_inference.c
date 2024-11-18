@@ -45,13 +45,18 @@ int main(int argc, char *argv[])
 	}
 
 	struct vaccel_tf_status status;
+	status.message = NULL;
+
 	ret = vaccel_tf_session_load(&vsess, &model, &status);
 	if (ret) {
 		vaccel_error("Could not load graph from model");
 		goto unregister_resource;
 	}
-	if (status.message)
+
+	if (status.message) {
 		free((char *)status.message);
+		status.message = NULL;
+	}
 
 	struct vaccel_tf_buffer run_options = { NULL, 0 };
 
@@ -95,8 +100,11 @@ int main(int argc, char *argv[])
 	for (unsigned int i = 0; i < min(10, out->size / sizeof(float)); ++i)
 		printf("%f\n", offsets[i]);
 
-	if (status.message)
+	if (status.message) {
 		free((char *)status.message);
+		status.message = NULL;
+	}
+
 	if (vaccel_tf_tensor_destroy(out))
 		vaccel_error("Could not destroy out tensor");
 unload_session:
@@ -105,8 +113,10 @@ unload_session:
 
 	if (vaccel_tf_session_delete(&vsess, &model, &status))
 		vaccel_error("Could not delete tf session");
-	if (status.message)
+	if (status.message) {
 		free((char *)status.message);
+		status.message = NULL;
+	}
 unregister_resource:
 	if (vaccel_resource_unregister(&model, &vsess))
 		vaccel_error("Could not unregister model with session");
