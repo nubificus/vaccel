@@ -11,6 +11,7 @@
  * 5) unregister_plugin()
  * 6) plugins_shutdown()
  * 7) get_plugin_op()
+ * 8) vaccel_plugin_load()
  */
 
 #include <catch.hpp>
@@ -360,4 +361,96 @@ TEST_CASE("register_plugin_vaccel_versions", "[core][plugin]")
 
 	free(vaccel_version);
 	free(extra);
+}
+
+TEST_CASE("vaccel_plugin_load", "[core][plugin]")
+{
+	int ret;
+	struct vaccel_session session;
+	char *plugin_exec =
+		abs_path(BUILD_ROOT, "plugins/exec/libvaccel-exec.so");
+	char *plugin_noop =
+		abs_path(BUILD_ROOT, "plugins/noop/libvaccel-noop.so");
+	char *lib = abs_path(BUILD_ROOT, "examples/libmytestlib.so");
+
+	/* Plugin path */
+	REQUIRE(fs_path_is_file(plugin_noop));
+	REQUIRE(fs_path_is_file(plugin_exec));
+
+	/* Session Init */
+	ret = vaccel_session_init(&session, 0);
+	REQUIRE(ret == VACCEL_OK);
+	REQUIRE(session.id == 1);
+
+	/* Null pointer */
+	ret = vaccel_plugin_load(nullptr);
+	REQUIRE(ret == VACCEL_EINVAL);
+
+	/* Non existent file */
+	ret = vaccel_plugin_load("some/random/path.so");
+	REQUIRE(ret == VACCEL_ENOENT);
+
+	/* Plugin subsystem non initialized yet */
+	ret = vaccel_plugin_load(plugin_noop);
+	REQUIRE(ret == VACCEL_EBACKEND);
+
+	/* Plugins Init */
+	ret = plugins_bootstrap();
+	REQUIRE(ret == VACCEL_OK);
+
+	/* vAccel exec() */
+	int input = 20; /* some random input value */
+	int output;
+
+	struct vaccel_arg read[1] = {
+		{ .argtype = 42, .size = sizeof(input), .buf = &input }
+	};
+
+	struct vaccel_arg write[1] = {
+		{ .argtype = 42, .size = sizeof(output), .buf = &output }
+	};
+
+	/* Not supported operation (yet) */
+	ret = vaccel_exec(&session, lib, "mytestfunc", read, 1, write, 1);
+	REQUIRE(ret == VACCEL_ENOTSUP);
+
+	/* Load first plugin - noop */
+	ret = vaccel_plugin_load(plugin_noop);
+	REQUIRE(ret == VACCEL_OK);
+
+	/* Supported by noop */
+	ret = vaccel_exec(&session, lib, "mytestfunc", read, 1, write, 1);
+	REQUIRE(ret == VACCEL_OK);
+	/* noop implementation, output should be equal to input */
+	REQUIRE(output == input);
+
+	/* Set output to zero */
+	output = 0;
+
+	/* Update hint - prefer exec plugin */
+	ret = vaccel_session_update(&session, VACCEL_PLUGIN_SOFTWARE);
+	REQUIRE(ret == VACCEL_OK);
+
+	/* Load exec plugin */
+	ret = vaccel_plugin_load(plugin_exec);
+	REQUIRE(ret == VACCEL_OK);
+
+	/* Use the exec plugin */
+	ret = vaccel_exec(&session, lib, "mytestfunc", read, 1, write, 1);
+	REQUIRE(ret == VACCEL_OK);
+	/* Now the output should be 2 * input*/
+	REQUIRE(output == (2 * input));
+
+	/* Release session */
+	ret = vaccel_session_release(&session);
+	REQUIRE(ret == VACCEL_OK);
+
+	/* Shutdown plugins */
+	ret = plugins_shutdown();
+	REQUIRE(ret == VACCEL_OK);
+
+	/* Release memory */
+	free(plugin_exec);
+	free(plugin_noop);
+	free(lib);
 }
