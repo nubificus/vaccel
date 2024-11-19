@@ -63,6 +63,15 @@ close_dl:
 	return ret;
 }
 
+int vaccel_plugin_load(const char *path)
+{
+	if (path == NULL)
+		return VACCEL_EINVAL;
+	if (!fs_path_is_file(path))
+		return VACCEL_ENOENT;
+	return load_backend_plugin(path);
+}
+
 static int load_backend_plugins(char *plugins)
 {
 	char *plugin;

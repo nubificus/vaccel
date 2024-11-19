@@ -147,6 +147,8 @@ int unregister_plugin(struct vaccel_plugin *plugin);
 int register_plugin_function(struct vaccel_op *plugin_op);
 int register_plugin_functions(struct vaccel_op *plugin_ops, size_t nr_ops);
 
+int vaccel_plugin_load(const char *path);
+
 #ifdef __cplusplus
 }
 #endif
