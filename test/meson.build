@@ -32,12 +32,12 @@ tests_args = [
 tests_env = environment()
 tests_env.set('VACCEL_DEBUG_LEVEL', '4')
 tests_env.set('VACCEL_BACKENDS','')
+tests_env.set('VACCEL_EXEC_DLCLOSE', '1')
 
 tests_env_noop = tests_env
 tests_env_noop.set('VACCEL_BACKENDS', libvaccel_noop.full_path())
 tests_env_exec = tests_env
 tests_env_exec.set('VACCEL_BACKENDS', libvaccel_exec.full_path())
-tests_env_exec.set('VACCEL_EXEC_DLCLOSE', '1')
 
 libtests_main = library('tests-main',
   ['main.cpp', 'utils.cpp', utils_hpp, 'mock_virtio.cpp', 'mock_virtio.hpp'],
