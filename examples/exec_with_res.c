@@ -88,7 +88,7 @@ int main(int argc, char *argv[])
 			goto close_session;
 		}
 	}
-	printf("output1(2x%d): %d\n", input, output1);
+	printf("output1: %d\n", output1);
 
 	struct vaccel_arg read_2[1] = { { .size = sizeof(input),
 					  .buf = &input } };
@@ -104,7 +104,7 @@ int main(int argc, char *argv[])
 			goto close_session;
 		}
 	}
-	printf("output1(2x%d): %d\n", input, output2);
+	printf("output2: %d\n", output2);
 
 close_session:
 	ret = vaccel_resource_unregister(&resource, &sess);

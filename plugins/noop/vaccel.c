@@ -208,17 +208,12 @@ static void exec_gen_dummy_output(struct vaccel_arg *read,
 				  struct vaccel_arg *write)
 {
 	int nr_output = write[0].size / sizeof(int);
-	if (nr_output == 1) {
-		int output = 2 * (*(int *)read[0].buf);
-		memcpy(write[0].buf, &output, sizeof(int));
-	} else {
-		if (nr_output > 1) {
-			int *input = (int *)read[0].buf;
-			int *output = (int *)write[0].buf;
-			output[0] = input[0];
-			for (int j = 1; j < nr_output; j++) {
-				output[j] = 2 * input[j];
-			}
+	if (nr_output >= 1) {
+		noop_debug("will return dummy output = input\n");
+		int *input = (int *)read[0].buf;
+		int *output = (int *)write[0].buf;
+		for (int j = 0; j < nr_output; j++) {
+			output[j] = input[j];
 		}
 	}
 }
@@ -238,13 +233,9 @@ static int noop_exec(struct vaccel_session *sess, const char *library,
 	noop_debug("library: %s symbol: %s", library, fn_symbol);
 	noop_debug("nr_read: %zu nr_write: %zu", nr_read, nr_write);
 
-	if ((nr_write > 0) && (write[0].size == read[0].size) &&
-	    (write[0].size % sizeof(int) == 0)) {
-		noop_debug(
-			"will return dummy output based on 'mytestlib' functions\n");
-
+	if ((nr_write == 1) && (write[0].size == read[0].size) &&
+	    (write[0].size % sizeof(int) == 0))
 		exec_gen_dummy_output(read, write);
-	}
 
 	return VACCEL_OK;
 }
@@ -294,13 +285,9 @@ static int noop_exec_with_resource(struct vaccel_session *sess,
 	noop_debug("library: %s symbol: %s", library, fn_symbol);
 	noop_debug("nr_read: %zu nr_write: %zu", nr_read, nr_write);
 
-	if ((nr_write > 0) && (write[0].size == read[0].size) &&
-	    (write[0].size % sizeof(int) == 0)) {
-		noop_debug(
-			"will return dummy output based on 'mytestlib' functions\n");
-
+	if ((nr_write == 1) && (write[0].size == read[0].size) &&
+	    (write[0].size % sizeof(int) == 0))
 		exec_gen_dummy_output(read, write);
-	}
 
 	return VACCEL_OK;
 }

@@ -63,11 +63,14 @@ int mytestfunc(struct vaccel_arg *input, size_t nr_in,
 	int *input_int = vaccel_extract_serial_arg(input, 0);
 
 	printf("I got nr_in: %zu, nr_out: %zu\n", nr_in, nr_out);
-	printf("I got this input: %d\n", *input_int);
+	printf("I got input: %d\n", *input_int);
 
 	/* Output */
 	int output_int = 2 * (*input_int);
 	vaccel_write_serial_arg(output, 0, &output_int);
+
+	printf("Will return output: %d\n", output_int);
+
 	return 0;
 }
 

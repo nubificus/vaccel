@@ -85,9 +85,9 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	printf("input     : %d\n", input_int);
-	printf("output(2x): %d\n", *outptr);
-	printf("output(2x): %d\n", output_int);
+	printf("input:                                  %d\n", input_int);
+	printf("output(from vaccel_extract_serial_arg): %d\n", *outptr);
+	printf("output(from buf):                       %d\n", output_int);
 
 close_session:
 
