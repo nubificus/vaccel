@@ -61,18 +61,14 @@ summary({
 
 meson.add_dist_script(
   'scripts/common/dist.sh',
-  'vaccel',
-  get_option('buildtype'),
-  'plugin-exec',
-  opt_plugin_exec.enabled() ? 'enabled' : 'disabled',
-  'plugin-noop',
-  opt_plugin_noop.enabled() ? 'enabled' : 'disabled',
-  'plugin-mbench',
-  opt_plugin_mbench.enabled() ? 'enabled' : 'disabled',
-  'examples',
-  opt_examples.enabled() ? 'enabled' : 'disabled',
-  'tests',
-  opt_tests.enabled() ? 'enabled' : 'disabled')
+  '-n', 'vaccel',
+  '-v', meson.project_version(),
+  '-t', get_option('buildtype'),
+  '-a', 'plugin-exec=' + (opt_plugin_exec.enabled() ? 'enabled' : 'disabled'),
+  '-a', 'plugin-noop=' + (opt_plugin_noop.enabled() ? 'enabled' : 'disabled'),
+  '-a', 'plugin-mbench=' + (opt_plugin_mbench.enabled() ? 'enabled' : 'disabled'),
+  '-a', 'examples=' + (opt_examples.enabled() ? 'enabled' : 'disabled'),
+  '-a', 'tests=' + (opt_tests.enabled() ? 'enabled' : 'disabled'))
 
 if opt_examples.enabled() and opt_plugin_noop.enabled() and opt_plugin_exec.enabled()
   run_target('run-examples',
