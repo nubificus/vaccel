@@ -33,7 +33,6 @@ examples_sources = files([
 ])
 
 examples = []
-vaccel_cppargs+= ['-DVACCEL_LOAD_IMAGE']
 foreach e : examples_sources
   examples += executable(fs.stem(e),
     sources : e,

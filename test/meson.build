@@ -92,7 +92,6 @@ foreach t : tests_ops_sources
   endif
 endforeach
 
-compiler = meson.get_compiler('cpp')
 gcovr_cfg = '''
 To enable coverage measurements configure with option:
 -Db_coverage=true
@@ -107,4 +106,4 @@ https://mesonbuild.com/Unit-tests.html#coverage
 https://mesonbuild.com/howtox.html#producing-a-coverage-report
 https://gcovr.com/en/stable/guide/configuration.html
 '''
-message(gcovr_cfg.format(compiler.version().split('.')[0]))
+message(gcovr_cfg.format(cpp.version().split('.')[0]))

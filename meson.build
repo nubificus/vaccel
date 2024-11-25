@@ -26,6 +26,15 @@ if libcurl_dep.found()
   vaccel_cpp_args += '-DLIBCURL'
 endif
 
+cc = meson.get_compiler('c')
+cpp = meson.get_compiler('cpp')
+if cc.has_header('stb/stb_image.h')
+  vaccel_c_args += '-DUSE_STB_IMAGE'
+endif
+if cpp.has_header('stb/stb_image.h')
+  vaccel_cpp_args += '-DUSE_STB_IMAGE'
+endif
+
 subdir('src')
 subdir('plugins')
 subdir('python')
