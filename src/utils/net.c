@@ -9,7 +9,7 @@
 #include <limits.h>
 #include <string.h>
 
-#ifdef LIBCURL
+#ifdef USE_LIBCURL
 
 #include <curl/curl.h>
 #include <errno.h>
@@ -230,13 +230,13 @@ int net_nocurl_file_download(const char *path, const char *download_path)
 	return VACCEL_ENOTSUP;
 }
 
-#endif /* LIBCURL */
+#endif /* USE_LIBCURL */
 
 bool net_path_is_url(const char *path)
 {
 	if (!path)
 		return false;
-#ifdef LIBCURL
+#ifdef USE_LIBCURL
 	return net_curl_path_is_url(path);
 #else
 	return net_nocurl_path_is_url(path);
@@ -247,7 +247,7 @@ bool net_path_exists(const char *path)
 {
 	if (!path)
 		return false;
-#ifdef LIBCURL
+#ifdef USE_LIBCURL
 	return net_curl_path_exists(path);
 #else
 	return net_nocurl_path_exists(path);
@@ -272,7 +272,7 @@ int net_file_download(const char *path, const char *download_path)
 		return VACCEL_EINVAL;
 	}
 
-#ifdef LIBCURL
+#ifdef USE_LIBCURL
 	return net_curl_file_download(path, download_path);
 #else
 	return net_nocurl_file_download(path, download_path);

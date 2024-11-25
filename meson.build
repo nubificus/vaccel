@@ -22,8 +22,8 @@ libslog_dep = dependency('slog')
 
 libcurl_dep = dependency('libcurl', required : false)
 if libcurl_dep.found()
-  vaccel_c_args += '-DLIBCURL'
-  vaccel_cpp_args += '-DLIBCURL'
+  vaccel_c_args += '-DUSE_LIBCURL'
+  vaccel_cpp_args += '-DUSE_LIBCURL'
 endif
 
 cc = meson.get_compiler('c')
