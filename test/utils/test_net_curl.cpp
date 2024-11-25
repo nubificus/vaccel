@@ -35,7 +35,7 @@ TEST_CASE("net_path_is_url", "[utils][net][curl]")
 	{
 		net_nocurl_path_is_url_fake.return_val = true;
 		REQUIRE(net_path_is_url(url));
-#ifdef LIBCURL
+#ifdef USE_LIBCURL
 		REQUIRE(net_nocurl_path_is_url_fake.call_count == 0);
 #else
 		// emulate net_curl_path_is_url()
@@ -49,7 +49,7 @@ TEST_CASE("net_path_is_url", "[utils][net][curl]")
 	{
 		net_nocurl_path_is_url_fake.return_val = false;
 		REQUIRE_FALSE(net_path_is_url(word));
-#ifdef LIBCURL
+#ifdef USE_LIBCURL
 		REQUIRE(net_nocurl_path_is_url_fake.call_count == 0);
 #else
 		// emulate net_curl_path_is_url()
@@ -77,7 +77,7 @@ TEST_CASE("net_path_exists", "[utils][net][curl]")
 	{
 		net_nocurl_path_exists_fake.return_val = true;
 		REQUIRE(net_path_exists(existent_url));
-#ifdef LIBCURL
+#ifdef USE_LIBCURL
 		REQUIRE(net_nocurl_path_exists_fake.call_count == 0);
 #else
 		// emulate net_curl_path_exists()
@@ -91,7 +91,7 @@ TEST_CASE("net_path_exists", "[utils][net][curl]")
 	{
 		net_nocurl_path_exists_fake.return_val = false;
 		REQUIRE_FALSE(net_path_exists(non_existent_url));
-#ifdef LIBCURL
+#ifdef USE_LIBCURL
 		REQUIRE(net_nocurl_path_exists_fake.call_count == 0);
 #else
 		// emulate net_curl_path_exists()
@@ -136,7 +136,7 @@ TEST_CASE("net_file_download", "[utils][net][curl]")
 		net_nocurl_file_download_fake.return_val = VACCEL_OK;
 		REQUIRE(net_file_download(existent_url, download_path) ==
 			VACCEL_OK);
-#ifdef LIBCURL
+#ifdef USE_LIBCURL
 		REQUIRE(fs_path_is_file(download_path));
 		REQUIRE(fs_file_remove(download_path) == VACCEL_OK);
 		REQUIRE(net_nocurl_file_download_fake.call_count == 0);
@@ -154,7 +154,7 @@ TEST_CASE("net_file_download", "[utils][net][curl]")
 		net_nocurl_file_download_fake.return_val = VACCEL_EREMOTEIO;
 		REQUIRE(net_file_download(non_existent_url, download_path) ==
 			VACCEL_EREMOTEIO);
-#ifdef LIBCURL
+#ifdef USE_LIBCURL
 		REQUIRE(fs_path_is_file(download_path));
 		REQUIRE(fs_file_remove(download_path) == VACCEL_OK);
 		REQUIRE(net_nocurl_file_download_fake.call_count == 0);
