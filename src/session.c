@@ -35,13 +35,13 @@ static void get_session_id(struct vaccel_session *sess)
 
 static void put_session_id(struct vaccel_session *sess)
 {
-	id_pool_release(&sessions.ids, sess->id);
+	id_pool_put(&sessions.ids, sess->id);
 	sess->id = -1;
 }
 
 int sessions_bootstrap(void)
 {
-	int ret = id_pool_new(&sessions.ids, VACCEL_SESSIONS_MAX);
+	int ret = id_pool_init(&sessions.ids, VACCEL_SESSIONS_MAX);
 	if (ret)
 		return ret;
 
@@ -63,7 +63,7 @@ int sessions_cleanup(void)
 
 	sessions.initialized = false;
 
-	return id_pool_destroy(&sessions.ids);
+	return id_pool_release(&sessions.ids);
 }
 
 static struct registered_resource *

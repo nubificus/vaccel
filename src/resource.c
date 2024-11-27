@@ -40,7 +40,7 @@ static list_t live_resources[VACCEL_RESOURCE_MAX];
 
 int resources_bootstrap(void)
 {
-	int ret = id_pool_new(&id_pool, VACCEL_RESOURCES_MAX);
+	int ret = id_pool_init(&id_pool, VACCEL_RESOURCES_MAX);
 	if (ret)
 		return ret;
 
@@ -66,7 +66,7 @@ int resources_cleanup(void)
 
 	initialized = false;
 
-	return id_pool_destroy(&id_pool);
+	return id_pool_release(&id_pool);
 }
 
 int vaccel_resource_get_by_id(struct vaccel_resource **resource, vaccel_id_t id)
@@ -95,7 +95,7 @@ static void get_resource_id(struct vaccel_resource *res)
 
 static void put_resource_id(struct vaccel_resource *res)
 {
-	id_pool_release(&id_pool, res->id);
+	id_pool_put(&id_pool, res->id);
 	res->id = -1;
 }
 
