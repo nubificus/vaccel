@@ -31,7 +31,7 @@ TEST_CASE("bootstrap_resource", "[core][bootstrap]")
 	id_pool_t id_pool;
 	list_t live_resources[VACCEL_RESOURCE_MAX];
 	int ret;
-	ret = id_pool_new(&id_pool, MAX_RESOURCES);
+	ret = id_pool_init(&id_pool, MAX_RESOURCES);
 	REQUIRE(ret == VACCEL_OK);
 
 	for (auto &live_resource : live_resources)
@@ -43,7 +43,7 @@ TEST_CASE("bootstrap_resource", "[core][bootstrap]")
 		for_each_vaccel_resource_safe(res, tmp, &live_resource)
 			vaccel_resource_release(res);
 	}
-	ret = id_pool_destroy(&id_pool);
+	ret = id_pool_release(&id_pool);
 	REQUIRE(ret == VACCEL_OK);
 }
 
@@ -56,7 +56,7 @@ TEST_CASE("bootstrap_session", "[core][bootstrap]")
 	} sessions;
 
 	int ret;
-	ret = id_pool_new(&sessions.ids, MAX_SESSIONS);
+	ret = id_pool_init(&sessions.ids, MAX_SESSIONS);
 	REQUIRE(ret == VACCEL_OK);
 
 	for (auto &running_session : sessions.running_sessions)
@@ -64,7 +64,7 @@ TEST_CASE("bootstrap_session", "[core][bootstrap]")
 
 	sessions.initialized = true;
 
-	ret = id_pool_destroy(&sessions.ids);
+	ret = id_pool_release(&sessions.ids);
 	REQUIRE(ret == VACCEL_OK);
 	sessions.initialized = false;
 }

@@ -28,17 +28,23 @@ typedef struct id_pool {
 	atomic_int next;
 } id_pool_t;
 
-/* Create and initialize a new id pool */
-int id_pool_new(id_pool_t *pool, int nr_ids);
+/* Initialize id pool */
+int id_pool_init(id_pool_t *pool, int nr_ids);
 
-/* Destroy a pool id */
-int id_pool_destroy(id_pool_t *pool);
+/* Release id pool data */
+int id_pool_release(id_pool_t *pool);
 
-/* Get a new id from the pool */
+/* Allocate and initialize id pool */
+int id_pool_new(id_pool_t **pool, int nr_ids);
+
+/* Release id pool data and free id pool created with id_pool_new() */
+int id_pool_delete(id_pool_t *pool);
+
+/* Retrieve a new id from the pool */
 vaccel_id_t id_pool_get(id_pool_t *pool);
 
-/* Release an id back to the pool */
-void id_pool_release(id_pool_t *pool, vaccel_id_t id);
+/* Return an id to the pool */
+void id_pool_put(id_pool_t *pool, vaccel_id_t id);
 
 #ifdef __cplusplus
 }
