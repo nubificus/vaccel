@@ -95,7 +95,8 @@ static void get_resource_id(struct vaccel_resource *res)
 
 static void put_resource_id(struct vaccel_resource *res)
 {
-	id_pool_put(&id_pool, res->id);
+	if (id_pool_put(&id_pool, res->id))
+		vaccel_warn("Could not return resource ID to pool");
 	res->id = -1;
 }
 
@@ -505,8 +506,8 @@ int vaccel_resource_init_multi(struct vaccel_resource *res, const char **paths,
 		return VACCEL_EINVAL;
 
 	get_resource_id(res);
-	if (res->id <= 0)
-		return VACCEL_EUSERS;
+	if (res->id < 0)
+		return -(int)res->id;
 
 	res->paths = (char **)malloc(nr_paths * sizeof(char *));
 	if (!res->paths) {
@@ -591,8 +592,8 @@ int vaccel_resource_init_from_buf(struct vaccel_resource *res, const void *buf,
 		return VACCEL_EINVAL;
 
 	get_resource_id(res);
-	if (res->id <= 0)
-		return VACCEL_EUSERS;
+	if (res->id < 0)
+		return -(int)res->id;
 
 	res->files =
 		(struct vaccel_file **)malloc(sizeof(struct vaccel_file *));
@@ -653,8 +654,8 @@ int vaccel_resource_init_from_files(struct vaccel_resource *res,
 		return VACCEL_EINVAL;
 
 	get_resource_id(res);
-	if (res->id <= 0)
-		return VACCEL_EUSERS;
+	if (res->id < 0)
+		return -(int)res->id;
 
 	res->files = (struct vaccel_file **)malloc(
 		nr_files * sizeof(struct vaccel_file *));

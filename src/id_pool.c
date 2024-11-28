@@ -1,21 +1,26 @@
 // SPDX-License-Identifier: Apache-2.0
 
+#include <stdbool.h>
 #include <stdlib.h>
 
 #include "id_pool.h"
 #include "error.h"
+#include "log.h"
 
-int id_pool_init(id_pool_t *pool, int nr_ids)
+int id_pool_init(id_pool_t *pool, vaccel_id_t nr_ids)
 {
-	if (!pool || !nr_ids)
+	if (!pool || nr_ids <= 0)
 		return VACCEL_EINVAL;
 
-	pool->ids = calloc(nr_ids, sizeof(vaccel_id_t));
+	pool->ids = calloc(nr_ids, sizeof(atomic_bool));
 	if (!pool->ids)
 		return VACCEL_ENOMEM;
 
+	for (vaccel_id_t i = 0; i < nr_ids; i++)
+		atomic_init(&pool->ids[i], true);
+
 	pool->max = nr_ids;
-	atomic_init(&pool->next, 0);
+	atomic_init(&pool->last, 0);
 
 	return VACCEL_OK;
 }
@@ -31,9 +36,9 @@ int id_pool_release(id_pool_t *pool)
 	return VACCEL_OK;
 }
 
-int id_pool_new(id_pool_t **pool, int nr_ids)
+int id_pool_new(id_pool_t **pool, vaccel_id_t nr_ids)
 {
-	if (!pool || !nr_ids)
+	if (!pool || nr_ids <= 0)
 		return VACCEL_EINVAL;
 
 	id_pool_t *p = (id_pool_t *)malloc(sizeof(id_pool_t));
@@ -65,32 +70,52 @@ int id_pool_delete(id_pool_t *pool)
 vaccel_id_t id_pool_get(id_pool_t *pool)
 {
 	if (!pool)
-		return 0;
+		return -VACCEL_EINVAL;
 
-	int ptr = atomic_fetch_add(&pool->next, 1);
-	if (ptr >= pool->max)
-		return 0;
+	vaccel_id_t cur = atomic_load(&pool->last);
 
-	if (!pool->ids[ptr])
-		pool->ids[ptr] = ptr + 1;
+	/* Try finding an available ID sequentially first */
+	for (vaccel_id_t id = cur; id < pool->max; id++) {
+		bool available = true;
+		vaccel_id_t next = id + 1;
+		if (atomic_compare_exchange_strong(&pool->ids[id], &available,
+						   false)) {
+			atomic_store(&pool->last, next);
+			return next;
+		}
+	}
 
-	return pool->ids[ptr];
+	vaccel_warn("Reached max ID (%" PRId64 ")", pool->max);
+	vaccel_warn("Trying to reclaim lower IDs");
+
+	/* If max ID has been reached, reset `last` */
+	if (cur == pool->max)
+		atomic_store(&pool->last, 0);
+
+	/* If no sequential ID is available, search for any freed IDs */
+	for (vaccel_id_t id = 0; id < cur; id++) {
+		bool available = true;
+		vaccel_id_t next = id + 1;
+		if (atomic_compare_exchange_strong(&pool->ids[id], &available,
+						   false))
+			return next;
+	}
+
+	return -VACCEL_EUSERS;
 }
 
-void id_pool_put(id_pool_t *pool, vaccel_id_t id)
+int id_pool_put(id_pool_t *pool, vaccel_id_t id)
 {
-	if (!pool)
-		return;
+	if (!pool || !id || id > pool->max || id <= 0)
+		return VACCEL_EINVAL;
 
-	if (!id || id > pool->max)
-		return;
+	vaccel_id_t idx = id - 1;
 
-	int curr = pool->next;
-	int ptr = curr - 1;
+	vaccel_id_t available = atomic_load(&pool->ids[idx]);
+	if (available)
+		return VACCEL_EPERM;
 
-	/* Atomically decrease the pointer value */
-	while (!atomic_compare_exchange_strong(&pool->next, &curr, ptr))
-		ptr = curr - 1;
+	atomic_store(&pool->ids[idx], true);
 
-	pool->ids[ptr] = id;
+	return VACCEL_OK;
 }

@@ -35,7 +35,8 @@ static void get_session_id(struct vaccel_session *sess)
 
 static void put_session_id(struct vaccel_session *sess)
 {
-	id_pool_put(&sessions.ids, sess->id);
+	if (id_pool_put(&sessions.ids, sess->id))
+		vaccel_warn("Could not return resource ID to pool");
 	sess->id = -1;
 }
 
@@ -241,8 +242,8 @@ int vaccel_session_init(struct vaccel_session *sess, uint32_t flags)
 		return VACCEL_ESESS;
 
 	get_session_id(sess);
-	if (!sess->id)
-		return VACCEL_ESESS;
+	if (sess->id < 0)
+		return -(int)sess->id;
 
 	virtio = get_virtio_plugin();
 	if ((flags & VACCEL_REMOTE) || (get_nr_plugins() == 1 && virtio)) {
