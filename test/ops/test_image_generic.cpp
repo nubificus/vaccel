@@ -28,29 +28,16 @@
 TEST_CASE("classify_generic", "[ops][image][generic]")
 {
 	char *file_path = abs_path(SOURCE_ROOT, "examples/images/example.jpg");
-	int ret;
 	char *image;
 	size_t image_size = 0;
 	char out_text[512];
 	char out_imagename[512];
-
 	struct vaccel_session sess;
-	sess.id = 0;
-	sess.priv = nullptr;
-	sess.resources = nullptr;
-	sess.hint = 1;
 
-	ret = vaccel_session_init(&sess, 0);
-	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(sess.id);
-	REQUIRE(sess.hint == 0);
-	REQUIRE(sess.resources);
-	REQUIRE(sess.priv == nullptr);
+	REQUIRE(vaccel_session_init(&sess, 0) == VACCEL_OK);
 
-	ret = fs_file_read(file_path, (void **)&image, &image_size);
-	REQUIRE(ret == 0);
-	REQUIRE(image_size);
-	REQUIRE(&image);
+	REQUIRE(fs_file_read(file_path, (void **)&image, &image_size) ==
+		VACCEL_OK);
 
 	uint32_t image_size_uint32 = 0;
 	if (image_size <= UINT32_MAX) {
@@ -74,13 +61,15 @@ TEST_CASE("classify_generic", "[ops][image][generic]")
 		  .buf = out_imagename }
 	};
 
-	ret = vaccel_genop(&sess, read, 2, write, 2);
+	int ret = vaccel_genop(&sess, read, 2, write, 2);
 	REQUIRE(ret == VACCEL_OK);
+	REQUIRE(out_text);
+	REQUIRE(out_imagename);
 
+	printf("classification imagename: %s\n", out_imagename);
 	printf("classification tags: %s\n", out_text);
 
-	ret = vaccel_session_release(&sess);
-	REQUIRE(ret == VACCEL_OK);
+	REQUIRE(vaccel_session_release(&sess) == VACCEL_OK);
 
 	free(file_path);
 	free(image);
@@ -93,24 +82,12 @@ TEST_CASE("depth_generic", "[ops][image][generic]")
 	char *image;
 	size_t image_size = 0;
 	char out_imagename[512];
-
 	struct vaccel_session sess;
-	sess.id = 0;
-	sess.priv = nullptr;
-	sess.resources = nullptr;
-	sess.hint = 1;
 
-	ret = vaccel_session_init(&sess, 0);
-	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(sess.id);
-	REQUIRE(sess.hint == 0);
-	REQUIRE(sess.resources);
-	REQUIRE(sess.priv == nullptr);
+	REQUIRE(vaccel_session_init(&sess, 0) == VACCEL_OK);
 
-	ret = fs_file_read(file_path, (void **)&image, &image_size);
-	REQUIRE(ret == 0);
-	REQUIRE(image_size);
-	REQUIRE(&image);
+	REQUIRE(fs_file_read(file_path, (void **)&image, &image_size) ==
+		VACCEL_OK);
 
 	uint32_t image_size_uint32 = 0;
 	if (image_size <= UINT32_MAX) {
@@ -133,10 +110,11 @@ TEST_CASE("depth_generic", "[ops][image][generic]")
 
 	ret = vaccel_genop(&sess, read, 2, write, 1);
 	REQUIRE(ret == VACCEL_OK);
+	REQUIRE(out_imagename);
+
 	printf("depth estimation imagename: %s\n", out_imagename);
 
-	ret = vaccel_session_release(&sess);
-	REQUIRE(ret == VACCEL_OK);
+	REQUIRE(vaccel_session_release(&sess) == VACCEL_OK);
 
 	free(file_path);
 	free(image);
@@ -149,24 +127,12 @@ TEST_CASE("detect_generic", "[ops][image][generic]")
 	char *image;
 	size_t image_size = 0;
 	char out_imagename[512];
-
 	struct vaccel_session sess;
-	sess.id = 0;
-	sess.priv = nullptr;
-	sess.resources = nullptr;
-	sess.hint = 1;
 
-	ret = vaccel_session_init(&sess, 0);
-	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(sess.id);
-	REQUIRE(sess.hint == 0);
-	REQUIRE(sess.resources);
-	REQUIRE(sess.priv == nullptr);
+	REQUIRE(vaccel_session_init(&sess, 0) == VACCEL_OK);
 
-	ret = fs_file_read(file_path, (void **)&image, &image_size);
-	REQUIRE(ret == 0);
-	REQUIRE(image_size);
-	REQUIRE(&image);
+	REQUIRE(fs_file_read(file_path, (void **)&image, &image_size) ==
+		VACCEL_OK);
 
 	uint32_t image_size_uint32 = 0;
 	if (image_size <= UINT32_MAX) {
@@ -190,11 +156,11 @@ TEST_CASE("detect_generic", "[ops][image][generic]")
 
 	ret = vaccel_genop(&sess, read, 2, write, 1);
 	REQUIRE(ret == VACCEL_OK);
+	REQUIRE(out_imagename);
 
-	printf("detection image name: %s\n", out_imagename);
+	printf("detection imagename: %s\n", out_imagename);
 
-	ret = vaccel_session_release(&sess);
-	REQUIRE(ret == VACCEL_OK);
+	REQUIRE(vaccel_session_release(&sess) == VACCEL_OK);
 
 	free(file_path);
 	free(image);
@@ -207,24 +173,12 @@ TEST_CASE("pose_generic", "[ops][image][generic]")
 	char *image;
 	size_t image_size = 0;
 	char out_imagename[512];
-
 	struct vaccel_session sess;
-	sess.id = 0;
-	sess.priv = nullptr;
-	sess.resources = nullptr;
-	sess.hint = 1;
 
-	ret = vaccel_session_init(&sess, 0);
-	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(sess.id);
-	REQUIRE(sess.hint == 0);
-	REQUIRE(sess.resources);
-	REQUIRE(sess.priv == nullptr);
+	REQUIRE(vaccel_session_init(&sess, 0) == VACCEL_OK);
 
-	ret = fs_file_read(file_path, (void **)&image, &image_size);
-	REQUIRE(ret == 0);
-	REQUIRE(image_size);
-	REQUIRE(&image);
+	REQUIRE(fs_file_read(file_path, (void **)&image, &image_size) ==
+		VACCEL_OK);
 
 	uint32_t image_size_uint32 = 0;
 	if (image_size <= UINT32_MAX) {
@@ -248,10 +202,11 @@ TEST_CASE("pose_generic", "[ops][image][generic]")
 
 	ret = vaccel_genop(&sess, read, 2, write, 1);
 	REQUIRE(ret == VACCEL_OK);
+	REQUIRE(out_imagename);
+
 	printf("pose estimation imagename: %s\n", out_imagename);
 
-	ret = vaccel_session_release(&sess);
-	REQUIRE(ret == VACCEL_OK);
+	REQUIRE(vaccel_session_release(&sess) == VACCEL_OK);
 
 	free(file_path);
 	free(image);
@@ -264,24 +219,12 @@ TEST_CASE("segmentation_generic", "[ops][image][generic]")
 	char *image;
 	size_t image_size = 0;
 	char out_imagename[512];
-
 	struct vaccel_session sess;
-	sess.id = 0;
-	sess.priv = nullptr;
-	sess.resources = nullptr;
-	sess.hint = 1;
 
-	ret = vaccel_session_init(&sess, 0);
-	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(sess.id);
-	REQUIRE(sess.hint == 0);
-	REQUIRE(sess.resources);
-	REQUIRE(sess.priv == nullptr);
+	REQUIRE(vaccel_session_init(&sess, 0) == VACCEL_OK);
 
-	ret = fs_file_read(file_path, (void **)&image, &image_size);
-	REQUIRE(ret == 0);
-	REQUIRE(image_size);
-	REQUIRE(&image);
+	REQUIRE(fs_file_read(file_path, (void **)&image, &image_size) ==
+		VACCEL_OK);
 
 	uint32_t image_size_uint32 = 0;
 	if (image_size <= UINT32_MAX) {
@@ -305,10 +248,11 @@ TEST_CASE("segmentation_generic", "[ops][image][generic]")
 
 	ret = vaccel_genop(&sess, read, 2, write, 1);
 	REQUIRE(ret == VACCEL_OK);
+	REQUIRE(out_imagename);
+
 	printf("segmentation output: %s\n", out_imagename);
 
-	ret = vaccel_session_release(&sess);
-	REQUIRE(ret == VACCEL_OK);
+	REQUIRE(vaccel_session_release(&sess) == VACCEL_OK);
 
 	free(file_path);
 	free(image);

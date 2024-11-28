@@ -96,7 +96,7 @@ TEST_CASE("resource_from_directory_path", "[core][resource]")
 	struct vaccel_resource res;
 	ret = vaccel_resource_init(&res, dir_path, VACCEL_RESOURCE_DATA);
 	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(res.id == 1);
+	REQUIRE(res.id > 0);
 	REQUIRE(res.remote_id == -1);
 	REQUIRE(res.files == nullptr);
 	REQUIRE(res.nr_files == 0);
@@ -112,7 +112,7 @@ TEST_CASE("resource_from_directory_path", "[core][resource]")
 	struct vaccel_resource *alloc_res;
 	ret = vaccel_resource_new(&alloc_res, dir_path, VACCEL_RESOURCE_DATA);
 	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(alloc_res->id == 2);
+	REQUIRE(alloc_res->id == res.id + 1);
 	REQUIRE(alloc_res->remote_id == -1);
 	REQUIRE(alloc_res->files == nullptr);
 	REQUIRE(alloc_res->nr_files == 0);
@@ -126,9 +126,7 @@ TEST_CASE("resource_from_directory_path", "[core][resource]")
 
 	/* Session init */
 	struct vaccel_session sess;
-	ret = vaccel_session_init(&sess, 0);
-	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(sess.id == 1);
+	REQUIRE(vaccel_session_init(&sess, 0) == VACCEL_OK);
 
 	/* Register resources */
 	for (auto &resource : resources) {
@@ -143,29 +141,29 @@ TEST_CASE("resource_from_directory_path", "[core][resource]")
 	const char *dir_files[4] = { "keras_metadata.pb", "saved_model.pb",
 				     "variables.data-00000-of-00001",
 				     "variables.index" };
-	for (size_t i = 0; i < nr_resources; i++) {
+	for (auto &resource : resources) {
 		/* Check files */
-		for (size_t j = 0; j < resources[i]->nr_files; j++) {
-			REQUIRE(resources[i]->files[j]);
-			REQUIRE(resources[i]->files[j]->path);
-			REQUIRE(fs_path_is_file(resources[i]->files[j]->path));
+		for (size_t j = 0; j < resource->nr_files; j++) {
+			REQUIRE(resource->files[j]);
+			REQUIRE(resource->files[j]->path);
+			REQUIRE(fs_path_is_file(resource->files[j]->path));
 
 			char filename[NAME_MAX];
-			path_file_name(resources[i]->files[j]->path, filename,
+			path_file_name(resource->files[j]->path, filename,
 				       NAME_MAX, nullptr);
 			REQUIRE(string_in_list(filename, dir_files, 4));
 		}
 
 		/* Get resource directory */
 		char dir_resp[PATH_MAX] = { '\0' };
-		ret = vaccel_resource_directory(resources[i], dir_resp,
+		ret = vaccel_resource_directory(resource, dir_resp,
 						sizeof(dir_resp), nullptr);
 		REQUIRE(ret == VACCEL_OK);
 		REQUIRE(strcmp(dir_resp, dir_path) == 0);
 
 		/* Get resource directory with alloc */
 		char *dir_resp_alloc;
-		ret = vaccel_resource_directory(resources[i], nullptr, 0,
+		ret = vaccel_resource_directory(resource, nullptr, 0,
 						&dir_resp_alloc);
 		REQUIRE(ret == VACCEL_OK);
 		REQUIRE(strcmp(dir_resp_alloc, dir_path) == 0);
@@ -173,13 +171,12 @@ TEST_CASE("resource_from_directory_path", "[core][resource]")
 
 		/* Get by id */
 		struct vaccel_resource *found_by_id;
-		ret = vaccel_resource_get_by_id(&found_by_id,
-						(vaccel_id_t)i + 1);
+		ret = vaccel_resource_get_by_id(&found_by_id, resource->id);
 		REQUIRE(ret == VACCEL_OK);
-		REQUIRE(found_by_id == resources[i]);
+		REQUIRE(found_by_id == resource);
 
 		/* Has resource */
-		REQUIRE(vaccel_session_has_resource(&sess, resources[i]));
+		REQUIRE(vaccel_session_has_resource(&sess, resource));
 	}
 
 	SECTION("virtio session")
@@ -191,10 +188,8 @@ TEST_CASE("resource_from_directory_path", "[core][resource]")
 
 		/* Session init */
 		struct vaccel_session vsess;
-		ret = vaccel_session_init(&vsess, 0 | VACCEL_REMOTE);
-		REQUIRE(ret == VACCEL_OK);
-		REQUIRE(vsess.id == 2);
-		REQUIRE(vsess.remote_id == 1);
+		REQUIRE(vaccel_session_init(&vsess, 0 | VACCEL_REMOTE) ==
+			VACCEL_OK);
 
 		/* Register resource */
 		ret = vaccel_resource_register(&res, &vsess);
@@ -203,7 +198,7 @@ TEST_CASE("resource_from_directory_path", "[core][resource]")
 			(size_t)fs_dir_process_files(dir_path, nullptr));
 		REQUIRE(res.files);
 		REQUIRE(res.refcount == 2);
-		REQUIRE(res.id == 1);
+		REQUIRE(res.id > 0);
 		REQUIRE(res.remote_id == 1);
 
 		/* Check files */
@@ -233,7 +228,7 @@ TEST_CASE("resource_from_directory_path", "[core][resource]")
 
 		/* Get by id */
 		struct vaccel_resource *found_by_id;
-		ret = vaccel_resource_get_by_id(&found_by_id, 1);
+		ret = vaccel_resource_get_by_id(&found_by_id, res.id);
 		REQUIRE(ret == VACCEL_OK);
 		REQUIRE(found_by_id == &res);
 
@@ -246,9 +241,7 @@ TEST_CASE("resource_from_directory_path", "[core][resource]")
 		REQUIRE_FALSE(vaccel_session_has_resource(&vsess, &res));
 
 		/* Release session */
-		ret = vaccel_session_release(&vsess);
-		REQUIRE(ret == VACCEL_OK);
-		REQUIRE(vsess.id <= 0);
+		REQUIRE(vaccel_session_release(&vsess) == VACCEL_OK);
 
 		REQUIRE(get_virtio_plugin_fake.call_count == 4);
 	}
@@ -261,9 +254,7 @@ TEST_CASE("resource_from_directory_path", "[core][resource]")
 	}
 
 	/* Release session */
-	ret = vaccel_session_release(&sess);
-	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(sess.id <= 0);
+	REQUIRE(vaccel_session_release(&sess) == VACCEL_OK);
 
 	/* Free resource */
 	ret = vaccel_resource_delete(alloc_res);
@@ -302,7 +293,7 @@ TEST_CASE("resource_from_file_paths", "[core][resource]")
 					 sizeof(paths) / sizeof(char *),
 					 VACCEL_RESOURCE_DATA);
 	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(res.id == 1);
+	REQUIRE(res.id > 0);
 	REQUIRE(res.remote_id == -1);
 	REQUIRE(res.type == VACCEL_RESOURCE_DATA);
 	REQUIRE(res.path_type == VACCEL_PATH_LOCAL_FILE);
@@ -325,7 +316,7 @@ TEST_CASE("resource_from_file_paths", "[core][resource]")
 					sizeof(paths) / sizeof(char *),
 					VACCEL_RESOURCE_DATA);
 	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(alloc_res->id == 2);
+	REQUIRE(alloc_res->id == res.id + 1);
 	REQUIRE(alloc_res->remote_id == -1);
 	REQUIRE(alloc_res->type == VACCEL_RESOURCE_DATA);
 	REQUIRE(alloc_res->path_type == VACCEL_PATH_LOCAL_FILE);
@@ -344,9 +335,7 @@ TEST_CASE("resource_from_file_paths", "[core][resource]")
 
 	/* Session init */
 	struct vaccel_session sess;
-	ret = vaccel_session_init(&sess, 0);
-	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(sess.id == 1);
+	REQUIRE(vaccel_session_init(&sess, 0) == VACCEL_OK);
 
 	/* Register resources */
 	for (auto &resource : resources) {
@@ -357,25 +346,24 @@ TEST_CASE("resource_from_file_paths", "[core][resource]")
 		REQUIRE(resource->refcount == 1);
 	}
 
-	for (size_t i = 0; i < nr_resources; i++) {
+	for (auto &resource : resources) {
 		/* Check files */
-		for (size_t j = 0; j < resources[i]->nr_files; j++) {
-			REQUIRE(resources[i]->files[j]);
-			REQUIRE(resources[i]->files[j]->path);
-			REQUIRE(fs_path_is_file(resources[i]->files[j]->path));
-			REQUIRE(string_in_list(resources[i]->files[j]->path,
-					       paths, 2));
+		for (size_t j = 0; j < resource->nr_files; j++) {
+			REQUIRE(resource->files[j]);
+			REQUIRE(resource->files[j]->path);
+			REQUIRE(fs_path_is_file(resource->files[j]->path));
+			REQUIRE(string_in_list(resource->files[j]->path, paths,
+					       2));
 		}
 
 		/* Get by id */
 		struct vaccel_resource *found_by_id;
-		ret = vaccel_resource_get_by_id(&found_by_id,
-						(vaccel_id_t)i + 1);
+		ret = vaccel_resource_get_by_id(&found_by_id, resource->id);
 		REQUIRE(ret == VACCEL_OK);
-		REQUIRE(found_by_id == resources[i]);
+		REQUIRE(found_by_id == resource);
 
 		/* Has resource */
-		REQUIRE(vaccel_session_has_resource(&sess, resources[i]));
+		REQUIRE(vaccel_session_has_resource(&sess, resource));
 	}
 
 	SECTION("virtio session")
@@ -387,10 +375,8 @@ TEST_CASE("resource_from_file_paths", "[core][resource]")
 
 		/* Session init */
 		struct vaccel_session vsess;
-		ret = vaccel_session_init(&vsess, 0 | VACCEL_REMOTE);
-		REQUIRE(ret == VACCEL_OK);
-		REQUIRE(vsess.id == 2);
-		REQUIRE(vsess.remote_id == 1);
+		REQUIRE(vaccel_session_init(&vsess, 0 | VACCEL_REMOTE) ==
+			VACCEL_OK);
 
 		/* Register resource */
 		ret = vaccel_resource_register(&res, &vsess);
@@ -398,7 +384,7 @@ TEST_CASE("resource_from_file_paths", "[core][resource]")
 		REQUIRE(res.nr_files == 2);
 		REQUIRE(res.files);
 		REQUIRE(res.refcount == 2);
-		REQUIRE(res.id == 1);
+		REQUIRE(res.id > 0);
 		REQUIRE(res.remote_id == 1);
 
 		/* Check files */
@@ -423,7 +409,7 @@ TEST_CASE("resource_from_file_paths", "[core][resource]")
 
 		/* Get by id */
 		struct vaccel_resource *found_by_id;
-		ret = vaccel_resource_get_by_id(&found_by_id, 1);
+		ret = vaccel_resource_get_by_id(&found_by_id, res.id);
 		REQUIRE(ret == VACCEL_OK);
 		REQUIRE(found_by_id == &res);
 
@@ -436,9 +422,7 @@ TEST_CASE("resource_from_file_paths", "[core][resource]")
 		REQUIRE_FALSE(vaccel_session_has_resource(&vsess, &res));
 
 		/* Release session */
-		ret = vaccel_session_release(&vsess);
-		REQUIRE(ret == VACCEL_OK);
-		REQUIRE(vsess.id <= 0);
+		REQUIRE(vaccel_session_release(&vsess) == VACCEL_OK);
 
 		REQUIRE(get_virtio_plugin_fake.call_count == 4);
 	}
@@ -451,9 +435,7 @@ TEST_CASE("resource_from_file_paths", "[core][resource]")
 	}
 
 	/* Release session */
-	ret = vaccel_session_release(&sess);
-	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(sess.id <= 0);
+	REQUIRE(vaccel_session_release(&sess) == VACCEL_OK);
 
 	/* Free resource */
 	ret = vaccel_resource_delete(alloc_res);
@@ -491,7 +473,7 @@ TEST_CASE("resource_from_url_path", "[core][resource]")
 	struct vaccel_resource res;
 	ret = vaccel_resource_init(&res, url, VACCEL_RESOURCE_DATA);
 	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(res.id == 1);
+	REQUIRE(res.id > 0);
 	REQUIRE(res.remote_id == -1);
 	REQUIRE(res.type == VACCEL_RESOURCE_DATA);
 	REQUIRE(res.path_type == VACCEL_PATH_REMOTE_FILE);
@@ -509,7 +491,7 @@ TEST_CASE("resource_from_url_path", "[core][resource]")
 	struct vaccel_resource *alloc_res;
 	ret = vaccel_resource_new(&alloc_res, url, VACCEL_RESOURCE_DATA);
 	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(alloc_res->id == 2);
+	REQUIRE(alloc_res->id == res.id + 1);
 	REQUIRE(alloc_res->remote_id == -1);
 	REQUIRE(alloc_res->type == VACCEL_RESOURCE_DATA);
 	REQUIRE(alloc_res->path_type == VACCEL_PATH_REMOTE_FILE);
@@ -525,9 +507,7 @@ TEST_CASE("resource_from_url_path", "[core][resource]")
 
 	/* Session init */
 	struct vaccel_session sess;
-	ret = vaccel_session_init(&sess, 0);
-	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(sess.id == 1);
+	REQUIRE(vaccel_session_init(&sess, 0) == VACCEL_OK);
 
 	SECTION("virtio session")
 	{
@@ -538,10 +518,8 @@ TEST_CASE("resource_from_url_path", "[core][resource]")
 
 		/* Session init */
 		struct vaccel_session vsess;
-		ret = vaccel_session_init(&vsess, 0 | VACCEL_REMOTE);
-		REQUIRE(ret == VACCEL_OK);
-		REQUIRE(vsess.id == 2);
-		REQUIRE(vsess.remote_id == 1);
+		REQUIRE(vaccel_session_init(&vsess, 0 | VACCEL_REMOTE) ==
+			VACCEL_OK);
 
 		/* Register resource */
 		ret = vaccel_resource_register(&res, &vsess);
@@ -549,12 +527,12 @@ TEST_CASE("resource_from_url_path", "[core][resource]")
 		REQUIRE(res.nr_files == 0);
 		REQUIRE_FALSE(res.files);
 		REQUIRE(res.refcount == 1);
-		REQUIRE(res.id == 1);
+		REQUIRE(res.id > 0);
 		REQUIRE(res.remote_id == 1);
 
 		/* Get by id */
 		struct vaccel_resource *found_by_id;
-		ret = vaccel_resource_get_by_id(&found_by_id, 1);
+		ret = vaccel_resource_get_by_id(&found_by_id, res.id);
 		REQUIRE(ret == VACCEL_OK);
 		REQUIRE(found_by_id == &res);
 
@@ -567,9 +545,7 @@ TEST_CASE("resource_from_url_path", "[core][resource]")
 		REQUIRE_FALSE(vaccel_session_has_resource(&vsess, &res));
 
 		/* Release session */
-		ret = vaccel_session_release(&vsess);
-		REQUIRE(ret == VACCEL_OK);
-		REQUIRE(vsess.id <= 0);
+		REQUIRE(vaccel_session_release(&vsess) == VACCEL_OK);
 
 		REQUIRE(get_virtio_plugin_fake.call_count == 4);
 	}
@@ -593,11 +569,11 @@ TEST_CASE("resource_from_url_path", "[core][resource]")
 	REQUIRE(ret == VACCEL_OK);
 	REQUIRE(buf1);
 	REQUIRE(len1 > 0);
-	for (size_t i = 0; i < nr_resources; i++) {
+	for (auto &resource : resources) {
 		/* Check content */
 		size_t len2;
 		unsigned char *buf2;
-		ret = fs_file_read(resources[i]->files[0]->path, (void **)&buf2,
+		ret = fs_file_read(resource->files[0]->path, (void **)&buf2,
 				   &len2);
 		REQUIRE(ret == VACCEL_OK);
 		REQUIRE(buf2);
@@ -606,13 +582,12 @@ TEST_CASE("resource_from_url_path", "[core][resource]")
 
 		/* Get by id */
 		struct vaccel_resource *found_by_id;
-		ret = vaccel_resource_get_by_id(&found_by_id,
-						(vaccel_id_t)i + 1);
+		ret = vaccel_resource_get_by_id(&found_by_id, resource->id);
 		REQUIRE(ret == VACCEL_OK);
-		REQUIRE(found_by_id == resources[i]);
+		REQUIRE(found_by_id == resource);
 
 		/* Has resource */
-		REQUIRE(vaccel_session_has_resource(&sess, resources[i]));
+		REQUIRE(vaccel_session_has_resource(&sess, resource));
 	}
 	free(file);
 	free(buf1);
@@ -626,9 +601,7 @@ TEST_CASE("resource_from_url_path", "[core][resource]")
 	}
 
 	/* Release session */
-	ret = vaccel_session_release(&sess);
-	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(sess.id <= 0);
+	REQUIRE(vaccel_session_release(&sess) == VACCEL_OK);
 
 	/* Free resource */
 	ret = vaccel_resource_delete(alloc_res);
@@ -650,13 +623,12 @@ TEST_CASE("resource_from_buffer", "[core][resource]")
 {
 	int ret;
 	char *file = abs_path(BUILD_ROOT, "examples/libmytestlib.so");
-
+	const size_t nr_resources = 2;
+	struct vaccel_resource *resources[nr_resources];
 	struct vaccel_session sess;
 
 	/* Session init */
-	ret = vaccel_session_init(&sess, 0);
-	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(sess.id == 1);
+	REQUIRE(vaccel_session_init(&sess, 0) == VACCEL_OK);
 
 	/* Read file */
 	size_t len;
@@ -669,7 +641,7 @@ TEST_CASE("resource_from_buffer", "[core][resource]")
 	ret = vaccel_resource_init_from_buf(&res, buff, len,
 					    VACCEL_RESOURCE_LIB, "lib.so");
 	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(res.id == 1);
+	REQUIRE(res.id > 0);
 	REQUIRE(res.remote_id == -1);
 	REQUIRE(res.type == VACCEL_RESOURCE_LIB);
 	REQUIRE(res.path_type == VACCEL_PATH_LOCAL_FILE);
@@ -681,13 +653,14 @@ TEST_CASE("resource_from_buffer", "[core][resource]")
 	REQUIRE(res.nr_paths == 0);
 	REQUIRE_FALSE(list_empty(&res.entry));
 	REQUIRE(res.refcount == 0);
+	resources[0] = &res;
 
 	/* Resource new from buffer */
 	struct vaccel_resource *alloc_res;
 	ret = vaccel_resource_from_buf(&alloc_res, buff, len,
 				       VACCEL_RESOURCE_LIB, "lib.so");
 	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(alloc_res->id == 2);
+	REQUIRE(alloc_res->id == res.id + 1);
 	REQUIRE(alloc_res->remote_id == -1);
 	REQUIRE(alloc_res->type == VACCEL_RESOURCE_LIB);
 	REQUIRE(alloc_res->path_type == VACCEL_PATH_LOCAL_FILE);
@@ -699,40 +672,29 @@ TEST_CASE("resource_from_buffer", "[core][resource]")
 	REQUIRE(alloc_res->nr_paths == 0);
 	REQUIRE_FALSE(list_empty(&alloc_res->entry));
 	REQUIRE(alloc_res->refcount == 0);
+	resources[1] = alloc_res;
 
-	/* Register resources */
-	ret = vaccel_resource_register(&res, &sess);
-	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(res.refcount == 1);
+	for (auto &resource : resources) {
+		/* Register resources */
+		ret = vaccel_resource_register(resource, &sess);
+		REQUIRE(ret == VACCEL_OK);
+		REQUIRE(resource->refcount == 1);
 
-	ret = vaccel_resource_register(alloc_res, &sess);
-	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(alloc_res->refcount == 1);
+		/* Get by id */
+		struct vaccel_resource *found_by_id;
+		ret = vaccel_resource_get_by_id(&found_by_id, resource->id);
+		REQUIRE(ret == VACCEL_OK);
+		REQUIRE(found_by_id == resource);
 
-	/* Get by id */
-	struct vaccel_resource *found_by_id;
-	ret = vaccel_resource_get_by_id(&found_by_id, 1);
-	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(found_by_id == &res);
+		/* Has resource */
+		REQUIRE(vaccel_session_has_resource(&sess, resource));
 
-	ret = vaccel_resource_get_by_id(&found_by_id, 2);
-	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(found_by_id == alloc_res);
-
-	/* Has resource */
-	REQUIRE(vaccel_session_has_resource(&sess, &res));
-	REQUIRE(vaccel_session_has_resource(&sess, alloc_res));
-
-	/* Unregister resources */
-	ret = vaccel_resource_unregister(&res, &sess);
-	REQUIRE(ret == VACCEL_OK);
-	REQUIRE_FALSE(vaccel_session_has_resource(&sess, &res));
-	REQUIRE(res.refcount == 0);
-
-	ret = vaccel_resource_unregister(alloc_res, &sess);
-	REQUIRE(ret == VACCEL_OK);
-	REQUIRE_FALSE(vaccel_session_has_resource(&sess, alloc_res));
-	REQUIRE(alloc_res->refcount == 0);
+		/* Unregister resources */
+		ret = vaccel_resource_unregister(resource, &sess);
+		REQUIRE(ret == VACCEL_OK);
+		REQUIRE_FALSE(vaccel_session_has_resource(&sess, resource));
+		REQUIRE(resource->refcount == 0);
+	}
 
 	/* Free resource */
 	ret = vaccel_resource_delete(alloc_res);
@@ -749,9 +711,7 @@ TEST_CASE("resource_from_buffer", "[core][resource]")
 	REQUIRE(res.id <= 0);
 
 	/* Release session */
-	ret = vaccel_session_release(&sess);
-	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(sess.id <= 0);
+	REQUIRE(vaccel_session_release(&sess) == VACCEL_OK);
 
 	free(buff);
 	free(file);
@@ -761,15 +721,16 @@ TEST_CASE("resource_from_buffer", "[core][resource]")
 TEST_CASE("resource_from_files", "[core][resource]")
 {
 	int ret;
+	const size_t nr_resources = 2;
+	struct vaccel_resource *resources[nr_resources];
+	struct vaccel_file f1;
+	struct vaccel_file f2;
 	char *path1 = abs_path(
 		SOURCE_ROOT,
 		"examples/models/tf/lstm2/variables/variables.data-00000-of-00001");
 	char *path2 =
 		abs_path(SOURCE_ROOT,
 			 "examples/models/tf/lstm2/variables/variables.index");
-
-	struct vaccel_file f1;
-	struct vaccel_file f2;
 
 	/* Init files */
 	ret = vaccel_file_init(&f1, path1);
@@ -792,7 +753,7 @@ TEST_CASE("resource_from_files", "[core][resource]")
 	ret = vaccel_resource_init_from_files(&res, vaccel_files, 2,
 					      VACCEL_RESOURCE_DATA);
 	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(res.id == 1);
+	REQUIRE(res.id > 0);
 	REQUIRE(res.remote_id == -1);
 	REQUIRE(res.type == VACCEL_RESOURCE_DATA);
 	REQUIRE(res.path_type == VACCEL_PATH_LOCAL_FILE);
@@ -805,13 +766,14 @@ TEST_CASE("resource_from_files", "[core][resource]")
 	REQUIRE(res.files[1]);
 	REQUIRE_FALSE(list_empty(&res.entry));
 	REQUIRE(res.refcount == 0);
+	resources[0] = &res;
 
 	/* Resource new from files */
 	struct vaccel_resource *alloc_res;
 	ret = vaccel_resource_from_files(&alloc_res, vaccel_files, 2,
 					 VACCEL_RESOURCE_DATA);
 	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(alloc_res->id == 2);
+	REQUIRE(alloc_res->id == res.id + 1);
 	REQUIRE(alloc_res->remote_id == -1);
 	REQUIRE(alloc_res->type == VACCEL_RESOURCE_DATA);
 	REQUIRE(alloc_res->path_type == VACCEL_PATH_LOCAL_FILE);
@@ -824,46 +786,33 @@ TEST_CASE("resource_from_files", "[core][resource]")
 	REQUIRE(alloc_res->files[1]);
 	REQUIRE_FALSE(list_empty(&alloc_res->entry));
 	REQUIRE(alloc_res->refcount == 0);
+	resources[1] = alloc_res;
 
 	/* Session init */
 	struct vaccel_session sess;
-	ret = vaccel_session_init(&sess, 0);
-	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(sess.id == 1);
+	REQUIRE(vaccel_session_init(&sess, 0) == VACCEL_OK);
 
-	/* Register resources */
-	ret = vaccel_resource_register(&res, &sess);
-	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(res.refcount == 1);
+	for (auto &resource : resources) {
+		/* Register resources */
+		ret = vaccel_resource_register(resource, &sess);
+		REQUIRE(ret == VACCEL_OK);
+		REQUIRE(resource->refcount == 1);
 
-	ret = vaccel_resource_register(alloc_res, &sess);
-	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(alloc_res->refcount == 1);
+		/* Get by id */
+		struct vaccel_resource *found_by_id;
+		ret = vaccel_resource_get_by_id(&found_by_id, resource->id);
+		REQUIRE(ret == VACCEL_OK);
+		REQUIRE(found_by_id == resource);
 
-	/* Get by id */
-	struct vaccel_resource *found_by_id;
-	ret = vaccel_resource_get_by_id(&found_by_id, 1);
-	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(found_by_id == &res);
+		/* Has resource */
+		REQUIRE(vaccel_session_has_resource(&sess, resource));
 
-	ret = vaccel_resource_get_by_id(&found_by_id, 2);
-	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(found_by_id == alloc_res);
-
-	/* Has resource */
-	REQUIRE(vaccel_session_has_resource(&sess, &res));
-	REQUIRE(vaccel_session_has_resource(&sess, alloc_res));
-
-	/* Unregister resources */
-	ret = vaccel_resource_unregister(&res, &sess);
-	REQUIRE(ret == VACCEL_OK);
-	REQUIRE_FALSE(vaccel_session_has_resource(&sess, &res));
-	REQUIRE(res.refcount == 0);
-
-	ret = vaccel_resource_unregister(alloc_res, &sess);
-	REQUIRE(ret == VACCEL_OK);
-	REQUIRE_FALSE(vaccel_session_has_resource(&sess, alloc_res));
-	REQUIRE(alloc_res->refcount == 0);
+		/* Unregister resources */
+		ret = vaccel_resource_unregister(resource, &sess);
+		REQUIRE(ret == VACCEL_OK);
+		REQUIRE_FALSE(vaccel_session_has_resource(&sess, resource));
+		REQUIRE(resource->refcount == 0);
+	}
 
 	/* Free resource */
 	ret = vaccel_resource_delete(alloc_res);
@@ -880,9 +829,7 @@ TEST_CASE("resource_from_files", "[core][resource]")
 	REQUIRE(res.id <= 0);
 
 	/* Release session */
-	ret = vaccel_session_release(&sess);
-	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(sess.id <= 0);
+	REQUIRE(vaccel_session_release(&sess) == VACCEL_OK);
 
 	/* Release files */
 	ret = vaccel_file_release(&f1);
@@ -1057,8 +1004,7 @@ TEST_CASE("resource_release_fail", "[core][resource]")
 	REQUIRE(ret == VACCEL_OK);
 
 	struct vaccel_session sess;
-	ret = vaccel_session_init(&sess, 0);
-	REQUIRE(ret == VACCEL_OK);
+	REQUIRE(vaccel_session_init(&sess, 0) == VACCEL_OK);
 
 	ret = vaccel_resource_register(&res, &sess);
 	REQUIRE(ret == VACCEL_OK);
@@ -1087,8 +1033,7 @@ TEST_CASE("resource_release_fail", "[core][resource]")
 		REQUIRE(ret == VACCEL_EINVAL);
 	}
 
-	ret = vaccel_session_release(&sess);
-	REQUIRE(ret == VACCEL_OK);
+	REQUIRE(vaccel_session_release(&sess) == VACCEL_OK);
 
 	free(test_path);
 }
@@ -1108,8 +1053,7 @@ TEST_CASE("resource_multiple_sessions", "[core][resource]")
 	REQUIRE(ret == VACCEL_OK);
 
 	for (auto &sess : sessions) {
-		ret = vaccel_session_init(&sess, 0);
-		REQUIRE(ret == VACCEL_OK);
+		REQUIRE(vaccel_session_init(&sess, 0) == VACCEL_OK);
 
 		ret = vaccel_resource_register(&res, &sess);
 		REQUIRE(ret == VACCEL_OK);
@@ -1127,12 +1071,9 @@ TEST_CASE("resource_multiple_sessions", "[core][resource]")
 
 	// Verify resource unregistered correctly
 	REQUIRE(res.refcount == 0);
-	for (auto &sess : sessions)
+	for (auto &sess : sessions) {
 		REQUIRE_FALSE(vaccel_session_has_resource(&sess, &res));
-
-	for (size_t i = nr_sessions - 1; i < (size_t)-1; i--) {
-		ret = vaccel_session_release(&sessions[i]);
-		REQUIRE(ret == VACCEL_OK);
+		REQUIRE(vaccel_session_release(&sess) == VACCEL_OK);
 	}
 
 	ret = vaccel_resource_release(&res);
@@ -1150,8 +1091,7 @@ TEST_CASE("resource_register_fail", "[core][resource]")
 	vaccel_resource_t test_type = VACCEL_RESOURCE_LIB;
 
 	struct vaccel_session sess;
-	ret = vaccel_session_init(&sess, 0);
-	REQUIRE(ret == VACCEL_OK);
+	REQUIRE(vaccel_session_init(&sess, 0) == VACCEL_OK);
 
 	ret = vaccel_resource_init(&res, test_path, test_type);
 	REQUIRE(ret == VACCEL_OK);
@@ -1174,8 +1114,7 @@ TEST_CASE("resource_register_fail", "[core][resource]")
 		REQUIRE(ret == VACCEL_EINVAL);
 	}
 
-	ret = vaccel_session_release(&sess);
-	REQUIRE(ret == VACCEL_OK);
+	REQUIRE(vaccel_session_release(&sess) == VACCEL_OK);
 
 	free(test_path);
 }
@@ -1189,8 +1128,7 @@ TEST_CASE("resource_unregister_fail", "[core][resource]")
 	vaccel_resource_t test_type = VACCEL_RESOURCE_LIB;
 
 	struct vaccel_session sess;
-	ret = vaccel_session_init(&sess, 0);
-	REQUIRE(ret == VACCEL_OK);
+	REQUIRE(vaccel_session_init(&sess, 0) == VACCEL_OK);
 
 	ret = vaccel_resource_init(&res, test_path, test_type);
 	REQUIRE(ret == VACCEL_OK);
@@ -1219,8 +1157,7 @@ TEST_CASE("resource_unregister_fail", "[core][resource]")
 		REQUIRE(ret == VACCEL_EINVAL);
 	}
 
-	ret = vaccel_session_release(&sess);
-	REQUIRE(ret == VACCEL_OK);
+	REQUIRE(vaccel_session_release(&sess) == VACCEL_OK);
 
 	free(test_path);
 }

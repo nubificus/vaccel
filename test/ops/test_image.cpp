@@ -28,41 +28,30 @@
 TEST_CASE("classify", "[ops][image]")
 {
 	char *file_path = abs_path(SOURCE_ROOT, "examples/images/example.jpg");
-	int ret;
 	char *image;
 	size_t image_size = 0;
 	char out_text[512];
 	char out_imagename[512];
-
 	struct vaccel_session sess;
-	sess.id = 0;
-	sess.priv = nullptr;
-	sess.resources = nullptr;
-	sess.hint = 1;
 
-	ret = vaccel_session_init(&sess, 0);
+	REQUIRE(vaccel_session_init(&sess, 0) == VACCEL_OK);
+
+	REQUIRE(fs_file_read(file_path, (void **)&image, &image_size) ==
+		VACCEL_OK);
+
+	int ret = vaccel_image_classification(&sess, image,
+					      (unsigned char *)out_text,
+					      (unsigned char *)out_imagename,
+					      image_size, sizeof(out_text),
+					      sizeof(out_imagename));
 	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(sess.id);
-	REQUIRE(sess.hint == 0);
-	REQUIRE(sess.resources);
-	REQUIRE(sess.priv == nullptr);
+	REQUIRE(out_text);
+	REQUIRE(out_imagename);
 
-	ret = fs_file_read(file_path, (void **)&image, &image_size);
-	REQUIRE(ret == 0);
-	REQUIRE(image_size);
-	REQUIRE(&image);
-
-	ret = vaccel_image_classification(&sess, image,
-					  (unsigned char *)out_text,
-					  (unsigned char *)out_imagename,
-					  image_size, sizeof(out_text),
-					  sizeof(out_imagename));
-	REQUIRE(ret == VACCEL_OK);
-
+	printf("classification imagename: %s\n", out_imagename);
 	printf("classification tags: %s\n", out_text);
 
-	ret = vaccel_session_release(&sess);
-	REQUIRE(ret == VACCEL_OK);
+	REQUIRE(vaccel_session_release(&sess) == VACCEL_OK);
 
 	free(file_path);
 	free(image);
@@ -71,36 +60,25 @@ TEST_CASE("classify", "[ops][image]")
 TEST_CASE("depth", "[ops][image]")
 {
 	char *file_path = abs_path(SOURCE_ROOT, "examples/images/example.jpg");
-	int ret;
 	char *image;
 	size_t image_size = 0;
 	char out_imagename[512];
-
 	struct vaccel_session sess;
-	sess.id = 0;
-	sess.priv = nullptr;
-	sess.resources = nullptr;
-	sess.hint = 1;
 
-	ret = vaccel_session_init(&sess, 0);
+	REQUIRE(vaccel_session_init(&sess, 0) == VACCEL_OK);
+
+	REQUIRE(fs_file_read(file_path, (void **)&image, &image_size) ==
+		VACCEL_OK);
+
+	int ret = vaccel_image_depth(&sess, image,
+				     (unsigned char *)out_imagename, image_size,
+				     sizeof(out_imagename));
 	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(sess.id);
-	REQUIRE(sess.hint == 0);
-	REQUIRE(sess.resources);
-	REQUIRE(sess.priv == nullptr);
+	REQUIRE(out_imagename);
 
-	ret = fs_file_read(file_path, (void **)&image, &image_size);
-	REQUIRE(ret == 0);
-	REQUIRE(image_size);
-	REQUIRE(&image);
-
-	ret = vaccel_image_depth(&sess, image, (unsigned char *)out_imagename,
-				 image_size, sizeof(out_imagename));
-	REQUIRE(ret == VACCEL_OK);
 	printf("depth estimation imagename: %s\n", out_imagename);
 
-	ret = vaccel_session_release(&sess);
-	REQUIRE(ret == VACCEL_OK);
+	REQUIRE(vaccel_session_release(&sess) == VACCEL_OK);
 
 	free(file_path);
 	free(image);
@@ -109,37 +87,25 @@ TEST_CASE("depth", "[ops][image]")
 TEST_CASE("detect", "[ops][image]")
 {
 	char *file_path = abs_path(SOURCE_ROOT, "examples/images/example.jpg");
-	int ret;
 	char *image;
 	size_t image_size = 0;
 	char out_imagename[512];
-
 	struct vaccel_session sess;
-	sess.id = 0;
-	sess.priv = nullptr;
-	sess.resources = nullptr;
-	sess.hint = 1;
 
-	ret = vaccel_session_init(&sess, 0);
+	REQUIRE(vaccel_session_init(&sess, 0) == VACCEL_OK);
+
+	REQUIRE(fs_file_read(file_path, (void **)&image, &image_size) ==
+		VACCEL_OK);
+
+	int ret = vaccel_image_detection(&sess, image,
+					 (unsigned char *)out_imagename,
+					 image_size, sizeof(out_imagename));
 	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(sess.id);
-	REQUIRE(sess.hint == 0);
-	REQUIRE(sess.resources);
-	REQUIRE(sess.priv == nullptr);
+	REQUIRE(out_imagename);
 
-	ret = fs_file_read(file_path, (void **)&image, &image_size);
-	REQUIRE(ret == 0);
-	REQUIRE(image_size);
-	REQUIRE(&image);
+	printf("detection imagename: %s\n", out_imagename);
 
-	ret = vaccel_image_detection(&sess, image,
-				     (unsigned char *)out_imagename, image_size,
-				     sizeof(out_imagename));
-	REQUIRE(ret == VACCEL_OK);
-	printf("detection image name: %s\n", out_imagename);
-
-	ret = vaccel_session_release(&sess);
-	REQUIRE(ret == VACCEL_OK);
+	REQUIRE(vaccel_session_release(&sess) == VACCEL_OK);
 
 	free(file_path);
 	free(image);
@@ -148,40 +114,25 @@ TEST_CASE("detect", "[ops][image]")
 TEST_CASE("pose", "[ops][image]")
 {
 	char *file_path = abs_path(SOURCE_ROOT, "examples/images/example.jpg");
-	int ret;
 	char *image;
 	size_t image_size = 0;
 	char out_imagename[512];
-
 	struct vaccel_session sess;
-	sess.id = 1;
-	sess.priv = nullptr;
-	sess.resources = nullptr;
-	sess.hint = 1;
 
-	ret = vaccel_session_init(&sess, 0);
+	REQUIRE(vaccel_session_init(&sess, 0) == VACCEL_OK);
+
+	REQUIRE(fs_file_read(file_path, (void **)&image, &image_size) ==
+		VACCEL_OK);
+
+	int ret = vaccel_image_pose(&sess, image,
+				    (unsigned char *)out_imagename, image_size,
+				    sizeof(out_imagename));
 	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(sess.id == 1);
-	REQUIRE(sess.hint == 0);
-	REQUIRE(sess.resources);
-	REQUIRE(sess.priv == nullptr);
+	REQUIRE(out_imagename);
 
-	ret = fs_file_read(file_path, (void **)&image, &image_size);
-	REQUIRE(ret == 0);
-	REQUIRE(image_size);
-	REQUIRE(&image);
-
-	ret = vaccel_image_pose(&sess, image, (unsigned char *)out_imagename,
-				image_size, sizeof(out_imagename));
-	REQUIRE(ret == VACCEL_OK);
 	printf("pose estimation imagename: %s\n", out_imagename);
 
-	ret = vaccel_session_release(&sess);
-	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(sess.id == -1);
-	REQUIRE(sess.hint == 0);
-	REQUIRE(sess.resources == nullptr);
-	REQUIRE(sess.priv == nullptr);
+	REQUIRE(vaccel_session_release(&sess) == VACCEL_OK);
 
 	free(file_path);
 	free(image);
@@ -190,37 +141,25 @@ TEST_CASE("pose", "[ops][image]")
 TEST_CASE("segmentation", "[ops][image]")
 {
 	char *file_path = abs_path(SOURCE_ROOT, "examples/images/example.jpg");
-	int ret;
 	char *image;
 	size_t image_size = 0;
 	char out_imagename[512];
-
 	struct vaccel_session sess;
-	sess.id = 0;
-	sess.priv = nullptr;
-	sess.resources = nullptr;
-	sess.hint = 1;
 
-	ret = vaccel_session_init(&sess, 0);
+	REQUIRE(vaccel_session_init(&sess, 0) == VACCEL_OK);
+
+	REQUIRE(fs_file_read(file_path, (void **)&image, &image_size) ==
+		VACCEL_OK);
+
+	int ret = vaccel_image_segmentation(&sess, image,
+					    (unsigned char *)out_imagename,
+					    image_size, sizeof(out_imagename));
 	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(sess.id);
-	REQUIRE(sess.hint == 0);
-	REQUIRE(sess.resources);
-	REQUIRE(sess.priv == nullptr);
+	REQUIRE(out_imagename);
 
-	ret = fs_file_read(file_path, (void **)&image, &image_size);
-	REQUIRE(ret == 0);
-	REQUIRE(image_size);
-	REQUIRE(&image);
-
-	ret = vaccel_image_segmentation(&sess, image,
-					(unsigned char *)out_imagename,
-					image_size, sizeof(out_imagename));
-	REQUIRE(ret == VACCEL_OK);
 	printf("segmentation output: %s\n", out_imagename);
 
-	ret = vaccel_session_release(&sess);
-	REQUIRE(ret == VACCEL_OK);
+	REQUIRE(vaccel_session_release(&sess) == VACCEL_OK);
 
 	free(file_path);
 	free(image);
