@@ -34,6 +34,7 @@ header:
     - 'third-party'
     - 'build*'
     - 'examples/input'
+    - 'examples/labels'
     - 'fff.h'
     - 'catch.hpp'
 
