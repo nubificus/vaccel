@@ -50,6 +50,6 @@ mytestlib = library('mytestlib',
   dependencies : [libvaccel_private],
   install : true)
 
-foreach d : ['models', 'images', 'input']
+foreach d : ['models', 'images', 'input', 'labels']
   install_subdir(d, install_dir : 'share/vaccel')
 endforeach

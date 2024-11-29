@@ -8,5 +8,6 @@ extend-exclude = [
   "subprojects/*",
   "third-party/*",
   "test/catch2/*",
-  "test/fff/*"
+  "test/fff/*",
+  "examples/labels/*"
 ]

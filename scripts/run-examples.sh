@@ -79,7 +79,8 @@ eval "${WRAPPER_CMD}" "${EXAMPLES_DIR}/tflite_inference" \
 	"${SHARE_DIR}/models/tf/lstm2.tflite"
 eval "${WRAPPER_CMD}" "${EXAMPLES_DIR}/torch_inference" \
 	"${SHARE_DIR}/images/example.jpg" \
-	"${SHARE_DIR}/models/torch/cnn_trace.pt"
+	https://s3.nbfc.io/torch/mobilenet.pt \
+	"${SHARE_DIR}/labels/imagenet.txt"
 eval "${WRAPPER_CMD}" "${EXAMPLES_DIR}/mbench" 1 \
 	"${SHARE_DIR}/images/example.jpg"
 eval "${WRAPPER_CMD}" "${EXAMPLES_DIR}/exec" \
