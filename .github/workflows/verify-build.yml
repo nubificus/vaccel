@@ -102,6 +102,13 @@ jobs:
           local-path: ${{ env.DOWNLOAD_PATH }}
           install: 'true'
 
+      # FIXME: Temp
+      - name: Install libcurl & stb
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcurl4-openssl-dev libstb-dev
+        shell: bash
+
       - name: Build project
         if: ${{ inputs.release == false }}
         uses: ./.github/actions/build
