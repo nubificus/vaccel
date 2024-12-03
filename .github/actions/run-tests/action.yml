@@ -19,7 +19,7 @@ runs:
     - name: Run tests
       id: run-tests
       working-directory: ${{ inputs.source-path }}
-      run: meson test --print-errorlogs -C ${{ inputs.build-path }}
+      run: meson test --print-errorlogs -C "${{ inputs.build-path }}"
       shell: bash
 
     - name: Run tests with valgrind
@@ -27,15 +27,11 @@ runs:
       working-directory: ${{ inputs.source-path }}
       if: ${{ inputs.valgrind == 'true' }}
       run: |
-          valgrind_cmd="valgrind"
-          valgrind_cmd+=" --leak-check=full --show-leak-kinds=all"
-          valgrind_cmd+=" --track-origins=yes --errors-for-leak-kinds=all"
-          valgrind_cmd+=" --max-stackframe=3150000 --error-exitcode=1"
           meson test \
-            --wrap="$valgrind_cmd" \
-            -t 6 \
+            --wrap="${{ env.SCRIPTS_VALGRIND_CMD }}" \
+            -t 7 \
             --print-errorlogs \
-            -C ${{ inputs.build-path }}
+            -C "${{ inputs.build-path }}"
       shell: bash
 
     - name: Calculate coverage

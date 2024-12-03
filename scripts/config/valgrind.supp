@@ -1,0 +1,7 @@
+# SPDX-License-Identifier: Apache-2.0
+
+{
+   libssh constructor/destructor errors (for armv7l)
+   Memcheck:Addr4
+   obj:/usr/lib/arm-linux-gnueabihf/libssh.so*
+}

@@ -68,3 +68,15 @@ runs:
         cp -rn .github/remote-actions-repo/.github ./
         rm -rf .github/remote-actions-repo
       shell: bash
+
+    - name: Load scripts' variables
+      run: |
+        SCRIPTS_DIR=${{ github.workspace }}/scripts
+        echo "SCRIPTS_DIR=${SCRIPTS_DIR}" >> "$GITHUB_ENV"
+        SCRIPTS_CONFIG_VARIABLES=${SCRIPTS_DIR}/config/variables.env
+        [ ! -f "${SCRIPTS_CONFIG_VARIABLES}" ] && exit 0
+        source "${SCRIPTS_CONFIG_VARIABLES}"
+        while IFS= read -r line; do
+          eval "echo $line" >> "$GITHUB_ENV"
+        done < "${SCRIPTS_CONFIG_VARIABLES}"
+      shell: bash

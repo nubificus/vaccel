@@ -3,8 +3,13 @@
 
 set -e
 
+SCRIPTS_DIR=$(cd -- "$(dirname -- "$0")" >/dev/null && pwd -P)
+# shellcheck source=scripts/config/variables.env
+. "${SCRIPTS_DIR}/config/variables.env"
+
 PREFIX=${1:-"/usr/local"}
 VALGRIND=$2
+[ "${VALGRIND}" = "true" ] && WRAPPER_CMD=${SCRIPTS_VALGRIND_CMD:-'valgrind'}
 if [ -n "${MESON_BUILD_ROOT}" ]; then
 	LIB_DIR=${MESON_BUILD_ROOT}/src
 	EXAMPLES_DIR=${MESON_BUILD_ROOT}/examples
@@ -22,13 +27,6 @@ else
 	NOOP_DIR=${LIB_DIR}
 	MBENCH_DIR=${LIB_DIR}
 	EXEC_DIR=${LIB_DIR}
-fi
-
-if [ "${VALGRIND}" = "true" ]; then
-	WRAPPER_CMD="valgrind"
-	WRAPPER_CMD="${WRAPPER_CMD} --leak-check=full --show-leak-kinds=all"
-	WRAPPER_CMD="${WRAPPER_CMD} --track-origins=yes --errors-for-leak-kinds=all"
-	WRAPPER_CMD="${WRAPPER_CMD} --max-stackframe=3145916 --error-exitcode=1"
 fi
 
 [ -z "${TERM}" ] && export TERM="linux"
@@ -79,7 +77,7 @@ eval "${WRAPPER_CMD}" "${EXAMPLES_DIR}/tflite_inference" \
 	"${SHARE_DIR}/models/tf/lstm2.tflite"
 eval "${WRAPPER_CMD}" "${EXAMPLES_DIR}/torch_inference" \
 	"${SHARE_DIR}/images/example.jpg" \
-	https://s3.nbfc.io/torch/mobilenet.pt \
+	'https://s3.nbfc.io/torch/mobilenet.pt' \
 	"${SHARE_DIR}/labels/imagenet.txt"
 eval "${WRAPPER_CMD}" "${EXAMPLES_DIR}/mbench" 1 \
 	"${SHARE_DIR}/images/example.jpg"
