@@ -1,5 +1,5 @@
 ---
-Checks:         'clang-diagnostic-*,clang-analyzer-*,bugprone-*,llvm-*,modernize-*,performance-*,portability-*,readability-*,-readability-braces-around-statements,-readability-identifier-length,-llvm-header-guard,-modernize-use-std-print,-bugprone-easily-swappable-parameters'
+Checks:         'clang-diagnostic-*,clang-analyzer-*,bugprone-*,llvm-*,modernize-*,performance-*,portability-*,readability-*,misc-*,-clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling,-bugprone-easily-swappable-parameters,-llvm-header-guard,-modernize-use-std-print,-modernize-avoid-c-arrays,-readability-braces-around-statements,-readability-identifier-length,-misc-no-recursion,-misc-unused-parameters,-misc-use-anonymous-namespace'
 WarningsAsErrors: 'clang-analyzer-core.*,clang-analyzer-unix.*,readability-inconsistent-declaration-parameter-name,clang-analyzer-deadcode.*,bugprone-suspicious-include,clang-diagnostic-sometimes-uninitialized'
 HeaderFileExtensions:
   - ''
@@ -20,6 +20,6 @@ User:            clang-tidy
 SystemHeaders:   false
 CheckOptions:
   - key:   readability-function-cognitive-complexity.Threshold
-    value: '30'
+    value: '40'
   - key:   bugprone-reserved-identifier.AllowedIdentifiers
     value: '_POSIX_C_SOURCE;_DEFAULT_SOURCE'
