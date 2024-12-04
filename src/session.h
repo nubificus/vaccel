@@ -2,10 +2,11 @@
 
 #pragma once
 
-#include "include/session.h"
+#include "include/session.h" // IWYU pragma: export
 #include "list.h"
 #include "resource.h"
 #include <limits.h>
+#include <linux/limits.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -20,15 +21,8 @@ struct registered_resource {
 
 	/* List entry to link the resource to the
 	 * session's registered resources */
-	list_t entry;
+	vaccel_list_t entry;
 };
-
-#define for_each_session_resource(iter, list) \
-	for_each_container((iter), (list), struct registered_resource, entry)
-
-#define for_each_session_resource_safe(iter, tmp, list) \
-	for_each_container_safe((iter), (tmp), (list),  \
-				struct registered_resource, entry)
 
 struct session_resources {
 	/* Runtime directory for holding resources related with the
@@ -38,7 +32,7 @@ struct session_resources {
 	/* Resources registered to this session. At the moment, this
 	 * is an array where each element holds a list of resources of
 	 * the same resource type */
-	list_t registered[VACCEL_RESOURCE_MAX];
+	vaccel_list_t registered[VACCEL_RESOURCE_MAX];
 };
 
 /* Initialize shared session objects */
@@ -54,6 +48,15 @@ int session_register_resource(struct vaccel_session *sess,
 /* Unregister a resource from a session */
 int session_unregister_resource(struct vaccel_session *sess,
 				struct vaccel_resource *res);
+
+/* Helper macros for iterating lists of containers */
+#define session_for_each_resource(iter, list)                               \
+	list_for_each_container((iter), (list), struct registered_resource, \
+				entry)
+
+#define session_for_each_resource_safe(iter, tmp, list)     \
+	list_for_each_container_safe((iter), (tmp), (list), \
+				     struct registered_resource, entry)
 
 #ifdef __cplusplus
 }

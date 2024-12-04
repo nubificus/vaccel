@@ -2,4 +2,4 @@
 
 #pragma once
 
-#include "include/error.h"
+#include "include/error.h" // IWYU pragma: export

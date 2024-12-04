@@ -9,14 +9,11 @@
  *
  */
 
+#include "vaccel.h"
 #include <catch.hpp>
-#include <utils.hpp>
-
 #include <cerrno>
-
 #include <cstdio>
 #include <cstdlib>
-#include <vaccel.h>
 
 extern "C" {
 
@@ -51,8 +48,8 @@ TEST_CASE("sgemm", "[ops][blas]")
 	// REQUIRE(data_fp);
 
 	// Initialize matrices A, B, and C with specific values
-	float alpha = 32412.0;
-	float beta = 2123.0;
+	float const alpha = 32412.0;
+	float const beta = 2123.0;
 	float A[M * K];
 	float B[K * N];
 	float C[M * N];

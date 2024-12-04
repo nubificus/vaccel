@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 /*
- *
  * The code below performs unit testing to `path` functions.
  *
  * 1) path_init_from_uri()
@@ -15,10 +14,13 @@
  *
  */
 
+#include "utils.hpp"
+#include "vaccel.h"
 #include <catch.hpp>
-#include <iostream>
-#include <utils.hpp>
-#include <vaccel.h>
+#include <cstddef>
+#include <cstdlib>
+#include <cstring>
+#include <linux/limits.h>
 
 TEST_CASE("path_from_uri", "[utils][path]")
 {

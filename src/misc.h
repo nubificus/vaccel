@@ -2,4 +2,4 @@
 
 #pragma once
 
-#include "include/misc.h"
+#include "include/misc.h" // IWYU pragma: export

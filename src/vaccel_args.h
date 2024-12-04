@@ -2,4 +2,4 @@
 
 #pragma once
 
-#include "include/vaccel_args.h"
+#include "include/vaccel_args.h" // IWYU pragma: export

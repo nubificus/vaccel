@@ -1,19 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "session.h"
-#include "id_pool.h"
-#include "log.h"
-#include "plugin.h"
-#include "utils/fs.h"
-#include "utils/path.h"
+#include "vaccel.h"
 #include <inttypes.h>
 #include <limits.h>
+#include <linux/limits.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
-#include <sys/stat.h>
-#include <unistd.h>
 
 enum { VACCEL_SESSIONS_MAX = 1024 };
 
@@ -72,10 +68,11 @@ find_registered_resource(const struct vaccel_session *sess,
 			 const struct vaccel_resource *res)
 {
 	struct session_resources *resources = sess->resources;
-	list_t *list = &resources->registered[res->type];
+	vaccel_list_t *list = &resources->registered[res->type];
 
 	struct registered_resource *iter = NULL;
-	for_each_session_resource(iter, list) {
+	session_for_each_resource(iter, list)
+	{
 		if (iter->res == res)
 			return iter;
 	}
@@ -205,8 +202,9 @@ static int session_cleanup_resources(struct vaccel_session *sess)
 	for (int i = 0; i < VACCEL_RESOURCE_MAX; ++i) {
 		struct registered_resource *iter = NULL;
 		struct registered_resource *tmp;
-		for_each_session_resource_safe(iter, tmp,
-					       &resources->registered[i]) {
+		session_for_each_resource_safe(iter, tmp,
+					       &resources->registered[i])
+		{
 			int ret = vaccel_resource_unregister(iter->res, sess);
 			if (ret) {
 				vaccel_error(

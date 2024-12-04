@@ -3,16 +3,14 @@
 /*
  * The code below performs unit testing for bootstrapping and shutting down
  * parts of the vAccel framework
+ *
  */
 
+#include "vaccel.h"
 #include <catch.hpp>
-#include <utils.hpp>
-
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <sys/stat.h>
-#include <vaccel.h>
 
 enum { MAX_SESSIONS = 1024, MAX_RESOURCES = 2048, MAX_RESOURCE_RUNDIR = 1024 };
 
@@ -29,7 +27,7 @@ TEST_CASE("bootstrap_plugin", "[core][bootstrap]")
 TEST_CASE("bootstrap_resource", "[core][bootstrap]")
 {
 	id_pool_t id_pool;
-	list_t live_resources[VACCEL_RESOURCE_MAX];
+	vaccel_list_t live_resources[VACCEL_RESOURCE_MAX];
 	int ret;
 	ret = id_pool_init(&id_pool, MAX_RESOURCES);
 	REQUIRE(ret == VACCEL_OK);
@@ -40,7 +38,7 @@ TEST_CASE("bootstrap_resource", "[core][bootstrap]")
 	for (auto &live_resource : live_resources) {
 		struct vaccel_resource *res;
 		struct vaccel_resource *tmp;
-		for_each_vaccel_resource_safe(res, tmp, &live_resource)
+		resource_for_each_safe(res, tmp, &live_resource)
 			vaccel_resource_release(res);
 	}
 	ret = id_pool_release(&id_pool);

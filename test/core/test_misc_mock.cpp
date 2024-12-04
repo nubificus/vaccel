@@ -7,13 +7,11 @@
  *
  */
 
+#include "vaccel.h"
 #include <catch.hpp>
 #include <fff.h>
-#include <utils.hpp>
 
 DEFINE_FFF_GLOBALS;
-
-#include <vaccel.h>
 
 extern "C" {
 FAKE_VALUE_FUNC(int, get_available_plugins, enum vaccel_op_type);
@@ -27,7 +25,7 @@ TEST_CASE("get_plugins_mock", "[core][misc][mock]")
 	SECTION("return correct implementation")
 	{
 		get_available_plugins_fake.return_val = 15;
-		int result = vaccel_get_plugins(&session, VACCEL_NO_OP);
+		int const result = vaccel_get_plugins(&session, VACCEL_NO_OP);
 		REQUIRE(result == 15);
 	}
 

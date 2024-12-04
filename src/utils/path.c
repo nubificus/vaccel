@@ -10,6 +10,7 @@
 #include "path.h"
 #include <errno.h>
 #include <limits.h>
+#include <linux/limits.h>
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdio.h>

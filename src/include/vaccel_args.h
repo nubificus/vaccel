@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include "error.h"
 #include <stddef.h>
 #include <stdint.h>
 

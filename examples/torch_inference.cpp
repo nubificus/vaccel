@@ -1,25 +1,26 @@
 // SPDX-License-Identifier: Apache-2.0
 
+#include <cinttypes>
 #include <cstddef>
+#include <cstdint>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <fcntl.h>
 #include <fstream>
 #include <iostream>
 #include <random>
-#include <session.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <unistd.h>
+#include <string>
+#include <string.h>
 #include <vector>
+
+#include <session.h>
 
 #ifdef USE_STB_IMAGE
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb/stb_image.h"
 #endif
 
-#include <vaccel.h>
+#include "vaccel.h"
 
 auto load_labels(const std::string &file_name,
 		 std::vector<std::string> &labels) -> bool
@@ -58,8 +59,8 @@ auto preprocess(const unsigned char *image_data, int width, int height,
 	/* Resize manually (nearest neighbor interpolation) */
 	for (int y = 0; y < target_height; ++y) {
 		for (int x = 0; x < target_width; ++x) {
-			int src_x = x * width / target_width;
-			int src_y = y * height / target_height;
+			int const src_x = x * width / target_width;
+			int const src_y = y * height / target_height;
 			for (int c = 0; c < 3; ++c) {
 				resized_image[(y * target_width + x) * 3 + c] =
 					image_data[(src_y * width + src_x) * 3 +
@@ -72,10 +73,10 @@ auto preprocess(const unsigned char *image_data, int width, int height,
 	for (int c = 0; c < 3; ++c) {
 		for (int y = 0; y < target_height; ++y) {
 			for (int x = 0; x < target_width; ++x) {
-				unsigned char pixel_value =
+				unsigned char const pixel_value =
 					resized_image[(y * target_width + x) * 3 +
 						      c];
-				float normalized_value =
+				float const normalized_value =
 					((float)pixel_value / 255.0F -
 					 mean[c]) /
 					std[c];
@@ -107,7 +108,7 @@ auto generate_random_input(int min_value = 1, int max_value = 100,
 	if (is_print) {
 		// Print the vector contents
 		std::cout << "The first Random numbers:";
-		for (float value : res_data) {
+		for (float const value : res_data) {
 			std::cout << " " << value;
 			break;
 		}

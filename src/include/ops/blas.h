@@ -2,14 +2,13 @@
 
 #pragma once
 
+#include "session.h"
 #include <stddef.h>
 #include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-struct vaccel_session;
 
 /* Matrix-Matrix multiplication for single-precision */
 int vaccel_sgemm(struct vaccel_session *sess, long long int m, long long int n,

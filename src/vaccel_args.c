@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "vaccel_args.h"
+#include "error.h"
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

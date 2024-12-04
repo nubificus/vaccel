@@ -4,28 +4,17 @@
 #define _DEFAULT_SOURCE
 
 #include "resource.h"
-#include "error.h"
-#include "file.h"
-#include "id_pool.h"
-#include "list.h"
-#include "log.h"
-#include "plugin.h"
-#include "utils/fs.h"
-#include "utils/net.h"
-#include "utils/path.h"
+#include "vaccel.h"
 #include <assert.h>
-#include <dirent.h>
+#include <errno.h>
 #include <inttypes.h>
-#include <libgen.h>
 #include <limits.h>
+#include <linux/limits.h>
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <unistd.h>
 
 enum { VACCEL_RESOURCES_MAX = 2048 };
 
@@ -36,7 +25,7 @@ static id_pool_t id_pool;
  * At the moment, this is an array where each element is a list of all
  * resources of the same time. We should think the data structure again.
  */
-static list_t live_resources[VACCEL_RESOURCE_MAX];
+static vaccel_list_t live_resources[VACCEL_RESOURCE_MAX];
 
 int resources_bootstrap(void)
 {
@@ -60,7 +49,7 @@ int resources_cleanup(void)
 	for (int i = 0; i < VACCEL_RESOURCE_MAX; ++i) {
 		struct vaccel_resource *res;
 		struct vaccel_resource *tmp;
-		for_each_vaccel_resource_safe(res, tmp, &live_resources[i])
+		resource_for_each_safe(res, tmp, &live_resources[i])
 			vaccel_resource_release(res);
 	}
 
@@ -77,7 +66,8 @@ int vaccel_resource_get_by_id(struct vaccel_resource **resource, vaccel_id_t id)
 	for (int i = 0; i < VACCEL_RESOURCE_MAX; ++i) {
 		struct vaccel_resource *res;
 		struct vaccel_resource *tmp;
-		for_each_vaccel_resource_safe(res, tmp, &live_resources[i]) {
+		resource_for_each_safe(res, tmp, &live_resources[i])
+		{
 			if (id == res->id) {
 				*resource = res;
 				return VACCEL_OK;
