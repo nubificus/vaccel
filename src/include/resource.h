@@ -2,6 +2,13 @@
 
 #pragma once
 
+#include "file.h"
+#include "id.h"
+#include "list.h"
+#include "session.h"
+#include "utils/path.h"
+#include <stddef.h>
+
 #ifdef __cplusplus
 #include <atomic>
 #ifndef atomic_uint
@@ -10,13 +17,6 @@ typedef std::atomic<unsigned int> atomic_uint;
 #else
 #include <stdatomic.h>
 #endif
-#include "error.h"
-#include "file.h"
-#include "id.h"
-#include "list.h"
-#include "session.h"
-#include "utils/path.h"
-#include <stddef.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -31,7 +31,7 @@ typedef enum {
 
 struct vaccel_resource {
 	/* an entry to add this resource in a list */
-	list_entry_t entry;
+	vaccel_list_entry_t entry;
 
 	/* resource id */
 	vaccel_id_t id;

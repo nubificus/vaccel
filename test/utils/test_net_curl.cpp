@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 /*
- *
  * The code below performs unit testing to `net` functions (curl variants).
  *
  * 1) net_path_is_url()
@@ -10,13 +9,13 @@
  *
  */
 
+#include "utils.hpp"
+#include "vaccel.h"
 #include <catch.hpp>
 #include <fff.h>
-#include <utils.hpp>
+#include <linux/limits.h>
 
 DEFINE_FFF_GLOBALS;
-
-#include <vaccel.h>
 
 extern "C" {
 FAKE_VALUE_FUNC(bool, net_nocurl_path_is_url, const char *);
@@ -126,7 +125,7 @@ TEST_CASE("net_file_download", "[utils][net][curl]")
 	REQUIRE(path_init_from_parts(download_path, PATH_MAX, root_path,
 				     "cnn_trace.pt", nullptr) == VACCEL_OK);
 
-	int ret = fs_dir_create(root_path);
+	int const ret = fs_dir_create(root_path);
 	REQUIRE((ret == VACCEL_OK || ret == VACCEL_EEXIST));
 
 	RESET_FAKE(net_nocurl_file_download);

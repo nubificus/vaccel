@@ -2,12 +2,14 @@
 
 #include "blas.h"
 #include "error.h"
-#include "genop.h"
 #include "log.h"
 #include "plugin.h"
 #include "session.h"
+#include "vaccel_args.h"
 #include "vaccel_ops.h"
 #include "vaccel_prof.h"
+#include <inttypes.h>
+#include <stdint.h>
 
 struct vaccel_prof_region blas_op_stats =
 	VACCEL_PROF_REGION_INIT("vaccel_blas_op");

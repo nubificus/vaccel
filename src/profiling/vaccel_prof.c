@@ -3,11 +3,9 @@
 #define _POSIX_C_SOURCE 200809L
 
 #include "vaccel_prof.h"
-
 #include "error.h"
 #include "log.h"
-
-#include <malloc.h>
+#include <bits/time.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>

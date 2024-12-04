@@ -2,4 +2,4 @@
 
 #pragma once
 
-#include "include/ops/genop.h"
+#include "include/ops/genop.h" // IWYU pragma: export

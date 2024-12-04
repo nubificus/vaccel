@@ -2,15 +2,14 @@
 
 #pragma once
 
+#include "resource.h"
+#include "session.h"
+#include "vaccel_args.h"
 #include <stddef.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-struct vaccel_session;
-struct vaccel_arg;
-struct vaccel_resource;
 
 int vaccel_exec(struct vaccel_session *sess, const char *library,
 		const char *fn_symbol, struct vaccel_arg *read, size_t nr_read,

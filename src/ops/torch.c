@@ -2,15 +2,13 @@
 
 #include "torch.h"
 #include "error.h"
-#include "genop.h"
 #include "log.h"
-#include "ops/genop.h"
-#include "ops/torch.h"
 #include "plugin.h"
-#include "vaccel_ops.h"
-
+#include "resource.h"
 #include "session.h"
-#include <pthread.h>
+#include "vaccel_ops.h"
+#include <inttypes.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -201,7 +199,6 @@ int vaccel_torch_jitload_forward(struct vaccel_session *sess,
 }
 #endif
 
-// struct vaccel_arg *write -> char **tags
 int vaccel_torch_jitload_forward(struct vaccel_session *sess,
 				 const struct vaccel_resource *model,
 				 const struct vaccel_torch_buffer *run_options,

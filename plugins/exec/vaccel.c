@@ -2,10 +2,12 @@
 
 #define _POSIX_C_SOURCE 200809L
 
-#include <byteswap.h>
+#include "vaccel.h"
 #include <dlfcn.h>
-#include <stdio.h>
-#include <vaccel.h>
+#include <inttypes.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
 
 #define exec_debug(fmt, ...) vaccel_debug("[exec] " fmt, ##__VA_ARGS__)
 #define exec_error(fmt, ...) vaccel_error("[exec] " fmt, ##__VA_ARGS__)

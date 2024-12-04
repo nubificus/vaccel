@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include "plugin.h"
 #include "ops/vaccel_ops.h"
 #include "session.h"
 

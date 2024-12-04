@@ -5,13 +5,17 @@
 #include "error.h"
 #include "fs.h"
 #include "log.h"
-#include "path.h"
 #include <limits.h>
+#include <linux/limits.h>
+#include <stdio.h>
 #include <string.h>
 
 #ifdef USE_LIBCURL
 
 #include <curl/curl.h>
+#include <curl/easy.h>
+#include <curl/system.h>
+#include <curl/urlapi.h>
 #include <errno.h>
 #include <stdbool.h>
 

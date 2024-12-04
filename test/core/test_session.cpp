@@ -14,11 +14,11 @@
  *
  */
 
+#include "vaccel.h"
 #include <catch.hpp>
+#include <cerrno>
 #include <fff.h>
 #include <mock_virtio.hpp>
-#include <utils.hpp>
-#include <vaccel.h>
 
 DEFINE_FFF_GLOBALS;
 

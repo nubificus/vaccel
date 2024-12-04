@@ -7,13 +7,13 @@
  *
  */
 
+#include "utils.hpp"
+#include "vaccel.h"
 #include <catch.hpp>
-#include <utils.hpp>
-
 #include <cinttypes>
+#include <cstdint>
 #include <cstdio>
 #include <cstdlib>
-#include <vaccel.h>
 
 #define min(a, b) ((a) < (b) ? (a) : (b))
 
@@ -62,10 +62,11 @@ TEST_CASE("tf_inference", "[ops][tf]")
 	if (status.message != nullptr)
 		free((char *)status.message);
 
-	struct vaccel_tf_buffer run_options = { .data = nullptr, .size = 0 };
+	struct vaccel_tf_buffer const run_options = { .data = nullptr,
+						      .size = 0 };
 	const char *in_node_name = "serving_default_input_1";
 
-	struct vaccel_tf_node in_node = {
+	struct vaccel_tf_node const in_node = {
 		.name = const_cast<char *>(in_node_name), .id = 0
 	};
 
@@ -83,7 +84,7 @@ TEST_CASE("tf_inference", "[ops][tf]")
 
 	const char *out_node_name = "StatefulPartitionedCall";
 
-	struct vaccel_tf_node out_node = {
+	struct vaccel_tf_node const out_node = {
 		.name = const_cast<char *>(out_node_name), .id = 0
 	};
 	struct vaccel_tf_tensor *out;

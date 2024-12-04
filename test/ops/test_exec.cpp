@@ -9,16 +9,12 @@
  *
  */
 
+#include "utils.hpp"
+#include "vaccel.h"
 #include <catch.hpp>
-#include <utils.hpp>
-
+#include <cstdint>
 #include <cstdio>
 #include <cstdlib>
-#include <fcntl.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <unistd.h>
-#include <vaccel.h>
 
 // TODO: Add arg_helpers tests
 

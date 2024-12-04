@@ -2,24 +2,20 @@
 
 #define _POSIX_C_SOURCE 200809L
 
+#include "vaccel.h"
 #include <assert.h>
 #include <dlfcn.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include "plugin.h"
-#include "error.h"
-#include "list.h"
-#include "log.h"
-#include "ops/vaccel_ops.h"
 
 static struct {
 	/* true if sub-system is initialized */
 	bool initialized;
 
 	/* list holding plugin descriptors */
-	list_t plugins;
+	vaccel_list_t plugins;
 
 	/* number of registered plugins */
 	size_t nr_plugins;
@@ -30,7 +26,7 @@ static struct {
 	/* array of available implementations for every supported
 	 * function
 	 */
-	list_t ops[VACCEL_FUNCTIONS_NR];
+	vaccel_list_t ops[VACCEL_FUNCTIONS_NR];
 } plugin_state = { 0 };
 
 static int check_plugin_info(const struct vaccel_plugin_info *pinfo)
@@ -163,7 +159,7 @@ int register_plugin(struct vaccel_plugin *plugin)
 		return VACCEL_EBACKEND;
 	}
 
-	if (entry_linked(&plugin->entry)) {
+	if (list_entry_linked(&plugin->entry)) {
 		vaccel_error("Plugin already registered");
 		return VACCEL_EEXIST;
 	}
@@ -211,7 +207,7 @@ int unregister_plugin(struct vaccel_plugin *plugin)
 	if (!plugin)
 		return VACCEL_EINVAL;
 
-	if (!entry_linked(&plugin->entry)) {
+	if (!list_entry_linked(&plugin->entry)) {
 		assert(0 && "Trying to unregister unknown plugin");
 		return VACCEL_ENOENT;
 	}
@@ -219,8 +215,9 @@ int unregister_plugin(struct vaccel_plugin *plugin)
 	/* unregister plugin's functions */
 	struct vaccel_op *op;
 	struct vaccel_op *tmp;
-	for_each_container_safe(op, tmp, &plugin->ops, struct vaccel_op,
-				plugin_entry) {
+	list_for_each_container_safe(op, tmp, &plugin->ops, struct vaccel_op,
+				     plugin_entry)
+	{
 		list_unlink_entry(&op->func_entry);
 		list_unlink_entry(&op->plugin_entry);
 	}
@@ -307,8 +304,10 @@ void *get_plugin_op(enum vaccel_op_type op_type, unsigned int hint)
 	 */
 
 	if (VACCEL_REMOTE & hint) {
-		for_each_container_safe(opiter, tmp, &plugin_state.ops[op_type],
-					struct vaccel_op, func_entry) {
+		list_for_each_container_safe(opiter, tmp,
+					     &plugin_state.ops[op_type],
+					     struct vaccel_op, func_entry)
+		{
 			if (opiter->owner->info->is_virtio) {
 				op = opiter;
 				vaccel_debug(
@@ -323,8 +322,10 @@ void *get_plugin_op(enum vaccel_op_type op_type, unsigned int hint)
 	}
 
 	if (env_priority) {
-		for_each_container_safe(opiter, tmp, &plugin_state.ops[op_type],
-					struct vaccel_op, func_entry) {
+		list_for_each_container_safe(opiter, tmp,
+					     &plugin_state.ops[op_type],
+					     struct vaccel_op, func_entry)
+		{
 			if ((env_priority & opiter->owner->info->type) != 0) {
 				op = opiter;
 				vaccel_debug(
@@ -338,8 +339,10 @@ void *get_plugin_op(enum vaccel_op_type op_type, unsigned int hint)
 	// If priority check fails, just return the first (local) implementation we find
 	// or any implementation if it's a single one
 	if (!op) {
-		for_each_container_safe(opiter, tmp, &plugin_state.ops[op_type],
-					struct vaccel_op, func_entry) {
+		list_for_each_container_safe(opiter, tmp,
+					     &plugin_state.ops[op_type],
+					     struct vaccel_op, func_entry)
+		{
 			if (!opiter->owner->info->is_virtio ||
 			    plugin_state.nr_plugins == 1) {
 				op = opiter;
@@ -366,8 +369,9 @@ int get_available_plugins(enum vaccel_op_type op_type)
 	struct vaccel_op *opiter;
 	struct vaccel_op *tmp_op;
 
-	for_each_container_safe(opiter, tmp_op, &plugin_state.ops[op_type],
-				struct vaccel_op, func_entry) {
+	list_for_each_container_safe(opiter, tmp_op, &plugin_state.ops[op_type],
+				     struct vaccel_op, func_entry)
+	{
 		char *p_type_str =
 			vaccel_plugin_type_str(opiter->owner->info->type);
 		if (!p_type_str)
@@ -412,8 +416,9 @@ int plugins_shutdown()
 
 	struct vaccel_plugin *plugin;
 	struct vaccel_plugin *tmp;
-	for_each_container_safe(plugin, tmp, &plugin_state.plugins,
-				struct vaccel_plugin, entry) {
+	list_for_each_container_safe(plugin, tmp, &plugin_state.plugins,
+				     struct vaccel_plugin, entry)
+	{
 		/* Unregister plugin from runtime */
 		int ret = unregister_plugin(plugin);
 		if (ret != VACCEL_OK) {

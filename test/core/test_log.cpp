@@ -7,14 +7,13 @@
  * 2) vaccel_log_shutdown()
  *
  * Run with env var VACCEL_DEBUG_LEVEL=(1..4)
+ *
  */
 
+#include "vaccel.h"
 #include <catch.hpp>
-#include <utils.hpp>
-
 #include <cstdlib>
 #include <cstring>
-#include <vaccel.h>
 
 TEST_CASE("log_level", "[core][log]")
 {

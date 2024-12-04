@@ -4,7 +4,6 @@
 
 #include <stdbool.h>
 #include <stddef.h>
-#include <stdlib.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -15,10 +14,10 @@ extern "C" {
 typedef struct list_entry {
 	struct list_entry *next;
 	struct list_entry *prev;
-} list_entry_t;
+} vaccel_list_entry_t;
 
 /* Our list type is actually just a normal entry type */
-typedef list_entry_t list_t;
+typedef vaccel_list_entry_t vaccel_list_t;
 
 #ifdef __cplusplus
 }

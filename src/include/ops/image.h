@@ -2,13 +2,12 @@
 
 #pragma once
 
+#include "session.h"
 #include <stddef.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-struct vaccel_session;
 
 int vaccel_image_classification(struct vaccel_session *sess, const void *img,
 				unsigned char *out_text,

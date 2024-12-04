@@ -2,6 +2,8 @@
 
 #pragma once
 
+#include <cstddef>
+
 extern "C" {
 
 #define SOURCE_ROOT "@SOURCE_ROOT@"
@@ -12,5 +14,5 @@ extern "C" {
 
 auto abs_path(const char *root, const char *file) -> char *;
 auto read_file_from_dir(const char *dir, const char *path,
-			std::size_t *len) -> unsigned char *;
+			size_t *len) -> unsigned char *;
 }

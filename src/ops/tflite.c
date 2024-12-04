@@ -2,15 +2,16 @@
 
 #define _POSIX_C_SOURCE 200809L
 
+#include "tflite.h"
 #include "error.h"
-#include "genop.h"
 #include "log.h"
 #include "plugin.h"
+#include "resource.h"
 #include "session.h"
-#include "tflite.h"
 #include "vaccel_ops.h"
 #include "vaccel_prof.h"
-
+#include <inttypes.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

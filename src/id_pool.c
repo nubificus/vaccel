@@ -1,18 +1,18 @@
 // SPDX-License-Identifier: Apache-2.0
 
+#include "error.h"
+#include "id_pool.h"
+#include "log.h"
+#include <inttypes.h>
 #include <stdbool.h>
 #include <stdlib.h>
-
-#include "id_pool.h"
-#include "error.h"
-#include "log.h"
 
 int id_pool_init(id_pool_t *pool, vaccel_id_t nr_ids)
 {
 	if (!pool || nr_ids <= 0)
 		return VACCEL_EINVAL;
 
-	pool->ids = calloc(nr_ids, sizeof(atomic_bool));
+	pool->ids = calloc(nr_ids, sizeof(*pool->ids));
 	if (!pool->ids)
 		return VACCEL_ENOMEM;
 

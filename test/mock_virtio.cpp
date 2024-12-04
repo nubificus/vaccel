@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-#include <vaccel.h>
+#include "vaccel.h"
+#include <cstdint>
 
 static struct vaccel_plugin plugin;
 static struct vaccel_plugin_info plugin_info;

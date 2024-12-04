@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "session.h"
 #include <stddef.h>
 #include <stdint.h>
 

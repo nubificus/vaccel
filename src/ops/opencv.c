@@ -1,13 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "error.h"
-#include "genop.h"
 #include "log.h"
-#include "plugin.h"
-#include "vaccel_ops.h"
 //#include "opencv.h"
-
+#include "plugin.h"
 #include "session.h"
+#include "vaccel_args.h"
+#include "vaccel_ops.h"
+#include <inttypes.h>
+#include <stdint.h>
+
 int vaccel_opencv(struct vaccel_session *sess, struct vaccel_arg *read,
 		  int nr_read, struct vaccel_arg *write, int nr_write)
 {

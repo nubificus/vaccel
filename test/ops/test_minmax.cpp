@@ -11,13 +11,14 @@
  *
  */
 
+#include "utils.hpp"
+#include "vaccel.h"
+#include <bits/time.h>
 #include <catch.hpp>
-#include <utils.hpp>
-
+#include <cstdint>
 #include <cstdio>
 #include <cstdlib>
 #include <ctime>
-#include <vaccel.h>
 
 #define timespec_usec(t) \
 	((double)(t).tv_nsec / 10e3 + (double)(t).tv_sec * 10e6)
@@ -30,7 +31,7 @@ TEST_CASE("min_max", "[ops][minmax]")
 	double max;
 	int ret;
 
-	int ndata = 2048;
+	int const ndata = 2048;
 	REQUIRE(ndata > 0);
 
 	auto *indata = (double *)malloc(ndata * sizeof(double));
@@ -46,8 +47,8 @@ TEST_CASE("min_max", "[ops][minmax]")
 	auto *outdata = (double *)malloc(ndata * sizeof(double));
 	REQUIRE(outdata != nullptr);
 
-	int low_threshold = 0;
-	int high_threshold = 4000;
+	int const low_threshold = 0;
+	int const high_threshold = 4000;
 
 	struct vaccel_session session;
 	session.id = 1;

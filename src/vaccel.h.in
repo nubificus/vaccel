@@ -4,10 +4,13 @@
 
 #define VACCEL_VERSION "@VACCEL_VERSION@"
 
+// IWYU pragma: begin_exports
+
 #include "error.h"
 #include "file.h"
-#include "id.h"
+#include "id_pool.h"
 #include "log.h"
+#include "list.h"
 #include "misc.h"
 #include "ops/blas.h"
 #include "ops/exec.h"
@@ -27,7 +30,10 @@
 #include "utils/fs.h"
 #include "utils/net.h"
 #include "utils/path.h"
+#include "vaccel_args.h"
 #include "vaccel_prof.h"
+
+// IWYU pragma: end_exports
 
 #ifdef __cplusplus
 extern "C" {
