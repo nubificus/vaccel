@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "include/utils/path.h"
+#include "include/utils/path.h" // IWYU pragma: export
 #include <stdbool.h>
 #include <stddef.h>
 

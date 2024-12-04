@@ -9,11 +9,12 @@
  *
  */
 
+#include "vaccel.h"
+#include <algorithm>
 #include <catch.hpp>
+#include <cstddef>
+#include <cstdlib>
 #include <iostream>
-#include <utils.hpp>
-
-#include <vaccel.h>
 
 TEST_CASE("fpga_add", "[ops][fpga]")
 {
@@ -28,8 +29,8 @@ TEST_CASE("fpga_add", "[ops][fpga]")
 	float B[] = { 1, 2, 6, 4, 5 };
 	float C[] = { 1, 2, 6, 4, 5 };
 
-	size_t len_A = sizeof(A) / sizeof(A[0]);
-	size_t len_B = sizeof(B) / sizeof(B[0]);
+	size_t const len_A = sizeof(A) / sizeof(A[0]);
+	size_t const len_B = sizeof(B) / sizeof(B[0]);
 
 	const char *vaccel_backends = std::getenv("VACCEL_BACKENDS");
 
@@ -57,8 +58,8 @@ TEST_CASE("fpga_add", "[ops][fpga]")
 
 		ret = vaccel_fpga_vadd(&sess, A, B, C, len_A, len_B);
 		float C_expected[] = { 2, 4, 9, 8, 10 };
-		size_t len_C = sizeof(C) / sizeof(C[0]);
-		size_t len_C_expected =
+		size_t const len_C = sizeof(C) / sizeof(C[0]);
+		size_t const len_C_expected =
 			sizeof(C_expected) / sizeof(C_expected[0]);
 
 		REQUIRE(vaccel_session_release(&sess) == VACCEL_OK);
@@ -82,8 +83,8 @@ TEST_CASE("fpga_copy", "[ops][fpga]")
 	int A[] = { 1, 2, 3, 4, 5 };
 	int B[] = { 1, 1, 1, 1, 1 };
 
-	size_t len_A = sizeof(A) / sizeof(A[0]);
-	size_t len_B = sizeof(B) / sizeof(B[0]);
+	size_t const len_A = sizeof(A) / sizeof(A[0]);
+	size_t const len_B = sizeof(B) / sizeof(B[0]);
 
 	SECTION("null session")
 	{
@@ -122,7 +123,7 @@ TEST_CASE("fpga_mmult", "[ops][fpga]")
 	float b[] = { 1.1, 0.2, 6.1, 4.6, 5.2 };
 
 	float c[] = { 0.1, 0.1, 0.1, 0.1, 0.1 };
-	size_t len_c = sizeof(c) / sizeof(c[0]);
+	size_t const len_c = sizeof(c) / sizeof(c[0]);
 
 	SECTION("null session")
 	{

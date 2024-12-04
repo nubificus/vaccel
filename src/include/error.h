@@ -2,7 +2,9 @@
 
 #pragma once
 
+#include <asm-generic/errno.h>
 #include <errno.h>
+#include <linux/errno.h>
 
 /* vaccel return codes */
 enum {

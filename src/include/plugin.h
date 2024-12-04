@@ -4,6 +4,7 @@
 
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "session.h"
@@ -98,10 +99,10 @@ struct vaccel_plugin {
 	void *dl_handle;
 
 	/* Entry for list of plugin */
-	list_entry_t entry;
+	vaccel_list_entry_t entry;
 
 	/* List of functions supported by this plugin */
-	list_t ops;
+	vaccel_list_t ops;
 
 	/* Plugin information */
 	struct vaccel_plugin_info *info;
@@ -132,10 +133,10 @@ struct vaccel_op {
 	struct vaccel_plugin *owner;
 
 	/* Entry for list of plugin functions */
-	list_entry_t plugin_entry;
+	vaccel_list_entry_t plugin_entry;
 
 	/* Entry for global list of functions of this type */
-	list_entry_t func_entry;
+	vaccel_list_entry_t func_entry;
 };
 
 #define VACCEL_OP_INIT(name, type, func)                                     \

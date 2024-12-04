@@ -2,13 +2,12 @@
 
 #pragma once
 
+#include "session.h"
 #include <stddef.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-struct vaccel_session;
 
 int vaccel_fpga_arraycopy(struct vaccel_session *sess, int array[],
 			  int out_array[], size_t len_array);

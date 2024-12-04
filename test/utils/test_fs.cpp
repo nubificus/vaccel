@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 /*
- *
  * The code below performs unit testing to fs operations.
  *
  * 1)  fs_path_exists()
@@ -17,13 +16,20 @@
  *
  */
 
+#define _POSIX_C_SOURCE 200809L
+
+#include "utils.hpp"
+#include "vaccel.h"
 #include <catch.hpp>
+#include <cstdarg>
+#include <cstddef>
+#include <cstdlib>
+#include <cstring>
+#include <linux/limits.h>
 #include <sys/mman.h>
 #include <unistd.h>
-#include <utils.hpp>
-#include <vaccel.h>
 
-int process_files_callback(const char *path, int idx, va_list args)
+auto process_files_callback(const char *path, int idx, va_list args) -> int
 {
 	char **paths = va_arg(args, char **);
 	if (paths == nullptr)

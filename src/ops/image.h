@@ -2,11 +2,13 @@
 
 #pragma once
 
-#include "include/ops/image.h"
-#include "include/ops/vaccel_ops.h"
+#include "include/ops/image.h" // IWYU pragma: export
+#include "session.h"
+#include "vaccel_args.h"
 
-struct vaccel_session;
-struct vaccel_arg;
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 int vaccel_image_classification_unpack(struct vaccel_session *sess,
 				       struct vaccel_arg *read, int nr_read,
@@ -27,3 +29,7 @@ int vaccel_image_pose_unpack(struct vaccel_session *sess,
 int vaccel_image_depth_unpack(struct vaccel_session *sess,
 			      struct vaccel_arg *read, int nr_read,
 			      struct vaccel_arg *write, int nr_write);
+
+#ifdef __cplusplus
+}
+#endif

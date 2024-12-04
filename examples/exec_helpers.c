@@ -1,13 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
-#include <fcntl.h>
+#include "vaccel_args.h"
+#include "vaccel.h"
+#include <inttypes.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <unistd.h>
-
-#include <vaccel.h>
+#include <string.h>
 
 enum { EXAMPLE_INT = 15 };
 

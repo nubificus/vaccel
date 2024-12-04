@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
-
 #pragma once
 
 #define VACCEL_VERSION "@VACCEL_VERSION@"
+
+// IWYU pragma: begin_exports
 
 #include "error.h"
 #include "log.h"
@@ -24,4 +25,7 @@
 #include "resource.h"
 #include "file.h"
 #include "id.h"
+#include "vaccel_args.h"
 #include "vaccel_prof.h"
+
+// IWYU pragma: end_exports

@@ -2,6 +2,8 @@
 
 #pragma once
 
+#include "resource.h"
+#include "session.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -9,9 +11,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-struct vaccel_session;
-struct vaccel_resource;
 
 /* This is one-to-one mapping with tensorflow's
  * data types representation: see `tensorflow/tensorflow/c/tf_datatype.h'

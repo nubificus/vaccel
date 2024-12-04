@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
-#include "session.h"
+#include "minmax.h"
 #include "error.h"
-#include "genop.h"
 #include "log.h"
 #include "plugin.h"
+#include "session.h"
+#include "vaccel_args.h"
 #include "vaccel_ops.h"
-
-#include "minmax.h"
+#include <inttypes.h>
+#include <stdint.h>
 
 int vaccel_minmax(struct vaccel_session *sess, const double *indata, int ndata,
 		  int low_threshold, int high_threshold, double *outdata,

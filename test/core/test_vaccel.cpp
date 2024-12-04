@@ -6,21 +6,16 @@
  * This tests the constructor and destructor aspect of the vaccel.c file.
  * However the destructor/shutdown functions has issues with testing at the 
  * current amount/
+ *
  */
 
+#include "vaccel.h"
 #include <catch.hpp>
-#include <fff.h>
-#include <utils.hpp>
-
-DEFINE_FFF_GLOBALS;
-
-#include <dlfcn.h>
-
 #include <cstdio>
 #include <cstring>
-#include <sys/stat.h>
-#include <unistd.h>
-#include <vaccel.h>
+#include <fff.h>
+
+DEFINE_FFF_GLOBALS;
 
 TEST_CASE("constructor_and_destructor", "[core][vaccel]")
 {

@@ -1,17 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
+#include "vaccel_args.h"
+#include "vaccel.h"
 #include <catch.hpp>
 #include <cstdint>
-#include <utils.hpp>
-
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <fcntl.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <unistd.h>
-#include <vaccel.h>
 
 struct mydata {
 	uint32_t size;
@@ -22,7 +17,7 @@ auto ser(void *buf, uint32_t *bytes) -> void *
 {
 	auto *non_ser = (struct mydata *)buf;
 
-	uint32_t size = (non_ser->size + 1) * sizeof(int);
+	uint32_t const size = (non_ser->size + 1) * sizeof(int);
 	int *ser_buf = (int *)malloc(size);
 
 	memcpy(ser_buf, (int *)(&non_ser->size), sizeof(int));
@@ -38,7 +33,7 @@ auto deser(void *buf, uint32_t bytes) -> void *
 {
 	printf("bytes: %d\n", (int)bytes);
 	int *ser_buf = (int *)buf;
-	int size = ser_buf[0];
+	int const size = ser_buf[0];
 
 	auto *new_buf = (struct mydata *)malloc(sizeof(struct mydata));
 

@@ -4,14 +4,13 @@
  * Unit Testing for VAccel Noop Operation
  *
  * The code below performs unit testing for the VAccel Noop operation functions.
+ *
  */
 
+#include "vaccel.h"
 #include <catch.hpp>
-#include <utils.hpp>
-
 #include <cstdio>
 #include <cstdlib>
-#include <vaccel.h>
 
 TEST_CASE("noop", "[ops][noop]")
 {

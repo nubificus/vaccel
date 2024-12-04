@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "vaccel_prof.h"
-#include <signal.h>
-#include <stdio.h>
+#include "vaccel.h"
+#include <bits/time.h>
+#include <inttypes.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/time.h>
 #include <time.h>
-#include <vaccel.h>
 
 struct vaccel_prof_region mbench_plugin_stats =
 	VACCEL_PROF_REGION_INIT("vaccel_mbench_plugin");

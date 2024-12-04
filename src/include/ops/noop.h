@@ -2,11 +2,11 @@
 
 #pragma once
 
+#include "session.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-struct vaccel_session;
 
 int vaccel_noop(struct vaccel_session *sess);
 

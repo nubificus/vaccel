@@ -1,14 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
-#include <fcntl.h>
+#include "utils/fs.h"
+#include "vaccel.h"
+#include <inttypes.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <unistd.h>
-
-#include "../src/utils/fs.h"
-#include <vaccel.h>
 
 int main(int argc, char *argv[])
 {

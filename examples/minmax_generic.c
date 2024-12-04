@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
+#include "vaccel.h"
+#include <bits/time.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include <vaccel.h>
 
 #define timespec_usec(t) \
 	((double)(t).tv_nsec / 10e3 + (double)(t).tv_sec * 10e6)

@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
+#include <cstring>
+#define _POSIX_C_SOURCE 200809L
+
+#include "utils/fs.h"
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <string>
-
-#include "utils/fs.h"
-#include <string.h>
 
 extern "C" {
 

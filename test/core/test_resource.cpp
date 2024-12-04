@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 /*
- *
  * The code below performs unit testing to resources.
  *
  * 1)  resource_bootstrap()
@@ -21,14 +20,19 @@
  * 15) vaccel_resource_directory()
  * 16) vaccel_session_has_resource()
  *
- *
  */
 
+#include "utils.hpp"
+#include "vaccel.h"
 #include <catch.hpp>
+#include <cerrno>
+#include <cstddef>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <fff.h>
+#include <linux/limits.h>
 #include <mock_virtio.hpp>
-#include <utils.hpp>
-#include <vaccel.h>
 
 DEFINE_FFF_GLOBALS;
 
@@ -55,13 +59,13 @@ static auto mock_net_nocurl_file_download(const char *path,
 
 	unsigned char *buf;
 	size_t len;
-	int ret = fs_file_read(file_to_copy, (void **)&buf, &len);
+	int const ret = fs_file_read(file_to_copy, (void **)&buf, &len);
 	if (ret != 0) {
 		vaccel_error("Could not read file %s", file_to_copy);
 		return ret;
 	}
 
-	size_t bytes_written = fwrite((char *)buf, 1, len, fp);
+	size_t const bytes_written = fwrite((char *)buf, 1, len, fp);
 	if (bytes_written != len) {
 		vaccel_error("Could not write to new file %s", download_path);
 		return VACCEL_EIO;
@@ -848,7 +852,7 @@ TEST_CASE("resource_init_fail", "[core][resource]")
 	int ret;
 	struct vaccel_resource res;
 	struct vaccel_resource *alloc_res;
-	vaccel_resource_t test_type = VACCEL_RESOURCE_LIB;
+	vaccel_resource_t const test_type = VACCEL_RESOURCE_LIB;
 
 	char *test_path = abs_path(BUILD_ROOT, "examples/libmytestlib.so");
 	const char *paths[2] = { test_path, nullptr };
@@ -997,7 +1001,7 @@ TEST_CASE("resource_release_fail", "[core][resource]")
 {
 	int ret;
 	struct vaccel_resource res;
-	vaccel_resource_t test_type = VACCEL_RESOURCE_LIB;
+	vaccel_resource_t const test_type = VACCEL_RESOURCE_LIB;
 	char *test_path = abs_path(BUILD_ROOT, "examples/libmytestlib.so");
 
 	ret = vaccel_resource_init(&res, test_path, test_type);
@@ -1044,7 +1048,7 @@ TEST_CASE("resource_multiple_sessions", "[core][resource]")
 	int ret;
 	struct vaccel_resource res;
 	char *test_path = abs_path(BUILD_ROOT, "examples/libmytestlib.so");
-	vaccel_resource_t test_type = VACCEL_RESOURCE_LIB;
+	vaccel_resource_t const test_type = VACCEL_RESOURCE_LIB;
 
 	const size_t nr_sessions = 4;
 	struct vaccel_session sessions[nr_sessions];
@@ -1088,7 +1092,7 @@ TEST_CASE("resource_register_fail", "[core][resource]")
 	int ret;
 	struct vaccel_resource res;
 	char *test_path = abs_path(BUILD_ROOT, "examples/libmytestlib.so");
-	vaccel_resource_t test_type = VACCEL_RESOURCE_LIB;
+	vaccel_resource_t const test_type = VACCEL_RESOURCE_LIB;
 
 	struct vaccel_session sess;
 	REQUIRE(vaccel_session_init(&sess, 0) == VACCEL_OK);
@@ -1125,7 +1129,7 @@ TEST_CASE("resource_unregister_fail", "[core][resource]")
 	int ret;
 	struct vaccel_resource res;
 	char *test_path = abs_path(BUILD_ROOT, "examples/libmytestlib.so");
-	vaccel_resource_t test_type = VACCEL_RESOURCE_LIB;
+	vaccel_resource_t const test_type = VACCEL_RESOURCE_LIB;
 
 	struct vaccel_session sess;
 	REQUIRE(vaccel_session_init(&sess, 0) == VACCEL_OK);
@@ -1166,11 +1170,11 @@ TEST_CASE("resource_unregister_fail", "[core][resource]")
 TEST_CASE("resource_find_by_id_fail", "[core][resource]")
 {
 	struct vaccel_resource *test_res = nullptr;
-	vaccel_id_t test_id = 0;
+	vaccel_id_t const test_id = 0;
 
 	// Attempt to find a resource by ID which fails (ID of 0 doesn't exist -
 	// starts at 1)
-	int ret = vaccel_resource_get_by_id(&test_res, test_id);
+	int const ret = vaccel_resource_get_by_id(&test_res, test_id);
 	REQUIRE(ret == VACCEL_EINVAL);
 }
 
@@ -1179,7 +1183,7 @@ TEST_CASE("resources_not_bootstrapped", "[core][resource]")
 {
 	int ret;
 	struct vaccel_resource res;
-	vaccel_resource_t test_type = VACCEL_RESOURCE_LIB;
+	vaccel_resource_t const test_type = VACCEL_RESOURCE_LIB;
 
 	// cleanup here so resources are not bootstrapped
 	ret = resources_cleanup();

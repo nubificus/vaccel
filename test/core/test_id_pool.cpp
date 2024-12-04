@@ -9,13 +9,17 @@
  * 4) id_pool_delete()
  * 5) id_pool_get()
  * 6) id_pool_put()
+ *
  */
 
+#include "vaccel.h"
+#include <bits/pthreadtypes.h>
 #include <catch.hpp>
+#include <cinttypes>
+#include <cstdio>
+#include <cstdlib>
 #include <pthread.h>
 #include <unistd.h>
-#include <utils.hpp>
-#include <vaccel.h>
 
 enum { TEST_IDS_MAX = 100 };
 
@@ -106,7 +110,7 @@ TEST_CASE("id_pool_get", "[core][id_pool]")
 
 	SECTION("success")
 	{
-		vaccel_id_t id = id_pool_get(&test_pool);
+		vaccel_id_t const id = id_pool_get(&test_pool);
 		REQUIRE(id == 1);
 		REQUIRE(test_pool.last == 1);
 	}
@@ -385,7 +389,7 @@ static auto get_and_put_ids(void *arg) -> void *
 	auto *data = (struct thread_data *)arg;
 
 	for (int i = 0; i < TEST_THREAD_IDS_NUM; i++) {
-		vaccel_id_t id = id_pool_get(data->pool);
+		vaccel_id_t const id = id_pool_get(data->pool);
 		REQUIRE(id > 0);
 		printf("Thread %d retrieved ID: %" PRId64 "\n", data->id, id);
 
@@ -414,7 +418,7 @@ TEST_CASE("id_pool_get_and_put_concurrent", "[core][id_pool]")
 			       &thread_data[i]);
 	}
 
-	for (unsigned long thread : threads) {
+	for (unsigned long const thread : threads) {
 		pthread_join(thread, nullptr);
 	}
 

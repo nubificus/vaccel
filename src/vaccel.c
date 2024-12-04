@@ -4,13 +4,14 @@
 
 #include "vaccel.h"
 #include <dlfcn.h>
-#include <libgen.h>
+#include <errno.h>
 #include <limits.h>
+#include <linux/limits.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
-#include <sys/stat.h>
 #include <unistd.h>
 
 /* Runtime directory for holding resources related with the

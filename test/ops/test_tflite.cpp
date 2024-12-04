@@ -7,13 +7,13 @@
  *
  */
 
+#include "utils.hpp"
+#include "vaccel.h"
 #include <catch.hpp>
-#include <utils.hpp>
-
 #include <cinttypes>
+#include <cstdint>
 #include <cstdio>
 #include <cstdlib>
-#include <vaccel.h>
 
 #define min(a, b) ((a) < (b) ? (a) : (b))
 

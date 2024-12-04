@@ -2,4 +2,4 @@
 
 #pragma once
 
-#include "include/ops/vaccel_ops.h"
+#include "include/ops/vaccel_ops.h" // IWYU pragma: export

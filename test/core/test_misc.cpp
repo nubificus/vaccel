@@ -7,13 +7,11 @@
  *
  */
 
+#include "vaccel.h"
 #include <catch.hpp>
 #include <fff.h>
-#include <utils.hpp>
 
 DEFINE_FFF_GLOBALS;
-
-#include <vaccel.h>
 
 TEST_CASE("get_plugins", "[core][misc]")
 {

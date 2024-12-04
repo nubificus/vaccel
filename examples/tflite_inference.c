@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
+#include "vaccel.h"
 #include <inttypes.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-
-#include <ops/tflite.h>
-#include <vaccel.h>
 
 #define min(a, b) ((a) < (b) ? (a) : (b))
 

@@ -2,14 +2,15 @@
 
 #define _POSIX_C_SOURCE 200809L
 
-#include "error.h"
 #include "file.h"
+#include "error.h"
 #include "log.h"
 #include "utils/fs.h"
 #include "utils/path.h"
 #include <errno.h>
 #include <limits.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
