@@ -2,9 +2,9 @@
 
 #pragma once
 
-#include "include/ops/image.h" // IWYU pragma: export
+#include "include/vaccel/ops/image.h" // IWYU pragma: export
+#include "arg.h"
 #include "session.h"
-#include "vaccel_args.h"
 
 #ifdef __cplusplus
 extern "C" {

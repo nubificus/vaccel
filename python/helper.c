@@ -2,7 +2,6 @@
 
 #define _POSIX_C_SOURCE 200809L
 
-#include "plugin.h"
 #include "vaccel.h"
 #include <assert.h>
 #include <dlfcn.h>

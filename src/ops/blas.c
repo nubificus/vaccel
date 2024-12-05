@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
+#include "arg.h"
 #include "blas.h"
 #include "error.h"
 #include "log.h"
+#include "op.h"
 #include "plugin.h"
+#include "prof.h"
 #include "session.h"
-#include "vaccel_args.h"
-#include "vaccel_ops.h"
-#include "vaccel_prof.h"
 #include <inttypes.h>
 #include <stdint.h>
 

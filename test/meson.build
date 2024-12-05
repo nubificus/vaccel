@@ -42,8 +42,8 @@ tests_env_exec.set('VACCEL_BACKENDS', libvaccel_exec.full_path())
 libtests_main = library('tests-main',
   ['main.cpp', 'utils.cpp', utils_hpp, 'mock_virtio.cpp', 'mock_virtio.hpp'],
   cpp_args : tests_cpp_args,
-  include_directories : [tests_includes, vaccel_src_includes],
-  dependencies : libvaccel_private,
+  include_directories : tests_includes,
+  dependencies : libvaccel_internal_dep,
   install : false)
 
 foreach t : tests_core_sources + tests_utils_sources
@@ -51,8 +51,8 @@ foreach t : tests_core_sources + tests_utils_sources
   exe = executable(name,
     sources : t,
     cpp_args : tests_cpp_args,
-    include_directories : [tests_includes, vaccel_src_includes],
-    dependencies : libvaccel_private,
+    include_directories : tests_includes,
+    dependencies : libvaccel_internal_dep,
     link_with : libtests_main,
     install : false)
 
@@ -74,8 +74,8 @@ foreach t : tests_ops_sources
   exe = executable(name,
     sources : t,
     cpp_args : tests_cpp_args,
-    include_directories : [tests_includes, vaccel_src_includes],
-    dependencies : libvaccel_private,
+    include_directories : tests_includes,
+    dependencies : libvaccel_internal_dep,
     link_with : libtests_main,
     install : false)
 

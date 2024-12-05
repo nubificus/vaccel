@@ -21,17 +21,16 @@ struct vaccel_arg_list {
 	/* total size of the list */
 	uint32_t size;
 
-	/* pointer to the entries of the list*/
+	/* pointer to the entries of the list */
 	struct vaccel_arg *list;
 
 	/* current index to add the next entry */
 	int curr_idx;
 
 	/*
-    An array that holds 1 in positions
-    that memory is allocated using malloc(), 
-    so it can be freed later automatically.  
-    */
+	 * array that holds 1 in positions that memory is allocated using
+	 * malloc(), so it can be freed later automatically
+	 */
 	int *idcs_allocated_space;
 };
 
@@ -62,20 +61,14 @@ void *vaccel_extract_serial_arg(struct vaccel_arg *args, int idx);
 void *vaccel_extract_nonserial_arg(struct vaccel_arg *args, int idx,
 				   void *(*deserializer)(void *, uint32_t));
 
-/* 
-Write to an expected serialized argument.
-Used inside plugin. 
-*/
+/* Write to an expected serialized argument. Used inside plugin. */
 int vaccel_write_serial_arg(struct vaccel_arg *args, int idx, void *buf);
 
-/* 
-Write to an expected non-serialized argument.
-Used inside plugin. 
-*/
+/* Write to an expected non-serialized argument. Used inside plugin. */
 int vaccel_write_nonserial_arg(struct vaccel_arg *args, int idx, void *buf,
 			       void *(*serializer)(void *, uint32_t *));
 
-/* Delete any allocated memory in the arg-list structure*/
+/* Delete any allocated memory in the arg-list structure */
 int vaccel_delete_args(struct vaccel_arg_list *args);
 
 #ifdef __cplusplus

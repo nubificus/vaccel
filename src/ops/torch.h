@@ -2,4 +2,4 @@
 
 #pragma once
 
-#include "include/ops/torch.h" // IWYU pragma: export
+#include "include/vaccel/ops/torch.h" // IWYU pragma: export

@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "include/list.h" // IWYU pragma: export
+#include "include/vaccel/list.h" // IWYU pragma: export
 #include <stddef.h>
 
 static inline bool list_empty(vaccel_list_t *list)

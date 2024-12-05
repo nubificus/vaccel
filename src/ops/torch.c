@@ -3,10 +3,10 @@
 #include "torch.h"
 #include "error.h"
 #include "log.h"
+#include "op.h"
 #include "plugin.h"
 #include "resource.h"
 #include "session.h"
-#include "vaccel_ops.h"
 #include <inttypes.h>
 #include <stdint.h>
 #include <stdlib.h>

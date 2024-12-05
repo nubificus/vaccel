@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "include/id.h" // IWYU pragma: export
+#include "include/vaccel/id.h" // IWYU pragma: export
 #include <stdbool.h>
 #include <stdint.h>
 

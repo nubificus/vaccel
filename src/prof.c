@@ -2,7 +2,7 @@
 
 #define _POSIX_C_SOURCE 200809L
 
-#include "vaccel_prof.h"
+#include "prof.h"
 #include "error.h"
 #include "log.h"
 #include <bits/time.h>

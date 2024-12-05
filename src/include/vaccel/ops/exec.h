@@ -2,9 +2,9 @@
 
 #pragma once
 
-#include "resource.h"
-#include "session.h"
-#include "vaccel_args.h"
+#include "vaccel/arg.h"
+#include "vaccel/resource.h"
+#include "vaccel/session.h"
 #include <stddef.h>
 
 #ifdef __cplusplus
