@@ -2,4 +2,4 @@
 
 #pragma once
 
-#include "include/ops/tflite.h" // IWYU pragma: export
+#include "include/vaccel/ops/tflite.h" // IWYU pragma: export

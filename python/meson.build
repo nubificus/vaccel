@@ -6,7 +6,7 @@ libvaccel_python = library('vaccel-python',
   python_sources,
   version: libvaccel_version,
   c_args : vaccel_c_args,
-  dependencies : [libvaccel_private],
+  dependencies : [libvaccel_dep],
   install : true)
 
 pkg_mod = import('pkgconfig')

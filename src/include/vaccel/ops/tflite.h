@@ -2,8 +2,8 @@
 
 #pragma once
 
-#include "resource.h"
-#include "session.h"
+#include "vaccel/resource.h"
+#include "vaccel/session.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>

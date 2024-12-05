@@ -80,7 +80,13 @@ To add profiling to your vaccel API operation or plugin, follow these steps:
 Ensure that you include the necessary headers in your code:
 
 ```c
-#include <vaccel_prof.h>
+#include <vaccel.h>
+```
+
+Alternatively, to include only the profiling functionality:
+
+```c
+#include <vaccel/prof.h>
 ```
 
 ### Define and Initialize a Profiling Region
@@ -126,7 +132,7 @@ vaccel_prof_region_destroy(&my_region);
 
 ## Example Code
 ```c
-#include <vaccel_prof.h>
+#include <vaccel/prof.h>
 
 void my_vaccel_operation() {
     struct vaccel_prof_region my_region = VACCEL_PROF_REGION_INIT("my_operation");

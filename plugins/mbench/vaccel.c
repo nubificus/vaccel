@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
 
-#include "vaccel_prof.h"
 #include "vaccel.h"
 #include <bits/time.h>
 #include <inttypes.h>

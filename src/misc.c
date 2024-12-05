@@ -3,7 +3,7 @@
 #include "misc.h"
 #include "error.h"
 #include "log.h"
-#include "ops/vaccel_ops.h"
+#include "op.h"
 #include "plugin.h"
 #include "session.h"
 #include <inttypes.h>

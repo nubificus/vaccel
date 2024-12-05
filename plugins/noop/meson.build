@@ -7,5 +7,5 @@ libvaccel_noop = shared_library('vaccel-noop',
   version: libvaccel_version,
   include_directories : include_directories('.'),
   c_args : plugins_c_args,
-  dependencies : libvaccel_private,
+  dependencies : libvaccel_dep,
   install : true)
