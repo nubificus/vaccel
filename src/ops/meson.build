@@ -1,5 +1,4 @@
 vaccel_headers += files([
-  'vaccel_ops.h',
   'blas.h',
   'exec.h',
   'fpga.h',

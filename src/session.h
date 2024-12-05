@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "include/session.h" // IWYU pragma: export
+#include "include/vaccel/session.h" // IWYU pragma: export
 #include "list.h"
 #include "resource.h"
 #include <limits.h>

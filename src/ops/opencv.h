@@ -2,9 +2,9 @@
 
 #pragma once
 
-//#include "include/ops/optflow.h"
+//#include "include/vaccel/ops/optflow.h"
 #include "session.h"
-#include "vaccel_args.h"
+#include "arg.h"
 #include <stddef.h>
 #include <stdint.h>
 

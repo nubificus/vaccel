@@ -3,10 +3,10 @@
 #include "error.h"
 #include "log.h"
 //#include "opencv.h"
+#include "arg.h"
+#include "op.h"
 #include "plugin.h"
 #include "session.h"
-#include "vaccel_args.h"
-#include "vaccel_ops.h"
 #include <inttypes.h>
 #include <stdint.h>
 

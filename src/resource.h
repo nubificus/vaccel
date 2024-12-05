@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "include/resource.h" // IWYU pragma: export
+#include "include/vaccel/resource.h" // IWYU pragma: export
 #include "list.h"
 #include <stdint.h>
 

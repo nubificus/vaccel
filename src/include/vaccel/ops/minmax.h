@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "session.h"
+#include "vaccel/session.h"
 
 #ifdef __cplusplus
 extern "C" {
