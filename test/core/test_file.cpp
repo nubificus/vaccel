@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 /*
- *
  * The code below performs unit testing to resources.
  *
  * 1)  vaccel_file_persist()
@@ -16,13 +15,15 @@
  * 10)  vaccel_file_data()
  * 11)  vaccel_file_path()
  *
- *
  */
 
+#include "utils.hpp"
+#include "vaccel.h"
 #include <catch.hpp>
-#include <fff.h>
-#include <utils.hpp>
-#include <vaccel.h>
+#include <cstddef>
+#include <cstdlib>
+#include <cstring>
+#include <linux/limits.h>
 
 TEST_CASE("file_from_path", "[core][file]")
 {

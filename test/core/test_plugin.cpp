@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 /*
- *
  * The code below performs unit testing to resources.
  *
  * 1) plugins_bootstrap()
@@ -12,16 +11,16 @@
  * 6) plugins_shutdown()
  * 7) get_plugin_op()
  * 8) vaccel_plugin_load()
+ *
  */
 
+#include "utils.hpp"
+#include "vaccel.h"
 #include <catch.hpp>
 #include <cerrno>
-#include <cstring>
-#include <utils.hpp>
-
+#include <cstdio>
 #include <cstdlib>
-#include <dlfcn.h>
-#include <vaccel.h>
+#include <cstring>
 
 static const char *pname = "mock_plugin_test";
 static const char *pversion = "0.0.0";
@@ -110,7 +109,7 @@ TEST_CASE("register_multiple_functions", "[core][plugin]")
 	plugin.info->session_release = nullptr;
 	plugin.info->type = VACCEL_PLUGIN_GENERIC;
 
-	size_t operation_array_size = 2;
+	size_t const operation_array_size = 2;
 
 	vaccel_op operation1;
 	operation1.type = VACCEL_NO_OP;

@@ -1,16 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
+#include "vaccel.h"
 #include <assert.h>
-#include <fcntl.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <unistd.h>
-
-#include <vaccel.h>
 
 struct mydata {
 	uint32_t size;

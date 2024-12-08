@@ -2,9 +2,8 @@
 
 #pragma once
 
-#include "include/plugin.h"
-#include "ops/vaccel_ops.h"
-#include "vaccel.h"
+#include "include/vaccel/plugin.h" // IWYU pragma: export
+#include "op.h"
 #include <stdint.h>
 
 #ifdef __cplusplus

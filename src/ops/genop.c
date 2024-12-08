@@ -1,16 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "genop.h"
-#include "vaccel_ops.h"
-
+#include "arg.h"
 #include "blas.h"
 #include "exec.h"
 #include "fpga.h"
 #include "image.h"
 #include "minmax.h"
 #include "noop.h"
+#include "op.h"
 #include "opencv.h"
-
 #include "torch.h"
 #include <error.h>
 #include <log.h>

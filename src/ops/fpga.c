@@ -1,13 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "fpga.h"
+#include "arg.h"
 #include "error.h"
-#include "genop.h"
 #include "log.h"
+#include "op.h"
 #include "plugin.h"
-#include "vaccel_ops.h"
-
 #include "session.h"
+#include <inttypes.h>
+#include <stdint.h>
+
 int vaccel_fpga_arraycopy(struct vaccel_session *sess, int array[],
 			  int out_array[], size_t len_array)
 {

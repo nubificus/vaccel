@@ -12,6 +12,7 @@
 #include <fcntl.h>
 #include <libgen.h>
 #include <limits.h>
+#include <linux/limits.h>
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdio.h>

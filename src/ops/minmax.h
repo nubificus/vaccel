@@ -2,7 +2,9 @@
 
 #pragma once
 
-#include "include/ops/minmax.h"
+#include "include/vaccel/ops/minmax.h" // IWYU pragma: export
+#include "arg.h"
+#include "session.h"
 
 #ifdef __cplusplus
 extern "C" {

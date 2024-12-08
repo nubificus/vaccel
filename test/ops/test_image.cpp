@@ -12,18 +12,14 @@
  * performs the specified image processing operation in a loop. The results are
  * printed to the console. The test cases also handle memory allocation, error
  * checking, and session cleanup.
+ *
  */
 
+#include "utils.hpp"
+#include "vaccel.h"
 #include <catch.hpp>
-#include <utils.hpp>
-
 #include <cstdio>
 #include <cstdlib>
-#include <fcntl.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <unistd.h>
-#include <vaccel.h>
 
 TEST_CASE("classify", "[ops][image]")
 {
@@ -39,11 +35,10 @@ TEST_CASE("classify", "[ops][image]")
 	REQUIRE(fs_file_read(file_path, (void **)&image, &image_size) ==
 		VACCEL_OK);
 
-	int ret = vaccel_image_classification(&sess, image,
-					      (unsigned char *)out_text,
-					      (unsigned char *)out_imagename,
-					      image_size, sizeof(out_text),
-					      sizeof(out_imagename));
+	int const ret = vaccel_image_classification(
+		&sess, image, (unsigned char *)out_text,
+		(unsigned char *)out_imagename, image_size, sizeof(out_text),
+		sizeof(out_imagename));
 	REQUIRE(ret == VACCEL_OK);
 	REQUIRE(out_text);
 	REQUIRE(out_imagename);
@@ -70,9 +65,9 @@ TEST_CASE("depth", "[ops][image]")
 	REQUIRE(fs_file_read(file_path, (void **)&image, &image_size) ==
 		VACCEL_OK);
 
-	int ret = vaccel_image_depth(&sess, image,
-				     (unsigned char *)out_imagename, image_size,
-				     sizeof(out_imagename));
+	int const ret = vaccel_image_depth(&sess, image,
+					   (unsigned char *)out_imagename,
+					   image_size, sizeof(out_imagename));
 	REQUIRE(ret == VACCEL_OK);
 	REQUIRE(out_imagename);
 
@@ -97,9 +92,10 @@ TEST_CASE("detect", "[ops][image]")
 	REQUIRE(fs_file_read(file_path, (void **)&image, &image_size) ==
 		VACCEL_OK);
 
-	int ret = vaccel_image_detection(&sess, image,
-					 (unsigned char *)out_imagename,
-					 image_size, sizeof(out_imagename));
+	int const ret = vaccel_image_detection(&sess, image,
+					       (unsigned char *)out_imagename,
+					       image_size,
+					       sizeof(out_imagename));
 	REQUIRE(ret == VACCEL_OK);
 	REQUIRE(out_imagename);
 
@@ -124,9 +120,9 @@ TEST_CASE("pose", "[ops][image]")
 	REQUIRE(fs_file_read(file_path, (void **)&image, &image_size) ==
 		VACCEL_OK);
 
-	int ret = vaccel_image_pose(&sess, image,
-				    (unsigned char *)out_imagename, image_size,
-				    sizeof(out_imagename));
+	int const ret = vaccel_image_pose(&sess, image,
+					  (unsigned char *)out_imagename,
+					  image_size, sizeof(out_imagename));
 	REQUIRE(ret == VACCEL_OK);
 	REQUIRE(out_imagename);
 
@@ -151,9 +147,9 @@ TEST_CASE("segmentation", "[ops][image]")
 	REQUIRE(fs_file_read(file_path, (void **)&image, &image_size) ==
 		VACCEL_OK);
 
-	int ret = vaccel_image_segmentation(&sess, image,
-					    (unsigned char *)out_imagename,
-					    image_size, sizeof(out_imagename));
+	int const ret = vaccel_image_segmentation(
+		&sess, image, (unsigned char *)out_imagename, image_size,
+		sizeof(out_imagename));
 	REQUIRE(ret == VACCEL_OK);
 	REQUIRE(out_imagename);
 

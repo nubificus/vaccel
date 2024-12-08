@@ -2,8 +2,7 @@
 
 #pragma once
 
-#include "plugin.h"
-#include "ops/vaccel_ops.h"
+#include "op.h"
 #include "session.h"
 
 #ifdef __cplusplus

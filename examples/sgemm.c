@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
-#include <errno.h>
+#include "vaccel.h"
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <vaccel.h>
 
 enum { M = 512, N = 512, K = 512 };
 

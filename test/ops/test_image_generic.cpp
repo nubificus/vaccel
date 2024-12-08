@@ -12,18 +12,15 @@
  * performs the specified image processing operation in a loop. The results are
  * printed to the console. The test cases also handle memory allocation, error
  * checking, and session cleanup.
+ *
  */
 
+#include "utils.hpp"
+#include "vaccel.h"
 #include <catch.hpp>
-#include <utils.hpp>
-
+#include <cstdint>
 #include <cstdio>
 #include <cstdlib>
-#include <fcntl.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <unistd.h>
-#include <vaccel.h>
 
 TEST_CASE("classify_generic", "[ops][image][generic]")
 {
@@ -61,7 +58,7 @@ TEST_CASE("classify_generic", "[ops][image][generic]")
 		  .buf = out_imagename }
 	};
 
-	int ret = vaccel_genop(&sess, read, 2, write, 2);
+	int const ret = vaccel_genop(&sess, read, 2, write, 2);
 	REQUIRE(ret == VACCEL_OK);
 	REQUIRE(out_text);
 	REQUIRE(out_imagename);

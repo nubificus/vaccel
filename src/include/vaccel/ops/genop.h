@@ -2,14 +2,13 @@
 
 #pragma once
 
-#include "vaccel_args.h"
+#include "vaccel/session.h"
+#include "vaccel/arg.h"
 #include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-struct vaccel_session;
 
 /* Call one of the supported functions, given an op code and a set of arbitrary
  * arguments */

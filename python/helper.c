@@ -2,13 +2,12 @@
 
 #define _POSIX_C_SOURCE 200809L
 
+#include "vaccel.h"
 #include <assert.h>
 #include <dlfcn.h>
-#include <plugin.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <vaccel.h>
 
 void *vacceldl = NULL;
 char *pname = NULL;

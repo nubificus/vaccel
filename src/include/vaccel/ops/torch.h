@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "vaccel/session.h"
 #include <stddef.h>
 #include <stdint.h>
 
