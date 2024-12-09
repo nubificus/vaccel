@@ -89,6 +89,13 @@ jobs:
           token: ${{ secrets.GIT_CLONE_PAT || github.token }}
           ref: ${{ steps.get-rev-info.outputs.sha }}
 
+      # FIXME: Temp
+      - name: Install libcurl & stb
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcurl4-openssl-dev libstb-dev
+        shell: bash
+
       - name: Download artifacts from s3
         id: download-artifacts
         if: ${{ inputs.actions-repo != github.repository }}
@@ -101,13 +108,6 @@ jobs:
           secret-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           local-path: ${{ env.DOWNLOAD_PATH }}
           install: 'true'
-
-      # FIXME: Temp
-      - name: Install libcurl & stb
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libcurl4-openssl-dev libstb-dev
-        shell: bash
 
       - name: Build project
         if: ${{ inputs.release == false }}
