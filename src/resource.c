@@ -78,6 +78,32 @@ int vaccel_resource_get_by_id(struct vaccel_resource **resource, vaccel_id_t id)
 	return VACCEL_EINVAL;
 }
 
+int vaccel_resource_get_by_type(struct vaccel_session *sess,
+				struct vaccel_resource **res_ptr,
+				vaccel_resource_t type)
+{
+	if (!initialized) {
+		vaccel_error("Resource subsystem not initialized yet.");
+		return VACCEL_EPERM;
+	}
+
+	if (!sess || !res_ptr || type >= VACCEL_RESOURCE_MAX) {
+		vaccel_error("[%s]: Invalid input", __func__);
+		return VACCEL_EINVAL;
+	}
+
+	struct vaccel_resource *res;
+	struct vaccel_resource *tmp;
+	resource_for_each_safe(res, tmp, &live_resources[type])
+	{
+		if (vaccel_session_has_resource(sess, res)) {
+			*res_ptr = res;
+			return VACCEL_OK;
+		}
+	}
+	return VACCEL_EINVAL;
+}
+
 static void get_resource_id(struct vaccel_resource *res)
 {
 	res->id = id_pool_get(&id_pool);

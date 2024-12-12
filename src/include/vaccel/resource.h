@@ -69,6 +69,13 @@ struct vaccel_resource {
 int vaccel_resource_get_by_id(struct vaccel_resource **resource,
 			      vaccel_id_t id);
 
+/* Get resource by type from live resources.
+ * It is required that the resource to be
+ * returned, is registered to `sess` session. */
+int vaccel_resource_get_by_type(struct vaccel_session *sess,
+				struct vaccel_resource **res_ptr,
+				vaccel_resource_t type);
+
 /* Get refcount atomically */
 long int vaccel_resource_refcount(const struct vaccel_resource *res);
 
