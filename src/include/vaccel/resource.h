@@ -5,7 +5,6 @@
 #include "file.h"
 #include "id.h"
 #include "list.h"
-#include "session.h"
 #include "utils/path.h"
 #include <stddef.h>
 
@@ -21,6 +20,8 @@ typedef std::atomic<unsigned int> atomic_uint;
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+struct vaccel_session;
 
 typedef enum {
 	VACCEL_RESOURCE_LIB = 0,

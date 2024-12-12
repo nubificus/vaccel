@@ -130,12 +130,6 @@ int session_unregister_resource(struct vaccel_session *sess,
 	return VACCEL_OK;
 }
 
-bool vaccel_session_has_resource(const struct vaccel_session *sess,
-				 const struct vaccel_resource *res)
-{
-	return find_registered_resource(sess, res) != NULL;
-}
-
 static int session_initialize_resources(struct vaccel_session *sess)
 {
 	if (!sess || !sess->id) {
@@ -373,6 +367,35 @@ int vaccel_session_release(struct vaccel_session *sess)
 	put_session_id(sess);
 
 	return VACCEL_OK;
+}
+
+bool vaccel_session_has_resource(const struct vaccel_session *sess,
+				 const struct vaccel_resource *res)
+{
+	return find_registered_resource(sess, res) != NULL;
+}
+
+int vaccel_session_resource_by_type(struct vaccel_session *sess,
+				    struct vaccel_resource **res,
+				    vaccel_resource_t type)
+{
+	if (!sess || !res || type >= VACCEL_RESOURCE_MAX) {
+		return VACCEL_EINVAL;
+	}
+
+	struct session_resources *resources = sess->resources;
+	vaccel_list_t *list = &resources->registered[type];
+
+	struct registered_resource *iter = NULL;
+	session_for_each_resource(iter, list)
+	{
+		*res = iter->res;
+		return VACCEL_OK;
+	}
+
+	vaccel_error("session:%" PRId64 " Could not find a matching resource",
+		     sess->id);
+	return VACCEL_EINVAL;
 }
 
 int vaccel_sess_init(struct vaccel_session *sess, uint32_t flags)

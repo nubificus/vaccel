@@ -3,6 +3,7 @@
 #pragma once
 
 #include "id.h"
+#include "resource.h"
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -11,7 +12,6 @@ extern "C" {
 #endif
 
 struct session_resources;
-struct vaccel_resource;
 
 struct vaccel_session {
 	/* id of the session */
@@ -45,6 +45,13 @@ int vaccel_session_release(struct vaccel_session *sess);
 /* Check if a resource is registered with a session */
 bool vaccel_session_has_resource(const struct vaccel_session *sess,
 				 const struct vaccel_resource *res);
+
+/* Get resource by type from live resources.
+ * It is required that the resource to be returned, is registered to `sess`
+ * session. */
+int vaccel_session_resource_by_type(struct vaccel_session *sess,
+				    struct vaccel_resource **res,
+				    vaccel_resource_t type);
 
 /* Deprecated. To be removed. */
 int vaccel_sess_init(struct vaccel_session *sess, uint32_t flags);
