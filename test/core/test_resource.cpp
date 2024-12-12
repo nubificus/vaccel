@@ -19,6 +19,7 @@
  * 14) vaccel_resource_release()
  * 15) vaccel_resource_directory()
  * 16) vaccel_session_has_resource()
+ * 17) vaccel_resource_get_by_type()
  *
  */
 
@@ -1220,4 +1221,80 @@ TEST_CASE("resources_not_bootstrapped", "[core][resource]")
 	// bootstrap again so the rest of the tests run correctly
 	ret = resources_bootstrap();
 	REQUIRE(ret == VACCEL_OK);
+}
+
+// Test case for finding a registered resource by type
+TEST_CASE("vaccel_resource_get_by_type", "[core][resource]")
+{
+	struct vaccel_resource *res_ptr;
+	struct vaccel_session sess;
+	int ret;
+
+	/* Invalid input */
+	ret = vaccel_resource_get_by_type(nullptr, &res_ptr,
+					  VACCEL_RESOURCE_LIB);
+	REQUIRE(ret == VACCEL_EINVAL);
+
+	ret = vaccel_resource_get_by_type(&sess, nullptr, VACCEL_RESOURCE_LIB);
+	REQUIRE(ret == VACCEL_EINVAL);
+
+	ret = vaccel_resource_get_by_type(&sess, &res_ptr, VACCEL_RESOURCE_MAX);
+	REQUIRE(ret == VACCEL_EINVAL);
+
+	/* Failing because there's no resource */
+	ret = vaccel_session_init(&sess, 0);
+	REQUIRE(ret == VACCEL_OK);
+
+	ret = vaccel_resource_get_by_type(&sess, &res_ptr, VACCEL_RESOURCE_LIB);
+	REQUIRE(ret == VACCEL_EINVAL);
+
+	ret = vaccel_resource_get_by_type(&sess, &res_ptr,
+					  VACCEL_RESOURCE_MODEL);
+	REQUIRE(ret == VACCEL_EINVAL);
+
+	ret = vaccel_resource_get_by_type(&sess, &res_ptr,
+					  VACCEL_RESOURCE_DATA);
+	REQUIRE(ret == VACCEL_EINVAL);
+
+	/* Failing because the resource is not registered */
+	struct vaccel_resource res;
+	char *lib_path = abs_path(BUILD_ROOT, "examples/libmytestlib.so");
+	ret = vaccel_resource_init(&res, lib_path, VACCEL_RESOURCE_LIB);
+	REQUIRE(ret == VACCEL_OK);
+
+	ret = vaccel_resource_get_by_type(&sess, &res_ptr, VACCEL_RESOURCE_LIB);
+	REQUIRE(ret == VACCEL_EINVAL);
+
+	/* Success */
+	ret = vaccel_resource_register(&res, &sess);
+	REQUIRE(ret == VACCEL_OK);
+
+	ret = vaccel_resource_get_by_type(&sess, &res_ptr, VACCEL_RESOURCE_LIB);
+	REQUIRE(ret == VACCEL_OK);
+	REQUIRE(res_ptr == &res);
+
+	/* Failing because of wrong type, although registered */
+	ret = vaccel_resource_get_by_type(&sess, &res_ptr,
+					  VACCEL_RESOURCE_MODEL);
+	REQUIRE(ret == VACCEL_EINVAL);
+
+	ret = vaccel_resource_get_by_type(&sess, &res_ptr,
+					  VACCEL_RESOURCE_DATA);
+	REQUIRE(ret == VACCEL_EINVAL);
+
+	/* Failing because the resource was unregistered */
+	ret = vaccel_resource_unregister(&res, &sess);
+	REQUIRE(ret == VACCEL_OK);
+
+	ret = vaccel_resource_get_by_type(&sess, &res_ptr, VACCEL_RESOURCE_LIB);
+	REQUIRE(ret == VACCEL_EINVAL);
+
+	/* Close */
+	ret = vaccel_resource_release(&res);
+	REQUIRE(ret == VACCEL_OK);
+
+	ret = vaccel_session_release(&sess);
+	REQUIRE(ret == VACCEL_OK);
+
+	free(lib_path);
 }
