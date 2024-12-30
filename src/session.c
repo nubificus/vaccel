@@ -375,6 +375,32 @@ bool vaccel_session_has_resource(const struct vaccel_session *sess,
 	return find_registered_resource(sess, res) != NULL;
 }
 
+int vaccel_session_resource_by_id(struct vaccel_session *sess,
+				  struct vaccel_resource **res, vaccel_id_t id)
+{
+	if (!sess || !res || id <= 0)
+		return VACCEL_EINVAL;
+
+	struct session_resources *resources = sess->resources;
+
+	for (int type = 0; type < VACCEL_RESOURCE_MAX; ++type) {
+		vaccel_list_t *list = &resources->registered[type];
+		struct registered_resource *iter = NULL;
+
+		session_for_each_resource(iter, list)
+		{
+			if (iter->res->id == id) {
+				*res = iter->res;
+				return VACCEL_OK;
+			}
+		}
+	}
+	vaccel_error("session:%" PRId64
+		     " Could not find a resource with id: %" PRId64,
+		     sess->id, id);
+	return VACCEL_EINVAL;
+}
+
 int vaccel_session_resource_by_type(struct vaccel_session *sess,
 				    struct vaccel_resource **res,
 				    vaccel_resource_t type)
@@ -396,6 +422,50 @@ int vaccel_session_resource_by_type(struct vaccel_session *sess,
 	vaccel_error("session:%" PRId64 " Could not find a matching resource",
 		     sess->id);
 	return VACCEL_EINVAL;
+}
+
+int vaccel_session_resources_by_type(struct vaccel_session *sess,
+				     struct vaccel_resource ***resources,
+				     size_t *nr_found, vaccel_resource_t type)
+{
+	if (!sess || !resources || type >= VACCEL_RESOURCE_MAX || !nr_found)
+		return VACCEL_EINVAL;
+
+	struct session_resources *sess_resources = sess->resources;
+	vaccel_list_t *list = &sess_resources->registered[type];
+
+	size_t found = 0;
+	struct registered_resource *iter = NULL;
+
+	/* Count matching resources */
+	session_for_each_resource(iter, list)
+	{
+		++found;
+	}
+
+	if (found == 0) {
+		vaccel_error("session:%" PRId64
+			     " Could not find a matching resource",
+			     sess->id);
+		*nr_found = 0;
+		return VACCEL_EINVAL;
+	}
+
+	/* Allocate space */
+	*resources = (struct vaccel_resource **)malloc(
+		found * sizeof(struct vaccel_resource *));
+	if (*resources == NULL)
+		return VACCEL_ENOMEM;
+
+	iter = NULL;
+	size_t i = 0;
+	session_for_each_resource(iter, list)
+	{
+		(*resources)[i++] = iter->res;
+	}
+
+	*nr_found = found;
+	return VACCEL_OK;
 }
 
 int vaccel_sess_init(struct vaccel_session *sess, uint32_t flags)

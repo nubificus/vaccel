@@ -46,12 +46,21 @@ int vaccel_session_release(struct vaccel_session *sess);
 bool vaccel_session_has_resource(const struct vaccel_session *sess,
 				 const struct vaccel_resource *res);
 
+/* Get resource by id, from registered live resources */
+int vaccel_session_resource_by_id(struct vaccel_session *sess,
+				  struct vaccel_resource **res, vaccel_id_t id);
+
 /* Get resource by type from live resources.
  * It is required that the resource to be returned, is registered to `sess`
  * session. */
 int vaccel_session_resource_by_type(struct vaccel_session *sess,
 				    struct vaccel_resource **res,
 				    vaccel_resource_t type);
+
+/* Get a list of the registered resources, by type */
+int vaccel_session_resources_by_type(struct vaccel_session *sess,
+				     struct vaccel_resource ***resources,
+				     size_t *nr_found, vaccel_resource_t type);
 
 /* Deprecated. To be removed. */
 int vaccel_sess_init(struct vaccel_session *sess, uint32_t flags);
