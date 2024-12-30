@@ -19,6 +19,8 @@
  * 14) vaccel_resource_release()
  * 15) vaccel_resource_directory()
  * 16) vaccel_session_has_resource()
+ * 17) vaccel_resource_get_by_type()
+ * 18) vaccel_resource_get_all_by_type()
  *
  */
 
@@ -1176,6 +1178,147 @@ TEST_CASE("resource_find_by_id_fail", "[core][resource]")
 	// starts at 1)
 	int const ret = vaccel_resource_get_by_id(&test_res, test_id);
 	REQUIRE(ret == VACCEL_EINVAL);
+}
+
+TEST_CASE("vaccel_resource_get_by_type", "[core][resource]")
+{
+	struct vaccel_resource *res_ptr;
+	int ret;
+
+	/* Invalid input */
+	ret = vaccel_resource_get_by_type(nullptr, VACCEL_RESOURCE_LIB);
+	REQUIRE(ret == VACCEL_EINVAL);
+
+	ret = vaccel_resource_get_by_type(&res_ptr, VACCEL_RESOURCE_MAX);
+	REQUIRE(ret == VACCEL_EINVAL);
+
+	/* Failing because there's no resource */
+	ret = vaccel_resource_get_by_type(&res_ptr, VACCEL_RESOURCE_LIB);
+	REQUIRE(ret == VACCEL_EINVAL);
+
+	ret = vaccel_resource_get_by_type(&res_ptr, VACCEL_RESOURCE_MODEL);
+	REQUIRE(ret == VACCEL_EINVAL);
+
+	ret = vaccel_resource_get_by_type(&res_ptr, VACCEL_RESOURCE_DATA);
+	REQUIRE(ret == VACCEL_EINVAL);
+
+	/* Success */
+	struct vaccel_resource res;
+	char *lib_path = abs_path(BUILD_ROOT, "examples/libmytestlib.so");
+	ret = vaccel_resource_init(&res, lib_path, VACCEL_RESOURCE_LIB);
+	REQUIRE(ret == VACCEL_OK);
+
+	ret = vaccel_resource_get_by_type(&res_ptr, VACCEL_RESOURCE_LIB);
+	REQUIRE(ret == VACCEL_OK);
+	REQUIRE(res_ptr == &res);
+
+	/* Failing because of wrong type, although a resource exists */
+	ret = vaccel_resource_get_by_type(&res_ptr, VACCEL_RESOURCE_MODEL);
+	REQUIRE(ret == VACCEL_EINVAL);
+
+	ret = vaccel_resource_get_by_type(&res_ptr, VACCEL_RESOURCE_DATA);
+	REQUIRE(ret == VACCEL_EINVAL);
+
+	/* Failing because the resource was released */
+	ret = vaccel_resource_release(&res);
+	REQUIRE(ret == VACCEL_OK);
+
+	ret = vaccel_resource_get_by_type(&res_ptr, VACCEL_RESOURCE_LIB);
+	REQUIRE(ret == VACCEL_EINVAL);
+
+	/* Close */
+	free(lib_path);
+}
+
+TEST_CASE("vaccel_resource_get_all_by_type", "[core][resource]")
+{
+	struct vaccel_resource **res_ptr;
+	size_t nr_found;
+	int ret;
+
+	/* Invalid input */
+	ret = vaccel_resource_get_all_by_type(nullptr, &nr_found,
+					      VACCEL_RESOURCE_LIB);
+	REQUIRE(ret == VACCEL_EINVAL);
+
+	ret = vaccel_resource_get_all_by_type(&res_ptr, nullptr,
+					      VACCEL_RESOURCE_LIB);
+	REQUIRE(ret == VACCEL_EINVAL);
+
+	ret = vaccel_resource_get_all_by_type(&res_ptr, &nr_found,
+					      VACCEL_RESOURCE_MAX);
+	REQUIRE(ret == VACCEL_EINVAL);
+
+	/* Failing because there's no resource */
+	ret = vaccel_resource_get_all_by_type(&res_ptr, &nr_found,
+					      VACCEL_RESOURCE_LIB);
+	REQUIRE(ret == VACCEL_EINVAL);
+	REQUIRE(nr_found == 0);
+
+	ret = vaccel_resource_get_all_by_type(&res_ptr, &nr_found,
+					      VACCEL_RESOURCE_DATA);
+	REQUIRE(ret == VACCEL_EINVAL);
+	REQUIRE(nr_found == 0);
+
+	ret = vaccel_resource_get_all_by_type(&res_ptr, &nr_found,
+					      VACCEL_RESOURCE_MODEL);
+	REQUIRE(ret == VACCEL_EINVAL);
+	REQUIRE(nr_found == 0);
+
+	/* Success */
+	struct vaccel_resource res;
+	char *lib_path = abs_path(BUILD_ROOT, "examples/libmytestlib.so");
+	ret = vaccel_resource_init(&res, lib_path, VACCEL_RESOURCE_LIB);
+	REQUIRE(ret == VACCEL_OK);
+
+	ret = vaccel_resource_get_all_by_type(&res_ptr, &nr_found,
+					      VACCEL_RESOURCE_LIB);
+	REQUIRE(ret == VACCEL_OK);
+	REQUIRE(nr_found == 1);
+	REQUIRE(res_ptr[0] == &res);
+
+	free(res_ptr);
+
+	/* Success with more than 1 resource */
+	struct vaccel_resource res2;
+	ret = vaccel_resource_init(&res2, lib_path, VACCEL_RESOURCE_LIB);
+	REQUIRE(ret == VACCEL_OK);
+
+	ret = vaccel_resource_get_all_by_type(&res_ptr, &nr_found,
+					      VACCEL_RESOURCE_LIB);
+	REQUIRE(ret == VACCEL_OK);
+	REQUIRE(nr_found == 2);
+	REQUIRE(res_ptr[0] == &res);
+	REQUIRE(res_ptr[1] == &res2);
+
+	free(res_ptr);
+
+	/* Delete the second resource */
+	ret = vaccel_resource_release(&res2);
+	REQUIRE(ret == VACCEL_OK);
+
+	/* Failing because of wrong type, although a resource exists */
+	ret = vaccel_resource_get_all_by_type(&res_ptr, &nr_found,
+					      VACCEL_RESOURCE_MODEL);
+	REQUIRE(ret == VACCEL_EINVAL);
+	REQUIRE(nr_found == 0);
+
+	ret = vaccel_resource_get_all_by_type(&res_ptr, &nr_found,
+					      VACCEL_RESOURCE_DATA);
+	REQUIRE(ret == VACCEL_EINVAL);
+	REQUIRE(nr_found == 0);
+
+	/* Failing because the resource was released */
+	ret = vaccel_resource_release(&res);
+	REQUIRE(ret == VACCEL_OK);
+
+	ret = vaccel_resource_get_all_by_type(&res_ptr, &nr_found,
+					      VACCEL_RESOURCE_LIB);
+	REQUIRE(ret == VACCEL_EINVAL);
+	REQUIRE(nr_found == 0);
+
+	/* Close */
+	free(lib_path);
 }
 
 // Test case for resource component not bootstrapped

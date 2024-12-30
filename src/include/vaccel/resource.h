@@ -67,8 +67,15 @@ struct vaccel_resource {
 };
 
 /* Get resource by index from live resources */
-int vaccel_resource_get_by_id(struct vaccel_resource **resource,
-			      vaccel_id_t id);
+int vaccel_resource_get_by_id(struct vaccel_resource **res, vaccel_id_t id);
+
+/* Get the first live resource with the given type */
+int vaccel_resource_get_by_type(struct vaccel_resource **res,
+				vaccel_resource_t type);
+
+/* Get a list of of all the live resources with the given type */
+int vaccel_resource_get_all_by_type(struct vaccel_resource ***resources,
+				    size_t *nr_found, vaccel_resource_t type);
 
 /* Get refcount atomically */
 long int vaccel_resource_refcount(const struct vaccel_resource *res);

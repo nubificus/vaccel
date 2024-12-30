@@ -58,24 +58,89 @@ int resources_cleanup(void)
 	return id_pool_release(&id_pool);
 }
 
-int vaccel_resource_get_by_id(struct vaccel_resource **resource, vaccel_id_t id)
+int vaccel_resource_get_by_id(struct vaccel_resource **res, vaccel_id_t id)
 {
 	if (!initialized)
 		return VACCEL_EPERM;
 
 	for (int i = 0; i < VACCEL_RESOURCE_MAX; ++i) {
-		struct vaccel_resource *res;
+		struct vaccel_resource *r;
 		struct vaccel_resource *tmp;
-		resource_for_each_safe(res, tmp, &live_resources[i])
+		resource_for_each_safe(r, tmp, &live_resources[i])
 		{
-			if (id == res->id) {
-				*resource = res;
+			if (id == r->id) {
+				*res = r;
 				return VACCEL_OK;
 			}
 		}
 	}
 
+	vaccel_error("Could not find a resource with id: %" PRId64, id);
 	return VACCEL_EINVAL;
+}
+
+int vaccel_resource_get_by_type(struct vaccel_resource **res,
+				vaccel_resource_t type)
+{
+	if (!initialized)
+		return VACCEL_EPERM;
+
+	if (!res || type >= VACCEL_RESOURCE_MAX)
+		return VACCEL_EINVAL;
+
+	struct vaccel_resource *r;
+	struct vaccel_resource *tmp;
+	resource_for_each_safe(r, tmp, &live_resources[type])
+	{
+		*res = r;
+		return VACCEL_OK;
+	}
+
+	vaccel_error("Could not find a matching resource");
+	return VACCEL_EINVAL;
+}
+
+int vaccel_resource_get_all_by_type(struct vaccel_resource ***resources,
+				    size_t *nr_found, vaccel_resource_t type)
+{
+	if (!initialized)
+		return VACCEL_EPERM;
+
+	if (!resources || type >= VACCEL_RESOURCE_MAX || !nr_found)
+		return VACCEL_EINVAL;
+
+	struct vaccel_resource *res = NULL;
+	struct vaccel_resource *tmp = NULL;
+	size_t found = 0;
+
+	/* Count the matching live resources */
+	resource_for_each_safe(res, tmp, &live_resources[type])
+	{
+		++found;
+	}
+
+	if (found == 0) {
+		vaccel_error("Could not find a matching resource");
+		*nr_found = 0;
+		return VACCEL_EINVAL;
+	}
+
+	/* Allocate space */
+	*resources = (struct vaccel_resource **)malloc(
+		found * sizeof(struct vaccel_resource *));
+	if (*resources == NULL)
+		return VACCEL_ENOMEM;
+
+	size_t i = 0;
+	res = NULL;
+	tmp = NULL;
+	resource_for_each_safe(res, tmp, &live_resources[type])
+	{
+		(*resources)[i++] = res;
+	}
+
+	*nr_found = found;
+	return VACCEL_OK;
 }
 
 static void get_resource_id(struct vaccel_resource *res)
