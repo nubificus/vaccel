@@ -237,8 +237,9 @@ int vaccel_session_init(struct vaccel_session *sess, uint32_t flags)
 	if (sess->id < 0)
 		return -(int)sess->id;
 
-	virtio = get_virtio_plugin();
-	if ((flags & VACCEL_REMOTE) || (get_nr_plugins() == 1 && virtio)) {
+	virtio = plugin_virtio();
+	if ((flags & VACCEL_REMOTE) ||
+	    (plugin_nr_registered() == 1 && virtio)) {
 		if (!virtio) {
 			vaccel_error(
 				"Could not initialize VirtIO session, no VirtIO Plugin loaded yet");
@@ -298,7 +299,7 @@ int vaccel_session_update(struct vaccel_session *sess, uint32_t flags)
 	/* if we're using virtio as a plugin offload the session update to the
 	 * host */
 	if (sess->is_virtio) {
-		struct vaccel_plugin *virtio = get_virtio_plugin();
+		struct vaccel_plugin *virtio = plugin_virtio();
 		if (virtio) {
 			int ret = virtio->info->session_update(
 				sess, flags & (~VACCEL_REMOTE));
@@ -340,7 +341,7 @@ int vaccel_session_release(struct vaccel_session *sess)
 	/* if we're using virtio as a plugin offload the session cleanup to the
 	 * host */
 	if (sess->is_virtio) {
-		struct vaccel_plugin *virtio = get_virtio_plugin();
+		struct vaccel_plugin *virtio = plugin_virtio();
 		if (virtio) {
 			ret = virtio->info->session_release(sess);
 			if (ret) {

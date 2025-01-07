@@ -28,7 +28,7 @@
 DEFINE_FFF_GLOBALS;
 
 extern "C" {
-FAKE_VALUE_FUNC(struct vaccel_plugin *, get_virtio_plugin);
+FAKE_VALUE_FUNC(struct vaccel_plugin *, plugin_virtio);
 }
 
 enum { MAX_VACCEL_SESSIONS = 1024 };
@@ -38,7 +38,7 @@ TEST_CASE("session_init", "[core][session]")
 {
 	int ret;
 
-	RESET_FAKE(get_virtio_plugin);
+	RESET_FAKE(plugin_virtio);
 
 	struct vaccel_session sess;
 	sess.hint = 0;
@@ -85,7 +85,7 @@ TEST_CASE("session_update_and_free", "[core][session]")
 	sess.priv = nullptr;
 	int ret;
 
-	RESET_FAKE(get_virtio_plugin);
+	RESET_FAKE(plugin_virtio);
 
 	ret = vaccel_session_init(&sess, 1);
 	REQUIRE(ret == VACCEL_OK);
@@ -129,7 +129,7 @@ TEST_CASE("session_unregister_null", "[core][session]")
 {
 	int ret;
 
-	RESET_FAKE(get_virtio_plugin);
+	RESET_FAKE(plugin_virtio);
 
 	struct vaccel_session sess;
 	sess.id = 0;
@@ -218,7 +218,7 @@ TEST_CASE("session_ops", "[core][session]")
 	test_res.type = VACCEL_RESOURCE_LIB;
 	test_res.id = 1;
 
-	RESET_FAKE(get_virtio_plugin);
+	RESET_FAKE(plugin_virtio);
 
 	ret = vaccel_session_init(&test_sess, 1);
 	REQUIRE(VACCEL_OK == ret);
@@ -274,9 +274,9 @@ TEST_CASE("session_virtio", "[core][session]")
 	test_res.id = 1;
 	test_res.remote_id = -1;
 
-	RESET_FAKE(get_virtio_plugin);
+	RESET_FAKE(plugin_virtio);
 
-	get_virtio_plugin_fake.custom_fake = mock_virtio_get_virtio_plugin;
+	plugin_virtio_fake.custom_fake = mock_virtio_plugin_virtio;
 
 	ret = vaccel_session_init(&test_sess, 1 | VACCEL_REMOTE);
 	REQUIRE(VACCEL_OK == ret);
@@ -295,7 +295,7 @@ TEST_CASE("session_virtio", "[core][session]")
 
 	// Ensure that the VirtIO plugin was called the expected number of times
 	// Note: session_*register_resource() does not call VirtIO functions
-	REQUIRE(get_virtio_plugin_fake.call_count == 3);
+	REQUIRE(plugin_virtio_fake.call_count == 3);
 }
 
 // Test case for finding a registered resource by type

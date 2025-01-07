@@ -15,7 +15,7 @@
 struct vaccel_prof_region image_op_stats =
 	VACCEL_PROF_REGION_INIT("vaccel_image_op");
 
-int vaccel_image_op(enum vaccel_op_type op_type, struct vaccel_session *sess,
+int vaccel_image_op(vaccel_op_t op_type, struct vaccel_session *sess,
 		    const void *img, unsigned char *out_text,
 		    unsigned char *out_imgname, size_t len_img,
 		    size_t len_out_text, size_t len_out_imgname)
@@ -31,7 +31,7 @@ int vaccel_image_op(enum vaccel_op_type op_type, struct vaccel_session *sess,
 	vaccel_prof_region_start(&image_op_stats);
 
 	//Get implementation
-	int (*plugin_op)() = get_plugin_op(op_type, sess->hint);
+	int (*plugin_op)() = plugin_get_op_func(op_type, sess->hint);
 	if (!plugin_op) {
 		ret = VACCEL_ENOTSUP;
 		goto out;
@@ -56,11 +56,10 @@ out:
 	vaccel_image_op(op_type, sess, img, NULL, out_imgname, len_img, 0, \
 			len_out_imgname)
 
-int vaccel_image_op_unpack(enum vaccel_op_type op_type,
-			   struct vaccel_session *sess, struct vaccel_arg *read,
-			   int nr_read, int nr_read_req,
-			   struct vaccel_arg *write, int nr_write,
-			   int nr_write_req)
+int vaccel_image_op_unpack(vaccel_op_t op_type, struct vaccel_session *sess,
+			   struct vaccel_arg *read, int nr_read,
+			   int nr_read_req, struct vaccel_arg *write,
+			   int nr_write, int nr_write_req)
 {
 	if (nr_read != nr_read_req) {
 		vaccel_error(

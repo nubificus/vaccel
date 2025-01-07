@@ -143,7 +143,7 @@ int vaccel_tflite_session_load(struct vaccel_session *sess,
 
 	// Get implementation
 	int (*plugin_op)(struct vaccel_session *, struct vaccel_resource *) =
-		get_plugin_op(VACCEL_TFLITE_SESSION_LOAD, sess->hint);
+		plugin_get_op_func(VACCEL_TFLITE_SESSION_LOAD, sess->hint);
 	if (!plugin_op) {
 		ret = VACCEL_ENOTSUP;
 		goto out;
@@ -197,7 +197,7 @@ int vaccel_tflite_session_run(struct vaccel_session *sess,
 			 const struct vaccel_resource *,
 			 struct vaccel_tflite_tensor *const *, int,
 			 struct vaccel_tflite_tensor **, int, uint8_t *) =
-		get_plugin_op(VACCEL_TFLITE_SESSION_RUN, sess->hint);
+		plugin_get_op_func(VACCEL_TFLITE_SESSION_RUN, sess->hint);
 	if (!plugin_op) {
 		ret = VACCEL_ENOTSUP;
 		goto out;
@@ -242,7 +242,7 @@ int vaccel_tflite_session_delete(struct vaccel_session *sess,
 	}
 
 	int (*plugin_op)(struct vaccel_session *, struct vaccel_resource *) =
-		get_plugin_op(VACCEL_TFLITE_SESSION_DELETE, sess->hint);
+		plugin_get_op_func(VACCEL_TFLITE_SESSION_DELETE, sess->hint);
 	if (!plugin_op) {
 		ret = VACCEL_ENOTSUP;
 		goto out;

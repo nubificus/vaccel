@@ -22,7 +22,7 @@ int vaccel_fpga_arraycopy(struct vaccel_session *sess, int array[],
 		sess->id);
 
 	//Get implementation
-	int (*plugin_op)() = get_plugin_op(VACCEL_F_ARRAYCOPY, sess->hint);
+	int (*plugin_op)() = plugin_get_op_func(VACCEL_F_ARRAYCOPY, sess->hint);
 	if (!plugin_op)
 		return VACCEL_ENOTSUP;
 
@@ -64,7 +64,7 @@ int vaccel_fpga_mmult(struct vaccel_session *sess, float A_array[],
 		     sess->id);
 
 	//Get implementation
-	int (*plugin_op)() = get_plugin_op(VACCEL_F_MMULT, sess->hint);
+	int (*plugin_op)() = plugin_get_op_func(VACCEL_F_MMULT, sess->hint);
 	if (!plugin_op)
 		return VACCEL_ENOTSUP;
 
@@ -107,7 +107,7 @@ int vaccel_fpga_parallel(struct vaccel_session *sess, float A_array[],
 		     sess->id);
 
 	//Get implementation
-	int (*plugin_op)() = get_plugin_op(VACCEL_F_PARALLEL, sess->hint);
+	int (*plugin_op)() = plugin_get_op_func(VACCEL_F_PARALLEL, sess->hint);
 	if (!plugin_op)
 		return VACCEL_ENOTSUP;
 
@@ -154,7 +154,7 @@ int vaccel_fpga_vadd(struct vaccel_session *sess, float A[], float B[],
 		sess->id);
 
 	//Get implementation
-	int (*plugin_op)() = get_plugin_op(VACCEL_F_VECTORADD, sess->hint);
+	int (*plugin_op)() = plugin_get_op_func(VACCEL_F_VECTORADD, sess->hint);
 	if (!plugin_op)
 		return VACCEL_ENOTSUP;
 

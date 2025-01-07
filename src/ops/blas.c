@@ -36,7 +36,7 @@ int vaccel_sgemm(struct vaccel_session *sess, long long int m, long long int n,
 			 float *a, long long int lda, float *b,
 			 long long int ldb, float beta, float *c,
 			 long long int ldc) =
-		get_plugin_op(VACCEL_BLAS_SGEMM, sess->hint);
+		plugin_get_op_func(VACCEL_BLAS_SGEMM, sess->hint);
 	if (!plugin_op)
 		return VACCEL_ENOTSUP;
 

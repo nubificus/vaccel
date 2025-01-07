@@ -4,12 +4,12 @@
  * The code below performs unit testing to resources.
  *
  * 1) plugins_bootstrap()
- * 2) register_plugin()
- * 3) register_plugin_function()
- * 4) get_available_plugins()
- * 5) unregister_plugin()
- * 6) plugins_shutdown()
- * 7) get_plugin_op()
+ * 2) plugin_register()
+ * 3) vaccel_plugin_register_op()
+ * 4) vaccel_plugin_print_all_by_op_type()
+ * 5) plugin_unregister()
+ * 6) plugins_cleanup()
+ * 7) plugin_get_op_func()
  * 8) vaccel_plugin_load()
  *
  */
@@ -43,7 +43,7 @@ static auto exec_op() -> int
 	return 3;
 }
 
-TEST_CASE("get_all_available_functions", "[core][plugin]")
+TEST_CASE("print_all_by_op_type", "[core][plugin]")
 {
 	int ret;
 	vaccel_plugin plugin;
@@ -73,19 +73,19 @@ TEST_CASE("get_all_available_functions", "[core][plugin]")
 	ret = plugins_bootstrap();
 	REQUIRE(ret == VACCEL_OK);
 
-	ret = register_plugin(&plugin);
+	ret = plugin_register(&plugin);
 	REQUIRE(ret == VACCEL_OK);
 
-	ret = register_plugin_function(&operation);
+	ret = vaccel_plugin_register_op(&operation);
 	REQUIRE(ret == VACCEL_OK);
 
-	ret = get_available_plugins(VACCEL_NO_OP);
+	ret = vaccel_plugin_print_all_by_op_type(VACCEL_NO_OP);
 	REQUIRE(ret == VACCEL_OK);
 
-	ret = unregister_plugin(&plugin);
+	ret = plugin_unregister(&plugin);
 	REQUIRE(ret == VACCEL_OK);
 
-	ret = plugins_shutdown();
+	ret = plugins_cleanup();
 	REQUIRE(ret == VACCEL_OK);
 }
 
@@ -130,41 +130,41 @@ TEST_CASE("register_multiple_functions", "[core][plugin]")
 	ret = plugins_bootstrap();
 	REQUIRE(ret == VACCEL_OK);
 
-	ret = register_plugin(&plugin);
+	ret = plugin_register(&plugin);
 	REQUIRE(ret == VACCEL_OK);
 
 	// fetch operation which is not registered yet
 	void *operation;
-	operation = get_plugin_op(VACCEL_EXEC, 0);
+	operation = plugin_get_op_func(VACCEL_EXEC, 0);
 	REQUIRE(operation == nullptr);
 
-	ret = register_plugin_functions(operation_array, operation_array_size);
+	ret = vaccel_plugin_register_ops(operation_array, operation_array_size);
 	REQUIRE(ret == VACCEL_OK);
 
-	operation = get_plugin_op(VACCEL_EXEC, 0);
+	operation = plugin_get_op_func(VACCEL_EXEC, 0);
 	REQUIRE(operation != nullptr);
 	ret = reinterpret_cast<int (*)()>(operation)();
 	REQUIRE(ret == 3);
 
-	operation = get_plugin_op(VACCEL_NO_OP, 0);
+	operation = plugin_get_op_func(VACCEL_NO_OP, 0);
 	REQUIRE(operation != nullptr);
 	ret = reinterpret_cast<int (*)()>(operation)();
 	REQUIRE(ret == 2);
 
 	// search using hint
-	operation = get_plugin_op(VACCEL_NO_OP, VACCEL_PLUGIN_GENERIC);
+	operation = plugin_get_op_func(VACCEL_NO_OP, VACCEL_PLUGIN_GENERIC);
 	REQUIRE(operation != nullptr);
 	ret = reinterpret_cast<int (*)()>(operation)();
 	REQUIRE(ret == 2);
 
-	ret = unregister_plugin(&plugin);
+	ret = plugin_unregister(&plugin);
 	REQUIRE(ret == VACCEL_OK);
 
-	ret = plugins_shutdown();
+	ret = plugins_cleanup();
 	REQUIRE(ret == VACCEL_OK);
 }
 
-TEST_CASE("register_plugin_ops", "[core][plugin]")
+TEST_CASE("plugin_register_ops", "[core][plugin]")
 {
 	int ret;
 	vaccel_plugin plugin;
@@ -196,22 +196,22 @@ TEST_CASE("register_plugin_ops", "[core][plugin]")
 		ret = plugins_bootstrap();
 		REQUIRE(ret == VACCEL_OK);
 
-		ret = register_plugin(nullptr);
+		ret = plugin_register(nullptr);
 		REQUIRE(ret == VACCEL_EINVAL);
 
-		ret = plugins_shutdown();
+		ret = plugins_cleanup();
 		REQUIRE(ret == VACCEL_OK);
 	}
 
 	SECTION("not_bootstrapped_yet")
 	{
-		ret = register_plugin(&plugin);
+		ret = plugin_register(&plugin);
 		REQUIRE(ret == VACCEL_EBACKEND);
 
 		ret = plugins_bootstrap();
 		REQUIRE(ret == VACCEL_OK);
 
-		ret = plugins_shutdown();
+		ret = plugins_cleanup();
 		REQUIRE(ret == VACCEL_OK);
 	}
 
@@ -221,31 +221,31 @@ TEST_CASE("register_plugin_ops", "[core][plugin]")
 		REQUIRE(ret == VACCEL_OK);
 
 		pinfo.fini = nullptr;
-		ret = register_plugin(&plugin);
+		ret = plugin_register(&plugin);
 		REQUIRE(ret == VACCEL_EINVAL);
 
 		pinfo.init = nullptr;
-		ret = register_plugin(&plugin);
+		ret = plugin_register(&plugin);
 		REQUIRE(ret == VACCEL_EINVAL);
 
 		pinfo.name = nullptr;
-		ret = register_plugin(&plugin);
+		ret = plugin_register(&plugin);
 		REQUIRE(ret == VACCEL_EINVAL);
 
 		pinfo.version = nullptr;
-		ret = register_plugin(&plugin);
+		ret = plugin_register(&plugin);
 		REQUIRE(ret == VACCEL_EINVAL);
 
 		pinfo.vaccel_version = nullptr;
-		ret = register_plugin(&plugin);
+		ret = plugin_register(&plugin);
 		REQUIRE(ret == VACCEL_EINVAL);
 
-		ret = plugins_shutdown();
+		ret = plugins_cleanup();
 		REQUIRE(ret == VACCEL_OK);
 	}
 }
 
-TEST_CASE("register_plugin_vaccel_versions", "[core][plugin]")
+TEST_CASE("plugin_register_vaccel_versions", "[core][plugin]")
 {
 	int ret;
 	int major;
@@ -279,7 +279,7 @@ TEST_CASE("register_plugin_vaccel_versions", "[core][plugin]")
 	list_init_entry(&operation.plugin_entry);
 	list_init_entry(&operation.func_entry);
 
-	ret = parse_plugin_version(&major, &minor1, &minor2, &extra,
+	ret = plugin_parse_version(&major, &minor1, &minor2, &extra,
 				   VACCEL_VERSION);
 	REQUIRE(ret == VACCEL_OK);
 	vaccel_version_size = strlen(VACCEL_VERSION) + 10;
@@ -291,7 +291,7 @@ TEST_CASE("register_plugin_vaccel_versions", "[core][plugin]")
 
 	SECTION("same_version")
 	{
-		ret = register_plugin(&plugin);
+		ret = plugin_register(&plugin);
 		REQUIRE(ret == VACCEL_OK);
 	}
 
@@ -300,7 +300,7 @@ TEST_CASE("register_plugin_vaccel_versions", "[core][plugin]")
 	{
 		snprintf(vaccel_version, vaccel_version_size, "v%d.%d.%d%s",
 			 major, minor1, minor2, extra);
-		ret = register_plugin(&plugin);
+		ret = plugin_register(&plugin);
 		REQUIRE(ret == VACCEL_OK);
 	}
 
@@ -308,7 +308,7 @@ TEST_CASE("register_plugin_vaccel_versions", "[core][plugin]")
 	{
 		snprintf(vaccel_version, vaccel_version_size, "%d.%d.%d%s",
 			 major + 1, minor1, minor2, extra);
-		ret = register_plugin(&plugin);
+		ret = plugin_register(&plugin);
 		REQUIRE(ret == VACCEL_EINVAL);
 	}
 
@@ -316,7 +316,7 @@ TEST_CASE("register_plugin_vaccel_versions", "[core][plugin]")
 	{
 		snprintf(vaccel_version, vaccel_version_size, "%d.%d.%d%s",
 			 major, minor1 + 1, minor2, extra);
-		ret = register_plugin(&plugin);
+		ret = plugin_register(&plugin);
 		REQUIRE(ret == VACCEL_OK);
 	}
 
@@ -324,7 +324,7 @@ TEST_CASE("register_plugin_vaccel_versions", "[core][plugin]")
 	{
 		snprintf(vaccel_version, vaccel_version_size, "%d.%d.%d%s",
 			 major, minor1, minor2 + 1, extra);
-		ret = register_plugin(&plugin);
+		ret = plugin_register(&plugin);
 		REQUIRE(ret == VACCEL_OK);
 	}
 
@@ -332,7 +332,7 @@ TEST_CASE("register_plugin_vaccel_versions", "[core][plugin]")
 	{
 		snprintf(vaccel_version, vaccel_version_size, "%d.%d.%d%s",
 			 major, minor1, minor2 + 1, "-extra");
-		ret = register_plugin(&plugin);
+		ret = plugin_register(&plugin);
 		REQUIRE(ret == VACCEL_OK);
 	}
 
@@ -340,7 +340,7 @@ TEST_CASE("register_plugin_vaccel_versions", "[core][plugin]")
 	{
 		snprintf(vaccel_version, vaccel_version_size, "%d-%d.%d%s",
 			 major, minor1, minor2, extra);
-		ret = register_plugin(&plugin);
+		ret = plugin_register(&plugin);
 		REQUIRE(ret == VACCEL_EINVAL);
 	}
 
@@ -351,11 +351,11 @@ TEST_CASE("register_plugin_vaccel_versions", "[core][plugin]")
 		ret = setenv("VACCEL_IGNORE_VERSION", "1", 1);
 		REQUIRE(ret == 0);
 
-		ret = register_plugin(&plugin);
+		ret = plugin_register(&plugin);
 		REQUIRE(ret == VACCEL_OK);
 	}
 
-	ret = plugins_shutdown();
+	ret = plugins_cleanup();
 	REQUIRE(ret == VACCEL_OK);
 
 	free(vaccel_version);
@@ -445,7 +445,7 @@ TEST_CASE("vaccel_plugin_load", "[core][plugin]")
 	REQUIRE(ret == VACCEL_OK);
 
 	/* Shutdown plugins */
-	ret = plugins_shutdown();
+	ret = plugins_cleanup();
 	REQUIRE(ret == VACCEL_OK);
 
 	/* Release memory */

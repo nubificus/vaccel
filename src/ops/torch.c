@@ -192,7 +192,7 @@ int vaccel_torch_jitload_forward(struct vaccel_session *sess,
 		return VACCEL_EINVAL;
 	vaccel_debug("session:%u Looking for plugin implementing torch_jitload_forward operation",
 						sess->id);
-	int (*plugin_op)() = get_plugin_op(VACCEL_TORCH_JITLOAD_FORWARD);
+	int (*plugin_op)() = plugin_get_op_func(VACCEL_TORCH_JITLOAD_FORWARD);
 	if (!plugin_op)
 		return VACCEL_ENOTSUP;
 	return plugin_op(sess, model_path, img, img_size, tags);
@@ -234,7 +234,7 @@ int vaccel_torch_jitload_forward(struct vaccel_session *sess,
 			 const struct vaccel_torch_buffer *,
 			 struct vaccel_torch_tensor **, int,
 			 struct vaccel_torch_tensor **, int) =
-		get_plugin_op(VACCEL_TORCH_JITLOAD_FORWARD, sess->hint);
+		plugin_get_op_func(VACCEL_TORCH_JITLOAD_FORWARD, sess->hint);
 
 	if (!plugin_op)
 		return VACCEL_ENOTSUP;
@@ -259,7 +259,7 @@ int vaccel_torch_sgemm(struct vaccel_session *sess,
 			 struct vaccel_torch_tensor **,
 			 struct vaccel_torch_tensor **, int, int, int,
 			 struct vaccel_torch_tensor **) =
-		get_plugin_op(VACCEL_TORCH_SGEMM, sess->hint);
+		plugin_get_op_func(VACCEL_TORCH_SGEMM, sess->hint);
 	if (!plugin_op) {
 		vaccel_debug("Plugin loading failed");
 		return VACCEL_ENOTSUP;

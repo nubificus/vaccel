@@ -133,11 +133,9 @@ TEST_CASE("min_max_generic", "[ops][minmax]")
 	struct timespec t0;
 	struct timespec t1;
 
-	enum vaccel_op_type op_type = VACCEL_MINMAX;
+	vaccel_op_t op_type = VACCEL_MINMAX;
 	struct vaccel_arg read[5] = {
-		{ .argtype = 0,
-		  .size = sizeof(enum vaccel_op_type),
-		  .buf = &op_type },
+		{ .argtype = 0, .size = sizeof(vaccel_op_t), .buf = &op_type },
 		{ .argtype = 0,
 		  .size = static_cast<uint32_t>(ndata * sizeof(double)),
 		  .buf = indata },

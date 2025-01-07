@@ -2,4 +2,4 @@
 
 #include "vaccel.h"
 
-auto mock_virtio_get_virtio_plugin() -> struct vaccel_plugin *;
+auto mock_virtio_plugin_virtio() -> struct vaccel_plugin *;

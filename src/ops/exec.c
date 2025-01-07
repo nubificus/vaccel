@@ -33,7 +33,7 @@ int vaccel_exec(struct vaccel_session *sess, const char *library,
 	vaccel_prof_region_start(&exec_op_stats);
 
 	// Get implementation
-	int (*plugin_op)() = get_plugin_op(VACCEL_EXEC, sess->hint);
+	int (*plugin_op)() = plugin_get_op_func(VACCEL_EXEC, sess->hint);
 	if (!plugin_op)
 		return VACCEL_ENOTSUP;
 
@@ -77,7 +77,7 @@ int vaccel_exec_with_resource(struct vaccel_session *sess,
 
 	// Get implementation
 	int (*plugin_op)() =
-		get_plugin_op(VACCEL_EXEC_WITH_RESOURCE, sess->hint);
+		plugin_get_op_func(VACCEL_EXEC_WITH_RESOURCE, sess->hint);
 	if (!plugin_op)
 		return VACCEL_ENOTSUP;
 

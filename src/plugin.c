@@ -14,22 +14,21 @@ static struct {
 	/* true if sub-system is initialized */
 	bool initialized;
 
-	/* list holding plugin descriptors */
-	vaccel_list_t plugins;
+	/* list of registered plugins */
+	vaccel_list_t registered;
 
 	/* number of registered plugins */
-	size_t nr_plugins;
+	size_t nr_registered;
 
 	/* virtio plugin */
 	struct vaccel_plugin *virtio;
 
 	/* array of available implementations for every supported
-	 * function
-	 */
+	 * function */
 	vaccel_list_t ops[VACCEL_FUNCTIONS_NR];
-} plugin_state = { 0 };
+} plugins = { 0 };
 
-static int check_plugin_info(const struct vaccel_plugin_info *pinfo)
+static int plugin_check_info(const struct vaccel_plugin_info *pinfo)
 {
 	if (!pinfo->name) {
 		vaccel_error("Plugin needs to have a name");
@@ -54,7 +53,7 @@ static int check_plugin_info(const struct vaccel_plugin_info *pinfo)
 	return VACCEL_OK;
 }
 
-int parse_plugin_version(int *major, int *minor1, int *minor2, char **extra,
+int plugin_parse_version(int *major, int *minor1, int *minor2, char **extra,
 			 const char *str)
 {
 	if (!str)
@@ -80,7 +79,7 @@ int parse_plugin_version(int *major, int *minor1, int *minor2, char **extra,
 	return VACCEL_OK;
 }
 
-static int check_plugin_version(const struct vaccel_plugin_info *pinfo)
+static int plugin_check_version(const struct vaccel_plugin_info *pinfo)
 {
 	int ret = VACCEL_OK;
 
@@ -96,7 +95,7 @@ static int check_plugin_version(const struct vaccel_plugin_info *pinfo)
 	int minor1;
 	int minor2;
 	char *extra = NULL;
-	if (parse_plugin_version(&major, &minor1, &minor2, &extra,
+	if (plugin_parse_version(&major, &minor1, &minor2, &extra,
 				 pinfo->vaccel_version)) {
 		vaccel_error("Could not parse plugin's vaccel version");
 		ret = VACCEL_EINVAL;
@@ -107,7 +106,7 @@ static int check_plugin_version(const struct vaccel_plugin_info *pinfo)
 	int vminor1;
 	int vminor2;
 	char *vextra = NULL;
-	if (parse_plugin_version(&vmajor, &vminor1, &vminor2, &vextra,
+	if (plugin_parse_version(&vmajor, &vminor1, &vminor2, &vextra,
 				 VACCEL_VERSION)) {
 		vaccel_error("Could not parse vaccel version");
 		ret = VACCEL_EINVAL;
@@ -145,7 +144,7 @@ static int is_virtio_plugin(const struct vaccel_plugin_info *pinfo)
 	return pinfo->session_init && pinfo->session_release;
 }
 
-int register_plugin(struct vaccel_plugin *plugin)
+int plugin_register(struct vaccel_plugin *plugin)
 {
 	int ret;
 
@@ -154,7 +153,7 @@ int register_plugin(struct vaccel_plugin *plugin)
 		return VACCEL_EINVAL;
 	}
 
-	if (!plugin_state.initialized) {
+	if (!plugins.initialized) {
 		vaccel_fatal("BUG! Plugin system not initialized");
 		return VACCEL_EBACKEND;
 	}
@@ -167,41 +166,41 @@ int register_plugin(struct vaccel_plugin *plugin)
 	if (!list_empty(&plugin->ops))
 		return VACCEL_EINVAL;
 
-	ret = check_plugin_info(plugin->info);
+	ret = plugin_check_info(plugin->info);
 	if (ret)
 		return ret;
 
-	ret = check_plugin_version(plugin->info);
+	ret = plugin_check_version(plugin->info);
 	if (ret)
 		return ret;
 
 	const struct vaccel_plugin_info *info = plugin->info;
 
-	list_add_tail(&plugin_state.plugins, &plugin->entry);
-	plugin_state.nr_plugins++;
+	list_add_tail(&plugins.registered, &plugin->entry);
+	plugins.nr_registered++;
 
 	vaccel_info("Registered plugin %s %s", info->name, info->version);
 
 	if (is_virtio_plugin(info)) {
 		vaccel_debug("%s is a VirtIO module", info->name);
 
-		if (plugin_state.virtio)
+		if (plugins.virtio)
 			vaccel_debug(
 				"A VirtIO registered is already registered");
 		else {
-			plugin_state.virtio = plugin;
+			plugins.virtio = plugin;
 		}
 	}
 
 	return VACCEL_OK;
 }
 
-int unregister_plugin(struct vaccel_plugin *plugin)
+int plugin_unregister(struct vaccel_plugin *plugin)
 {
 	if (!plugin)
 		return VACCEL_EINVAL;
 
-	if (!plugin_state.initialized)
+	if (!plugins.initialized)
 		return VACCEL_EBACKEND;
 
 	if (!plugin)
@@ -223,7 +222,7 @@ int unregister_plugin(struct vaccel_plugin *plugin)
 	}
 
 	list_unlink_entry(&plugin->entry);
-	plugin_state.nr_plugins--;
+	plugins.nr_registered--;
 
 	if (!plugin->info) {
 		vaccel_error("Plugin is missing info entry");
@@ -241,38 +240,37 @@ int unregister_plugin(struct vaccel_plugin *plugin)
 	return VACCEL_OK;
 }
 
-int register_plugin_function(struct vaccel_op *plugin_op)
+int vaccel_plugin_register_op(struct vaccel_op *op)
 {
-	if (!plugin_op || !plugin_op->func) {
+	if (!op || !op->func) {
 		vaccel_error("Invalid vaccel function");
 		return VACCEL_EINVAL;
 	}
 
-	if (plugin_op->type >= VACCEL_FUNCTIONS_NR) {
+	if (op->type >= VACCEL_FUNCTIONS_NR) {
 		vaccel_error("Unknown function type");
 		return VACCEL_EINVAL;
 	}
 
-	struct vaccel_plugin *plugin = plugin_op->owner;
+	struct vaccel_plugin *plugin = op->owner;
 	if (!plugin) {
 		vaccel_error("Unknown plugin");
 		return VACCEL_EINVAL;
 	}
 
-	list_add_tail(&plugin->ops, &plugin_op->plugin_entry);
-	list_add_tail(&plugin_state.ops[plugin_op->type],
-		      &plugin_op->func_entry);
+	list_add_tail(&plugin->ops, &op->plugin_entry);
+	list_add_tail(&plugins.ops[op->type], &op->func_entry);
 
 	vaccel_debug("Registered function %s from plugin %s",
-		     vaccel_op_type_str(plugin_op->type), plugin->info->name);
+		     vaccel_op_type_str(op->type), plugin->info->name);
 
 	return VACCEL_OK;
 }
 
-int register_plugin_functions(struct vaccel_op *plugin_ops, size_t nr_ops)
+int vaccel_plugin_register_ops(struct vaccel_op *ops, size_t nr_ops)
 {
 	for (size_t i = 0; i < nr_ops; ++i) {
-		int ret = register_plugin_function(&plugin_ops[i]);
+		int ret = vaccel_plugin_register_op(&ops[i]);
 		if (ret)
 			return ret;
 	}
@@ -280,7 +278,7 @@ int register_plugin_functions(struct vaccel_op *plugin_ops, size_t nr_ops)
 	return VACCEL_OK;
 }
 
-void *get_plugin_op(enum vaccel_op_type op_type, unsigned int hint)
+void *plugin_get_op_func(vaccel_op_t op_type, unsigned int hint)
 {
 	unsigned int env_priority = hint & (~VACCEL_REMOTE);
 	struct vaccel_op *op = NULL;
@@ -292,7 +290,7 @@ void *get_plugin_op(enum vaccel_op_type op_type, unsigned int hint)
 		return NULL;
 	}
 
-	if (list_empty(&plugin_state.ops[op_type])) {
+	if (list_empty(&plugins.ops[op_type])) {
 		vaccel_warn("None of the loaded plugins implement %s",
 			    vaccel_op_type_str(op_type));
 		return NULL;
@@ -304,8 +302,7 @@ void *get_plugin_op(enum vaccel_op_type op_type, unsigned int hint)
 	 */
 
 	if (VACCEL_REMOTE & hint) {
-		list_for_each_container_safe(opiter, tmp,
-					     &plugin_state.ops[op_type],
+		list_for_each_container_safe(opiter, tmp, &plugins.ops[op_type],
 					     struct vaccel_op, func_entry)
 		{
 			if (opiter->owner->info->is_virtio) {
@@ -322,8 +319,7 @@ void *get_plugin_op(enum vaccel_op_type op_type, unsigned int hint)
 	}
 
 	if (env_priority) {
-		list_for_each_container_safe(opiter, tmp,
-					     &plugin_state.ops[op_type],
+		list_for_each_container_safe(opiter, tmp, &plugins.ops[op_type],
 					     struct vaccel_op, func_entry)
 		{
 			if ((env_priority & opiter->owner->info->type) != 0) {
@@ -339,12 +335,11 @@ void *get_plugin_op(enum vaccel_op_type op_type, unsigned int hint)
 	// If priority check fails, just return the first (local) implementation we find
 	// or any implementation if it's a single one
 	if (!op) {
-		list_for_each_container_safe(opiter, tmp,
-					     &plugin_state.ops[op_type],
+		list_for_each_container_safe(opiter, tmp, &plugins.ops[op_type],
 					     struct vaccel_op, func_entry)
 		{
 			if (!opiter->owner->info->is_virtio ||
-			    plugin_state.nr_plugins == 1) {
+			    plugins.nr_registered == 1) {
 				op = opiter;
 				vaccel_debug(
 					"Returning func from hint plugin %s ",
@@ -364,12 +359,12 @@ out:
 	return op->func;
 }
 
-int get_available_plugins(enum vaccel_op_type op_type)
+int vaccel_plugin_print_all_by_op_type(vaccel_op_t op_type)
 {
 	struct vaccel_op *opiter;
 	struct vaccel_op *tmp_op;
 
-	list_for_each_container_safe(opiter, tmp_op, &plugin_state.ops[op_type],
+	list_for_each_container_safe(opiter, tmp_op, &plugins.ops[op_type],
 				     struct vaccel_op, func_entry)
 	{
 		char *p_type_str =
@@ -385,52 +380,125 @@ int get_available_plugins(enum vaccel_op_type op_type)
 	return VACCEL_OK;
 }
 
-size_t get_nr_plugins()
+size_t plugin_nr_registered()
 {
-	return plugin_state.nr_plugins;
+	return plugins.nr_registered;
 }
 
-struct vaccel_plugin *get_virtio_plugin()
+struct vaccel_plugin *plugin_virtio()
 {
-	return plugin_state.virtio;
+	return plugins.virtio;
+}
+
+int vaccel_plugin_load(const char *lib)
+{
+	int ret;
+
+	if (lib == NULL)
+		return VACCEL_EINVAL;
+
+	void *dl = dlopen(lib, RTLD_LAZY);
+	if (!dl) {
+		vaccel_error("Could not dlopen plugin %s: %s", lib, dlerror());
+		return VACCEL_ENOENT;
+	}
+
+	struct vaccel_plugin **plugin =
+		(struct vaccel_plugin **)dlsym(dl, "vaccel_plugin");
+	if (!plugin) {
+		vaccel_error("%s is not a vaccel plugin", lib);
+		ret = VACCEL_ELIBBAD;
+		goto close_dl;
+	}
+
+	ret = plugin_register(*plugin);
+	if (ret != VACCEL_OK) {
+		vaccel_error("Could not register plugin %s", lib);
+		goto close_dl;
+	}
+
+	/* Initialize the plugin */
+	ret = (*plugin)->info->init();
+	if (ret != VACCEL_OK) {
+		vaccel_error("Could not initialize plugin %s",
+			     (*plugin)->info->name);
+		goto unregister;
+	}
+
+	/* Keep dl handle so we can later close the library */
+	(*plugin)->dl_handle = dl;
+
+	vaccel_debug("Loaded plugin %s from %s", (*plugin)->info->name, lib);
+
+	return VACCEL_OK;
+
+unregister:
+	plugin_unregister(*plugin);
+close_dl:
+	dlclose(dl);
+	return ret;
+}
+
+int vaccel_plugin_parse_and_load(const char *lib_str)
+{
+	int ret = VACCEL_OK;
+
+	if (lib_str == NULL)
+		return VACCEL_EINVAL;
+
+	char *lib_str_temp = strdup(lib_str);
+	if (!lib_str_temp)
+		return VACCEL_ENOMEM;
+
+	char *lib = strtok(lib_str_temp, ":");
+	while (lib) {
+		ret = vaccel_plugin_load(lib);
+		if (ret != VACCEL_OK)
+			break;
+
+		lib = strtok(NULL, ":");
+	}
+
+	free(lib_str_temp);
+	return ret;
 }
 
 int plugins_bootstrap()
 {
-	list_init(&plugin_state.plugins);
+	list_init(&plugins.registered);
 
 	for (size_t i = 0; i < VACCEL_FUNCTIONS_NR; ++i)
-		list_init(&plugin_state.ops[i]);
+		list_init(&plugins.ops[i]);
 
-	plugin_state.initialized = true;
+	plugins.initialized = true;
 
 	return VACCEL_OK;
 }
 
-int plugins_shutdown()
+int plugins_cleanup()
 {
-	if (!plugin_state.initialized)
+	if (!plugins.initialized)
 		return VACCEL_OK;
 
 	vaccel_debug("Cleaning up plugins");
 
 	struct vaccel_plugin *plugin;
 	struct vaccel_plugin *tmp;
-	list_for_each_container_safe(plugin, tmp, &plugin_state.plugins,
+	list_for_each_container_safe(plugin, tmp, &plugins.registered,
 				     struct vaccel_plugin, entry)
 	{
 		/* Unregister plugin from runtime */
-		int ret = unregister_plugin(plugin);
+		int ret = plugin_unregister(plugin);
 		if (ret != VACCEL_OK) {
-			vaccel_error("Failed to remove plugin, ret: %d", ret);
+			vaccel_warn("Failed to remove plugin, ret: %d", ret);
 			continue;
 		}
 	}
 
-	if (plugin_state.virtio)
-		plugin_state.virtio = NULL;
+	if (plugins.virtio)
+		plugins.virtio = NULL;
 
-	plugin_state.initialized = false;
+	plugins.initialized = false;
 
 	return VACCEL_OK;
 }

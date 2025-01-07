@@ -20,7 +20,7 @@ TEST_CASE("bootstrap_plugin", "[core][bootstrap]")
 	ret = plugins_bootstrap();
 	REQUIRE(ret == VACCEL_OK);
 
-	ret = plugins_shutdown();
+	ret = plugins_cleanup();
 	REQUIRE(ret == VACCEL_OK);
 }
 

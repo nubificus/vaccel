@@ -943,7 +943,7 @@ int vaccel_resource_register(struct vaccel_resource *res,
 	}
 
 	if (sess->is_virtio) {
-		struct vaccel_plugin *virtio = get_virtio_plugin();
+		struct vaccel_plugin *virtio = plugin_virtio();
 		if (virtio) {
 			ret = virtio->info->resource_register(res, sess);
 			if (res->remote_id <= 0 || ret) {
@@ -1005,7 +1005,7 @@ int vaccel_resource_unregister(struct vaccel_resource *res,
 	resource_refcount_dec(res);
 
 	if (sess->is_virtio) {
-		struct vaccel_plugin *virtio = get_virtio_plugin();
+		struct vaccel_plugin *virtio = plugin_virtio();
 		if (virtio) {
 			ret = virtio->info->resource_unregister(res, sess);
 			if (ret) {

@@ -21,7 +21,7 @@ TEST_CASE("constructor_and_destructor", "[core][vaccel]")
 {
 	int ret;
 
-	ret = plugins_shutdown();
+	ret = plugins_cleanup();
 	REQUIRE(ret == VACCEL_OK);
 
 	ret = resources_cleanup();
