@@ -23,7 +23,7 @@ int vaccel_minmax(struct vaccel_session *sess, const double *indata, int ndata,
 	int (*plugin_op)(struct vaccel_session *sess, const double *indata,
 			 int ndata, int low_threshold, int high_threshold,
 			 double *outdata, double *min, double *max) =
-		get_plugin_op(VACCEL_MINMAX, sess->hint);
+		plugin_get_op_func(VACCEL_MINMAX, sess->hint);
 	if (!plugin_op)
 		return VACCEL_ENOTSUP;
 

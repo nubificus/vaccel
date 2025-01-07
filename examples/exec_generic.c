@@ -29,7 +29,7 @@ int main(int argc, char **argv)
 	printf("Initialized session with id: %" PRId64 "\n", sess.id);
 
 	input = 10; /* some random input value */
-	enum vaccel_op_type op_type = VACCEL_EXEC;
+	vaccel_op_t op_type = VACCEL_EXEC;
 	struct vaccel_arg read[4] = {
 		{ .size = sizeof(uint8_t), .buf = &op_type },
 		{ .size = strlen(argv[1]) + 1, .buf = argv[1] },

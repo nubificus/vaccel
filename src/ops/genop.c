@@ -54,7 +54,7 @@ int vaccel_genop(struct vaccel_session *sess, struct vaccel_arg *read,
 		return VACCEL_EINVAL;
 	}
 
-	enum vaccel_op_type op = *(enum vaccel_op_type *)read[0].buf;
+	vaccel_op_t op = *(vaccel_op_t *)read[0].buf;
 	if (op >= VACCEL_FUNCTIONS_NR) {
 		vaccel_error("Invalid operation type: %u", op);
 		return VACCEL_EINVAL;

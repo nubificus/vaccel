@@ -44,7 +44,7 @@ static auto mock_virtio_resource_unregister(struct vaccel_resource *res,
 	return VACCEL_OK;
 }
 
-auto mock_virtio_get_virtio_plugin() -> struct vaccel_plugin *
+auto mock_virtio_plugin_virtio() -> struct vaccel_plugin *
 {
 	plugin_info.name = "fake_virtio";
 	plugin_info.session_init = mock_virtio_session_init;

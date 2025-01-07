@@ -71,7 +71,7 @@ TEST_CASE("exec_generic", "[ops][exec]")
 	ret = vaccel_session_init(&sess, 0);
 	REQUIRE(ret == VACCEL_OK);
 
-	enum vaccel_op_type op_type = VACCEL_EXEC;
+	vaccel_op_t op_type = VACCEL_EXEC;
 
 	char *plugin_path = abs_path(BUILD_ROOT, "examples/libmytestlib.so");
 	const char function_name[] = "mytestfunc";

@@ -39,7 +39,7 @@
 DEFINE_FFF_GLOBALS;
 
 extern "C" {
-FAKE_VALUE_FUNC(struct vaccel_plugin *, get_virtio_plugin);
+FAKE_VALUE_FUNC(struct vaccel_plugin *, plugin_virtio);
 FAKE_VALUE_FUNC(int, net_nocurl_file_download, const char *, const char *);
 }
 
@@ -187,10 +187,9 @@ TEST_CASE("resource_from_directory_path", "[core][resource]")
 
 	SECTION("virtio session")
 	{
-		RESET_FAKE(get_virtio_plugin);
+		RESET_FAKE(plugin_virtio);
 
-		get_virtio_plugin_fake.custom_fake =
-			mock_virtio_get_virtio_plugin;
+		plugin_virtio_fake.custom_fake = mock_virtio_plugin_virtio;
 
 		/* Session init */
 		struct vaccel_session vsess;
@@ -249,7 +248,7 @@ TEST_CASE("resource_from_directory_path", "[core][resource]")
 		/* Release session */
 		REQUIRE(vaccel_session_release(&vsess) == VACCEL_OK);
 
-		REQUIRE(get_virtio_plugin_fake.call_count == 4);
+		REQUIRE(plugin_virtio_fake.call_count == 4);
 	}
 
 	/* Unregister resources */
@@ -374,10 +373,9 @@ TEST_CASE("resource_from_file_paths", "[core][resource]")
 
 	SECTION("virtio session")
 	{
-		RESET_FAKE(get_virtio_plugin);
+		RESET_FAKE(plugin_virtio);
 
-		get_virtio_plugin_fake.custom_fake =
-			mock_virtio_get_virtio_plugin;
+		plugin_virtio_fake.custom_fake = mock_virtio_plugin_virtio;
 
 		/* Session init */
 		struct vaccel_session vsess;
@@ -430,7 +428,7 @@ TEST_CASE("resource_from_file_paths", "[core][resource]")
 		/* Release session */
 		REQUIRE(vaccel_session_release(&vsess) == VACCEL_OK);
 
-		REQUIRE(get_virtio_plugin_fake.call_count == 4);
+		REQUIRE(plugin_virtio_fake.call_count == 4);
 	}
 
 	/* Unregister resources */
@@ -517,10 +515,9 @@ TEST_CASE("resource_from_url_path", "[core][resource]")
 
 	SECTION("virtio session")
 	{
-		RESET_FAKE(get_virtio_plugin);
+		RESET_FAKE(plugin_virtio);
 
-		get_virtio_plugin_fake.custom_fake =
-			mock_virtio_get_virtio_plugin;
+		plugin_virtio_fake.custom_fake = mock_virtio_plugin_virtio;
 
 		/* Session init */
 		struct vaccel_session vsess;
@@ -553,7 +550,7 @@ TEST_CASE("resource_from_url_path", "[core][resource]")
 		/* Release session */
 		REQUIRE(vaccel_session_release(&vsess) == VACCEL_OK);
 
-		REQUIRE(get_virtio_plugin_fake.call_count == 4);
+		REQUIRE(plugin_virtio_fake.call_count == 4);
 	}
 
 	/* Register resources */

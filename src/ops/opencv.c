@@ -22,7 +22,7 @@ int vaccel_opencv(struct vaccel_session *sess, struct vaccel_arg *read,
 		sess->id);
 
 	//Get implementation
-	int (*plugin_op)() = get_plugin_op(VACCEL_OPENCV, sess->hint);
+	int (*plugin_op)() = plugin_get_op_func(VACCEL_OPENCV, sess->hint);
 	if (!plugin_op)
 		return VACCEL_ENOTSUP;
 

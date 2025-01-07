@@ -743,7 +743,7 @@ struct vaccel_op ops[] = {
 
 static int init(void)
 {
-	return register_plugin_functions(ops, sizeof(ops) / sizeof(ops[0]));
+	return vaccel_plugin_register_ops(ops, sizeof(ops) / sizeof(ops[0]));
 }
 
 static int fini(void)
@@ -751,6 +751,6 @@ static int fini(void)
 	return VACCEL_OK;
 }
 
-VACCEL_MODULE(.name = "noop", .version = VACCEL_VERSION,
+VACCEL_PLUGIN(.name = "noop", .version = VACCEL_VERSION,
 	      .vaccel_version = VACCEL_VERSION, .type = VACCEL_PLUGIN_DEBUG,
 	      .init = init, .fini = fini)

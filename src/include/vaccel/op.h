@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "list.h"
 #include <stddef.h>
 #include <stdint.h>
 
@@ -9,7 +10,7 @@
 extern "C" {
 #endif
 
-enum vaccel_op_type {
+typedef enum {
 	VACCEL_NO_OP = 0,
 	VACCEL_BLAS_SGEMM, /* 1 */
 	VACCEL_IMG_CLASS, /* 2 */
@@ -38,7 +39,7 @@ enum vaccel_op_type {
 	VACCEL_TFLITE_SESSION_RUN, /* 25 */
 	VACCEL_TFLITE_SESSION_DELETE, /* 26 */
 	VACCEL_FUNCTIONS_NR
-};
+} vaccel_op_t;
 
 static const char *vaccel_op_name[] = {
 	"noop",
@@ -71,10 +72,34 @@ static const char *vaccel_op_name[] = {
 	"Functions NR",
 };
 
-static inline const char *vaccel_op_type_str(enum vaccel_op_type op_type)
+static inline const char *vaccel_op_type_str(vaccel_op_t op_type)
 {
 	return vaccel_op_name[op_type];
 }
+
+struct vaccel_plugin;
+struct vaccel_op {
+	/* operation type */
+	vaccel_op_t type;
+
+	/* function implementing the operation */
+	void *func;
+
+	/* plugin to which this implementation belongs */
+	struct vaccel_plugin *owner;
+
+	/* entry for list of plugin functions */
+	vaccel_list_entry_t plugin_entry;
+
+	/* entry for global list of functions of this type */
+	vaccel_list_entry_t func_entry;
+};
+
+extern struct vaccel_plugin vaccel_this_plugin;
+#define VACCEL_OP_INIT(name, type, func)         \
+	{ (type), (func), (&vaccel_this_plugin), \
+	  LIST_ENTRY_INIT((name).plugin_entry),  \
+	  LIST_ENTRY_INIT((name).func_entry) }
 
 #ifdef __cplusplus
 }

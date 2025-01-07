@@ -23,8 +23,8 @@ int main()
 
 	printf("Initialized session with id: %" PRId64 "\n", sess.id);
 
-	enum vaccel_op_type op_type = VACCEL_F_ARRAYCOPY;
-	struct vaccel_arg read[2] = { { .size = sizeof(enum vaccel_op_type),
+	vaccel_op_t op_type = VACCEL_F_ARRAYCOPY;
+	struct vaccel_arg read[2] = { { .size = sizeof(vaccel_op_t),
 					.buf = &op_type },
 				      { .size = sizeof(a), .buf = (char *)a } };
 	struct vaccel_arg write[2] = {

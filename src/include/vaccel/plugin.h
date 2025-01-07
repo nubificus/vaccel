@@ -2,20 +2,20 @@
 
 #pragma once
 
+#include "list.h"
+#include "op.h"
+#include "resource.h"
+#include "session.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "session.h"
-#include "list.h"
-#include "resource.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-enum vaccel_plugin_type {
+typedef enum {
 	VACCEL_PLUGIN_CPU = 0x0001,
 	VACCEL_PLUGIN_GPU = 0x0002,
 	VACCEL_PLUGIN_FPGA = 0x0004,
@@ -28,7 +28,7 @@ enum vaccel_plugin_type {
 	VACCEL_REMOTE = 0x4000,
 	VACCEL_PLUGIN_TYPE_MAX = 0x8000,
 	VACCEL_PLUGIN_ALL = 0xffff,
-};
+} vaccel_plugin_t;
 
 static const char *vaccel_plugin_type_name[] = {
 	"CPU",	 "GPU",	   "FPGA",    "SOFTWARE", "TENSORFLOW",
@@ -36,7 +36,7 @@ static const char *vaccel_plugin_type_name[] = {
 };
 
 /* Dummy type to str function for debug */
-static inline char *vaccel_plugin_type_str(enum vaccel_plugin_type type)
+static inline char *vaccel_plugin_type_str(vaccel_plugin_t type)
 {
 	int i = 0;
 	unsigned int tester = 1;
@@ -62,28 +62,28 @@ static inline char *vaccel_plugin_type_str(enum vaccel_plugin_type type)
 }
 
 struct vaccel_plugin_info {
-	/* Name of the plugin */
+	/* name of the plugin */
 	const char *name;
 
-	/* Human-readable version number */
+	/* human-readable version number */
 	const char *version;
 
-	/* Human-readable vAccelRT version that the plugin has been built with */
+	/* human-readable vAccelRT version that the plugin has been built with */
 	const char *vaccel_version;
 
-	/* Plugin initialization function */
+	/* plugin initialization function */
 	int (*init)(void);
 
-	/* Plugin cleaning-up function */
+	/* plugin cleaning-up function */
 	int (*fini)(void);
 
-	/* True if this is a VirtIO plugin */
+	/* true if this is a VirtIO plugin */
 	bool is_virtio;
 
-	/* Plugin enum type */
-	enum vaccel_plugin_type type;
+	/* plugin enum type */
+	vaccel_plugin_t type;
 
-	/* In some cases, like in the context of VirtIO we need to offload
+	/* in some cases, like in the context of VirtIO we need to offload
 	 * session handling to the plugin itself */
 	int (*session_init)(struct vaccel_session *sess, uint32_t flags);
 	int (*session_update)(struct vaccel_session *sess, uint32_t flags);
@@ -95,23 +95,20 @@ struct vaccel_plugin_info {
 };
 
 struct vaccel_plugin {
-	/* Handle for dynamic library implementing plugin */
+	/* handle for dynamic library implementing plugin */
 	void *dl_handle;
 
-	/* Entry for list of plugin */
+	/* entry for list of plugin */
 	vaccel_list_entry_t entry;
 
-	/* List of functions supported by this plugin */
+	/* list of functions supported by this plugin */
 	vaccel_list_t ops;
 
-	/* Plugin information */
+	/* plugin information */
 	struct vaccel_plugin_info *info;
 };
 
-extern struct vaccel_plugin vaccel_this_plugin;
-#define THIS_MODULE (&vaccel_this_plugin)
-
-#define VACCEL_MODULE(...)                                                      \
+#define VACCEL_PLUGIN(...)                                                      \
 	static struct vaccel_plugin_info _vaccel_plugin_info = { __VA_ARGS__ }; \
 	__attribute__((visibility(                                              \
 		"hidden"))) struct vaccel_plugin vaccel_this_plugin = {         \
@@ -122,33 +119,29 @@ extern struct vaccel_plugin vaccel_this_plugin;
 	};                                                                      \
 	const struct vaccel_plugin *vaccel_plugin = &vaccel_this_plugin;
 
-struct vaccel_op {
-	/* operation type */
-	uint8_t type;
+int vaccel_plugin_register_op(struct vaccel_op *op);
+int vaccel_plugin_register_ops(struct vaccel_op *ops, size_t nr_ops);
+int vaccel_plugin_print_all_by_op_type(vaccel_op_t op_type);
+int vaccel_plugin_load(const char *lib);
+int vaccel_plugin_parse_and_load(const char *lib_str);
 
-	/* function implementing the operation */
-	void *func;
+/* Deprecated. To be removed. */
+#define VACCEL_MODULE(...)                                                                    \
+	_Pragma("GCC warning \"VACCEL_MODULE() is deprecated. Use VACCEL_PLUGIN() instead\"") \
+		VACCEL_PLUGIN(__VA_ARGS__)
 
-	/* plugin to which this implementation belongs */
-	struct vaccel_plugin *owner;
-
-	/* Entry for list of plugin functions */
-	vaccel_list_entry_t plugin_entry;
-
-	/* Entry for global list of functions of this type */
-	vaccel_list_entry_t func_entry;
-};
-
-#define VACCEL_OP_INIT(name, type, func)                                     \
-	{ (type), (func), THIS_MODULE, LIST_ENTRY_INIT((name).plugin_entry), \
-	  LIST_ENTRY_INIT((name).func_entry) }
-
-int register_plugin(struct vaccel_plugin *plugin);
-int unregister_plugin(struct vaccel_plugin *plugin);
-int register_plugin_function(struct vaccel_op *plugin_op);
-int register_plugin_functions(struct vaccel_op *plugin_ops, size_t nr_ops);
-
-int vaccel_plugin_load(const char *path);
+__attribute__((deprecated(
+	"Use vaccel_plugin_register_op() instead"))) static inline int
+register_plugin_function(struct vaccel_op *plugin_op)
+{
+	return vaccel_plugin_register_op(plugin_op);
+}
+__attribute__((deprecated(
+	"Use vaccel_plugin_register_ops() instead"))) static inline int
+register_plugin_functions(struct vaccel_op *plugin_ops, size_t nr_ops)
+{
+	return vaccel_plugin_register_ops(plugin_ops, nr_ops);
+}
 
 #ifdef __cplusplus
 }
