@@ -43,9 +43,11 @@ TEST_CASE("classify_generic", "[ops][image][generic]")
 		REQUIRE(1 == 2); // lets fail the test here
 	}
 
-	vaccel_op_t op_type = VACCEL_IMG_CLASS;
+	vaccel_op_type_t op_type = VACCEL_OP_IMAGE_CLASSIFY;
 	struct vaccel_arg read[2] = {
-		{ .argtype = 0, .size = sizeof(vaccel_op_t), .buf = &op_type },
+		{ .argtype = 0,
+		  .size = sizeof(vaccel_op_type_t),
+		  .buf = &op_type },
 		{ .argtype = 0, .size = image_size_uint32, .buf = image }
 	};
 
@@ -91,9 +93,11 @@ TEST_CASE("depth_generic", "[ops][image][generic]")
 		REQUIRE(1 == 2); // lets fail the test here
 	}
 
-	vaccel_op_t op_type = VACCEL_IMG_DEPTH;
+	vaccel_op_type_t op_type = VACCEL_OP_IMAGE_DEPTH;
 	struct vaccel_arg read[2] = {
-		{ .argtype = 0, .size = sizeof(vaccel_op_t), .buf = &op_type },
+		{ .argtype = 0,
+		  .size = sizeof(vaccel_op_type_t),
+		  .buf = &op_type },
 		{ .argtype = 0, .size = image_size_uint32, .buf = image }
 	};
 
@@ -134,9 +138,11 @@ TEST_CASE("detect_generic", "[ops][image][generic]")
 		REQUIRE(1 == 2); // lets fail the test here
 	}
 
-	vaccel_op_t op_type = VACCEL_IMG_DETEC;
+	vaccel_op_type_t op_type = VACCEL_OP_IMAGE_DETECT;
 	struct vaccel_arg read[2] = {
-		{ .argtype = 0, .size = sizeof(vaccel_op_t), .buf = &op_type },
+		{ .argtype = 0,
+		  .size = sizeof(vaccel_op_type_t),
+		  .buf = &op_type },
 		{ .argtype = 0, .size = image_size_uint32, .buf = image }
 	};
 	struct vaccel_arg write[1] = {
@@ -178,9 +184,11 @@ TEST_CASE("pose_generic", "[ops][image][generic]")
 		REQUIRE(1 == 2); // lets fail the test here
 	}
 
-	vaccel_op_t op_type = VACCEL_IMG_POSE;
+	vaccel_op_type_t op_type = VACCEL_OP_IMAGE_POSE;
 	struct vaccel_arg read[2] = {
-		{ .argtype = 0, .size = sizeof(vaccel_op_t), .buf = &op_type },
+		{ .argtype = 0,
+		  .size = sizeof(vaccel_op_type_t),
+		  .buf = &op_type },
 		{ .argtype = 0, .size = image_size_uint32, .buf = image }
 	};
 	struct vaccel_arg write[1] = {
@@ -222,9 +230,11 @@ TEST_CASE("segmentation_generic", "[ops][image][generic]")
 		REQUIRE(1 == 2); // lets fail the test here
 	}
 
-	vaccel_op_t op_type = VACCEL_IMG_SEGME;
+	vaccel_op_type_t op_type = VACCEL_OP_IMAGE_SEGMENT;
 	struct vaccel_arg read[2] = {
-		{ .argtype = 0, .size = sizeof(vaccel_op_t), .buf = &op_type },
+		{ .argtype = 0,
+		  .size = sizeof(vaccel_op_type_t),
+		  .buf = &op_type },
 		{ .argtype = 0, .size = image_size_uint32, .buf = image }
 	};
 	struct vaccel_arg write[1] = {

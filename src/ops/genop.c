@@ -19,7 +19,7 @@ typedef int (*unpack_func_t)(struct vaccel_session *sess,
 			     struct vaccel_arg *read, int nr_read,
 			     struct vaccel_arg *write, int nr_write);
 
-unpack_func_t callbacks[VACCEL_FUNCTIONS_NR] = {
+unpack_func_t callbacks[VACCEL_OP_MAX] = {
 	vaccel_noop_unpack, /* 0 */
 	vaccel_sgemm_unpack, /* 1 */
 	vaccel_image_classification_unpack, /* 2 */
@@ -54,8 +54,8 @@ int vaccel_genop(struct vaccel_session *sess, struct vaccel_arg *read,
 		return VACCEL_EINVAL;
 	}
 
-	vaccel_op_t op = *(vaccel_op_t *)read[0].buf;
-	if (op >= VACCEL_FUNCTIONS_NR) {
+	vaccel_op_type_t op = *(vaccel_op_type_t *)read[0].buf;
+	if (op >= VACCEL_OP_MAX) {
 		vaccel_error("Invalid operation type: %u", op);
 		return VACCEL_EINVAL;
 	}

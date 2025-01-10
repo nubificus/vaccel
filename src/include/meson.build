@@ -25,7 +25,9 @@ vaccel_public_headers = files([
   'vaccel/prof.h',
   'vaccel/resource.h',
   'vaccel/session.h',
+  'vaccel/utils/enum.h',
   'vaccel/utils/path.h',
+  'vaccel/utils/str.h',
 ])
 
 vaccel_public_headers += include_vaccel_h

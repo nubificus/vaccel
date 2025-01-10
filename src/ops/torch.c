@@ -188,7 +188,7 @@ int vaccel_torch_jitload_forward(struct vaccel_session *sess,
 	}
 
 	torch_jitload_forward_fn_t plugin_torch_jitload_forward =
-		plugin_get_op_func(VACCEL_TORCH_JITLOAD_FORWARD, sess->hint);
+		plugin_get_op_func(VACCEL_OP_TORCH_JITLOAD_FORWARD, sess->hint);
 	if (!plugin_torch_jitload_forward)
 		return VACCEL_ENOTSUP;
 
@@ -216,7 +216,7 @@ int vaccel_torch_sgemm(struct vaccel_session *sess,
 		     sess->id);
 
 	torch_sgemm_fn_t plugin_torch_sgemm =
-		plugin_get_op_func(VACCEL_TORCH_SGEMM, sess->hint);
+		plugin_get_op_func(VACCEL_OP_TORCH_SGEMM, sess->hint);
 	if (!plugin_torch_sgemm) {
 		vaccel_debug("Plugin loading failed");
 		return VACCEL_ENOTSUP;

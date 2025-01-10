@@ -55,12 +55,13 @@ int vaccel_session_resource_by_id(struct vaccel_session *sess,
  * session. */
 int vaccel_session_resource_by_type(struct vaccel_session *sess,
 				    struct vaccel_resource **res,
-				    vaccel_resource_t type);
+				    vaccel_resource_type_t type);
 
 /* Get a list of the registered resources, by type */
 int vaccel_session_resources_by_type(struct vaccel_session *sess,
 				     struct vaccel_resource ***resources,
-				     size_t *nr_found, vaccel_resource_t type);
+				     size_t *nr_found,
+				     vaccel_resource_type_t type);
 
 /* Deprecated. To be removed. */
 int vaccel_sess_init(struct vaccel_session *sess, uint32_t flags);

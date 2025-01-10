@@ -32,8 +32,8 @@ int main(int argc, char *argv[])
 	if (ret)
 		goto close_session;
 
-	vaccel_op_t op_type = VACCEL_IMG_DETEC;
-	struct vaccel_arg read[2] = { { .size = sizeof(vaccel_op_t),
+	vaccel_op_type_t op_type = VACCEL_OP_IMAGE_DETECT;
+	struct vaccel_arg read[2] = { { .size = sizeof(vaccel_op_type_t),
 					.buf = &op_type },
 				      { .size = image_size, .buf = image } };
 	struct vaccel_arg write[1] = {

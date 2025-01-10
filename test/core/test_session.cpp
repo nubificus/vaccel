@@ -278,7 +278,7 @@ TEST_CASE("session_virtio", "[core][session]")
 
 	plugin_virtio_fake.custom_fake = mock_virtio_plugin_virtio;
 
-	ret = vaccel_session_init(&test_sess, 1 | VACCEL_REMOTE);
+	ret = vaccel_session_init(&test_sess, 1 | VACCEL_PLUGIN_REMOTE);
 	REQUIRE(VACCEL_OK == ret);
 
 	ret = vaccel_session_update(&test_sess, 2);

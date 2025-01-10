@@ -24,7 +24,7 @@ typedef int (*image_op_fn_t)(struct vaccel_session *sess, const void *img,
 			     unsigned char *out_imgname, size_t len_img,
 			     size_t len_out_text, size_t len_out_imgname);
 
-int vaccel_image_op(vaccel_op_t op_type, struct vaccel_session *sess,
+int vaccel_image_op(vaccel_op_type_t op_type, struct vaccel_session *sess,
 		    const void *img, unsigned char *out_text,
 		    unsigned char *out_imgname, size_t len_img,
 		    size_t len_out_text, size_t len_out_imgname)
@@ -35,7 +35,7 @@ int vaccel_image_op(vaccel_op_t op_type, struct vaccel_session *sess,
 		return VACCEL_EINVAL;
 
 	vaccel_debug("session:%" PRId64 " Looking for plugin implementing %s",
-		     sess->id, vaccel_op_type_str(op_type));
+		     sess->id, vaccel_op_type_to_str(op_type));
 
 	vaccel_prof_region_start(&image_op_stats);
 
@@ -66,22 +66,23 @@ out:
 	vaccel_image_op(op_type, sess, img, NULL, out_imgname, len_img, 0, \
 			len_out_imgname)
 
-int vaccel_image_op_unpack(vaccel_op_t op_type, struct vaccel_session *sess,
-			   struct vaccel_arg *read, int nr_read,
-			   int nr_read_req, struct vaccel_arg *write,
-			   int nr_write, int nr_write_req)
+int vaccel_image_op_unpack(vaccel_op_type_t op_type,
+			   struct vaccel_session *sess, struct vaccel_arg *read,
+			   int nr_read, int nr_read_req,
+			   struct vaccel_arg *write, int nr_write,
+			   int nr_write_req)
 {
 	if (nr_read != nr_read_req) {
 		vaccel_error(
 			"Wrong number of read arguments in %s: %d (expected %d)",
-			vaccel_op_type_str(op_type), nr_read, nr_read_req);
+			vaccel_op_type_to_str(op_type), nr_read, nr_read_req);
 		return VACCEL_EINVAL;
 	}
 
 	if (nr_write != nr_write_req) {
 		vaccel_error(
 			"Wrong number of write arguments in %s: %d (expected %d)",
-			vaccel_op_type_str(op_type), nr_write, nr_write_req);
+			vaccel_op_type_to_str(op_type), nr_write, nr_write_req);
 		return VACCEL_EINVAL;
 	}
 
@@ -110,7 +111,7 @@ int vaccel_image_classification(struct vaccel_session *sess, const void *img,
 				unsigned char *out_imgname, size_t len_img,
 				size_t len_out_text, size_t len_out_imgname)
 {
-	return vaccel_image_op(VACCEL_IMG_CLASS, sess, img, out_text,
+	return vaccel_image_op(VACCEL_OP_IMAGE_CLASSIFY, sess, img, out_text,
 			       out_imgname, len_img, len_out_text,
 			       len_out_imgname);
 }
@@ -119,72 +120,72 @@ int vaccel_image_classification_unpack(struct vaccel_session *sess,
 				       struct vaccel_arg *read, int nr_read,
 				       struct vaccel_arg *write, int nr_write)
 {
-	return vaccel_image_op_unpack(VACCEL_IMG_CLASS, sess, read, nr_read, 1,
-				      write, nr_write, 2);
+	return vaccel_image_op_unpack(VACCEL_OP_IMAGE_CLASSIFY, sess, read,
+				      nr_read, 1, write, nr_write, 2);
 }
 
 int vaccel_image_detection(struct vaccel_session *sess, const void *img,
 			   unsigned char *out_imgname, size_t len_img,
 			   size_t len_out_imgname)
 {
-	return vaccel_image_op_no_text(VACCEL_IMG_DETEC, sess, img, out_imgname,
-				       len_img, len_out_imgname);
+	return vaccel_image_op_no_text(VACCEL_OP_IMAGE_DETECT, sess, img,
+				       out_imgname, len_img, len_out_imgname);
 }
 
 int vaccel_image_detection_unpack(struct vaccel_session *sess,
 				  struct vaccel_arg *read, int nr_read,
 				  struct vaccel_arg *write, int nr_write)
 {
-	return vaccel_image_op_unpack(VACCEL_IMG_DETEC, sess, read, nr_read, 1,
-				      write, nr_write, 1);
+	return vaccel_image_op_unpack(VACCEL_OP_IMAGE_DETECT, sess, read,
+				      nr_read, 1, write, nr_write, 1);
 }
 
 int vaccel_image_segmentation(struct vaccel_session *sess, const void *img,
 			      unsigned char *out_imgname, size_t len_img,
 			      size_t len_out_imgname)
 {
-	return vaccel_image_op_no_text(VACCEL_IMG_SEGME, sess, img, out_imgname,
-				       len_img, len_out_imgname);
+	return vaccel_image_op_no_text(VACCEL_OP_IMAGE_SEGMENT, sess, img,
+				       out_imgname, len_img, len_out_imgname);
 }
 
 int vaccel_image_segmentation_unpack(struct vaccel_session *sess,
 				     struct vaccel_arg *read, int nr_read,
 				     struct vaccel_arg *write, int nr_write)
 {
-	return vaccel_image_op_unpack(VACCEL_IMG_SEGME, sess, read, nr_read, 1,
-				      write, nr_write, 1);
+	return vaccel_image_op_unpack(VACCEL_OP_IMAGE_SEGMENT, sess, read,
+				      nr_read, 1, write, nr_write, 1);
 }
 
 int vaccel_image_pose(struct vaccel_session *sess, const void *img,
 		      unsigned char *out_imgname, size_t len_img,
 		      size_t len_out_imgname)
 {
-	return vaccel_image_op_no_text(VACCEL_IMG_POSE, sess, img, out_imgname,
-				       len_img, len_out_imgname);
+	return vaccel_image_op_no_text(VACCEL_OP_IMAGE_POSE, sess, img,
+				       out_imgname, len_img, len_out_imgname);
 }
 
 int vaccel_image_pose_unpack(struct vaccel_session *sess,
 			     struct vaccel_arg *read, int nr_read,
 			     struct vaccel_arg *write, int nr_write)
 {
-	return vaccel_image_op_unpack(VACCEL_IMG_POSE, sess, read, nr_read, 1,
-				      write, nr_write, 1);
+	return vaccel_image_op_unpack(VACCEL_OP_IMAGE_POSE, sess, read, nr_read,
+				      1, write, nr_write, 1);
 }
 
 int vaccel_image_depth(struct vaccel_session *sess, const void *img,
 		       unsigned char *out_imgname, size_t len_img,
 		       size_t len_out_imgname)
 {
-	return vaccel_image_op_no_text(VACCEL_IMG_DEPTH, sess, img, out_imgname,
-				       len_img, len_out_imgname);
+	return vaccel_image_op_no_text(VACCEL_OP_IMAGE_DEPTH, sess, img,
+				       out_imgname, len_img, len_out_imgname);
 }
 
 int vaccel_image_depth_unpack(struct vaccel_session *sess,
 			      struct vaccel_arg *read, int nr_read,
 			      struct vaccel_arg *write, int nr_write)
 {
-	return vaccel_image_op_unpack(VACCEL_IMG_DEPTH, sess, read, nr_read, 1,
-				      write, nr_write, 1);
+	return vaccel_image_op_unpack(VACCEL_OP_IMAGE_DEPTH, sess, read,
+				      nr_read, 1, write, nr_write, 1);
 }
 
 __attribute__((constructor)) static void vaccel_ops_init(void)

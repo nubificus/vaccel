@@ -3,6 +3,7 @@
 #pragma once
 
 #include "list.h"
+#include "utils/enum.h"
 #include <stddef.h>
 #include <stdint.h>
 
@@ -10,77 +11,46 @@
 extern "C" {
 #endif
 
-typedef enum {
-	VACCEL_NO_OP = 0,
-	VACCEL_BLAS_SGEMM, /* 1 */
-	VACCEL_IMG_CLASS, /* 2 */
-	VACCEL_IMG_DETEC, /* 3 */
-	VACCEL_IMG_SEGME, /* 4 */
-	VACCEL_IMG_POSE, /* 5 */
-	VACCEL_IMG_DEPTH, /* 6 */
-	VACCEL_EXEC, /* 7 */
-	VACCEL_TF_MODEL_NEW, /* 8 */
-	VACCEL_TF_MODEL_DESTROY, /* 9 */
-	VACCEL_TF_MODEL_REGISTER, /* 10 */
-	VACCEL_TF_MODEL_UNREGISTER, /* 11 */
-	VACCEL_TF_SESSION_LOAD, /* 12 */
-	VACCEL_TF_SESSION_RUN, /* 13 */
-	VACCEL_TF_SESSION_DELETE, /* 14 */
-	VACCEL_MINMAX, /* 15 */
-	VACCEL_F_ARRAYCOPY, /* 16 */
-	VACCEL_F_MMULT, /* 17 */
-	VACCEL_F_PARALLEL, /* 18 */
-	VACCEL_F_VECTORADD, /* 19 */
-	VACCEL_EXEC_WITH_RESOURCE, /* 20 */
-	VACCEL_TORCH_JITLOAD_FORWARD, /* 21 */
-	VACCEL_TORCH_SGEMM, /* 22 */
-	VACCEL_OPENCV, /* 23 */
-	VACCEL_TFLITE_SESSION_LOAD, /* 24 */
-	VACCEL_TFLITE_SESSION_RUN, /* 25 */
-	VACCEL_TFLITE_SESSION_DELETE, /* 26 */
-	VACCEL_FUNCTIONS_NR
-} vaccel_op_t;
+/* Define vaccel_op_type_t, vaccel_op_type_to_str() and
+ * vaccel_op_type_to_base_str() */
+#define _ENUM_PREFIX VACCEL_OP
+#define VACCEL_OP_TYPE_ENUM_LIST(VACCEL_ENUM_ITEM)            \
+	VACCEL_ENUM_ITEM(NOOP, 0, _ENUM_PREFIX)               \
+	VACCEL_ENUM_ITEM(BLAS_SGEMM, _ENUM_PREFIX)            \
+	VACCEL_ENUM_ITEM(IMAGE_CLASSIFY, _ENUM_PREFIX)        \
+	VACCEL_ENUM_ITEM(IMAGE_DETECT, _ENUM_PREFIX)          \
+	VACCEL_ENUM_ITEM(IMAGE_SEGMENT, _ENUM_PREFIX)         \
+	VACCEL_ENUM_ITEM(IMAGE_POSE, _ENUM_PREFIX)            \
+	VACCEL_ENUM_ITEM(IMAGE_DEPTH, _ENUM_PREFIX)           \
+	VACCEL_ENUM_ITEM(EXEC, _ENUM_PREFIX)                  \
+	VACCEL_ENUM_ITEM(TF_MODEL_NEW, _ENUM_PREFIX)          \
+	VACCEL_ENUM_ITEM(TF_MODEL_DESTROY, _ENUM_PREFIX)      \
+	VACCEL_ENUM_ITEM(TF_MODEL_REGISTER, _ENUM_PREFIX)     \
+	VACCEL_ENUM_ITEM(TF_MODEL_UNREGISTER, _ENUM_PREFIX)   \
+	VACCEL_ENUM_ITEM(TF_SESSION_LOAD, _ENUM_PREFIX)       \
+	VACCEL_ENUM_ITEM(TF_SESSION_RUN, _ENUM_PREFIX)        \
+	VACCEL_ENUM_ITEM(TF_SESSION_DELETE, _ENUM_PREFIX)     \
+	VACCEL_ENUM_ITEM(MINMAX, _ENUM_PREFIX)                \
+	VACCEL_ENUM_ITEM(FPGA_ARRAYCOPY, _ENUM_PREFIX)        \
+	VACCEL_ENUM_ITEM(FPGA_MMULT, _ENUM_PREFIX)            \
+	VACCEL_ENUM_ITEM(FPGA_PARALLEL, _ENUM_PREFIX)         \
+	VACCEL_ENUM_ITEM(FPGA_VECTORADD, _ENUM_PREFIX)        \
+	VACCEL_ENUM_ITEM(EXEC_WITH_RESOURCE, _ENUM_PREFIX)    \
+	VACCEL_ENUM_ITEM(TORCH_JITLOAD_FORWARD, _ENUM_PREFIX) \
+	VACCEL_ENUM_ITEM(TORCH_SGEMM, _ENUM_PREFIX)           \
+	VACCEL_ENUM_ITEM(OPENCV, _ENUM_PREFIX)                \
+	VACCEL_ENUM_ITEM(TFLITE_SESSION_LOAD, _ENUM_PREFIX)   \
+	VACCEL_ENUM_ITEM(TFLITE_SESSION_RUN, _ENUM_PREFIX)    \
+	VACCEL_ENUM_ITEM(TFLITE_SESSION_DELETE, _ENUM_PREFIX)
 
-static const char *vaccel_op_name[] = {
-	"noop",
-	"sgemm",
-	"image classification",
-	"image detection",
-	"image segmentation",
-	"image pose estimation",
-	"image depth estimation",
-	"exec",
-	"TensorFlow model create",
-	"TensorFlow model destroy",
-	"TensorFlow model register",
-	"TensorFlow model unregister",
-	"TensorFlow session load",
-	"TensorFlow session run",
-	"TensorFlow session delete",
-	"MinMax",
-	"Array copy",
-	"Matrix multiplication",
-	"Parallel acceleration",
-	"Vector Add",
-	"Exec with resource",
-	"Torch jitload_forward function",
-	"Torch SGEMM",
-	"OpenCV Generic",
-	"TensorFlow Lite session load",
-	"TensorFlow Lite session run",
-	"TensorFlow Lite session delete",
-	"Functions NR",
-};
-
-static inline const char *vaccel_op_type_str(vaccel_op_t op_type)
-{
-	return vaccel_op_name[op_type];
-}
+VACCEL_ENUM_DEF_WITH_STR_FUNCS(vaccel_op_type, _ENUM_PREFIX,
+			       VACCEL_OP_TYPE_ENUM_LIST)
+#undef _ENUM_PREFIX
 
 struct vaccel_plugin;
 struct vaccel_op {
 	/* operation type */
-	vaccel_op_t type;
+	vaccel_op_type_t type;
 
 	/* function implementing the operation */
 	void *func;

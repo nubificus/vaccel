@@ -28,7 +28,7 @@ int vaccel_noop(struct vaccel_session *sess)
 
 	vaccel_prof_region_start(&noop_op_stats);
 
-	noop_fn_t plugin_noop = plugin_get_op_func(VACCEL_NO_OP, sess->hint);
+	noop_fn_t plugin_noop = plugin_get_op_func(VACCEL_OP_NOOP, sess->hint);
 	if (!plugin_noop)
 		return VACCEL_ENOTSUP;
 

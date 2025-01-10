@@ -256,7 +256,7 @@ int vaccel_tf_session_load(struct vaccel_session *sess,
 	vaccel_prof_region_start(&tf_load_stats);
 
 	tf_session_load_fn_t plugin_tf_session_load =
-		plugin_get_op_func(VACCEL_TF_SESSION_LOAD, sess->hint);
+		plugin_get_op_func(VACCEL_OP_TF_SESSION_LOAD, sess->hint);
 	if (!plugin_tf_session_load) {
 		ret = VACCEL_ENOTSUP;
 		goto out;
@@ -315,7 +315,7 @@ int vaccel_tf_session_run(struct vaccel_session *sess,
 	vaccel_prof_region_start(&tf_session_run_stats);
 
 	tf_session_run_fn_t plugin_tf_session_run =
-		plugin_get_op_func(VACCEL_TF_SESSION_RUN, sess->hint);
+		plugin_get_op_func(VACCEL_OP_TF_SESSION_RUN, sess->hint);
 	if (!plugin_tf_session_run) {
 		ret = VACCEL_ENOTSUP;
 		goto out;
@@ -365,7 +365,7 @@ int vaccel_tf_session_delete(struct vaccel_session *sess,
 	}
 
 	tf_session_delete_fn_t plugin_tf_session_delete =
-		plugin_get_op_func(VACCEL_TF_SESSION_DELETE, sess->hint);
+		plugin_get_op_func(VACCEL_OP_TF_SESSION_DELETE, sess->hint);
 	if (!plugin_tf_session_delete) {
 		ret = VACCEL_ENOTSUP;
 		goto out;

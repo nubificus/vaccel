@@ -193,7 +193,7 @@ TEST_CASE("resource_from_directory_path", "[core][resource]")
 
 		/* Session init */
 		struct vaccel_session vsess;
-		REQUIRE(vaccel_session_init(&vsess, 0 | VACCEL_REMOTE) ==
+		REQUIRE(vaccel_session_init(&vsess, 0 | VACCEL_PLUGIN_REMOTE) ==
 			VACCEL_OK);
 
 		/* Register resource */
@@ -379,7 +379,7 @@ TEST_CASE("resource_from_file_paths", "[core][resource]")
 
 		/* Session init */
 		struct vaccel_session vsess;
-		REQUIRE(vaccel_session_init(&vsess, 0 | VACCEL_REMOTE) ==
+		REQUIRE(vaccel_session_init(&vsess, 0 | VACCEL_PLUGIN_REMOTE) ==
 			VACCEL_OK);
 
 		/* Register resource */
@@ -521,7 +521,7 @@ TEST_CASE("resource_from_url_path", "[core][resource]")
 
 		/* Session init */
 		struct vaccel_session vsess;
-		REQUIRE(vaccel_session_init(&vsess, 0 | VACCEL_REMOTE) ==
+		REQUIRE(vaccel_session_init(&vsess, 0 | VACCEL_PLUGIN_REMOTE) ==
 			VACCEL_OK);
 
 		/* Register resource */
@@ -851,7 +851,7 @@ TEST_CASE("resource_init_fail", "[core][resource]")
 	int ret;
 	struct vaccel_resource res;
 	struct vaccel_resource *alloc_res;
-	vaccel_resource_t const test_type = VACCEL_RESOURCE_LIB;
+	vaccel_resource_type_t const test_type = VACCEL_RESOURCE_LIB;
 
 	char *test_path = abs_path(BUILD_ROOT, "examples/libmytestlib.so");
 	const char *paths[2] = { test_path, nullptr };
@@ -1000,7 +1000,7 @@ TEST_CASE("resource_release_fail", "[core][resource]")
 {
 	int ret;
 	struct vaccel_resource res;
-	vaccel_resource_t const test_type = VACCEL_RESOURCE_LIB;
+	vaccel_resource_type_t const test_type = VACCEL_RESOURCE_LIB;
 	char *test_path = abs_path(BUILD_ROOT, "examples/libmytestlib.so");
 
 	ret = vaccel_resource_init(&res, test_path, test_type);
@@ -1047,7 +1047,7 @@ TEST_CASE("resource_multiple_sessions", "[core][resource]")
 	int ret;
 	struct vaccel_resource res;
 	char *test_path = abs_path(BUILD_ROOT, "examples/libmytestlib.so");
-	vaccel_resource_t const test_type = VACCEL_RESOURCE_LIB;
+	vaccel_resource_type_t const test_type = VACCEL_RESOURCE_LIB;
 
 	const size_t nr_sessions = 4;
 	struct vaccel_session sessions[nr_sessions];
@@ -1091,7 +1091,7 @@ TEST_CASE("resource_register_fail", "[core][resource]")
 	int ret;
 	struct vaccel_resource res;
 	char *test_path = abs_path(BUILD_ROOT, "examples/libmytestlib.so");
-	vaccel_resource_t const test_type = VACCEL_RESOURCE_LIB;
+	vaccel_resource_type_t const test_type = VACCEL_RESOURCE_LIB;
 
 	struct vaccel_session sess;
 	REQUIRE(vaccel_session_init(&sess, 0) == VACCEL_OK);
@@ -1128,7 +1128,7 @@ TEST_CASE("resource_unregister_fail", "[core][resource]")
 	int ret;
 	struct vaccel_resource res;
 	char *test_path = abs_path(BUILD_ROOT, "examples/libmytestlib.so");
-	vaccel_resource_t const test_type = VACCEL_RESOURCE_LIB;
+	vaccel_resource_type_t const test_type = VACCEL_RESOURCE_LIB;
 
 	struct vaccel_session sess;
 	REQUIRE(vaccel_session_init(&sess, 0) == VACCEL_OK);
@@ -1323,7 +1323,7 @@ TEST_CASE("resources_not_bootstrapped", "[core][resource]")
 {
 	int ret;
 	struct vaccel_resource res;
-	vaccel_resource_t const test_type = VACCEL_RESOURCE_LIB;
+	vaccel_resource_type_t const test_type = VACCEL_RESOURCE_LIB;
 
 	// cleanup here so resources are not bootstrapped
 	ret = resources_cleanup();

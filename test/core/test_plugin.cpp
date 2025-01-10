@@ -64,7 +64,7 @@ TEST_CASE("print_all_by_op_type", "[core][plugin]")
 	plugin.info->type = VACCEL_PLUGIN_GENERIC;
 
 	vaccel_op operation;
-	operation.type = VACCEL_NO_OP;
+	operation.type = VACCEL_OP_NOOP;
 	operation.func = (void *)no_op;
 	operation.owner = &plugin;
 	list_init_entry(&operation.plugin_entry);
@@ -79,8 +79,7 @@ TEST_CASE("print_all_by_op_type", "[core][plugin]")
 	ret = vaccel_plugin_register_op(&operation);
 	REQUIRE(ret == VACCEL_OK);
 
-	ret = vaccel_plugin_print_all_by_op_type(VACCEL_NO_OP);
-	REQUIRE(ret == VACCEL_OK);
+	vaccel_plugin_print_all_by_op_type(VACCEL_OP_NOOP);
 
 	ret = plugin_unregister(&plugin);
 	REQUIRE(ret == VACCEL_OK);
@@ -112,14 +111,14 @@ TEST_CASE("register_multiple_functions", "[core][plugin]")
 	size_t const operation_array_size = 2;
 
 	vaccel_op operation1;
-	operation1.type = VACCEL_NO_OP;
+	operation1.type = VACCEL_OP_NOOP;
 	operation1.func = (void *)no_op;
 	operation1.owner = &plugin;
 	list_init_entry(&operation1.plugin_entry);
 	list_init_entry(&operation1.func_entry);
 
 	vaccel_op operation2;
-	operation2.type = VACCEL_EXEC;
+	operation2.type = VACCEL_OP_EXEC;
 	operation2.func = (void *)exec_op;
 	operation2.owner = &plugin;
 	list_init_entry(&operation2.plugin_entry);
@@ -135,24 +134,24 @@ TEST_CASE("register_multiple_functions", "[core][plugin]")
 
 	// fetch operation which is not registered yet
 	void *operation;
-	operation = plugin_get_op_func(VACCEL_EXEC, 0);
+	operation = plugin_get_op_func(VACCEL_OP_EXEC, 0);
 	REQUIRE(operation == nullptr);
 
 	ret = vaccel_plugin_register_ops(operation_array, operation_array_size);
 	REQUIRE(ret == VACCEL_OK);
 
-	operation = plugin_get_op_func(VACCEL_EXEC, 0);
+	operation = plugin_get_op_func(VACCEL_OP_EXEC, 0);
 	REQUIRE(operation != nullptr);
 	ret = reinterpret_cast<int (*)()>(operation)();
 	REQUIRE(ret == 3);
 
-	operation = plugin_get_op_func(VACCEL_NO_OP, 0);
+	operation = plugin_get_op_func(VACCEL_OP_NOOP, 0);
 	REQUIRE(operation != nullptr);
 	ret = reinterpret_cast<int (*)()>(operation)();
 	REQUIRE(ret == 2);
 
 	// search using hint
-	operation = plugin_get_op_func(VACCEL_NO_OP, VACCEL_PLUGIN_GENERIC);
+	operation = plugin_get_op_func(VACCEL_OP_NOOP, VACCEL_PLUGIN_GENERIC);
 	REQUIRE(operation != nullptr);
 	ret = reinterpret_cast<int (*)()>(operation)();
 	REQUIRE(ret == 2);
@@ -185,7 +184,7 @@ TEST_CASE("plugin_register_ops", "[core][plugin]")
 	plugin.info->type = VACCEL_PLUGIN_GENERIC;
 
 	vaccel_op operation;
-	operation.type = VACCEL_NO_OP;
+	operation.type = VACCEL_OP_NOOP;
 	operation.func = (void *)no_op;
 	operation.owner = &plugin;
 	list_init_entry(&operation.plugin_entry);
@@ -273,7 +272,7 @@ TEST_CASE("plugin_register_vaccel_versions", "[core][plugin]")
 	plugin.info->type = VACCEL_PLUGIN_GENERIC;
 
 	vaccel_op operation;
-	operation.type = VACCEL_NO_OP;
+	operation.type = VACCEL_OP_NOOP;
 	operation.func = (void *)no_op;
 	operation.owner = &plugin;
 	list_init_entry(&operation.plugin_entry);

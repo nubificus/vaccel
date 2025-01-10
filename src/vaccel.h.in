@@ -28,9 +28,11 @@
 #include "prof.h"
 #include "resource.h"
 #include "session.h"
+#include "utils/enum.h"
 #include "utils/fs.h"
 #include "utils/net.h"
 #include "utils/path.h"
+#include "utils/str.h"
 
 // IWYU pragma: end_exports
 

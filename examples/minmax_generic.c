@@ -72,9 +72,9 @@ int main(int argc, char *argv[])
 	struct timespec t0;
 	struct timespec t1;
 
-	vaccel_op_t op_type = VACCEL_MINMAX;
+	vaccel_op_type_t op_type = VACCEL_OP_MINMAX;
 	struct vaccel_arg read[5] = {
-		{ .size = sizeof(vaccel_op_t), .buf = &op_type },
+		{ .size = sizeof(vaccel_op_type_t), .buf = &op_type },
 		{ .size = ndata * sizeof(double), .buf = indata },
 		{ .size = sizeof(int), .buf = &ndata },
 		{ .size = sizeof(int), .buf = &low_threshold },
