@@ -68,7 +68,7 @@ static int mbench_unpack(struct vaccel_session *session, const char *library,
 	return ret;
 }
 struct vaccel_op ops[] = {
-	VACCEL_OP_INIT(ops[0], VACCEL_EXEC, mbench_unpack),
+	VACCEL_OP_INIT(ops[0], VACCEL_OP_EXEC, mbench_unpack),
 };
 
 static int init(void)

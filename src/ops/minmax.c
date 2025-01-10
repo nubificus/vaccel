@@ -22,10 +22,10 @@ int vaccel_minmax(struct vaccel_session *sess, const double *indata, int ndata,
 		return VACCEL_EINVAL;
 
 	vaccel_debug("session:%" PRId64 " Looking for plugin implementing %s",
-		     sess->id, vaccel_op_type_str(VACCEL_MINMAX));
+		     sess->id, vaccel_op_type_to_str(VACCEL_OP_MINMAX));
 
 	minmax_fn_t plugin_minmax =
-		plugin_get_op_func(VACCEL_MINMAX, sess->hint);
+		plugin_get_op_func(VACCEL_OP_MINMAX, sess->hint);
 	if (!plugin_minmax)
 		return VACCEL_ENOTSUP;
 

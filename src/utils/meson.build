@@ -1,11 +1,14 @@
 vaccel_headers += files([
-  'path.h',
+  'enum.h',
   'fs.h',
   'net.h',
+  'path.h',
+  'str.h',
 ])
 
 vaccel_sources += files([
-  'path.c',
   'fs.c',
   'net.c',
+  'path.c',
+  'str.c',
 ])

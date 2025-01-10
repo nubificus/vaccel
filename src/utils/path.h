@@ -11,17 +11,17 @@ extern "C" {
 #endif
 
 /* Parse path string from URI */
-int path_init_from_uri(char *path, size_t size, vaccel_path_t *type,
+int path_init_from_uri(char *path, size_t size, vaccel_path_type_t *type,
 		       const char *uri);
 
 /* Allocate string and parse path from URI */
-int path_from_uri(char **path, vaccel_path_t *type, const char *uri);
+int path_from_uri(char **path, vaccel_path_type_t *type, const char *uri);
 
 /* Check if path is a url */
 bool path_is_url(const char *path);
 
 /* Determine type of path */
-int path_type(const char *path, vaccel_path_t *type);
+int path_type(const char *path, vaccel_path_type_t *type);
 
 /* Generate path string from path parts.
  * IMPORTANT: Last argument should always be NULL */

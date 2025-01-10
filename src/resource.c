@@ -80,7 +80,7 @@ int vaccel_resource_get_by_id(struct vaccel_resource **res, vaccel_id_t id)
 }
 
 int vaccel_resource_get_by_type(struct vaccel_resource **res,
-				vaccel_resource_t type)
+				vaccel_resource_type_t type)
 {
 	if (!initialized)
 		return VACCEL_EPERM;
@@ -101,7 +101,8 @@ int vaccel_resource_get_by_type(struct vaccel_resource **res,
 }
 
 int vaccel_resource_get_all_by_type(struct vaccel_resource ***resources,
-				    size_t *nr_found, vaccel_resource_t type)
+				    size_t *nr_found,
+				    vaccel_resource_type_t type)
 {
 	if (!initialized)
 		return VACCEL_EPERM;
@@ -500,7 +501,7 @@ static int resource_add_files_from_remote(struct vaccel_resource *res,
 }
 
 static int resource_init_with_paths(struct vaccel_resource *res,
-				    vaccel_resource_t type)
+				    vaccel_resource_type_t type)
 {
 	if (!res || !res->paths || !res->nr_paths || !res->paths[0] ||
 	    type >= VACCEL_RESOURCE_MAX)
@@ -522,7 +523,7 @@ static int resource_init_with_paths(struct vaccel_resource *res,
 }
 
 static int resource_init_with_files(struct vaccel_resource *res,
-				    vaccel_resource_t type)
+				    vaccel_resource_type_t type)
 {
 	if (!res || !res->files || !res->nr_files ||
 	    type >= VACCEL_RESOURCE_MAX || !res->rundir || !res->id)
@@ -544,13 +545,13 @@ static int resource_init_with_files(struct vaccel_resource *res,
 }
 
 int vaccel_resource_init(struct vaccel_resource *res, const char *path,
-			 vaccel_resource_t type)
+			 vaccel_resource_type_t type)
 {
 	return vaccel_resource_init_multi(res, &path, 1, type);
 }
 
 int vaccel_resource_init_multi(struct vaccel_resource *res, const char **paths,
-			       size_t nr_paths, vaccel_resource_t type)
+			       size_t nr_paths, vaccel_resource_type_t type)
 {
 	int ret;
 
@@ -589,7 +590,7 @@ int vaccel_resource_init_multi(struct vaccel_resource *res, const char **paths,
 			goto free;
 		}
 
-		vaccel_path_t type;
+		vaccel_path_type_t type;
 		ret = path_from_uri(&res->paths[i], &type, paths[i]);
 		if (ret) {
 			vaccel_error("Could not parse URI for %s", paths[i]);
@@ -635,7 +636,7 @@ release_id:
 }
 
 int vaccel_resource_init_from_buf(struct vaccel_resource *res, const void *buf,
-				  size_t nr_bytes, vaccel_resource_t type,
+				  size_t nr_bytes, vaccel_resource_type_t type,
 				  const char *filename)
 {
 	int ret;
@@ -698,7 +699,8 @@ release_id:
 
 int vaccel_resource_init_from_files(struct vaccel_resource *res,
 				    const struct vaccel_file **files,
-				    size_t nr_files, vaccel_resource_t type)
+				    size_t nr_files,
+				    vaccel_resource_type_t type)
 {
 	int ret;
 
@@ -823,13 +825,13 @@ int vaccel_resource_release(struct vaccel_resource *res)
 }
 
 int vaccel_resource_new(struct vaccel_resource **res, const char *path,
-			vaccel_resource_t type)
+			vaccel_resource_type_t type)
 {
 	return vaccel_resource_multi_new(res, &path, 1, type);
 }
 
 int vaccel_resource_multi_new(struct vaccel_resource **res, const char **paths,
-			      size_t nr_paths, vaccel_resource_t type)
+			      size_t nr_paths, vaccel_resource_type_t type)
 {
 	if (!res)
 		return VACCEL_EINVAL;
@@ -851,7 +853,7 @@ int vaccel_resource_multi_new(struct vaccel_resource **res, const char **paths,
 }
 
 int vaccel_resource_from_buf(struct vaccel_resource **res, const void *buf,
-			     size_t nr_bytes, vaccel_resource_t type,
+			     size_t nr_bytes, vaccel_resource_type_t type,
 			     const char *filename)
 {
 	if (!res)
@@ -876,7 +878,7 @@ int vaccel_resource_from_buf(struct vaccel_resource **res, const void *buf,
 
 int vaccel_resource_from_files(struct vaccel_resource **res,
 			       const struct vaccel_file **files,
-			       size_t nr_files, vaccel_resource_t type)
+			       size_t nr_files, vaccel_resource_type_t type)
 {
 	if (!res)
 		return VACCEL_EINVAL;

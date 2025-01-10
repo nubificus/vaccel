@@ -49,13 +49,14 @@ static bool uri_is_local(const char *uri)
 	return false;
 }
 
-static int parse_uri(const char **path, vaccel_path_t *type, const char *uri)
+static int parse_uri(const char **path, vaccel_path_type_t *type,
+		     const char *uri)
 {
 	if (!uri || (!path && !type))
 		return VACCEL_EINVAL;
 
 	const char *out_path = NULL;
-	vaccel_path_t out_type = VACCEL_PATH_MAX;
+	vaccel_path_type_t out_type = VACCEL_PATH_MAX;
 
 	const char *separator = strstr(uri, "://");
 
@@ -101,14 +102,14 @@ static int parse_uri(const char **path, vaccel_path_t *type, const char *uri)
 	return VACCEL_OK;
 }
 
-int path_init_from_uri(char *path, size_t size, vaccel_path_t *type,
+int path_init_from_uri(char *path, size_t size, vaccel_path_type_t *type,
 		       const char *uri)
 {
 	if (!uri || (path && !size) || (!path && !type))
 		return VACCEL_EINVAL;
 
 	const char *out_path;
-	vaccel_path_t out_type;
+	vaccel_path_type_t out_type;
 	int ret = parse_uri(&out_path, &out_type, uri);
 	if (ret)
 		return ret;
@@ -126,13 +127,13 @@ int path_init_from_uri(char *path, size_t size, vaccel_path_t *type,
 	return VACCEL_OK;
 }
 
-int path_from_uri(char **path, vaccel_path_t *type, const char *uri)
+int path_from_uri(char **path, vaccel_path_type_t *type, const char *uri)
 {
 	if (!uri || (!path && !type))
 		return VACCEL_EINVAL;
 
 	const char *out_path;
-	vaccel_path_t out_type;
+	vaccel_path_type_t out_type;
 	int ret = parse_uri(&out_path, &out_type, uri);
 	if (ret)
 		return ret;
@@ -153,7 +154,7 @@ bool path_is_url(const char *path)
 	if (!path)
 		return false;
 
-	vaccel_path_t type;
+	vaccel_path_type_t type;
 	if (path_from_uri(NULL, &type, path) != VACCEL_OK)
 		return false;
 
@@ -163,7 +164,7 @@ bool path_is_url(const char *path)
 	return false;
 }
 
-int path_type(const char *path, vaccel_path_t *type)
+int path_type(const char *path, vaccel_path_type_t *type)
 {
 	if (!path || !type)
 		return VACCEL_EINVAL;

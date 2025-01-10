@@ -29,9 +29,9 @@ int main()
 
 	printf("Initialized session with id: %" PRId64 "\n", sess.id);
 
-	vaccel_op_t op_type = VACCEL_F_PARALLEL;
+	vaccel_op_type_t op_type = VACCEL_OP_FPGA_PARALLEL;
 	struct vaccel_arg read[3] = {
-		{ .size = sizeof(vaccel_op_t), .buf = &op_type },
+		{ .size = sizeof(vaccel_op_type_t), .buf = &op_type },
 		{ .size = sizeof(a), .buf = (char *)a },
 		{ .size = sizeof(b), .buf = (char *)b },
 	};

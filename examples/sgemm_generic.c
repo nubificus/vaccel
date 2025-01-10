@@ -92,9 +92,9 @@ int main(int argc, char *argv[])
 	struct timespec t0;
 	struct timespec t1;
 
-	vaccel_op_t op_type = VACCEL_BLAS_SGEMM;
+	vaccel_op_type_t op_type = VACCEL_OP_BLAS_SGEMM;
 	struct vaccel_arg read[8] = {
-		{ .size = sizeof(vaccel_op_t), .buf = &op_type },
+		{ .size = sizeof(vaccel_op_type_t), .buf = &op_type },
 		{ .size = sizeof(int), .buf = &m },
 		{ .size = sizeof(int), .buf = &n },
 		{ .size = sizeof(int), .buf = &k },

@@ -238,7 +238,7 @@ int vaccel_session_init(struct vaccel_session *sess, uint32_t flags)
 		return -(int)sess->id;
 
 	virtio = plugin_virtio();
-	if ((flags & VACCEL_REMOTE) ||
+	if ((flags & VACCEL_PLUGIN_REMOTE) ||
 	    (plugin_nr_registered() == 1 && virtio)) {
 		if (!virtio) {
 			vaccel_error(
@@ -247,8 +247,8 @@ int vaccel_session_init(struct vaccel_session *sess, uint32_t flags)
 			goto release_id;
 		}
 
-		ret = virtio->info->session_init(sess,
-						 flags & (~VACCEL_REMOTE));
+		ret = virtio->info->session_init(
+			sess, flags & (~VACCEL_PLUGIN_REMOTE));
 		if (ret) {
 			vaccel_error("Could not create host-side session");
 			goto release_id;
@@ -302,7 +302,7 @@ int vaccel_session_update(struct vaccel_session *sess, uint32_t flags)
 		struct vaccel_plugin *virtio = plugin_virtio();
 		if (virtio) {
 			int ret = virtio->info->session_update(
-				sess, flags & (~VACCEL_REMOTE));
+				sess, flags & (~VACCEL_PLUGIN_REMOTE));
 			if (ret) {
 				vaccel_error(
 					"Could not update host-side session");
@@ -404,7 +404,7 @@ int vaccel_session_resource_by_id(struct vaccel_session *sess,
 
 int vaccel_session_resource_by_type(struct vaccel_session *sess,
 				    struct vaccel_resource **res,
-				    vaccel_resource_t type)
+				    vaccel_resource_type_t type)
 {
 	if (!sess || !res || type >= VACCEL_RESOURCE_MAX) {
 		return VACCEL_EINVAL;
@@ -427,7 +427,8 @@ int vaccel_session_resource_by_type(struct vaccel_session *sess,
 
 int vaccel_session_resources_by_type(struct vaccel_session *sess,
 				     struct vaccel_resource ***resources,
-				     size_t *nr_found, vaccel_resource_t type)
+				     size_t *nr_found,
+				     vaccel_resource_type_t type)
 {
 	if (!sess || !resources || type >= VACCEL_RESOURCE_MAX || !nr_found)
 		return VACCEL_EINVAL;

@@ -170,9 +170,10 @@ free:
 }
 
 struct vaccel_op ops[] = {
-	VACCEL_OP_INIT(ops[0], VACCEL_NO_OP, noop),
-	VACCEL_OP_INIT(ops[1], VACCEL_EXEC, exec),
-	VACCEL_OP_INIT(ops[2], VACCEL_EXEC_WITH_RESOURCE, exec_with_resource),
+	VACCEL_OP_INIT(ops[0], VACCEL_OP_NOOP, noop),
+	VACCEL_OP_INIT(ops[1], VACCEL_OP_EXEC, exec),
+	VACCEL_OP_INIT(ops[2], VACCEL_OP_EXEC_WITH_RESOURCE,
+		       exec_with_resource),
 };
 
 static int init(void)

@@ -32,7 +32,7 @@ TEST_CASE("path_from_uri", "[utils][path]")
 	char u_file[PATH_MAX];
 	char u_dir[PATH_MAX];
 	const char *url = "http://nubificus.co.uk";
-	vaccel_path_t path_type;
+	vaccel_path_type_t path_type;
 
 	ret = path_init_from_parts(file, PATH_MAX, BUILD_ROOT,
 				   "examples/libmytestlib.so", nullptr);
@@ -137,7 +137,7 @@ TEST_CASE("path_type", "[utils][path]")
 	char file[PATH_MAX];
 	char dir[PATH_MAX];
 	const char *url = "http://nubificus.co.uk";
-	vaccel_path_t type;
+	vaccel_path_type_t type;
 
 	ret = path_init_from_parts(file, PATH_MAX, BUILD_ROOT,
 				   "examples/libmytestlib.so", nullptr);

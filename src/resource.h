@@ -12,7 +12,7 @@ extern "C" {
 
 int resources_bootstrap(void);
 int resources_cleanup(void);
-int resource_new(struct vaccel_resource *res, vaccel_resource_t type,
+int resource_new(struct vaccel_resource *res, vaccel_resource_type_t type,
 		 void *data, int (*cleanup_resource)(void *));
 void resource_refcount_inc(struct vaccel_resource *res);
 void resource_refcount_dec(struct vaccel_resource *res);

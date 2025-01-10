@@ -6,6 +6,7 @@
 #include "op.h"
 #include "resource.h"
 #include "session.h"
+#include "utils/enum.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -15,51 +16,25 @@
 extern "C" {
 #endif
 
-typedef enum {
-	VACCEL_PLUGIN_CPU = 0x0001,
-	VACCEL_PLUGIN_GPU = 0x0002,
-	VACCEL_PLUGIN_FPGA = 0x0004,
-	VACCEL_PLUGIN_SOFTWARE = 0x0008,
-	VACCEL_PLUGIN_TENSORFLOW = 0x0010,
-	VACCEL_PLUGIN_TORCH = 0x0020,
-	VACCEL_PLUGIN_JETSON = 0x0040,
-	VACCEL_PLUGIN_GENERIC = 0x0080,
-	VACCEL_PLUGIN_DEBUG = 0x0100,
-	VACCEL_REMOTE = 0x4000,
-	VACCEL_PLUGIN_TYPE_MAX = 0x8000,
-	VACCEL_PLUGIN_ALL = 0xffff,
-} vaccel_plugin_t;
+/* Define vaccel_plugin_type_t, vaccel_plugin_type_to_str() and
+ * vaccel_plugin_type_to_base_str() */
+#define _ENUM_PREFIX VACCEL_PLUGIN
+#define VACCEL_PLUGIN_TYPE_ENUM_LIST(VACCEL_ENUM_ITEM)     \
+	VACCEL_ENUM_ITEM(CPU, 0x0001, _ENUM_PREFIX)        \
+	VACCEL_ENUM_ITEM(GPU, 0x0002, _ENUM_PREFIX)        \
+	VACCEL_ENUM_ITEM(FPGA, 0x0004, _ENUM_PREFIX)       \
+	VACCEL_ENUM_ITEM(SOFTWARE, 0x0008, _ENUM_PREFIX)   \
+	VACCEL_ENUM_ITEM(TENSORFLOW, 0x0010, _ENUM_PREFIX) \
+	VACCEL_ENUM_ITEM(TORCH, 0x0020, _ENUM_PREFIX)      \
+	VACCEL_ENUM_ITEM(JETSON, 0x0040, _ENUM_PREFIX)     \
+	VACCEL_ENUM_ITEM(GENERIC, 0x0080, _ENUM_PREFIX)    \
+	VACCEL_ENUM_ITEM(DEBUG, 0x0100, _ENUM_PREFIX)      \
+	VACCEL_ENUM_ITEM(REMOTE, 0x4000, _ENUM_PREFIX)     \
+	VACCEL_ENUM_ITEM(ALL, 0xffff, _ENUM_PREFIX)
 
-static const char *vaccel_plugin_type_name[] = {
-	"CPU",	 "GPU",	   "FPGA",    "SOFTWARE", "TENSORFLOW",
-	"TORCH", "JETSON", "GENERIC", "DEBUG",
-};
-
-/* Dummy type to str function for debug */
-static inline char *vaccel_plugin_type_str(vaccel_plugin_t type)
-{
-	int i = 0;
-	unsigned int tester = 1;
-	char *p;
-	char *plugin_type_str = (char *)malloc(100);
-	if (!plugin_type_str)
-		return NULL;
-
-	p = plugin_type_str;
-	for (i = 0; i < VACCEL_PLUGIN_TYPE_MAX >> 9; i++) {
-		if (tester & type) {
-			if (p != plugin_type_str) {
-				sprintf(p, " ");
-				p += strlen(" ");
-			}
-			sprintf(p, "%s", vaccel_plugin_type_name[i]);
-			p += strlen(vaccel_plugin_type_name[i]);
-		}
-		tester <<= 1;
-	}
-
-	return plugin_type_str;
-}
+VACCEL_ENUM_DEF_WITH_STR_FUNCS(vaccel_plugin_type, _ENUM_PREFIX,
+			       VACCEL_PLUGIN_TYPE_ENUM_LIST)
+#undef _ENUM_PREFIX
 
 struct vaccel_plugin_info {
 	/* name of the plugin */
@@ -68,7 +43,7 @@ struct vaccel_plugin_info {
 	/* human-readable version number */
 	const char *version;
 
-	/* human-readable vAccelRT version that the plugin has been built with */
+	/* human-readable vAccel version that the plugin has been built with */
 	const char *vaccel_version;
 
 	/* plugin initialization function */
@@ -81,7 +56,7 @@ struct vaccel_plugin_info {
 	bool is_virtio;
 
 	/* plugin enum type */
-	vaccel_plugin_t type;
+	vaccel_plugin_type_t type;
 
 	/* in some cases, like in the context of VirtIO we need to offload
 	 * session handling to the plugin itself */
@@ -121,7 +96,7 @@ struct vaccel_plugin {
 
 int vaccel_plugin_register_op(struct vaccel_op *op);
 int vaccel_plugin_register_ops(struct vaccel_op *ops, size_t nr_ops);
-int vaccel_plugin_print_all_by_op_type(vaccel_op_t op_type);
+void vaccel_plugin_print_all_by_op_type(vaccel_op_type_t op_type);
 int vaccel_plugin_load(const char *lib);
 int vaccel_plugin_parse_and_load(const char *lib_str);
 

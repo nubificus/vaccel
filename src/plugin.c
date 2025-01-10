@@ -25,7 +25,7 @@ static struct {
 
 	/* array of available implementations for every supported
 	 * function */
-	vaccel_list_t ops[VACCEL_FUNCTIONS_NR];
+	vaccel_list_t ops[VACCEL_OP_MAX];
 } plugins = { 0 };
 
 static int plugin_check_info(const struct vaccel_plugin_info *pinfo)
@@ -240,6 +240,12 @@ int plugin_unregister(struct vaccel_plugin *plugin)
 	return VACCEL_OK;
 }
 
+static int plugin_gen_op_name(char *name, size_t size, struct vaccel_op *op)
+{
+	strncpy(name, vaccel_op_type_to_base_str(op->type), size);
+	return vaccel_str_to_lower(name, size, NULL);
+}
+
 int vaccel_plugin_register_op(struct vaccel_op *op)
 {
 	if (!op || !op->func) {
@@ -247,7 +253,7 @@ int vaccel_plugin_register_op(struct vaccel_op *op)
 		return VACCEL_EINVAL;
 	}
 
-	if (op->type >= VACCEL_FUNCTIONS_NR) {
+	if (op->type >= VACCEL_OP_MAX) {
 		vaccel_error("Unknown function type");
 		return VACCEL_EINVAL;
 	}
@@ -258,11 +264,16 @@ int vaccel_plugin_register_op(struct vaccel_op *op)
 		return VACCEL_EINVAL;
 	}
 
+	char op_name[NAME_MAX];
+	int ret = plugin_gen_op_name(op_name, NAME_MAX, op);
+	if (ret)
+		return ret;
+
 	list_add_tail(&plugin->ops, &op->plugin_entry);
 	list_add_tail(&plugins.ops[op->type], &op->func_entry);
 
-	vaccel_debug("Registered function %s from plugin %s",
-		     vaccel_op_type_str(op->type), plugin->info->name);
+	vaccel_debug("Registered op %s from plugin %s", op_name,
+		     plugin->info->name);
 
 	return VACCEL_OK;
 }
@@ -278,21 +289,21 @@ int vaccel_plugin_register_ops(struct vaccel_op *ops, size_t nr_ops)
 	return VACCEL_OK;
 }
 
-void *plugin_get_op_func(vaccel_op_t op_type, unsigned int hint)
+void *plugin_get_op_func(vaccel_op_type_t op_type, unsigned int hint)
 {
-	unsigned int env_priority = hint & (~VACCEL_REMOTE);
+	unsigned int env_priority = hint & (~VACCEL_PLUGIN_REMOTE);
 	struct vaccel_op *op = NULL;
 	struct vaccel_op *opiter;
 	struct vaccel_op *tmp;
 
-	if (op_type >= VACCEL_FUNCTIONS_NR) {
+	if (op_type >= VACCEL_OP_MAX) {
 		vaccel_error("Trying to execute unknown function");
 		return NULL;
 	}
 
 	if (list_empty(&plugins.ops[op_type])) {
 		vaccel_warn("None of the loaded plugins implement %s",
-			    vaccel_op_type_str(op_type));
+			    vaccel_op_type_to_str(op_type));
 		return NULL;
 	}
 
@@ -301,7 +312,7 @@ void *plugin_get_op_func(vaccel_op_t op_type, unsigned int hint)
 	 * layers. If we get a match, return this plugin operation
 	 */
 
-	if (VACCEL_REMOTE & hint) {
+	if (VACCEL_PLUGIN_REMOTE & hint) {
 		list_for_each_container_safe(opiter, tmp, &plugins.ops[op_type],
 					     struct vaccel_op, func_entry)
 		{
@@ -359,7 +370,7 @@ out:
 	return op->func;
 }
 
-int vaccel_plugin_print_all_by_op_type(vaccel_op_t op_type)
+void vaccel_plugin_print_all_by_op_type(vaccel_op_type_t op_type)
 {
 	struct vaccel_op *opiter;
 	struct vaccel_op *tmp_op;
@@ -367,17 +378,12 @@ int vaccel_plugin_print_all_by_op_type(vaccel_op_t op_type)
 	list_for_each_container_safe(opiter, tmp_op, &plugins.ops[op_type],
 				     struct vaccel_op, func_entry)
 	{
-		char *p_type_str =
-			vaccel_plugin_type_str(opiter->owner->info->type);
-		if (!p_type_str)
-			return VACCEL_ENOMEM;
+		const char *p_type_str =
+			vaccel_plugin_type_to_str(opiter->owner->info->type);
 		vaccel_debug("Found implementation of %s in %s plugin type: %s",
-			     vaccel_op_type_str(opiter->type),
+			     vaccel_op_type_to_str(opiter->type),
 			     opiter->owner->info->name, p_type_str);
-		free(p_type_str);
 	}
-
-	return VACCEL_OK;
 }
 
 size_t plugin_nr_registered()
@@ -467,7 +473,7 @@ int plugins_bootstrap()
 {
 	list_init(&plugins.registered);
 
-	for (size_t i = 0; i < VACCEL_FUNCTIONS_NR; ++i)
+	for (size_t i = 0; i < VACCEL_OP_MAX; ++i)
 		list_init(&plugins.ops[i]);
 
 	plugins.initialized = true;

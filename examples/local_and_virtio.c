@@ -32,7 +32,7 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	if (vaccel_session_init(&virtio_sess, VACCEL_REMOTE)) {
+	if (vaccel_session_init(&virtio_sess, VACCEL_PLUGIN_REMOTE)) {
 		vaccel_error("Could not create virtio session");
 		exit(1);
 	}

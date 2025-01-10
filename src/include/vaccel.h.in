@@ -27,6 +27,8 @@
 #include "vaccel/prof.h"
 #include "vaccel/resource.h"
 #include "vaccel/session.h"
+#include "vaccel/utils/enum.h"
 #include "vaccel/utils/path.h"
+#include "vaccel/utils/str.h"
 
 // IWYU pragma: end_exports
