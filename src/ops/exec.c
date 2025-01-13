@@ -15,8 +15,11 @@
 
 struct vaccel_prof_region exec_op_stats =
 	VACCEL_PROF_REGION_INIT("vaccel_exec_op");
-struct vaccel_prof_region exec_res_op_stats =
-	VACCEL_PROF_REGION_INIT("vaccel_exec_with_resource_op");
+
+typedef int (*exec_fn_t)(struct vaccel_session *sess, const char *library,
+			 const char *fn_symbol, struct vaccel_arg *read,
+			 size_t nr_read, struct vaccel_arg *write,
+			 size_t nr_write);
 
 int vaccel_exec(struct vaccel_session *sess, const char *library,
 		const char *fn_symbol, struct vaccel_arg *read, size_t nr_read,
@@ -32,18 +35,27 @@ int vaccel_exec(struct vaccel_session *sess, const char *library,
 
 	vaccel_prof_region_start(&exec_op_stats);
 
-	// Get implementation
-	int (*plugin_op)() = plugin_get_op_func(VACCEL_EXEC, sess->hint);
-	if (!plugin_op)
+	exec_fn_t plugin_exec = plugin_get_op_func(VACCEL_EXEC, sess->hint);
+	if (!plugin_exec)
 		return VACCEL_ENOTSUP;
 
-	ret = plugin_op(sess, library, fn_symbol, read, nr_read, write,
-			nr_write);
+	ret = plugin_exec(sess, library, fn_symbol, read, nr_read, write,
+			  nr_write);
 
 	vaccel_prof_region_stop(&exec_op_stats);
 
 	return ret;
 }
+
+struct vaccel_prof_region exec_res_op_stats =
+	VACCEL_PROF_REGION_INIT("vaccel_exec_with_resource_op");
+
+typedef int (*exec_with_resource_fn_t)(struct vaccel_session *sess,
+				       struct vaccel_resource *resource,
+				       const char *fn_symbol,
+				       struct vaccel_arg *read, size_t nr_read,
+				       struct vaccel_arg *write,
+				       size_t nr_write);
 
 int vaccel_exec_with_resource(struct vaccel_session *sess,
 			      struct vaccel_resource *resource,
@@ -75,14 +87,13 @@ int vaccel_exec_with_resource(struct vaccel_session *sess,
 
 	vaccel_prof_region_start(&exec_res_op_stats);
 
-	// Get implementation
-	int (*plugin_op)() =
+	exec_with_resource_fn_t plugin_exec_with_resource =
 		plugin_get_op_func(VACCEL_EXEC_WITH_RESOURCE, sess->hint);
-	if (!plugin_op)
+	if (!plugin_exec_with_resource)
 		return VACCEL_ENOTSUP;
 
-	ret = plugin_op(sess, resource, fn_symbol, read, nr_read, write,
-			nr_write);
+	ret = plugin_exec_with_resource(sess, resource, fn_symbol, read,
+					nr_read, write, nr_write);
 
 	vaccel_prof_region_stop(&exec_op_stats);
 

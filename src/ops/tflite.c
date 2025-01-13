@@ -111,6 +111,9 @@ void *vaccel_tflite_tensor_get_data(struct vaccel_tflite_tensor *tensor)
 struct vaccel_prof_region tflite_load_stats =
 	VACCEL_PROF_REGION_INIT("vaccel_tflite_session_load");
 
+typedef int (*tflite_session_load_fn_t)(struct vaccel_session *sess,
+					struct vaccel_resource *model);
+
 int vaccel_tflite_session_load(struct vaccel_session *sess,
 			       struct vaccel_resource *model)
 {
@@ -141,15 +144,14 @@ int vaccel_tflite_session_load(struct vaccel_session *sess,
 
 	vaccel_prof_region_start(&tflite_load_stats);
 
-	// Get implementation
-	int (*plugin_op)(struct vaccel_session *, struct vaccel_resource *) =
+	tflite_session_load_fn_t plugin_tflite_session_load =
 		plugin_get_op_func(VACCEL_TFLITE_SESSION_LOAD, sess->hint);
-	if (!plugin_op) {
+	if (!plugin_tflite_session_load) {
 		ret = VACCEL_ENOTSUP;
 		goto out;
 	}
 
-	ret = plugin_op(sess, model);
+	ret = plugin_tflite_session_load(sess, model);
 
 out:
 	vaccel_prof_region_stop(&tflite_load_stats);
@@ -158,6 +160,13 @@ out:
 
 struct vaccel_prof_region tflite_session_run_stats =
 	VACCEL_PROF_REGION_INIT("vaccel_tflite_session_run");
+
+typedef int (*tflite_session_run_fn_t)(struct vaccel_session *sess,
+				       const struct vaccel_resource *model,
+				       struct vaccel_tflite_tensor *const *in,
+				       int nr_inputs,
+				       struct vaccel_tflite_tensor **out,
+				       int nr_outputs, uint8_t *status);
 
 int vaccel_tflite_session_run(struct vaccel_session *sess,
 			      const struct vaccel_resource *model,
@@ -192,18 +201,15 @@ int vaccel_tflite_session_run(struct vaccel_session *sess,
 
 	vaccel_prof_region_start(&tflite_session_run_stats);
 
-	// Get implementation
-	int (*plugin_op)(struct vaccel_session *,
-			 const struct vaccel_resource *,
-			 struct vaccel_tflite_tensor *const *, int,
-			 struct vaccel_tflite_tensor **, int, uint8_t *) =
+	tflite_session_run_fn_t plugin_tflite_session =
 		plugin_get_op_func(VACCEL_TFLITE_SESSION_RUN, sess->hint);
-	if (!plugin_op) {
+	if (!plugin_tflite_session) {
 		ret = VACCEL_ENOTSUP;
 		goto out;
 	}
 
-	ret = plugin_op(sess, model, in, nr_inputs, out, nr_outputs, status);
+	ret = plugin_tflite_session(sess, model, in, nr_inputs, out, nr_outputs,
+				    status);
 
 out:
 	vaccel_prof_region_stop(&tflite_session_run_stats);
@@ -212,6 +218,9 @@ out:
 
 struct vaccel_prof_region tflite_session_delete_stats =
 	VACCEL_PROF_REGION_INIT("vaccel_tflite_session_delete");
+
+typedef int (*tflite_session_delete_fn_t)(struct vaccel_session *sess,
+					  struct vaccel_resource *model);
 
 int vaccel_tflite_session_delete(struct vaccel_session *sess,
 				 struct vaccel_resource *model)
@@ -241,14 +250,14 @@ int vaccel_tflite_session_delete(struct vaccel_session *sess,
 		return VACCEL_EPERM;
 	}
 
-	int (*plugin_op)(struct vaccel_session *, struct vaccel_resource *) =
+	tflite_session_delete_fn_t plugin_tflite_session_delete =
 		plugin_get_op_func(VACCEL_TFLITE_SESSION_DELETE, sess->hint);
-	if (!plugin_op) {
+	if (!plugin_tflite_session_delete) {
 		ret = VACCEL_ENOTSUP;
 		goto out;
 	}
 
-	ret = plugin_op(sess, model);
+	ret = plugin_tflite_session_delete(sess, model);
 
 out:
 	vaccel_prof_region_stop(&tflite_session_delete_stats);

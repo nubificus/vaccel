@@ -10,6 +10,10 @@
 #include <inttypes.h>
 #include <stdint.h>
 
+typedef int (*minmax_fn_t)(struct vaccel_session *sess, const double *indata,
+			   int ndata, int low_threshold, int high_threshold,
+			   double *outdata, double *min, double *max);
+
 int vaccel_minmax(struct vaccel_session *sess, const double *indata, int ndata,
 		  int low_threshold, int high_threshold, double *outdata,
 		  double *min, double *max)
@@ -20,15 +24,13 @@ int vaccel_minmax(struct vaccel_session *sess, const double *indata, int ndata,
 	vaccel_debug("session:%" PRId64 " Looking for plugin implementing %s",
 		     sess->id, vaccel_op_type_str(VACCEL_MINMAX));
 
-	int (*plugin_op)(struct vaccel_session *sess, const double *indata,
-			 int ndata, int low_threshold, int high_threshold,
-			 double *outdata, double *min, double *max) =
+	minmax_fn_t plugin_minmax =
 		plugin_get_op_func(VACCEL_MINMAX, sess->hint);
-	if (!plugin_op)
+	if (!plugin_minmax)
 		return VACCEL_ENOTSUP;
 
-	return plugin_op(sess, indata, ndata, low_threshold, high_threshold,
-			 outdata, min, max);
+	return plugin_minmax(sess, indata, ndata, low_threshold, high_threshold,
+			     outdata, min, max);
 }
 
 int vaccel_minmax_unpack(struct vaccel_session *sess, struct vaccel_arg *read,

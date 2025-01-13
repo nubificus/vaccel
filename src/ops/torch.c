@@ -152,52 +152,11 @@ void *vaccel_torch_tensor_get_data(struct vaccel_torch_tensor *tensor)
 	return tensor->data;
 }
 
-#if 0
-// The unpack solution
-int vaccel_torch_unpack(struct vaccel_session *sess, struct vaccel_arg *read,
-		int nr_read, struct vaccel_arg *write, int nr_write)
-{
-	if (nr_read != 3) {
-		vaccel_error("Wrong number of read arguments in torch image loading: %d",
-					nr_read);
-		
-		return VACCEL_EINVAL;
-	}
-
-	if (nr_write != 1) {
-		vaccel_error("Wrong number of write arguments in torch image loading: %d",
-					nr_write);
-		
-		return VACCEL_EINVAL;
-	}
-	
-	
-	char* model_path = (char*)read[0].buf;
-	char * img = (char*)read[1].buf;
-	size_t img_size = *(size_t*)read[2].buf;
-	char *tags = (char*)write[0].buf;
-	
-    return vaccel_torch_jitload_forward(sess, model_path, img, img_size, &tags);
-}
-#endif
-
-#if 0
-int vaccel_torch_jitload_forward(struct vaccel_session *sess,
-		const char* model_path, 
-		const char* img, 
-		size_t img_size, 
-		char **tags)
-{
-	if (!sess)
-		return VACCEL_EINVAL;
-	vaccel_debug("session:%u Looking for plugin implementing torch_jitload_forward operation",
-						sess->id);
-	int (*plugin_op)() = plugin_get_op_func(VACCEL_TORCH_JITLOAD_FORWARD);
-	if (!plugin_op)
-		return VACCEL_ENOTSUP;
-	return plugin_op(sess, model_path, img, img_size, tags);
-}
-#endif
+typedef int (*torch_jitload_forward_fn_t)(
+	struct vaccel_session *sess, const struct vaccel_resource *model,
+	const struct vaccel_torch_buffer *run_options,
+	struct vaccel_torch_tensor **in_tensor, int nr_read,
+	struct vaccel_torch_tensor **out_tensor, int nr_write);
 
 int vaccel_torch_jitload_forward(struct vaccel_session *sess,
 				 const struct vaccel_resource *model,
@@ -228,20 +187,20 @@ int vaccel_torch_jitload_forward(struct vaccel_session *sess,
 		return VACCEL_EPERM;
 	}
 
-	// struct vaccel_arg * -> char **
-	int (*plugin_op)(struct vaccel_session *,
-			 const struct vaccel_resource *,
-			 const struct vaccel_torch_buffer *,
-			 struct vaccel_torch_tensor **, int,
-			 struct vaccel_torch_tensor **, int) =
+	torch_jitload_forward_fn_t plugin_torch_jitload_forward =
 		plugin_get_op_func(VACCEL_TORCH_JITLOAD_FORWARD, sess->hint);
-
-	if (!plugin_op)
+	if (!plugin_torch_jitload_forward)
 		return VACCEL_ENOTSUP;
-	// write -> tags
-	return plugin_op(sess, model, run_options, in_tensor, nr_read,
-			 out_tensor, nr_write);
+
+	return plugin_torch_jitload_forward(sess, model, run_options, in_tensor,
+					    nr_read, out_tensor, nr_write);
 }
+
+typedef int (*torch_sgemm_fn_t)(struct vaccel_session *sess,
+				struct vaccel_torch_tensor **in_A,
+				struct vaccel_torch_tensor **in_B,
+				struct vaccel_torch_tensor **in_C, int M, int N,
+				int K, struct vaccel_torch_tensor **out);
 
 int vaccel_torch_sgemm(struct vaccel_session *sess,
 		       struct vaccel_torch_tensor **in_A,
@@ -255,14 +214,13 @@ int vaccel_torch_sgemm(struct vaccel_session *sess,
 	vaccel_debug("session:%" PRId64
 		     " Looking for plugin implementing torch sgemm operation",
 		     sess->id);
-	int (*plugin_op)(struct vaccel_session *, struct vaccel_torch_tensor **,
-			 struct vaccel_torch_tensor **,
-			 struct vaccel_torch_tensor **, int, int, int,
-			 struct vaccel_torch_tensor **) =
+
+	torch_sgemm_fn_t plugin_torch_sgemm =
 		plugin_get_op_func(VACCEL_TORCH_SGEMM, sess->hint);
-	if (!plugin_op) {
+	if (!plugin_torch_sgemm) {
 		vaccel_debug("Plugin loading failed");
 		return VACCEL_ENOTSUP;
 	}
-	return plugin_op(sess, in_A, in_B, in_C, M, N, K, out);
+
+	return plugin_torch_sgemm(sess, in_A, in_B, in_C, M, N, K, out);
 }
