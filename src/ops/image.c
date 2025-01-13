@@ -15,6 +15,15 @@
 struct vaccel_prof_region image_op_stats =
 	VACCEL_PROF_REGION_INIT("vaccel_image_op");
 
+typedef int (*image_op_no_text_fn_t)(struct vaccel_session *sess,
+				     const void *img,
+				     unsigned char *out_imgname, size_t len_img,
+				     size_t len_out_imgname);
+typedef int (*image_op_fn_t)(struct vaccel_session *sess, const void *img,
+			     unsigned char *out_text,
+			     unsigned char *out_imgname, size_t len_img,
+			     size_t len_out_text, size_t len_out_imgname);
+
 int vaccel_image_op(vaccel_op_t op_type, struct vaccel_session *sess,
 		    const void *img, unsigned char *out_text,
 		    unsigned char *out_imgname, size_t len_img,
@@ -30,19 +39,20 @@ int vaccel_image_op(vaccel_op_t op_type, struct vaccel_session *sess,
 
 	vaccel_prof_region_start(&image_op_stats);
 
-	//Get implementation
-	int (*plugin_op)() = plugin_get_op_func(op_type, sess->hint);
-	if (!plugin_op) {
+	int (*plugin_image_op)() = plugin_get_op_func(op_type, sess->hint);
+	if (!plugin_image_op) {
 		ret = VACCEL_ENOTSUP;
 		goto out;
 	}
 
 	if (out_text != NULL && len_out_text > 0) {
-		ret = plugin_op(sess, img, out_text, out_imgname, len_img,
-				len_out_text, len_out_imgname);
+		ret = ((image_op_fn_t)plugin_image_op)(sess, img, out_text,
+						       out_imgname, len_img,
+						       len_out_text,
+						       len_out_imgname);
 	} else {
-		ret = plugin_op(sess, img, out_imgname, len_img,
-				len_out_imgname);
+		ret = ((image_op_no_text_fn_t)plugin_image_op)(
+			sess, img, out_imgname, len_img, len_out_imgname);
 	}
 
 out:

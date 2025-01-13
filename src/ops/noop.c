@@ -14,6 +14,8 @@
 struct vaccel_prof_region noop_op_stats =
 	VACCEL_PROF_REGION_INIT("vaccel_noop_op");
 
+typedef int (*noop_fn_t)(struct vaccel_session *sess);
+
 int vaccel_noop(struct vaccel_session *sess)
 {
 	int ret;
@@ -26,12 +28,11 @@ int vaccel_noop(struct vaccel_session *sess)
 
 	vaccel_prof_region_start(&noop_op_stats);
 
-	//Get implementation
-	int (*plugin_op)() = plugin_get_op_func(VACCEL_NO_OP, sess->hint);
-	if (!plugin_op)
+	noop_fn_t plugin_noop = plugin_get_op_func(VACCEL_NO_OP, sess->hint);
+	if (!plugin_noop)
 		return VACCEL_ENOTSUP;
 
-	ret = plugin_op(sess);
+	ret = plugin_noop(sess);
 
 	vaccel_prof_region_stop(&noop_op_stats);
 

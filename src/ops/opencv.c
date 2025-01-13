@@ -1,14 +1,16 @@
 // SPDX-License-Identifier: Apache-2.0
 
+#include "arg.h"
 #include "error.h"
 #include "log.h"
-//#include "opencv.h"
-#include "arg.h"
 #include "op.h"
 #include "plugin.h"
 #include "session.h"
 #include <inttypes.h>
 #include <stdint.h>
+
+typedef int (*opencv_fn_t)(struct vaccel_session *sess, struct vaccel_arg *read,
+			   int nr_read, struct vaccel_arg *write, int nr_write);
 
 int vaccel_opencv(struct vaccel_session *sess, struct vaccel_arg *read,
 		  int nr_read, struct vaccel_arg *write, int nr_write)
@@ -21,19 +23,19 @@ int vaccel_opencv(struct vaccel_session *sess, struct vaccel_arg *read,
 		" Looking for plugin implementing the Optical Flow operation",
 		sess->id);
 
-	//Get implementation
-	int (*plugin_op)() = plugin_get_op_func(VACCEL_OPENCV, sess->hint);
-	if (!plugin_op)
+	opencv_fn_t plugin_opencv =
+		plugin_get_op_func(VACCEL_OPENCV, sess->hint);
+	if (!plugin_opencv)
 		return VACCEL_ENOTSUP;
 
-	return plugin_op(sess, read, nr_read, write, nr_write);
+	return plugin_opencv(sess, read, nr_read, write, nr_write);
 }
 
 int vaccel_opencv_unpack(struct vaccel_session *sess, struct vaccel_arg *read,
 			 int nr_read, struct vaccel_arg *write, int nr_write)
 {
-//TODO: sanity check args
-#if 0
+	//TODO: sanity check args
+	/*
 	if (nr_read != 2) {
 		vaccel_error("Wrong number of read arguments in FOO: %d",
 				nr_read);
@@ -45,6 +47,6 @@ int vaccel_opencv_unpack(struct vaccel_session *sess, struct vaccel_arg *read,
 				nr_write);
 		return VACCEL_EINVAL;
 	}
-#endif
+*/
 	return vaccel_opencv(sess, read, nr_read, write, nr_write);
 }

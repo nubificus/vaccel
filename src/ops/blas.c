@@ -14,6 +14,12 @@
 struct vaccel_prof_region blas_op_stats =
 	VACCEL_PROF_REGION_INIT("vaccel_blas_op");
 
+typedef int (*sgemm_fn_t)(struct vaccel_session *sess, long long int m,
+			  long long int n, long long int k, float alpha,
+			  float *a, long long int lda, float *b,
+			  long long int ldb, float beta, float *c,
+			  long long int ldc);
+
 int vaccel_sgemm(struct vaccel_session *sess, long long int m, long long int n,
 		 long long int k, float alpha, float *a, long long int lda,
 		 float *b, long long int ldb, float beta, float *c,
@@ -30,17 +36,12 @@ int vaccel_sgemm(struct vaccel_session *sess, long long int m, long long int n,
 
 	vaccel_prof_region_start(&blas_op_stats);
 
-	//Get implementation
-	int (*plugin_op)(struct vaccel_session *sess, long long int m,
-			 long long int n, long long int k, float alpha,
-			 float *a, long long int lda, float *b,
-			 long long int ldb, float beta, float *c,
-			 long long int ldc) =
+	sgemm_fn_t plugin_sgemm =
 		plugin_get_op_func(VACCEL_BLAS_SGEMM, sess->hint);
-	if (!plugin_op)
+	if (!plugin_sgemm)
 		return VACCEL_ENOTSUP;
 
-	ret = plugin_op(sess, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc);
+	ret = plugin_sgemm(sess, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc);
 
 	vaccel_prof_region_stop(&blas_op_stats);
 

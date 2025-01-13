@@ -10,6 +10,9 @@
 #include <inttypes.h>
 #include <stdint.h>
 
+typedef int (*fpga_arraycopy_fn_t)(struct vaccel_session *sess, int array[],
+				   int out_array[], size_t len_array);
+
 int vaccel_fpga_arraycopy(struct vaccel_session *sess, int array[],
 			  int out_array[], size_t len_array)
 {
@@ -21,12 +24,12 @@ int vaccel_fpga_arraycopy(struct vaccel_session *sess, int array[],
 		" Looking for plugin implementing fpga_arraycopy operation",
 		sess->id);
 
-	//Get implementation
-	int (*plugin_op)() = plugin_get_op_func(VACCEL_F_ARRAYCOPY, sess->hint);
-	if (!plugin_op)
+	fpga_arraycopy_fn_t plugin_fpga_arraycopy =
+		plugin_get_op_func(VACCEL_F_ARRAYCOPY, sess->hint);
+	if (!plugin_fpga_arraycopy)
 		return VACCEL_ENOTSUP;
 
-	return plugin_op(sess, array, out_array, len_array);
+	return plugin_fpga_arraycopy(sess, array, out_array, len_array);
 }
 
 int vaccel_fpga_arraycopy_unpack(struct vaccel_session *sess,
@@ -53,6 +56,9 @@ int vaccel_fpga_arraycopy_unpack(struct vaccel_session *sess,
 	return vaccel_fpga_arraycopy(sess, array, out_array, len_array);
 }
 
+typedef int (*fpga_mmult_fn_t)(struct vaccel_session *sess, float A_array[],
+			       float B_array[], float C_array[], size_t lenA);
+
 int vaccel_fpga_mmult(struct vaccel_session *sess, float A_array[],
 		      float B_array[], float C_array[], size_t lenA)
 {
@@ -63,12 +69,12 @@ int vaccel_fpga_mmult(struct vaccel_session *sess, float A_array[],
 		     " Looking for plugin implementing fpga_mmult operation",
 		     sess->id);
 
-	//Get implementation
-	int (*plugin_op)() = plugin_get_op_func(VACCEL_F_MMULT, sess->hint);
-	if (!plugin_op)
+	fpga_mmult_fn_t plugin_fpga_mmult =
+		plugin_get_op_func(VACCEL_F_MMULT, sess->hint);
+	if (!plugin_fpga_mmult)
 		return VACCEL_ENOTSUP;
 
-	return plugin_op(sess, A_array, B_array, C_array, lenA);
+	return plugin_fpga_mmult(sess, A_array, B_array, C_array, lenA);
 }
 
 int vaccel_fpga_mmult_unpack(struct vaccel_session *sess,
@@ -95,6 +101,10 @@ int vaccel_fpga_mmult_unpack(struct vaccel_session *sess,
 	return vaccel_fpga_mmult(sess, A_array, B_array, C_array, lenA);
 }
 
+typedef int (*fpga_parallel_fn_t)(struct vaccel_session *sess, float A_array[],
+				  float B_array[], float add_output[],
+				  float mult_output[], size_t len_a);
+
 int vaccel_fpga_parallel(struct vaccel_session *sess, float A_array[],
 			 float B_array[], float add_output[],
 			 float mult_output[], size_t len_a)
@@ -106,13 +116,13 @@ int vaccel_fpga_parallel(struct vaccel_session *sess, float A_array[],
 		     " Looking for plugin implementing fpga_parallel operation",
 		     sess->id);
 
-	//Get implementation
-	int (*plugin_op)() = plugin_get_op_func(VACCEL_F_PARALLEL, sess->hint);
-	if (!plugin_op)
+	fpga_parallel_fn_t plugin_fpga_parallel =
+		plugin_get_op_func(VACCEL_F_PARALLEL, sess->hint);
+	if (!plugin_fpga_parallel)
 		return VACCEL_ENOTSUP;
 
-	return plugin_op(sess, A_array, B_array, add_output, mult_output,
-			 len_a);
+	return plugin_fpga_parallel(sess, A_array, B_array, add_output,
+				    mult_output, len_a);
 }
 
 int vaccel_fpga_parallel_unpack(struct vaccel_session *sess,
@@ -142,6 +152,9 @@ int vaccel_fpga_parallel_unpack(struct vaccel_session *sess,
 				    mult_output, len_a);
 }
 
+typedef int (*fpga_vadd_t)(struct vaccel_session *sess, float A[], float B[],
+			   float C[], size_t len_a, size_t len_b);
+
 int vaccel_fpga_vadd(struct vaccel_session *sess, float A[], float B[],
 		     float C[], size_t len_a, size_t len_b)
 {
@@ -153,12 +166,12 @@ int vaccel_fpga_vadd(struct vaccel_session *sess, float A[], float B[],
 		" Looking for plugin implementing fpga_vector_add operation",
 		sess->id);
 
-	//Get implementation
-	int (*plugin_op)() = plugin_get_op_func(VACCEL_F_VECTORADD, sess->hint);
-	if (!plugin_op)
+	fpga_vadd_t plugin_fpga_vadd =
+		plugin_get_op_func(VACCEL_F_VECTORADD, sess->hint);
+	if (!plugin_fpga_vadd)
 		return VACCEL_ENOTSUP;
 
-	return plugin_op(sess, A, B, C, len_a, len_b);
+	return plugin_fpga_vadd(sess, A, B, C, len_a, len_b);
 }
 
 int vaccel_fpga_vadd_unpack(struct vaccel_session *sess,
