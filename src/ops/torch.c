@@ -61,7 +61,7 @@ void *vaccel_torch_buffer_get_data(struct vaccel_torch_buffer *buffer,
 }
 
 struct vaccel_torch_tensor *
-vaccel_torch_tensor_new(int nr_dims, const int64_t *dims,
+vaccel_torch_tensor_new(int64_t nr_dims, const int64_t *dims,
 			enum vaccel_torch_data_type type)
 {
 	struct vaccel_torch_tensor *ret;
@@ -79,8 +79,8 @@ vaccel_torch_tensor_new(int nr_dims, const int64_t *dims,
 	}
 
 	if (dims) {
-		for (int i = 0; i < nr_dims; i++) {
-			ret->dims[i] = (int32_t)dims[i];
+		for (int64_t i = 0; i < nr_dims; i++) {
+			ret->dims[i] = dims[i];
 		}
 	}
 
@@ -88,7 +88,7 @@ vaccel_torch_tensor_new(int nr_dims, const int64_t *dims,
 }
 
 struct vaccel_torch_tensor *
-vaccel_torch_tensor_allocate(int nr_dims, int64_t *dims,
+vaccel_torch_tensor_allocate(int64_t nr_dims, int64_t *dims,
 			     enum vaccel_torch_data_type type,
 			     size_t total_size)
 {
@@ -133,10 +133,6 @@ int vaccel_torch_tensor_set_data(struct vaccel_torch_tensor *tensor, void *data,
 {
 	if (!tensor)
 		return VACCEL_EINVAL;
-
-	// why do we free here?
-	if (tensor->data && tensor->owned)
-		free(tensor->data);
 
 	tensor->data = data;
 	tensor->size = size;

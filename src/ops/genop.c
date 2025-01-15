@@ -10,7 +10,6 @@
 #include "noop.h"
 #include "op.h"
 #include "opencv.h"
-#include "torch.h"
 #include <error.h>
 #include <log.h>
 #include <session.h>
