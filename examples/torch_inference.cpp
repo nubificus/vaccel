@@ -252,7 +252,7 @@ auto main(int argc, char **argv) -> int
 
 	printf("Success!\n");
 	printf("Result Tensor :\n");
-	printf("Output tensor => type:%u nr_dims:%u\n", out->data_type,
+	printf("Output tensor => type:%u nr_dims:%" PRId64 "\n", out->data_type,
 	       out->nr_dims);
 	printf("size: %zu\n", out->size);
 

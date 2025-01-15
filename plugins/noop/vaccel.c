@@ -603,13 +603,13 @@ static int noop_torch_jitload_forward(
 
 	noop_debug("Number of inputs: %d", nr_read);
 	for (int i = 0; i < nr_read; ++i) {
-		noop_debug("\t#dims: %d -> {", in_tensor[i]->nr_dims);
+		noop_debug("\t#dims: %" PRId64 " -> {", in_tensor[i]->nr_dims);
 		for (int j = 0; j < in_tensor[i]->nr_dims; ++j)
-			printf("%d%s", in_tensor[i]->dims[j],
+			printf("%" PRId64 "%s", in_tensor[i]->dims[j],
 			       (j == in_tensor[i]->nr_dims - 1) ? "}\n" : " ");
 
 		noop_debug("\tData type: %d", in_tensor[i]->data_type);
-		noop_debug("\tData -> %p, %zu", in_tensor[i]->data,
+		noop_debug("\tData -> %p, %" PRId64, in_tensor[i]->data,
 			   in_tensor[i]->size);
 	}
 
