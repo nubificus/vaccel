@@ -605,7 +605,7 @@ static int noop_torch_jitload_forward(
 	for (int i = 0; i < nr_read; ++i) {
 		noop_debug("\t#dims: %d -> {", in_tensor[i]->nr_dims);
 		for (int j = 0; j < in_tensor[i]->nr_dims; ++j)
-			printf("%d%s", in_tensor[i]->dims[j],
+			printf("%ld%s", in_tensor[i]->dims[j],
 			       (j == in_tensor[i]->nr_dims - 1) ? "}\n" : " ");
 
 		noop_debug("\tData type: %d", in_tensor[i]->data_type);
