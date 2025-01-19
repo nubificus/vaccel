@@ -3,8 +3,7 @@
 #define _POSIX_C_SOURCE 200809L
 
 #include "prof.h"
-#include "error.h"
-#include "log.h"
+#include "vaccel.h"
 #include <bits/time.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -26,9 +25,9 @@ static uint64_t get_tstamp_nsec(void)
 
 bool vaccel_prof_enabled(void)
 {
-	char *env = getenv("VACCEL_PROF_ENABLED");
+	const struct vaccel_config *config = vaccel_config();
 
-	return env && !strncmp(env, "enabled", 7);
+	return config->profiling_enabled;
 }
 
 static void prof_sample_start(struct vaccel_prof_sample *sample)

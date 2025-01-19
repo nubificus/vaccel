@@ -32,11 +32,11 @@ fi
 [ -z "${TERM}" ] && export TERM="linux"
 
 export LD_LIBRARY_PATH="${LIB_DIR}"
-export VACCEL_DEBUG_LEVEL=4
-export VACCEL_BACKENDS="${NOOP_DIR}/libvaccel-noop.so"
+export VACCEL_LOG_LEVEL=4
+export VACCEL_PLUGINS="${NOOP_DIR}/libvaccel-noop.so"
 
 printf "\n$(tput setaf 2)%s$(tput sgr0)\n" \
-	"Run examples with plugin '${VACCEL_BACKENDS}'"
+	"Run examples with plugin '${VACCEL_PLUGINS}'"
 set -x
 eval "${WRAPPER_CMD}" "${EXAMPLES_DIR}/noop"
 eval "${WRAPPER_CMD}" "${EXAMPLES_DIR}/classify" \
@@ -93,18 +93,18 @@ eval "${WRAPPER_CMD}" "${EXAMPLES_DIR}/exec_with_res" \
 	"${TESTLIB_DIR}/libmytestlib.so" 1
 set +x
 
-export VACCEL_BACKENDS="${MBENCH_DIR}/libvaccel-mbench.so"
+export VACCEL_PLUGINS="${MBENCH_DIR}/libvaccel-mbench.so"
 printf "\n$(tput setaf 2)%s$(tput sgr0)\n" \
-	"Run examples with plugin '${VACCEL_BACKENDS}'"
+	"Run examples with plugin '${VACCEL_PLUGINS}'"
 set -x
 eval "${WRAPPER_CMD}" "${EXAMPLES_DIR}/mbench 1" \
 	"${SHARE_DIR}/images/example.jpg"
 set +x
 
-export VACCEL_BACKENDS="${EXEC_DIR}/libvaccel-exec.so"
+export VACCEL_PLUGINS="${EXEC_DIR}/libvaccel-exec.so"
 export VACCEL_EXEC_DLCLOSE=1
 printf "\n$(tput setaf 2)%s$(tput sgr0)\n" \
-	"Run examples with plugin '${VACCEL_BACKENDS}'"
+	"Run examples with plugin '${VACCEL_PLUGINS}'"
 set -x
 eval "${WRAPPER_CMD}" "${EXAMPLES_DIR}/exec" \
 	"${TESTLIB_DIR}/libmytestlib.so" 1

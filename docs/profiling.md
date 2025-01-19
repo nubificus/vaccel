@@ -65,10 +65,10 @@ regions in the array.
 ### Enabling Profiling
 
 Profiling in vAccel is enabled by setting an environment variable. To activate
-profiling, set the environment variable `VACCEL_PROF_ENABLED` to `enabled`.
+profiling, set the environment variable `VACCEL_PROFILING_ENABLED` to `1`.
 
 ```bash
-export VACCEL_PROF_ENABLED=enabled
+export VACCEL_PROFILING_ENABLED=1
 ```
 
 ## Adding Profiling to Your vAccel API Operation or Plugin

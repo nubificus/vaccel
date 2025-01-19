@@ -13,9 +13,9 @@
 #include <string.h>
 #include <unistd.h>
 
-/* Runtime directory for holding resources related with the
- * runtime */
+/* Directory for holding resources related with the runtime */
 static char rundir[PATH_MAX];
+static struct vaccel_config config;
 
 static int create_rundir(void)
 {
@@ -68,15 +68,25 @@ const char *vaccel_rundir(void)
 	return rundir;
 }
 
+const struct vaccel_config *vaccel_config(void)
+{
+	return &config;
+}
+
 __attribute__((constructor)) static void vaccel_init(void)
 {
 	int ret = VACCEL_EINVAL;
 
-	/* Initialize logger */
+	ret = vaccel_config_init_from_env(&config);
+	if (ret)
+		exit(ret);
+
 	vaccel_log_init();
 
 	vaccel_debug("Initializing vAccel");
 	vaccel_info("vAccel %s", VACCEL_VERSION);
+
+	vaccel_config_print_debug(&config);
 
 	ret = create_rundir();
 	if (ret) {
@@ -102,12 +112,10 @@ __attribute__((constructor)) static void vaccel_init(void)
 		exit(ret);
 	}
 
-	/* find backend implementations and set them up */
-	char *plugins = getenv("VACCEL_BACKENDS");
-	if (!plugins)
+	if (!config.plugins)
 		return;
 
-	ret = vaccel_plugin_parse_and_load(plugins);
+	ret = vaccel_plugin_parse_and_load(config.plugins);
 	if (ret) {
 		vaccel_error("Could not load backend plugins");
 		exit(ret);
@@ -121,4 +129,5 @@ __attribute__((destructor)) static void vaccel_fini(void)
 	resources_cleanup();
 	plugins_cleanup();
 	destroy_rundir();
+	vaccel_config_release(&config);
 }
