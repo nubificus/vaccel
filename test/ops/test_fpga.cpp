@@ -32,12 +32,12 @@ TEST_CASE("fpga_add", "[ops][fpga]")
 	size_t const len_A = sizeof(A) / sizeof(A[0]);
 	size_t const len_B = sizeof(B) / sizeof(B[0]);
 
-	const char *vaccel_backends = std::getenv("VACCEL_BACKENDS");
+	const char *vaccel_plugins = std::getenv("VACCEL_PLUGINS");
 
-	if (vaccel_backends != nullptr) {
-		std::cout << "VACCEL_BACKENDS: " << vaccel_backends << '\n';
+	if (vaccel_plugins != nullptr) {
+		std::cout << "VACCEL_PLUGINS: " << vaccel_plugins << '\n';
 	} else {
-		std::cerr << "VACCEL_BACKENDS environment variable not set."
+		std::cerr << "VACCEL_PLUGINS environment variable not set."
 			  << '\n';
 	}
 

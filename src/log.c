@@ -1,40 +1,28 @@
 // SPDX-License-Identifier: Apache-2.0
 
-#include "error.h"
 #include "log.h"
-
+#include "vaccel.h"
 #include <slog.h>
-#include <stdlib.h>
 #include <string.h>
-
-enum {
-	VACCEL_DEBUG_LVL_ERROR = 1,
-	VACCEL_DEBUG_LVL_WARN = 2,
-	VACCEL_DEBUG_LVL_INFO = 3,
-	VACCEL_DEBUG_LVL_DEBUG = 4
-};
 
 static void set_debug_level(void)
 {
-	char *env = getenv("VACCEL_DEBUG_LEVEL");
-	if (!env)
-		return;
-
-	int level = atoi(env);
+	const struct vaccel_config *config = vaccel_config();
 	int nEnabledLevels = 0;
-	switch (level) {
-	/* FALLTHRU */
-	case VACCEL_DEBUG_LVL_DEBUG:
+
+	switch (config->log_level) {
+	case VACCEL_LOG_DEBUG:
 		nEnabledLevels |= SLOG_DEBUG;
-	/* FALLTHRU */
-	case VACCEL_DEBUG_LVL_INFO:
+		/* fallthrough */
+	case VACCEL_LOG_INFO:
 		nEnabledLevels |= SLOG_INFO;
-	/* FALLTHRU */
-	case VACCEL_DEBUG_LVL_WARN:
+		/* fallthrough */
+	case VACCEL_LOG_WARN:
 		nEnabledLevels |= SLOG_WARN;
-	/* FALLTHRU */
-	case VACCEL_DEBUG_LVL_ERROR:
+		/* fallthrough */
+	case VACCEL_LOG_ERROR:
 		nEnabledLevels |= SLOG_ERROR;
+		/* fallthrough */
 	default:
 		break;
 	}
@@ -48,13 +36,12 @@ static void set_debug_level(void)
 static void set_log_file(void)
 {
 	SLogConfig cfg;
-
-	char *env = getenv("VACCEL_LOG_FILE");
-	if (!env)
+	const struct vaccel_config *config = vaccel_config();
+	if (!config->log_file)
 		return;
 
 	slog_config_get(&cfg);
-	strncpy(cfg.sFileName, env, SLOG_NAME_MAX - 1);
+	strncpy(cfg.sFileName, config->log_file, SLOG_NAME_MAX - 1);
 
 	if (strncmp(cfg.sFileName, "/dev/stdout", SLOG_NAME_MAX - 1) != 0 &&
 	    strncmp(cfg.sFileName, "/dev/stderr", SLOG_NAME_MAX - 1) != 0) {
