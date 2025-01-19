@@ -44,8 +44,7 @@ When reporting a bug provide as much detail as possible, including steps to
 reproduce the issue and any relevant information about your environment.
 Specifically, include:
 - A clear description of the issue.
-- The respective output logs using the maximum debug level
-  (`VACCEL_DEBUG_LEVEL=4`).
+- The respective output logs using the maximum log level (`VACCEL_LOG_LEVEL=4`).
 - Version details of vAccel and plugins (either the commit's hash or the
   version).
 - CPU architecture and build type.

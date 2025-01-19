@@ -6,7 +6,7 @@
  * 1) vaccel_log_init()
  * 2) vaccel_log_shutdown()
  *
- * Run with env var VACCEL_DEBUG_LEVEL=(1..4)
+ * Run with env var VACCEL_LOG_LEVEL=(1..4)
  *
  */
 

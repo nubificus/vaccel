@@ -10,19 +10,19 @@
 #include <string.h>
 
 void *vacceldl = NULL;
-char *backends = NULL;
+char *plugins = NULL;
 
 __attribute__((constructor)) void load_vaccel(void)
 {
 	/* Get a copy of the plugin env variable */
-	const char *backends_env = getenv("VACCEL_BACKENDS");
-	if (backends_env)
-		backends = strdup(backends_env);
+	const char *plugins_env = getenv("VACCEL_PLUGINS");
+	if (plugins_env)
+		plugins = strdup(plugins_env);
 
 	/* Do not allow libvaccel.so to load the plugins
 	   as we get unresolved symbols. See:
 	   https://mail.python.org/pipermail/python-dev/2002-May/023923.html */
-	unsetenv("VACCEL_BACKENDS");
+	unsetenv("VACCEL_PLUGINS");
 
 	printf("Loading libvaccel\n");
 	vacceldl = dlopen("libvaccel.so", RTLD_LAZY | RTLD_GLOBAL);
@@ -33,7 +33,7 @@ __attribute__((constructor)) void load_vaccel(void)
 
 	/* Instead, load the plugins now */
 	printf("Loading plugins\n");
-	vaccel_plugin_parse_and_load(backends);
+	vaccel_plugin_parse_and_load(plugins);
 }
 
 __attribute__((destructor)) static void unload_vaccel(void)
@@ -41,6 +41,6 @@ __attribute__((destructor)) static void unload_vaccel(void)
 	printf("Shutting down vAccel\n");
 	/* This will unregister and free resources of the plugins */
 	dlclose(vacceldl);
-	if (backends)
-		free(backends);
+	if (plugins)
+		free(plugins);
 }

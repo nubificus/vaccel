@@ -347,8 +347,11 @@ TEST_CASE("plugin_register_vaccel_versions", "[core][plugin]")
 	{
 		snprintf(vaccel_version, vaccel_version_size, "%d-%d.%d%s",
 			 major, minor1, minor2, extra);
-		ret = setenv("VACCEL_IGNORE_VERSION", "1", 1);
-		REQUIRE(ret == 0);
+		ret = plugin_register(&plugin);
+		REQUIRE(ret == VACCEL_EINVAL);
+
+		auto *config = (struct vaccel_config *)vaccel_config();
+		config->version_ignore = true;
 
 		ret = plugin_register(&plugin);
 		REQUIRE(ret == VACCEL_OK);

@@ -7,6 +7,7 @@
 // IWYU pragma: begin_exports
 
 #include "vaccel/arg.h"
+#include "vaccel/config.h"
 #include "vaccel/error.h"
 #include "vaccel/file.h"
 #include "vaccel/id.h"
