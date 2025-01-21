@@ -55,6 +55,8 @@ int sessions_cleanup(void)
 	if (!sessions.initialized)
 		return VACCEL_OK;
 
+	vaccel_debug("Cleaning up sessions");
+
 	for (int i = 0; i < VACCEL_SESSIONS_MAX; ++i)
 		vaccel_session_release(sessions.running_sessions[i]);
 

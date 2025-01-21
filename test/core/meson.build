@@ -1,6 +1,6 @@
 tests_core_sources = files([
-  'test_bootstrap_shutdown.cpp',
   'test_config.cpp',
+  'test_core.cpp',
   'test_file.cpp',
   'test_id_pool.cpp',
   'test_log.cpp',
