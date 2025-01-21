@@ -69,6 +69,95 @@ struct vaccel_torch_tensor {
 	enum vaccel_torch_data_type data_type;
 };
 
+typedef struct {
+	void *framework_tensor_ptr;
+} vaccel_tensor_t;
+
+enum vaccel_data_type {
+	VACCEL_BYTE = 0,
+	VACCEL_CHAR = 1,
+	VACCEL_SHORT = 2,
+	VACCEL_INT = 3,
+	VACCEL_LONG = 4,
+	VACCEL_HALF = 5,
+	VACCEL_FLOAT = 6
+};
+
+
+/* Operations */
+int vaccel_tensor_init_from_buf(struct vaccel_session *sess,
+				vaccel_tensor_t *tensor,
+				int nr_dims, int *dims, void *buf,
+				enum vaccel_data_type type);
+
+int vaccel_tensor_init_from_res(struct vaccel_session *sess,
+				struct vaccel_resource *res,
+				vaccel_tensor_t *tensor,
+				int nr_dims, int *dims,
+				enum vaccel_data_type type);
+
+/* Allocate the tensor and write the content from `data`.
+ * Internally, use resources to transfer the data in case
+ * of rpc plugin.
+ * Also, we infer the data length from dims and data type.
+ */
+int vaccel_tensor_init(struct vaccel_session *sess,
+		       vaccel_tensor_t *tensor,
+		       int nr_dims, int *dims, void *data,
+		       enum vaccel_data_type type);
+
+/* Memory allocation only, no specific data - use for output tensors */
+int vaccel_tensor_alloc(struct vaccel_session *sess,
+			vaccel_tensor_t *tensor,
+			int nr_dims, int *dims,
+			enum vaccel_data_type type);
+
+/* Write the content of the tensor to a buffer.
+ * No need to know the number of bytes, since
+ * we can infer it from dimensions and data type.
+ * We may also add a query call for this.
+ */
+int vaccel_tensor_get_data(struct vaccel_session *sess,
+			   vaccel_tensor_t *tensor,
+			   void *buf);
+
+/* Permute tensor dimensions - Run directly to the torch::tensor */
+int vaccel_tensor_permute(struct vaccel_session *sess,
+			  vaccel_tensor_t *tensor,
+			  int nr_dims, int *new_dims);
+
+/* Delete the live torch::tensor */
+int vaccel_tensor_destroy(struct vaccel_session *sess,
+			  vaccel_tensor_t *tensor);
+
+/* Forward */
+int vaccel_tensor_forward(struct vaccel_session *sess,
+			  struct vaccel_resource *model_res,
+			  int nr_in, vaccel_tensor_t *in,
+			  vaccel_tensor_t *out);
+
+int vaccel_tensor_get_sub(struct vaccel_session *sess,
+			  vaccel_tensor_t *orig,
+			  vaccel_tensor_t *sub,
+			  int nr_sub_dims, int *sub_dims);
+
+int vaccel_tensor_sub_val(struct vaccel_session *sess,
+			  vaccel_tensor_t* tensor, void *val,
+			  enum vaccel_data_type type);
+
+int vaccel_tensor_div_val(struct vaccel_session *sess,
+			  vaccel_tensor_t* tensor, void *val,
+			  enum vaccel_data_type type);
+
+int vaccel_tensor_add_val(struct vaccel_session *sess,
+			  vaccel_tensor_t* tensor, void *val,
+			  enum vaccel_data_type type);
+
+int vaccel_tensor_mul_val(struct vaccel_session *sess,
+			  vaccel_tensor_t* tensor, void *val,
+			  enum vaccel_data_type type);
+
+/* ===== Old API ===== */
 struct vaccel_torch_tensor *
 vaccel_torch_tensor_new(int nr_dims, const int64_t *dims,
 			enum vaccel_torch_data_type type);

@@ -38,6 +38,18 @@ typedef enum {
 	VACCEL_TFLITE_SESSION_LOAD, /* 24 */
 	VACCEL_TFLITE_SESSION_RUN, /* 25 */
 	VACCEL_TFLITE_SESSION_DELETE, /* 26 */
+	VACCEL_TENSOR_INIT_FROM_BUF, /* 27 */
+	VACCEL_TENSOR_INIT_FROM_RES, /* 28 */
+	VACCEL_TENSOR_ALLOC, /* 29 */
+	VACCEL_TENSOR_GET_DATA, /* 30 */
+	VACCEL_TENSOR_PERMUTE, /* 31 */
+	VACCEL_TENSOR_DESTROY, /* 32 */
+	VACCEL_TENSOR_FORWARD, /* 33 */
+	VACCEL_TENSOR_GET_SUB, /* 34 */
+	VACCEL_TENSOR_SUB_VAL, /* 35*/
+	VACCEL_TENSOR_DIV_VAL, /* 36 */
+	VACCEL_TENSOR_ADD_VAL, /* 37 */
+	VACCEL_TENSOR_MUL_VAL, /* 38 */
 	VACCEL_FUNCTIONS_NR
 } vaccel_op_t;
 
@@ -69,6 +81,18 @@ static const char *vaccel_op_name[] = {
 	"TensorFlow Lite session load",
 	"TensorFlow Lite session run",
 	"TensorFlow Lite session delete",
+	"Tensor init from buffer",
+	"Tensor init from resource",
+	"Tensor allocation",
+	"Tensor get data",
+	"Tensor permute",
+	"Tensor destroy",
+	"Tensor forward",
+	"Tensor get subtensor",
+	"Tensor val subtraction",
+	"Tensor val division",
+	"Tensor val addition",
+	"Tensor val multiplication",
 	"Functions NR",
 };
 

@@ -30,6 +30,7 @@ examples_sources = files([
   'exec_helpers_nonser.c',
   'mbench.c',
   'local_and_virtio.c',
+  'full_torch_classification.cpp',
 ])
 
 examples = []
