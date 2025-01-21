@@ -46,6 +46,8 @@ int resources_cleanup(void)
 	if (!initialized)
 		return VACCEL_OK;
 
+	vaccel_debug("Cleaning up resources");
+
 	for (int i = 0; i < VACCEL_RESOURCE_MAX; ++i) {
 		struct vaccel_resource *res;
 		struct vaccel_resource *tmp;
