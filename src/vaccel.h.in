@@ -8,6 +8,7 @@
 
 #include "arg.h"
 #include "config.h"
+#include "core.h"
 #include "error.h"
 #include "file.h"
 #include "id_pool.h"
@@ -36,14 +37,3 @@
 #include "utils/str.h"
 
 // IWYU pragma: end_exports
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-const char *vaccel_rundir(void);
-const struct vaccel_config *vaccel_config(void);
-
-#ifdef __cplusplus
-}
-#endif

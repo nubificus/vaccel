@@ -8,6 +8,7 @@
 
 #include "vaccel/arg.h"
 #include "vaccel/config.h"
+#include "vaccel/core.h"
 #include "vaccel/error.h"
 #include "vaccel/file.h"
 #include "vaccel/id.h"
