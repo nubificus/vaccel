@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "log.h"
-#include "vaccel.h"
+#include "config.h"
+#include "core.h"
+#include "error.h"
 #include <slog.h>
 #include <string.h>
 
