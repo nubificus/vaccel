@@ -2,9 +2,12 @@
 
 #define _POSIX_C_SOURCE 200809L
 
+#include "plugin.h"
 #include "vaccel.h"
 #include <assert.h>
 #include <dlfcn.h>
+#include <limits.h>
+#include <linux/limits.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
