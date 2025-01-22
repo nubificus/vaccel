@@ -70,15 +70,15 @@ struct vaccel_resource {
 	size_t nr_files;
 };
 
-/* Get resource by index from live resources */
+/* Get resource by index from created resources */
 int vaccel_resource_get_by_id(struct vaccel_resource **res, vaccel_id_t id);
 
-/* Get the first live resource with the given type */
+/* Get the first created resource with the given type */
 int vaccel_resource_get_by_type(struct vaccel_resource **res,
 				vaccel_resource_type_t type);
 
-/* Get a list of of all the live resources with the given type */
-int vaccel_resource_get_all_by_type(struct vaccel_resource ***resources,
+/* Get a list of of all created resources with the given type */
+int vaccel_resource_get_all_by_type(struct vaccel_resource ***res,
 				    size_t *nr_found,
 				    vaccel_resource_type_t type);
 

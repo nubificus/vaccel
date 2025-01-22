@@ -14,7 +14,7 @@
 #include <string.h>
 
 static struct {
-	/* true if sub-system is initialized */
+	/* true if the plugins component is initialized */
 	bool initialized;
 
 	/* list of registered plugins */
@@ -23,13 +23,13 @@ static struct {
 	/* number of registered plugins */
 	size_t nr_registered;
 
-	/* virtio plugin */
+	/* virtio plugin (if available) */
 	struct vaccel_plugin *virtio;
 
 	/* array of available implementations for every supported
 	 * function */
 	vaccel_list_t ops[VACCEL_OP_MAX];
-} plugins = { 0 };
+} plugins = { .initialized = false };
 
 static int plugin_check_info(const struct vaccel_plugin_info *pinfo)
 {

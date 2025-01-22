@@ -21,15 +21,15 @@
 
 enum { VACCEL_SESSIONS_MAX = 1024 };
 
-struct {
-	/* true if the sessions subsystem has been initialized */
+static struct {
+	/* true if the sessions component has been initialized */
 	bool initialized;
 
-	/* Available session ids */
+	/* available session ids */
 	id_pool_t ids;
 
-	/* Active sessions */
-	struct vaccel_session *running_sessions[VACCEL_SESSIONS_MAX];
+	/* all the created vAccel sessions */
+	struct vaccel_session *all[VACCEL_SESSIONS_MAX];
 } sessions;
 
 static void get_session_id(struct vaccel_session *sess)
@@ -51,7 +51,7 @@ int sessions_bootstrap(void)
 		return ret;
 
 	for (size_t i = 0; i < VACCEL_SESSIONS_MAX; ++i)
-		sessions.running_sessions[i] = NULL;
+		sessions.all[i] = NULL;
 
 	sessions.initialized = true;
 
@@ -66,7 +66,7 @@ int sessions_cleanup(void)
 	vaccel_debug("Cleaning up sessions");
 
 	for (int i = 0; i < VACCEL_SESSIONS_MAX; ++i)
-		vaccel_session_release(sessions.running_sessions[i]);
+		vaccel_session_release(sessions.all[i]);
 
 	sessions.initialized = false;
 
@@ -274,7 +274,7 @@ int vaccel_session_init(struct vaccel_session *sess, uint32_t flags)
 		goto cleanup_session;
 
 	sess->hint = flags;
-	sessions.running_sessions[sess->id - 1] = sess;
+	sessions.all[sess->id - 1] = sess;
 
 	if (sess->is_virtio)
 		vaccel_debug("Initialized session %" PRId64
@@ -371,7 +371,7 @@ int vaccel_session_release(struct vaccel_session *sess)
 		return ret;
 	}
 
-	sessions.running_sessions[sess->id - 1] = NULL;
+	sessions.all[sess->id - 1] = NULL;
 
 	vaccel_debug("Released session %" PRId64, sess->id);
 
