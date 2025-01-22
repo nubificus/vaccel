@@ -28,32 +28,37 @@
 
 enum { VACCEL_RESOURCES_MAX = 2048 };
 
-static bool initialized = false;
-static id_pool_t id_pool;
+static struct {
+	/* true if the resources component has been initialized */
+	bool initialized;
 
-/* All the live (created) vAccel resources.
- * At the moment, this is an array where each element is a list of all
- * resources of the same time. We should think the data structure again.
- */
-static vaccel_list_t live_resources[VACCEL_RESOURCE_MAX];
+	/* available resource ids */
+	id_pool_t id_pool;
+
+	/* all the created vAccel resources
+	 * At the moment, this is an array where each element is a list of all
+	 * resources of the same time. We should think the data structure again.
+	 */
+	vaccel_list_t all[VACCEL_RESOURCE_MAX];
+} resources = { .initialized = false };
 
 int resources_bootstrap(void)
 {
-	int ret = id_pool_init(&id_pool, VACCEL_RESOURCES_MAX);
+	int ret = id_pool_init(&resources.id_pool, VACCEL_RESOURCES_MAX);
 	if (ret)
 		return ret;
 
 	for (int i = 0; i < VACCEL_RESOURCE_MAX; ++i)
-		list_init(&live_resources[i]);
+		list_init(&resources.all[i]);
 
-	initialized = true;
+	resources.initialized = true;
 
 	return VACCEL_OK;
 }
 
 int resources_cleanup(void)
 {
-	if (!initialized)
+	if (!resources.initialized)
 		return VACCEL_OK;
 
 	vaccel_debug("Cleaning up resources");
@@ -61,24 +66,24 @@ int resources_cleanup(void)
 	for (int i = 0; i < VACCEL_RESOURCE_MAX; ++i) {
 		struct vaccel_resource *res;
 		struct vaccel_resource *tmp;
-		resource_for_each_safe(res, tmp, &live_resources[i])
+		resource_for_each_safe(res, tmp, &resources.all[i])
 			vaccel_resource_release(res);
 	}
 
-	initialized = false;
+	resources.initialized = false;
 
-	return id_pool_release(&id_pool);
+	return id_pool_release(&resources.id_pool);
 }
 
 int vaccel_resource_get_by_id(struct vaccel_resource **res, vaccel_id_t id)
 {
-	if (!initialized)
+	if (!resources.initialized)
 		return VACCEL_EPERM;
 
 	for (int i = 0; i < VACCEL_RESOURCE_MAX; ++i) {
 		struct vaccel_resource *r;
 		struct vaccel_resource *tmp;
-		resource_for_each_safe(r, tmp, &live_resources[i])
+		resource_for_each_safe(r, tmp, &resources.all[i])
 		{
 			if (id == r->id) {
 				*res = r;
@@ -94,7 +99,7 @@ int vaccel_resource_get_by_id(struct vaccel_resource **res, vaccel_id_t id)
 int vaccel_resource_get_by_type(struct vaccel_resource **res,
 				vaccel_resource_type_t type)
 {
-	if (!initialized)
+	if (!resources.initialized)
 		return VACCEL_EPERM;
 
 	if (!res || type >= VACCEL_RESOURCE_MAX)
@@ -102,7 +107,7 @@ int vaccel_resource_get_by_type(struct vaccel_resource **res,
 
 	struct vaccel_resource *r;
 	struct vaccel_resource *tmp;
-	resource_for_each_safe(r, tmp, &live_resources[type])
+	resource_for_each_safe(r, tmp, &resources.all[type])
 	{
 		*res = r;
 		return VACCEL_OK;
@@ -112,22 +117,22 @@ int vaccel_resource_get_by_type(struct vaccel_resource **res,
 	return VACCEL_EINVAL;
 }
 
-int vaccel_resource_get_all_by_type(struct vaccel_resource ***resources,
+int vaccel_resource_get_all_by_type(struct vaccel_resource ***res,
 				    size_t *nr_found,
 				    vaccel_resource_type_t type)
 {
-	if (!initialized)
+	if (!resources.initialized)
 		return VACCEL_EPERM;
 
-	if (!resources || type >= VACCEL_RESOURCE_MAX || !nr_found)
+	if (!res || type >= VACCEL_RESOURCE_MAX || !nr_found)
 		return VACCEL_EINVAL;
 
-	struct vaccel_resource *res = NULL;
+	struct vaccel_resource *r = NULL;
 	struct vaccel_resource *tmp = NULL;
 	size_t found = 0;
 
-	/* Count the matching live resources */
-	resource_for_each_safe(res, tmp, &live_resources[type])
+	/* Count the matching created resources */
+	resource_for_each_safe(r, tmp, &resources.all[type])
 	{
 		++found;
 	}
@@ -139,17 +144,17 @@ int vaccel_resource_get_all_by_type(struct vaccel_resource ***resources,
 	}
 
 	/* Allocate space */
-	*resources = (struct vaccel_resource **)malloc(
+	*res = (struct vaccel_resource **)malloc(
 		found * sizeof(struct vaccel_resource *));
-	if (*resources == NULL)
+	if (*res == NULL)
 		return VACCEL_ENOMEM;
 
 	size_t i = 0;
-	res = NULL;
+	r = NULL;
 	tmp = NULL;
-	resource_for_each_safe(res, tmp, &live_resources[type])
+	resource_for_each_safe(r, tmp, &resources.all[type])
 	{
-		(*resources)[i++] = res;
+		(*res)[i++] = r;
 	}
 
 	*nr_found = found;
@@ -158,12 +163,12 @@ int vaccel_resource_get_all_by_type(struct vaccel_resource ***resources,
 
 static void get_resource_id(struct vaccel_resource *res)
 {
-	res->id = id_pool_get(&id_pool);
+	res->id = id_pool_get(&resources.id_pool);
 }
 
 static void put_resource_id(struct vaccel_resource *res)
 {
-	if (id_pool_put(&id_pool, res->id))
+	if (id_pool_put(&resources.id_pool, res->id))
 		vaccel_warn("Could not return resource ID to pool");
 	res->id = -1;
 }
@@ -527,7 +532,7 @@ static int resource_init_with_paths(struct vaccel_resource *res,
 	atomic_init(&res->refcount, 0);
 
 	list_init_entry(&res->entry);
-	list_add_tail(&live_resources[res->type], &res->entry);
+	list_add_tail(&resources.all[res->type], &res->entry);
 
 	vaccel_debug("Initialized resource %" PRId64, res->id);
 
@@ -549,7 +554,7 @@ static int resource_init_with_files(struct vaccel_resource *res,
 	atomic_init(&res->refcount, 0);
 
 	list_init_entry(&res->entry);
-	list_add_tail(&live_resources[res->type], &res->entry);
+	list_add_tail(&resources.all[res->type], &res->entry);
 
 	vaccel_debug("Initialized resource %" PRId64, res->id);
 
@@ -567,7 +572,7 @@ int vaccel_resource_init_multi(struct vaccel_resource *res, const char **paths,
 {
 	int ret;
 
-	if (!initialized)
+	if (!resources.initialized)
 		return VACCEL_EPERM;
 
 	if (!res || !paths || !nr_paths || type >= VACCEL_RESOURCE_MAX)
@@ -653,7 +658,7 @@ int vaccel_resource_init_from_buf(struct vaccel_resource *res, const void *buf,
 {
 	int ret;
 
-	if (!initialized)
+	if (!resources.initialized)
 		return VACCEL_EPERM;
 
 	if (!res || !buf || !nr_bytes || type >= VACCEL_RESOURCE_MAX)
@@ -716,7 +721,7 @@ int vaccel_resource_init_from_files(struct vaccel_resource *res,
 {
 	int ret;
 
-	if (!initialized)
+	if (!resources.initialized)
 		return VACCEL_EPERM;
 
 	if (!res || !files || !nr_files || type >= VACCEL_RESOURCE_MAX)
@@ -785,7 +790,7 @@ release_id:
 
 int vaccel_resource_release(struct vaccel_resource *res)
 {
-	if (!initialized)
+	if (!resources.initialized)
 		return VACCEL_EPERM;
 
 	if (!res)
@@ -927,7 +932,7 @@ int vaccel_resource_register(struct vaccel_resource *res,
 {
 	int ret;
 
-	if (!initialized)
+	if (!resources.initialized)
 		return VACCEL_EPERM;
 
 	if (!res || res->path_type >= VACCEL_PATH_MAX || !sess)
@@ -997,7 +1002,7 @@ int vaccel_resource_register(struct vaccel_resource *res,
 int vaccel_resource_unregister(struct vaccel_resource *res,
 			       struct vaccel_session *sess)
 {
-	if (!initialized)
+	if (!resources.initialized)
 		return VACCEL_EPERM;
 
 	if (!res || !sess)
