@@ -4,7 +4,17 @@
 #define _DEFAULT_SOURCE
 
 #include "resource.h"
-#include "vaccel.h"
+#include "core.h"
+#include "error.h"
+#include "file.h"
+#include "id_pool.h"
+#include "list.h"
+#include "log.h"
+#include "plugin.h"
+#include "session.h"
+#include "utils/fs.h"
+#include "utils/net.h"
+#include "utils/path.h"
 #include <assert.h>
 #include <errno.h>
 #include <inttypes.h>

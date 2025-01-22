@@ -1,7 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "session.h"
-#include "vaccel.h"
+#include "core.h"
+#include "error.h"
+#include "id_pool.h"
+#include "list.h"
+#include "log.h"
+#include "plugin.h"
+#include "resource.h"
+#include "utils/fs.h"
+#include "utils/path.h"
 #include <inttypes.h>
 #include <limits.h>
 #include <linux/limits.h>

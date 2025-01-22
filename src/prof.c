@@ -3,7 +3,10 @@
 #define _POSIX_C_SOURCE 200809L
 
 #include "prof.h"
-#include "vaccel.h"
+#include "config.h"
+#include "core.h"
+#include "error.h"
+#include "log.h"
 #include <bits/time.h>
 #include <stddef.h>
 #include <stdint.h>
