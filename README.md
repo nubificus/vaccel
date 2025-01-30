@@ -120,12 +120,12 @@ environment for it to run:
    export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
    ```
 
-2. Define the backend plugin to use for our application.
+2. Define the plugin implementing the operations we use in our application.
 
    In this example, we will use the noop plugin:
 
    ```bash
-   export VACCEL_BACKENDS=/usr/local/lib/libvaccel-noop.so
+   export VACCEL_PLUGINS=/usr/local/lib/libvaccel-noop.so
    ```
 
 3. Finally, run the application:
@@ -152,12 +152,12 @@ environment for it to run:
    classification tags: This is a dummy classification tag!
    ```
 
-You can get verbose output from the vAcceRT library by setting the
-`VACCEL_DEBUG_LEVEL` environment variable.
+You can get verbose output from the vAccel library by setting the
+`VACCEL_LOG_LEVEL` environment variable.
 
 For example, to use debug level logging:
 ```bash
-export VACCEL_DEBUG_LEVEL=4
+export VACCEL_LOG_LEVEL=4
    ```
 
 ## License

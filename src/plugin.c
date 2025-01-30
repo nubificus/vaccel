@@ -2,16 +2,19 @@
 
 #define _POSIX_C_SOURCE 200809L
 
+#include "plugin.h"
 #include "vaccel.h"
 #include <assert.h>
 #include <dlfcn.h>
+#include <limits.h>
+#include <linux/limits.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 static struct {
-	/* true if sub-system is initialized */
+	/* true if the plugins component is initialized */
 	bool initialized;
 
 	/* list of registered plugins */
@@ -20,13 +23,13 @@ static struct {
 	/* number of registered plugins */
 	size_t nr_registered;
 
-	/* virtio plugin */
+	/* virtio plugin (if available) */
 	struct vaccel_plugin *virtio;
 
 	/* array of available implementations for every supported
 	 * function */
 	vaccel_list_t ops[VACCEL_OP_MAX];
-} plugins = { 0 };
+} plugins = { .initialized = false };
 
 static int plugin_check_info(const struct vaccel_plugin_info *pinfo)
 {
@@ -60,6 +63,8 @@ int plugin_parse_version(int *major, int *minor1, int *minor2, char **extra,
 		return VACCEL_EINVAL;
 
 	char *tmp_str = strdup(str);
+	if (!tmp_str)
+		return VACCEL_ENOMEM;
 
 	int ret;
 	if (str[0] == 'v')
@@ -83,8 +88,8 @@ static int plugin_check_version(const struct vaccel_plugin_info *pinfo)
 {
 	int ret = VACCEL_OK;
 
-	char *ignore = getenv("VACCEL_IGNORE_VERSION");
-	if (ignore && (strcmp(ignore, "1") == 0 || strcmp(ignore, "true") == 0))
+	const struct vaccel_config *config = vaccel_config();
+	if (config->version_ignore)
 		return VACCEL_OK;
 
 	if (!pinfo->vaccel_version) {
@@ -134,7 +139,6 @@ free_vextra:
 free_extra:
 	if (extra)
 		free(extra);
-	free(ignore);
 
 	return ret;
 }

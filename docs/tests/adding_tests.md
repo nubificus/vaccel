@@ -29,7 +29,7 @@ foreach t : tests_core_sources
     foreach l : range(1, 4)
       test('@0@+@1@@2@'.format(name, 'level', l), exe,
         args : tests_args,
-        env : 'VACCEL_DEBUG_LEVEL=' + l.to_string(),
+        env : 'VACCEL_LOG_LEVEL=' + l.to_string(),
         is_parallel : false)
     endforeach
   endif
