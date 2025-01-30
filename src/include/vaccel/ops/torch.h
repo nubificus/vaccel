@@ -63,7 +63,7 @@ struct vaccel_torch_tensor {
 	uint8_t owned;
 
 	int nr_dims;
-	int32_t *dims;
+	int64_t *dims;
 
 	/* Data type */
 	enum vaccel_torch_data_type data_type;
