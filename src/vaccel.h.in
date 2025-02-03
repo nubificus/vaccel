@@ -8,7 +8,7 @@
 
 #include "arg.h"
 #include "error.h"
-#include "file.h"
+#include "blob.h"
 #include "id_pool.h"
 #include "list.h"
 #include "log.h"

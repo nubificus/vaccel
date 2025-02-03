@@ -87,21 +87,21 @@ static int exec_with_resource(struct vaccel_session *session,
 	exec_res_debug("session:%" PRId64 " Calling exec_with_resource",
 		       session->id);
 
-	if (resource->nr_files < 1) {
+	if (resource->nr_blobs < 1) {
 		exec_res_error("No library provided");
 		return VACCEL_EINVAL;
 	}
-	exec_res_debug("Number of libraries: %zu", resource->nr_files);
+	exec_res_debug("Number of libraries: %zu", resource->nr_blobs);
 
 	/* Allocate array for dl handles */
-	void **dl = (void **)malloc(sizeof(*dl) * resource->nr_files);
+	void **dl = (void **)malloc(sizeof(*dl) * resource->nr_blobs);
 	if (!dl)
 		return VACCEL_ENOMEM;
 
 	/* Load dependency libraries if any */
-	size_t nr_deps = resource->nr_files - 1;
+	size_t nr_deps = resource->nr_blobs - 1;
 	for (size_t i = 0; i < nr_deps; i++) {
-		char *dep_library = resource->files[i]->path;
+		char *dep_library = resource->blobs[i]->path;
 		dl[i] = dlopen(dep_library, RTLD_NOW | RTLD_GLOBAL);
 		if (!dl[i]) {
 			exec_res_error("dlopen: %s", dep_library, dlerror());
@@ -111,7 +111,7 @@ static int exec_with_resource(struct vaccel_session *session,
 	}
 
 	/* Load main library */
-	char *library = resource->files[nr_deps]->path;
+	char *library = resource->blobs[nr_deps]->path;
 	exec_res_debug("Library: %s", library);
 	dl[nr_deps] = dlopen(library, RTLD_NOW);
 	void *ldl = dl[nr_deps];
@@ -149,7 +149,7 @@ static int exec_with_resource(struct vaccel_session *session,
 	char *do_dlclose = getenv("VACCEL_EXEC_DLCLOSE");
 	if (do_dlclose &&
 	    (strcmp(do_dlclose, "1") == 0 || strcmp(do_dlclose, "true") == 0)) {
-		for (size_t i = resource->nr_files; i > 0; i--) {
+		for (size_t i = resource->nr_blobs; i > 0; i--) {
 			if (dlclose(dl[i - 1])) {
 				exec_res_error("dlclose: %s", dlerror());
 				ret = VACCEL_EINVAL;

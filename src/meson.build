@@ -8,7 +8,7 @@ vaccel_h = configure_file(input : 'vaccel.h.in',
 vaccel_headers = files([
   'arg.h',
   'error.h',
-  'file.h',
+  'blob.h',
   'id_pool.h',
   'list.h',
   'log.h',
@@ -21,7 +21,7 @@ vaccel_headers = files([
 
 vaccel_sources = files([
   'arg.c',
-  'file.c',
+  'blob.c',
   'id_pool.c',
   'log.c',
   'plugin.c',

@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "file.h"
+#include "blob.h"
 #include "id.h"
 #include "list.h"
 #include "utils/enum.h"
@@ -63,11 +63,11 @@ struct vaccel_resource {
 	/* rundir for this resource if it needs it. can be empty (NULL) */
 	char *rundir;
 
-	/* resource representation of the file. can be an array */
-	struct vaccel_file **files;
+	/* resource representation of the blob. can be an array */
+	struct vaccel_blob **blobs;
 
-	/* number of file entities represented by the resource */
-	size_t nr_files;
+	/* number of blob entities represented by the resource */
+	size_t nr_blobs;
 };
 
 /* Get resource by index from live resources */
@@ -98,10 +98,10 @@ int vaccel_resource_init_from_buf(struct vaccel_resource *res, const void *buf,
 				  size_t nr_bytes, vaccel_resource_type_t type,
 				  const char *filename);
 
-/* Initialize resource from existing vaccel files */
-int vaccel_resource_init_from_files(struct vaccel_resource *res,
-				    const struct vaccel_file **files,
-				    size_t nr_files,
+/* Initialize resource from existing vaccel blobs */
+int vaccel_resource_init_from_blobs(struct vaccel_resource *res,
+				    const struct vaccel_blob **blobs,
+				    size_t nr_blobs,
 				    vaccel_resource_type_t type);
 
 /* Release resource data */
@@ -120,10 +120,10 @@ int vaccel_resource_from_buf(struct vaccel_resource **res, const void *buf,
 			     size_t nr_bytes, vaccel_resource_type_t type,
 			     const char *filename);
 
-/* Allocate and initialize resource from existing vaccel files */
-int vaccel_resource_from_files(struct vaccel_resource **res,
-			       const struct vaccel_file **files,
-			       size_t nr_files, vaccel_resource_type_t type);
+/* Allocate and initialize resource from existing vaccel blobs */
+int vaccel_resource_from_blobs(struct vaccel_resource **res,
+			       const struct vaccel_blob **blobs,
+			       size_t nr_blobs, vaccel_resource_type_t type);
 
 /* Release resource data and free resource created with
  * vaccel_resource_new*() or vaccel_resource_from_*() */

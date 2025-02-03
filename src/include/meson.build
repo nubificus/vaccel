@@ -5,7 +5,7 @@ include_vaccel_h = configure_file(input : 'vaccel.h.in',
 vaccel_public_headers = files([
   'vaccel/arg.h',
   'vaccel/error.h',
-  'vaccel/file.h',
+  'vaccel/blob.h',
   'vaccel/id.h',
   'vaccel/list.h',
   'vaccel/log.h',

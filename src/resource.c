@@ -243,34 +243,34 @@ void resource_destroy_rundir(struct vaccel_resource *res)
 	res->rundir = NULL;
 }
 
-static void delete_files(struct vaccel_file **files, size_t nr_files)
+static void delete_blobs(struct vaccel_blob **blobs, size_t nr_blobs)
 {
-	if (!files)
+	if (!blobs)
 		return;
 
-	for (size_t i = 0; i < nr_files; i++) {
-		if (!files[i])
+	for (size_t i = 0; i < nr_blobs; i++) {
+		if (!blobs[i])
 			continue;
 
-		int ret = vaccel_file_delete(files[i]);
+		int ret = vaccel_blob_delete(blobs[i]);
 		if (ret) {
-			vaccel_warn("Could not delete file %zu", i);
+			vaccel_warn("Could not delete blob %zu", i);
 			continue;
 		}
-		files[i] = NULL;
+		blobs[i] = NULL;
 	}
 }
 
-static int resource_populate_file_data(struct vaccel_resource *res)
+static int resource_populate_blob_data(struct vaccel_resource *res)
 {
-	if (!res || !res->files || !res->nr_files)
+	if (!res || !res->blobs || !res->nr_blobs)
 		return VACCEL_EINVAL;
 
-	for (size_t i = 0; i < res->nr_files; i++) {
-		if (!res->files[i])
+	for (size_t i = 0; i < res->nr_blobs; i++) {
+		if (!res->blobs[i])
 			return VACCEL_EINVAL;
 
-		int ret = vaccel_file_read(res->files[i]);
+		int ret = vaccel_blob_read(res->blobs[i]);
 		if (ret)
 			return ret;
 	}
@@ -297,23 +297,23 @@ static int add_dir_files_callback(const char *path, int idx, va_list args)
 		return VACCEL_EINVAL;
 	}
 
-	int ret = vaccel_file_new(&res->files[idx], path);
+	int ret = vaccel_blob_new(&res->blobs[idx], path);
 	if (ret)
-		vaccel_error("Could not create vaccel_file for %s", path);
+		vaccel_error("Could not create vaccel_blob for %s", path);
 
 	return ret;
 }
 
-static int resource_add_files_from_dir(struct vaccel_resource *res,
+static int resource_add_blobs_from_dir(struct vaccel_resource *res,
 				       bool with_data)
 {
 	if (!res)
 		return VACCEL_EINVAL;
 
 	/* If files exist only populate the file data if chosen */
-	if (res->files && res->nr_files) {
+	if (res->blobs && res->nr_blobs) {
 		if (with_data)
-			return resource_populate_file_data(res);
+			return resource_populate_blob_data(res);
 		return VACCEL_OK;
 	}
 
@@ -328,15 +328,15 @@ static int resource_add_files_from_dir(struct vaccel_resource *res,
 		return VACCEL_EINVAL;
 	}
 
-	res->files = (struct vaccel_file **)malloc(
-		nr_dirfiles * sizeof(struct vaccel_file *));
-	if (!res->files)
+	res->blobs = (struct vaccel_blob **)malloc(
+		nr_dirfiles * sizeof(struct vaccel_blob *));
+	if (!res->blobs)
 		return VACCEL_ENOMEM;
 
 	for (int i = 0; i < nr_dirfiles; i++)
-		res->files[i] = NULL;
+		res->blobs[i] = NULL;
 
-	/* Create vaccel_file struct for file paths. If the files are in
+	/* Create vaccel_blob struct for file paths. If the files are in
 	 * subdirectories they will be persisted in a flat directory remotely */
 	int ret = fs_dir_process_files(res->paths[0], add_dir_files_callback,
 				       res, nr_dirfiles, NULL);
@@ -347,12 +347,12 @@ static int resource_add_files_from_dir(struct vaccel_resource *res,
 	}
 
 	assert(nr_dirfiles == ret);
-	res->nr_files = nr_dirfiles;
+	res->nr_blobs = nr_dirfiles;
 
 	if (with_data) {
-		ret = resource_populate_file_data(res);
+		ret = resource_populate_blob_data(res);
 		if (ret) {
-			vaccel_error("Could not populate resource file data");
+			vaccel_error("Could not populate resource blob data");
 			goto free;
 		}
 	}
@@ -360,10 +360,10 @@ static int resource_add_files_from_dir(struct vaccel_resource *res,
 	return VACCEL_OK;
 
 free:
-	delete_files(res->files, res->nr_files);
-	free(res->files);
-	res->files = NULL;
-	res->nr_files = 0;
+	delete_blobs(res->blobs, res->nr_blobs);
+	free(res->blobs);
+	res->blobs = NULL;
+	res->nr_blobs = 0;
 
 	return ret;
 }
@@ -391,13 +391,13 @@ static int download_file(const char *path, const char *fs_dir,
 	return ret;
 }
 
-static int resource_add_files(struct vaccel_resource *res, bool remote,
+static int resource_add_blobs(struct vaccel_resource *res, bool remote,
 			      bool download)
 {
 	if (!res)
 		return VACCEL_EINVAL;
 
-	if (res->files && res->nr_files)
+	if (res->blobs && res->nr_blobs)
 		return VACCEL_OK;
 
 	if (!res->paths || !res->nr_paths)
@@ -413,15 +413,15 @@ static int resource_add_files(struct vaccel_resource *res, bool remote,
 			goto cleanup_rundir;
 	}
 
-	res->files = (struct vaccel_file **)malloc(
-		res->nr_paths * sizeof(struct vaccel_file *));
-	if (!res->files)
+	res->blobs = (struct vaccel_blob **)malloc(
+		res->nr_paths * sizeof(struct vaccel_blob *));
+	if (!res->blobs)
 		return VACCEL_ENOMEM;
 
 	for (size_t i = 0; i < res->nr_paths; i++)
-		res->files[i] = NULL;
+		res->blobs[i] = NULL;
 
-	size_t nr_files = 0;
+	size_t nr_blobs = 0;
 	for (size_t i = 0; i < res->nr_paths; i++) {
 		if (!res->paths[i]) {
 			ret = VACCEL_EINVAL;
@@ -438,66 +438,66 @@ static int resource_add_files(struct vaccel_resource *res, bool remote,
 				goto free;
 			}
 
-			ret = vaccel_file_new(&res->files[i], path);
+			ret = vaccel_blob_new(&res->blobs[i], path);
 			if (ret) {
 				vaccel_error(
-					"Could not create vaccel_file for %s",
+					"Could not create vaccel_blob for %s",
 					path);
 				goto free;
 			}
 			/* Mark the path as owned so it will be deleted on release */
-			res->files[i]->path_owned = true;
+			res->blobs[i]->path_owned = true;
 		} else {
-			ret = vaccel_file_new(&res->files[i], res->paths[i]);
+			ret = vaccel_blob_new(&res->blobs[i], res->paths[i]);
 			if (ret) {
 				vaccel_error(
-					"Could not create vaccel_file for %s",
+					"Could not create vaccel_blob for %s",
 					res->paths[i]);
 				goto free;
 			}
 		}
 
-		++nr_files;
+		++nr_blobs;
 	}
-	assert(res->nr_paths == nr_files);
-	res->nr_files = nr_files;
+	assert(res->nr_paths == nr_blobs);
+	res->nr_blobs = nr_blobs;
 
 	return VACCEL_OK;
 
 free:
-	delete_files(res->files, nr_files);
-	free(res->files);
-	res->files = NULL;
-	res->nr_files = 0;
+	delete_blobs(res->blobs, nr_blobs);
+	free(res->blobs);
+	res->blobs = NULL;
+	res->nr_blobs = 0;
 cleanup_rundir:
 	resource_destroy_rundir(res);
 
 	return ret;
 }
 
-static int resource_add_files_from_local(struct vaccel_resource *res,
+static int resource_add_blobs_from_local(struct vaccel_resource *res,
 					 bool with_data)
 {
 	if (!res)
 		return VACCEL_EINVAL;
 
-	int ret = resource_add_files(res, false, false);
+	int ret = resource_add_blobs(res, false, false);
 	if (ret)
 		return ret;
 
 	if (with_data)
-		return resource_populate_file_data(res);
+		return resource_populate_blob_data(res);
 
 	return VACCEL_OK;
 }
 
-static int resource_add_files_from_remote(struct vaccel_resource *res,
+static int resource_add_blobs_from_remote(struct vaccel_resource *res,
 					  bool download)
 {
 	if (!res)
 		return VACCEL_EINVAL;
 
-	return resource_add_files(res, true, download);
+	return resource_add_blobs(res, true, download);
 }
 
 static int resource_init_with_paths(struct vaccel_resource *res,
@@ -509,8 +509,8 @@ static int resource_init_with_paths(struct vaccel_resource *res,
 
 	res->remote_id = -1;
 	res->type = type;
-	res->files = NULL;
-	res->nr_files = 0;
+	res->blobs = NULL;
+	res->nr_blobs = 0;
 	res->rundir = NULL;
 	atomic_init(&res->refcount, 0);
 
@@ -522,10 +522,10 @@ static int resource_init_with_paths(struct vaccel_resource *res,
 	return VACCEL_OK;
 }
 
-static int resource_init_with_files(struct vaccel_resource *res,
+static int resource_init_with_blobs(struct vaccel_resource *res,
 				    vaccel_resource_type_t type)
 {
-	if (!res || !res->files || !res->nr_files ||
+	if (!res || !res->blobs || !res->nr_blobs ||
 	    type >= VACCEL_RESOURCE_MAX || !res->rundir || !res->id)
 		return VACCEL_EINVAL;
 
@@ -651,55 +651,55 @@ int vaccel_resource_init_from_buf(struct vaccel_resource *res, const void *buf,
 	if (res->id < 0)
 		return -(int)res->id;
 
-	res->files =
-		(struct vaccel_file **)malloc(sizeof(struct vaccel_file *));
-	if (!res->files) {
+	res->blobs =
+		(struct vaccel_blob **)malloc(sizeof(struct vaccel_blob *));
+	if (!res->blobs) {
 		ret = VACCEL_ENOMEM;
 		goto release_id;
 	}
 
 	ret = resource_create_rundir(res);
 	if (ret)
-		goto free_files;
+		goto free_blobs;
 
 	if (filename != NULL) {
-		ret = vaccel_file_from_buf(&res->files[0], buf, nr_bytes,
+		ret = vaccel_blob_from_buf(&res->blobs[0], buf, nr_bytes,
 					   filename, res->rundir, false);
 	} else {
-		ret = vaccel_file_from_buf(&res->files[0], buf, nr_bytes,
+		ret = vaccel_blob_from_buf(&res->blobs[0], buf, nr_bytes,
 					   "file", res->rundir, true);
 	}
 	if (ret) {
-		vaccel_error("Could not create vaccel_file from buffer");
+		vaccel_error("Could not create vaccel_blob from buffer");
 		goto cleanup_rundir;
 	}
-	res->nr_files = 1;
+	res->nr_blobs = 1;
 
-	ret = resource_init_with_files(res, type);
+	ret = resource_init_with_blobs(res, type);
 	if (ret) {
 		vaccel_error("Could not initialize resource");
-		goto delete_file;
+		goto delete_blob;
 	}
 
 	return VACCEL_OK;
 
-delete_file:
-	delete_files(res->files, res->nr_files);
+delete_blob:
+	delete_blobs(res->blobs, res->nr_blobs);
 cleanup_rundir:
 	resource_destroy_rundir(res);
-free_files:
-	free(res->files);
-	res->files = NULL;
-	res->nr_files = 0;
+free_blobs:
+	free(res->blobs);
+	res->blobs = NULL;
+	res->nr_blobs = 0;
 release_id:
 	put_resource_id(res);
 
 	return ret;
 }
 
-int vaccel_resource_init_from_files(struct vaccel_resource *res,
-				    const struct vaccel_file **files,
-				    size_t nr_files,
+int vaccel_resource_init_from_blobs(struct vaccel_resource *res,
+				    const struct vaccel_blob **blobs,
+				    size_t nr_blobs,
 				    vaccel_resource_type_t type)
 {
 	int ret;
@@ -707,50 +707,50 @@ int vaccel_resource_init_from_files(struct vaccel_resource *res,
 	if (!initialized)
 		return VACCEL_EPERM;
 
-	if (!res || !files || !nr_files || type >= VACCEL_RESOURCE_MAX)
+	if (!res || !blobs || !nr_blobs || type >= VACCEL_RESOURCE_MAX)
 		return VACCEL_EINVAL;
 
 	get_resource_id(res);
 	if (res->id < 0)
 		return -(int)res->id;
 
-	res->files = (struct vaccel_file **)malloc(
-		nr_files * sizeof(struct vaccel_file *));
-	if (!res->files) {
+	res->blobs = (struct vaccel_blob **)malloc(
+		nr_blobs * sizeof(struct vaccel_blob *));
+	if (!res->blobs) {
 		ret = VACCEL_ENOMEM;
 		goto release_id;
 	}
 
-	for (size_t i = 0; i < nr_files; i++)
-		res->files[i] = NULL;
+	for (size_t i = 0; i < nr_blobs; i++)
+		res->blobs[i] = NULL;
 
 	ret = resource_create_rundir(res);
 	if (ret)
-		goto free_files;
+		goto free_blobs;
 
-	size_t nr_r_files = 0;
-	for (size_t i = 0; i < nr_files; i++) {
-		if (!files[i] || !files[i]->size || !files[i]->data ||
-		    !files[i]->name) {
+	size_t nr_r_blobs = 0;
+	for (size_t i = 0; i < nr_blobs; i++) {
+		if (!blobs[i] || !blobs[i]->size || !blobs[i]->data ||
+		    !blobs[i]->name) {
 			ret = VACCEL_EINVAL;
 			goto free;
 		}
 
-		ret = vaccel_file_from_buf(&res->files[i], files[i]->data,
-					   files[i]->size, files[i]->name,
+		ret = vaccel_blob_from_buf(&res->blobs[i], blobs[i]->data,
+					   blobs[i]->size, blobs[i]->name,
 					   res->rundir, false);
 		if (ret) {
 			vaccel_error(
-				"Could not create vaccel_file from buffer");
+				"Could not create vaccel_blob from buffer");
 			goto free;
 		}
 
-		++nr_r_files;
+		++nr_r_blobs;
 	}
-	assert(nr_r_files == nr_files);
-	res->nr_files = nr_files;
+	assert(nr_r_blobs == nr_blobs);
+	res->nr_blobs = nr_blobs;
 
-	ret = resource_init_with_files(res, type);
+	ret = resource_init_with_blobs(res, type);
 	if (ret) {
 		vaccel_error("Could not initialize resource");
 		goto free;
@@ -759,12 +759,12 @@ int vaccel_resource_init_from_files(struct vaccel_resource *res,
 	return VACCEL_OK;
 
 free:
-	delete_files(res->files, nr_r_files);
+	delete_blobs(res->blobs, nr_r_blobs);
 	resource_destroy_rundir(res);
-free_files:
-	free(res->files);
-	res->files = NULL;
-	res->nr_files = 0;
+free_blobs:
+	free(res->blobs);
+	res->blobs = NULL;
+	res->nr_blobs = 0;
 release_id:
 	put_resource_id(res);
 
@@ -791,12 +791,12 @@ int vaccel_resource_release(struct vaccel_resource *res)
 		return VACCEL_EBUSY;
 	}
 
-	if (res->files) {
-		delete_files(res->files, res->nr_files);
-		free(res->files);
-		res->files = NULL;
+	if (res->blobs) {
+		delete_blobs(res->blobs, res->nr_blobs);
+		free(res->blobs);
+		res->blobs = NULL;
 	}
-	res->nr_files = 0;
+	res->nr_blobs = 0;
 
 	if (res->rundir) {
 		resource_destroy_rundir(res);
@@ -876,9 +876,9 @@ int vaccel_resource_from_buf(struct vaccel_resource **res, const void *buf,
 	return VACCEL_OK;
 }
 
-int vaccel_resource_from_files(struct vaccel_resource **res,
-			       const struct vaccel_file **files,
-			       size_t nr_files, vaccel_resource_type_t type)
+int vaccel_resource_from_blobs(struct vaccel_resource **res,
+			       const struct vaccel_blob **blobs,
+			       size_t nr_blobs, vaccel_resource_type_t type)
 {
 	if (!res)
 		return VACCEL_EINVAL;
@@ -888,7 +888,7 @@ int vaccel_resource_from_files(struct vaccel_resource **res,
 	if (!r)
 		return VACCEL_ENOMEM;
 
-	int ret = vaccel_resource_init_from_files(r, files, nr_files, type);
+	int ret = vaccel_resource_init_from_blobs(r, blobs, nr_blobs, type);
 	if (ret) {
 		free(r);
 		return ret;
@@ -923,16 +923,16 @@ int vaccel_resource_register(struct vaccel_resource *res,
 
 	switch (res->path_type) {
 	case VACCEL_PATH_LOCAL_FILE:
-		ret = resource_add_files_from_local(res, sess->is_virtio);
+		ret = resource_add_blobs_from_local(res, sess->is_virtio);
 		break;
 	case VACCEL_PATH_LOCAL_DIR:
-		ret = resource_add_files_from_dir(res, sess->is_virtio);
+		ret = resource_add_blobs_from_dir(res, sess->is_virtio);
 		break;
 	case VACCEL_PATH_REMOTE_FILE:
-		ret = resource_add_files_from_remote(res, !sess->is_virtio);
+		ret = resource_add_blobs_from_remote(res, !sess->is_virtio);
 		if (ret == VACCEL_ENOTSUP)
 			vaccel_error(
-				"Adding remote resource files requires building with libcurl");
+				"Adding remote resource blobs requires building with libcurl");
 		break;
 	case VACCEL_PATH_MAX:
 		vaccel_error("Invalid path type");
@@ -940,7 +940,7 @@ int vaccel_resource_register(struct vaccel_resource *res,
 		break;
 	}
 	if (ret) {
-		vaccel_error("Failed to add resource files");
+		vaccel_error("Failed to add resource blobs");
 		return ret;
 	}
 
