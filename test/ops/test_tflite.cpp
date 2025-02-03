@@ -124,8 +124,8 @@ TEST_CASE("tflite_inference", "[ops][tflite]")
 	REQUIRE(vsess.hint == 0);
 	REQUIRE_FALSE(list_empty(&vsess.resources->registered[model.type]));
 	REQUIRE(vsess.priv == nullptr);
-	REQUIRE_FALSE(model.files == nullptr);
-	REQUIRE_FALSE(model.files[0] == nullptr);
+	REQUIRE_FALSE(model.blobs == nullptr);
+	REQUIRE_FALSE(model.blobs[0] == nullptr);
 
 	ret = vaccel_tflite_session_load(&vsess, &model);
 	REQUIRE(ret == VACCEL_OK);
