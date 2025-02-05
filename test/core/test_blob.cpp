@@ -138,8 +138,8 @@ TEST_CASE("blob_from_buffer", "[core][blob]")
 	const size_t nr_blobs = 2;
 	vaccel_blob *blobs[nr_blobs];
 
-	ret = vaccel_blob_init_from_buf(&blob, buf, len, file_name, root_path,
-					false);
+	ret = vaccel_blob_init_from_buf(&blob, buf, len, false, file_name,
+					root_path, false);
 	REQUIRE(ret == VACCEL_OK);
 	REQUIRE(strcmp(blob.name, "file") == 0);
 	REQUIRE(strcmp(blob.path, file_path) == 0);
@@ -152,7 +152,7 @@ TEST_CASE("blob_from_buffer", "[core][blob]")
 
 	SECTION("persist existing")
 	{
-		ret = vaccel_blob_from_buf(&alloc_blob, buf, len,
+		ret = vaccel_blob_from_buf(&alloc_blob, buf, len, false,
 					   alloc_file_name, root_path, false);
 		REQUIRE(ret == VACCEL_OK);
 		REQUIRE(strstr(alloc_blob->name, alloc_file_name));
@@ -171,7 +171,7 @@ TEST_CASE("blob_from_buffer", "[core][blob]")
 
 	SECTION("persist random")
 	{
-		ret = vaccel_blob_from_buf(&alloc_blob, buf, len,
+		ret = vaccel_blob_from_buf(&alloc_blob, buf, len, false,
 					   alloc_file_name, root_path, true);
 		REQUIRE(ret == VACCEL_OK);
 		REQUIRE(strstr(alloc_blob->name, alloc_file_name));
@@ -190,7 +190,7 @@ TEST_CASE("blob_from_buffer", "[core][blob]")
 
 	SECTION("no persist")
 	{
-		ret = vaccel_blob_from_buf(&alloc_blob, buf, len,
+		ret = vaccel_blob_from_buf(&alloc_blob, buf, len, false,
 					   alloc_file_name, nullptr, false);
 		REQUIRE(ret == VACCEL_OK);
 		REQUIRE(strcmp(alloc_blob->name, alloc_file_name) == 0);
@@ -207,8 +207,8 @@ TEST_CASE("blob_from_buffer", "[core][blob]")
 		REQUIRE(ret == VACCEL_OK);
 	}
 
-	ret = vaccel_blob_from_buf(&alloc_blob, buf, len, alloc_file_name,
-				   root_path, false);
+	ret = vaccel_blob_from_buf(&alloc_blob, buf, len, false,
+				   alloc_file_name, root_path, false);
 	REQUIRE(ret == VACCEL_OK);
 	REQUIRE(strcmp(alloc_blob->name, alloc_file_name) == 0);
 	REQUIRE(strcmp(alloc_blob->path, alloc_file_path) == 0);
@@ -271,8 +271,8 @@ TEST_CASE("blob_persist_fail", "[core][blob]")
 
 	SECTION("null arguments")
 	{
-		ret = vaccel_blob_init_from_buf(&blob, buf, len, file_name,
-						nullptr, false);
+		ret = vaccel_blob_init_from_buf(&blob, buf, len, false,
+						file_name, nullptr, false);
 		REQUIRE(ret == VACCEL_OK);
 
 		ret = vaccel_blob_persist(&blob, root_path, nullptr, false);
@@ -293,8 +293,8 @@ TEST_CASE("blob_persist_fail", "[core][blob]")
 
 	SECTION("existent file path")
 	{
-		ret = vaccel_blob_init_from_buf(&blob, buf, len, file_name,
-						root_path, false);
+		ret = vaccel_blob_init_from_buf(&blob, buf, len, false,
+						file_name, root_path, false);
 		REQUIRE(ret == VACCEL_OK);
 
 		ret = vaccel_blob_persist(&blob, root_path, file_name, false);
@@ -341,15 +341,15 @@ TEST_CASE("blob_init_fail", "[core][blob]")
 		ret = vaccel_blob_init(nullptr, path);
 		REQUIRE(ret == VACCEL_EINVAL);
 
-		ret = vaccel_blob_init_from_buf(&blob, nullptr, len, file_name,
+		ret = vaccel_blob_init_from_buf(&blob, nullptr, len, false,
+						file_name, root_path, false);
+		REQUIRE(ret == VACCEL_EINVAL);
+
+		ret = vaccel_blob_init_from_buf(&blob, buf, 0, false, file_name,
 						root_path, false);
 		REQUIRE(ret == VACCEL_EINVAL);
 
-		ret = vaccel_blob_init_from_buf(&blob, buf, 0, file_name,
-						root_path, false);
-		REQUIRE(ret == VACCEL_EINVAL);
-
-		ret = vaccel_blob_init_from_buf(&blob, buf, len, nullptr,
+		ret = vaccel_blob_init_from_buf(&blob, buf, len, false, nullptr,
 						root_path, false);
 		REQUIRE(ret == VACCEL_EINVAL);
 
@@ -359,16 +359,16 @@ TEST_CASE("blob_init_fail", "[core][blob]")
 		ret = vaccel_blob_new(nullptr, path);
 		REQUIRE(ret == VACCEL_EINVAL);
 
-		ret = vaccel_blob_from_buf(&alloc_blob, nullptr, len, file_name,
-					   root_path, false);
+		ret = vaccel_blob_from_buf(&alloc_blob, nullptr, len, false,
+					   file_name, root_path, false);
 		REQUIRE(ret == VACCEL_EINVAL);
 
-		ret = vaccel_blob_from_buf(&alloc_blob, buf, 0, file_name,
-					   root_path, false);
+		ret = vaccel_blob_from_buf(&alloc_blob, buf, 0, false,
+					   file_name, root_path, false);
 		REQUIRE(ret == VACCEL_EINVAL);
 
-		ret = vaccel_blob_from_buf(&alloc_blob, buf, len, nullptr,
-					   root_path, false);
+		ret = vaccel_blob_from_buf(&alloc_blob, buf, len, false,
+					   nullptr, root_path, false);
 		REQUIRE(ret == VACCEL_EINVAL);
 	}
 
@@ -382,12 +382,13 @@ TEST_CASE("blob_init_fail", "[core][blob]")
 		ret = vaccel_blob_new(&alloc_blob, non_existent_path);
 		REQUIRE(ret == VACCEL_EINVAL);
 
-		ret = vaccel_blob_init_from_buf(&blob, buf, len, file_name,
-						non_existent_path, false);
+		ret = vaccel_blob_init_from_buf(&blob, buf, len, false,
+						file_name, non_existent_path,
+						false);
 		REQUIRE(ret == VACCEL_ENOENT);
 
-		ret = vaccel_blob_from_buf(&alloc_blob, buf, len, file_name,
-					   non_existent_path, false);
+		ret = vaccel_blob_from_buf(&alloc_blob, buf, len, false,
+					   file_name, non_existent_path, false);
 		REQUIRE(ret == VACCEL_ENOENT);
 	}
 
