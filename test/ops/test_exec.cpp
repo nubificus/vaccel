@@ -132,7 +132,8 @@ TEST_CASE("exec_with_resource", "[ops][exec]")
 	REQUIRE(object.paths[0]);
 
 	ret = vaccel_resource_init_from_buf(&object2, (unsigned char *)buff,
-					    len, VACCEL_RESOURCE_LIB, "lib.so");
+					    len, VACCEL_RESOURCE_LIB, "lib.so",
+					    false);
 	REQUIRE(ret == VACCEL_OK);
 
 	struct vaccel_session sess;
