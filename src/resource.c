@@ -679,13 +679,10 @@ int vaccel_resource_init_from_buf(struct vaccel_resource *res, const void *buf,
 	if (ret)
 		goto free_blobs;
 
-	if (filename != NULL) {
-		ret = vaccel_blob_from_buf(&res->blobs[0], buf, nr_bytes,
-					   filename, res->rundir, false);
-	} else {
-		ret = vaccel_blob_from_buf(&res->blobs[0], buf, nr_bytes,
-					   "file", res->rundir, true);
-	}
+	bool rand = (filename == NULL);
+	const char *name = rand ? "file" : filename;
+	ret = vaccel_blob_from_buf(&res->blobs[0], buf, nr_bytes, false, name,
+				   res->rundir, rand);
 	if (ret) {
 		vaccel_error("Could not create vaccel_blob from buffer");
 		goto cleanup_rundir;
