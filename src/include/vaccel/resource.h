@@ -96,7 +96,7 @@ int vaccel_resource_init_multi(struct vaccel_resource *res, const char **paths,
 /* Initialize resource from in-memory data */
 int vaccel_resource_init_from_buf(struct vaccel_resource *res, const void *buf,
 				  size_t nr_bytes, vaccel_resource_type_t type,
-				  const char *filename);
+				  const char *filename, bool mem_only);
 
 /* Initialize resource from existing vaccel blobs */
 int vaccel_resource_init_from_blobs(struct vaccel_resource *res,
@@ -118,7 +118,7 @@ int vaccel_resource_multi_new(struct vaccel_resource **res, const char **paths,
 /* Allocate and initialize resource from in-memory data */
 int vaccel_resource_from_buf(struct vaccel_resource **res, const void *buf,
 			     size_t nr_bytes, vaccel_resource_type_t type,
-			     const char *filename);
+			     const char *filename, bool mem_only);
 
 /* Allocate and initialize resource from existing vaccel blobs */
 int vaccel_resource_from_blobs(struct vaccel_resource **res,

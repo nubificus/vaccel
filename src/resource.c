@@ -543,7 +543,7 @@ static int resource_init_with_blobs(struct vaccel_resource *res,
 				    vaccel_resource_type_t type)
 {
 	if (!res || !res->blobs || !res->nr_blobs ||
-	    type >= VACCEL_RESOURCE_MAX || !res->rundir || !res->id)
+	    type >= VACCEL_RESOURCE_MAX || !res->id)
 		return VACCEL_EINVAL;
 
 	res->remote_id = -1;
@@ -654,7 +654,7 @@ release_id:
 
 int vaccel_resource_init_from_buf(struct vaccel_resource *res, const void *buf,
 				  size_t nr_bytes, vaccel_resource_type_t type,
-				  const char *filename)
+				  const char *filename, bool mem_only)
 {
 	int ret;
 
@@ -675,9 +675,13 @@ int vaccel_resource_init_from_buf(struct vaccel_resource *res, const void *buf,
 		goto release_id;
 	}
 
-	ret = resource_create_rundir(res);
-	if (ret)
-		goto free_blobs;
+	if (!mem_only) {
+		ret = resource_create_rundir(res);
+		if (ret)
+			goto free_blobs;
+	} else {
+		res->rundir = NULL;
+	}
 
 	bool rand = (filename == NULL);
 	const char *name = rand ? "file" : filename;
@@ -700,7 +704,8 @@ int vaccel_resource_init_from_buf(struct vaccel_resource *res, const void *buf,
 delete_blob:
 	delete_blobs(res->blobs, res->nr_blobs);
 cleanup_rundir:
-	resource_destroy_rundir(res);
+	if (!mem_only)
+		resource_destroy_rundir(res);
 free_blobs:
 	free(res->blobs);
 	res->blobs = NULL;
@@ -724,6 +729,18 @@ int vaccel_resource_init_from_blobs(struct vaccel_resource *res,
 	if (!res || !blobs || !nr_blobs || type >= VACCEL_RESOURCE_MAX)
 		return VACCEL_EINVAL;
 
+	/* Confirm input blobs are valid */
+	ret = VACCEL_EINVAL;
+	for (size_t i = 0; i != nr_blobs; i++) {
+		if (!blobs[i])
+			goto empty_attributes;
+		if (blobs[i]->type == VACCEL_BLOB_NONE)
+			goto empty_attributes;
+		if (!blobs[i]->size || !blobs[i]->data || !blobs[i]->name)
+			goto empty_attributes;
+	}
+	ret = VACCEL_OK;
+
 	get_resource_id(res);
 	if (res->id < 0)
 		return -(int)res->id;
@@ -735,23 +752,31 @@ int vaccel_resource_init_from_blobs(struct vaccel_resource *res,
 		goto release_id;
 	}
 
-	for (size_t i = 0; i < nr_blobs; i++)
+	for (size_t i = 0; i != nr_blobs; i++)
 		res->blobs[i] = NULL;
 
-	ret = resource_create_rundir(res);
-	if (ret)
-		goto free_blobs;
+	/* Check if rundir should be created */
+	bool create_rundir = false;
+	for (size_t i = 0; i != nr_blobs; i++) {
+		if (blobs[i]->type != VACCEL_BLOB_BUF) {
+			create_rundir = true;
+			break;
+		}
+	}
 
+	if (create_rundir) {
+		ret = resource_create_rundir(res);
+		if (ret)
+			goto free_blobs;
+	} else {
+		res->rundir = NULL;
+	}
+
+	bool own = true;
 	size_t nr_r_blobs = 0;
 	for (size_t i = 0; i < nr_blobs; i++) {
-		if (!blobs[i] || !blobs[i]->size || !blobs[i]->data ||
-		    !blobs[i]->name) {
-			ret = VACCEL_EINVAL;
-			goto free;
-		}
-
 		ret = vaccel_blob_from_buf(&res->blobs[i], blobs[i]->data,
-					   blobs[i]->size, blobs[i]->name,
+					   blobs[i]->size, own, blobs[i]->name,
 					   res->rundir, false);
 		if (ret) {
 			vaccel_error(
@@ -774,13 +799,15 @@ int vaccel_resource_init_from_blobs(struct vaccel_resource *res,
 
 free:
 	delete_blobs(res->blobs, nr_r_blobs);
-	resource_destroy_rundir(res);
+	if (create_rundir)
+		resource_destroy_rundir(res);
 free_blobs:
 	free(res->blobs);
-	res->blobs = NULL;
-	res->nr_blobs = 0;
 release_id:
 	put_resource_id(res);
+empty_attributes:
+	res->blobs = NULL;
+	res->nr_blobs = 0;
 
 	return ret;
 }
@@ -868,7 +895,7 @@ int vaccel_resource_multi_new(struct vaccel_resource **res, const char **paths,
 
 int vaccel_resource_from_buf(struct vaccel_resource **res, const void *buf,
 			     size_t nr_bytes, vaccel_resource_type_t type,
-			     const char *filename)
+			     const char *filename, bool mem_only)
 {
 	if (!res)
 		return VACCEL_EINVAL;
@@ -878,8 +905,8 @@ int vaccel_resource_from_buf(struct vaccel_resource **res, const void *buf,
 	if (!r)
 		return VACCEL_ENOMEM;
 
-	int ret =
-		vaccel_resource_init_from_buf(r, buf, nr_bytes, type, filename);
+	int ret = vaccel_resource_init_from_buf(r, buf, nr_bytes, type,
+						filename, mem_only);
 	if (ret) {
 		free(r);
 		return ret;
