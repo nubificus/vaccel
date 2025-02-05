@@ -641,8 +641,8 @@ TEST_CASE("resource_from_buffer", "[core][resource]")
 
 	/* Resource init from buffer */
 	struct vaccel_resource res;
-	ret = vaccel_resource_init_from_buf(&res, buff, len,
-					    VACCEL_RESOURCE_LIB, "lib.so");
+	ret = vaccel_resource_init_from_buf(
+		&res, buff, len, VACCEL_RESOURCE_LIB, "lib.so", false);
 	REQUIRE(ret == VACCEL_OK);
 	REQUIRE(res.id > 0);
 	REQUIRE(res.remote_id == -1);
@@ -661,7 +661,7 @@ TEST_CASE("resource_from_buffer", "[core][resource]")
 	/* Resource new from buffer */
 	struct vaccel_resource *alloc_res;
 	ret = vaccel_resource_from_buf(&alloc_res, buff, len,
-				       VACCEL_RESOURCE_LIB, "lib.so");
+				       VACCEL_RESOURCE_LIB, "lib.so", false);
 	REQUIRE(ret == VACCEL_OK);
 	REQUIRE(alloc_res->id == res.id + 1);
 	REQUIRE(alloc_res->remote_id == -1);
@@ -896,16 +896,16 @@ TEST_CASE("resource_init_fail", "[core][resource]")
 		REQUIRE(ret == VACCEL_EINVAL);
 
 		ret = vaccel_resource_init_from_buf(nullptr, &buff, len,
-						    test_type, nullptr);
+						    test_type, nullptr, false);
 		REQUIRE(ret == VACCEL_EINVAL);
 		ret = vaccel_resource_init_from_buf(&res, nullptr, len,
-						    test_type, nullptr);
+						    test_type, nullptr, false);
 		REQUIRE(ret == VACCEL_EINVAL);
 		ret = vaccel_resource_init_from_buf(&res, &buff, 0, test_type,
-						    nullptr);
+						    nullptr, false);
 		REQUIRE(ret == VACCEL_EINVAL);
 		ret = vaccel_resource_init_from_buf(
-			&res, &buff, len, VACCEL_RESOURCE_MAX, nullptr);
+			&res, &buff, len, VACCEL_RESOURCE_MAX, nullptr, false);
 		REQUIRE(ret == VACCEL_EINVAL);
 
 		ret = vaccel_resource_init_from_blobs(nullptr, blobs, 1,
@@ -942,16 +942,17 @@ TEST_CASE("resource_init_fail", "[core][resource]")
 		REQUIRE(ret == VACCEL_EINVAL);
 
 		ret = vaccel_resource_from_buf(nullptr, &buff, len, test_type,
-					       nullptr);
+					       nullptr, false);
 		REQUIRE(ret == VACCEL_EINVAL);
 		ret = vaccel_resource_from_buf(&alloc_res, nullptr, len,
-					       test_type, nullptr);
+					       test_type, nullptr, false);
 		REQUIRE(ret == VACCEL_EINVAL);
 		ret = vaccel_resource_from_buf(&alloc_res, &buff, 0, test_type,
-					       nullptr);
+					       nullptr, false);
 		REQUIRE(ret == VACCEL_EINVAL);
 		ret = vaccel_resource_from_buf(&alloc_res, &buff, len,
-					       VACCEL_RESOURCE_MAX, nullptr);
+					       VACCEL_RESOURCE_MAX, nullptr,
+					       false);
 		REQUIRE(ret == VACCEL_EINVAL);
 
 		ret = vaccel_resource_from_blobs(nullptr, blobs, 1, test_type);
@@ -1345,7 +1346,7 @@ TEST_CASE("resources_not_bootstrapped", "[core][resource]")
 	REQUIRE(ret == VACCEL_EPERM);
 
 	ret = vaccel_resource_init_from_buf(&res, nullptr, 0, test_type,
-					    nullptr);
+					    nullptr, false);
 	REQUIRE(ret == VACCEL_EPERM);
 
 	ret = vaccel_resource_init_from_blobs(&res, nullptr, 0, test_type);
