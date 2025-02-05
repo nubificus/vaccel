@@ -97,12 +97,18 @@ int vaccel_blob_persist(struct vaccel_blob *blob, const char *dir,
 		}
 	}
 
-	/* Extract filename from path */
-	ret = path_file_name(blob->path, NULL, 0, &blob->name);
-	if (ret) {
-		vaccel_error("Could not extract filename from %s", blob->path);
-		close(fd);
-		goto remove_file;
+	if (!blob->name || (blob->name && strcmp(blob->name, filename))) {
+		if (blob->name) {
+			free(blob->name);
+			blob->name = NULL;
+		}
+		ret = path_file_name(blob->path, NULL, 0, &blob->name);
+		if (ret) {
+			vaccel_error("Could not extract filename from %s",
+				     blob->path);
+			close(fd);
+			goto remove_file;
+		}
 	}
 
 	vaccel_debug("Persisting file %s to %s", blob->name, blob->path);
@@ -142,6 +148,10 @@ int vaccel_blob_persist(struct vaccel_blob *blob, const char *dir,
 		blob->size = old_size;
 		goto free_name;
 	}
+	/* Free the allocated memory */
+	if (blob->type == VACCEL_BLOB_BUF && blob->data_owned)
+		free(old_ptr);
+	blob->data_owned = false;
 	blob->type = VACCEL_BLOB_MAPPED;
 	return VACCEL_OK;
 
@@ -185,6 +195,7 @@ int vaccel_blob_init(struct vaccel_blob *blob, const char *path)
 
 	blob->type = VACCEL_BLOB_FILE;
 	blob->path_owned = false;
+	blob->data_owned = false;
 	blob->data = NULL;
 	blob->size = 0;
 
@@ -201,9 +212,10 @@ int vaccel_blob_init(struct vaccel_blob *blob, const char *path)
  * resource.
  */
 int vaccel_blob_init_from_buf(struct vaccel_blob *blob, const uint8_t *buf,
-			      size_t size, const char *name, const char *dir,
-			      bool randomize)
+			      size_t size, bool own, const char *name,
+			      const char *dir, bool randomize)
 {
+	int ret;
 	if (!blob || !buf || !size)
 		return VACCEL_EINVAL;
 
@@ -215,18 +227,41 @@ int vaccel_blob_init_from_buf(struct vaccel_blob *blob, const uint8_t *buf,
 	blob->name = NULL;
 	blob->path = NULL;
 	blob->path_owned = false;
-	blob->data = (uint8_t *)buf;
+	if (!own) {
+		blob->data = (uint8_t *)buf;
+	} else {
+		blob->data = (uint8_t *)malloc(size);
+		if (!blob->data)
+			return VACCEL_ENOMEM;
+		memcpy(blob->data, buf, size);
+	}
 	blob->size = size;
+	blob->data_owned = own;
 	blob->type = VACCEL_BLOB_BUF;
 
-	if (dir)
-		return vaccel_blob_persist(blob, dir, name, randomize);
-
 	blob->name = strdup(name);
-	if (!blob->name)
-		return VACCEL_ENOMEM;
+	if (!blob->name) {
+		ret = VACCEL_ENOMEM;
+		goto err;
+	}
+
+	if (dir) {
+		ret = vaccel_blob_persist(blob, dir, name, randomize);
+		if (ret) {
+			free(blob->name);
+			goto err;
+		}
+	}
 
 	return VACCEL_OK;
+err:
+	if (own)
+		free(blob->data);
+	blob->data = NULL;
+	blob->size = 0;
+	blob->data_owned = false;
+	blob->type = VACCEL_BLOB_NONE;
+	return ret;
 }
 
 /* Release blob resources
@@ -250,10 +285,6 @@ int vaccel_blob_release(struct vaccel_blob *blob)
 		free(blob->name);
 	blob->name = NULL;
 
-	/* Just a file with data we got from the user. Nothing to do */
-	if (!blob->path)
-		return VACCEL_OK;
-
 	/* There is a path in the disk representing the file,
 	 * which means that if we hold a pointer to the contents
 	 * of the file, this has been mapped, so unmap it */
@@ -265,8 +296,13 @@ int vaccel_blob_release(struct vaccel_blob *blob)
 			return ret;
 		}
 	}
+
+	if (blob->type == VACCEL_BLOB_BUF && blob->data_owned)
+		free(blob->data);
+
 	blob->data = NULL;
 	blob->size = 0;
+	blob->data_owned = false;
 
 	/* If we own the path to the file, just remove it from the
 	 * file system */
@@ -277,7 +313,9 @@ int vaccel_blob_release(struct vaccel_blob *blob)
 	}
 	blob->path_owned = false;
 
-	free(blob->path);
+	if (blob->type != VACCEL_BLOB_BUF)
+		free(blob->path);
+
 	blob->path = NULL;
 	blob->type = VACCEL_BLOB_NONE;
 
@@ -317,8 +355,8 @@ int vaccel_blob_new(struct vaccel_blob **blob, const char *path)
  * vaccel_file_init_from_buf(),
  */
 int vaccel_blob_from_buf(struct vaccel_blob **blob, const uint8_t *buf,
-			 size_t size, const char *name, const char *dir,
-			 bool randomize)
+			 size_t size, bool own, const char *name,
+			 const char *dir, bool randomize)
 {
 	if (!blob)
 		return VACCEL_EINVAL;
@@ -328,7 +366,8 @@ int vaccel_blob_from_buf(struct vaccel_blob **blob, const uint8_t *buf,
 	if (!b)
 		return VACCEL_ENOMEM;
 
-	int ret = vaccel_blob_init_from_buf(b, buf, size, name, dir, randomize);
+	int ret = vaccel_blob_init_from_buf(b, buf, size, own, name, dir,
+					    randomize);
 	if (ret) {
 		free(b);
 		return ret;
