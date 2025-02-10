@@ -97,12 +97,18 @@ int vaccel_blob_persist(struct vaccel_blob *blob, const char *dir,
 		}
 	}
 
-	/* Extract filename from path */
-	ret = path_file_name(blob->path, NULL, 0, &blob->name);
-	if (ret) {
-		vaccel_error("Could not extract filename from %s", blob->path);
-		close(fd);
-		goto remove_file;
+	if (!blob->name || (blob->name && strcmp(blob->name, filename))) {
+		if (blob->name) {
+			free(blob->name);
+			blob->name = NULL;
+		}
+		ret = path_file_name(blob->path, NULL, 0, &blob->name);
+		if (ret) {
+			vaccel_error("Could not extract filename from %s",
+				     blob->path);
+			close(fd);
+			goto remove_file;
+		}
 	}
 
 	vaccel_debug("Persisting file %s to %s", blob->name, blob->path);
@@ -142,6 +148,10 @@ int vaccel_blob_persist(struct vaccel_blob *blob, const char *dir,
 		blob->size = old_size;
 		goto free_name;
 	}
+	/* Free the allocated memory */
+	if (blob->type == VACCEL_BLOB_BUF && blob->data_owned)
+		free(old_ptr);
+	blob->data_owned = false;
 	blob->type = VACCEL_BLOB_MAPPED;
 	return VACCEL_OK;
 
@@ -205,6 +215,7 @@ int vaccel_blob_init_from_buf(struct vaccel_blob *blob, const uint8_t *buf,
 			      size_t size, bool own, const char *name,
 			      const char *dir, bool randomize)
 {
+	int ret;
 	if (!blob || !buf || !size)
 		return VACCEL_EINVAL;
 
@@ -228,21 +239,29 @@ int vaccel_blob_init_from_buf(struct vaccel_blob *blob, const uint8_t *buf,
 	blob->data_owned = own;
 	blob->type = VACCEL_BLOB_BUF;
 
-	if (dir)
-		return vaccel_blob_persist(blob, dir, name, randomize);
-
 	blob->name = strdup(name);
 	if (!blob->name) {
-		if (own)
-			free(blob->data);
-		blob->data = NULL;
-		blob->size = 0;
-		blob->data_owned = false;
-		blob->type = VACCEL_BLOB_NONE;
-
-		return VACCEL_ENOMEM;
+		ret = VACCEL_ENOMEM;
+		goto err;
 	}
+
+	if (dir) {
+		ret = vaccel_blob_persist(blob, dir, name, randomize);
+		if (ret) {
+			free(blob->name);
+			goto err;
+		}
+	}
+
 	return VACCEL_OK;
+err:
+	if (own)
+		free(blob->data);
+	blob->data = NULL;
+	blob->size = 0;
+	blob->data_owned = false;
+	blob->type = VACCEL_BLOB_NONE;
+	return ret;
 }
 
 /* Release blob resources
