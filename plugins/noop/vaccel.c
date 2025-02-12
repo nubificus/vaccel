@@ -589,6 +589,8 @@ static int noop_torch_jitload_forward(
 	struct vaccel_torch_tensor **in_tensor, int nr_read,
 	struct vaccel_torch_tensor **out_tensor, int nr_write)
 {
+	(void)run_options;
+
 	if (!session) {
 		noop_error("Invalid session \n");
 		return VACCEL_EINVAL;
@@ -672,6 +674,11 @@ static int noop_torch_sgemm(struct vaccel_session *session,
 			    struct vaccel_torch_tensor **in_C, int M, int N,
 			    int K, struct vaccel_torch_tensor **out)
 {
+	(void)in_A;
+	(void)in_B;
+	(void)in_C;
+	(void)out;
+
 	if (!session) {
 		noop_error("Invalid session \n");
 		return VACCEL_EINVAL;
