@@ -14,7 +14,7 @@ int main(int argc, char *argv[])
 	struct vaccel_resource model;
 
 	if (argc != 2) {
-		vaccel_error("usage: %s model", argv[0]);
+		fprintf(stderr, "Usage: %s model", argv[0]);
 		exit(1);
 	}
 
@@ -23,7 +23,7 @@ int main(int argc, char *argv[])
 	int ret =
 		vaccel_resource_init(&model, model_path, VACCEL_RESOURCE_MODEL);
 	if (ret) {
-		vaccel_error("Could not create model resource");
+		fprintf(stderr, "Could not create model resource\n\n");
 		exit(1);
 	}
 
@@ -31,16 +31,16 @@ int main(int argc, char *argv[])
 
 	ret = vaccel_session_init(&vsess, 0);
 	if (ret) {
-		vaccel_error("Could not initialize vAccel session");
-		goto destroy_resource;
+		fprintf(stderr, "Could not initialize vAccel session\n");
+		goto release_resource;
 	}
 
 	printf("Initialized vAccel session %" PRId64 "\n", vsess.id);
 
 	ret = vaccel_resource_register(&model, &vsess);
 	if (ret) {
-		vaccel_error("Could not register model with session");
-		goto close_session;
+		fprintf(stderr, "Could not register model with session\n");
+		goto release_session;
 	}
 
 	struct vaccel_tf_status status;
@@ -48,14 +48,12 @@ int main(int argc, char *argv[])
 
 	ret = vaccel_tf_session_load(&vsess, &model, &status);
 	if (ret) {
-		vaccel_error("Could not load graph from model");
+		fprintf(stderr, "Could not load graph from model\n");
 		goto unregister_resource;
 	}
 
-	if (status.message) {
-		free((char *)status.message);
-		status.message = NULL;
-	}
+	if (vaccel_tf_status_release(&status))
+		fprintf(stderr, "Could not release session load status\n");
 
 	struct vaccel_tf_buffer run_options = { NULL, 0 };
 
@@ -67,15 +65,18 @@ int main(int argc, char *argv[])
 	for (int i = 0; i < 30; ++i)
 		data[i] = 1.00;
 
-	struct vaccel_tf_tensor *in =
-		vaccel_tf_tensor_new(2, dims, VACCEL_TF_FLOAT);
-	if (!in) {
-		vaccel_error("Could not allocate memory");
-		exit(1);
+	struct vaccel_tf_tensor *in;
+	ret = vaccel_tf_tensor_new(&in, 2, dims, VACCEL_TF_FLOAT);
+	if (ret) {
+		fprintf(stderr, "Could not create input tensor\n");
+		goto delete_session;
 	}
 
-	in->data = data;
-	in->size = sizeof(float) * 30;
+	ret = vaccel_tf_tensor_set_data(in, data, sizeof(data));
+	if (ret) {
+		fprintf(stderr, "Could not set input tensor data\n");
+		goto delete_in_tensor;
+	}
 
 	/* Output tensors & nodes */
 	struct vaccel_tf_node out_node = { "StatefulPartitionedCall", 0 };
@@ -84,12 +85,12 @@ int main(int argc, char *argv[])
 	ret = vaccel_tf_session_run(&vsess, &model, &run_options, &in_node, &in,
 				    1, &out_node, &out, 1, &status);
 	if (ret) {
-		vaccel_error("Could not run model: %d", ret);
-		goto unload_session;
+		fprintf(stderr, "Could not run model: %d", ret);
+		goto delete_in_tensor;
 	}
 
 	printf("Success!\n");
-	printf("Output tensor => type:%u nr_dims:%u\n", out->data_type,
+	printf("Output tensor => type:%u nr_dims:%d\n", out->data_type,
 	       out->nr_dims);
 	for (int i = 0; i < out->nr_dims; ++i)
 		printf("dim[%d]: %" PRId64 "\n", i, out->dims[i]);
@@ -99,31 +100,28 @@ int main(int argc, char *argv[])
 	for (unsigned int i = 0; i < min(10, out->size / sizeof(float)); ++i)
 		printf("%f\n", offsets[i]);
 
-	if (status.message) {
-		free((char *)status.message);
-		status.message = NULL;
-	}
+	if (vaccel_tf_status_release(&status))
+		fprintf(stderr, "Could not release session run status\n");
 
-	if (vaccel_tf_tensor_destroy(out))
-		vaccel_error("Could not destroy out tensor");
-unload_session:
-	if (vaccel_tf_tensor_destroy(in))
-		vaccel_error("Could not destroy in tensor");
-
+	if (vaccel_tf_tensor_delete(out))
+		fprintf(stderr, "Could not delete output tensor\n");
+delete_in_tensor:
+	if (vaccel_tf_tensor_delete(in))
+		fprintf(stderr, "Could not delete input tensor\n");
+delete_session:
 	if (vaccel_tf_session_delete(&vsess, &model, &status))
-		vaccel_error("Could not delete tf session");
-	if (status.message) {
-		free((char *)status.message);
-		status.message = NULL;
-	}
+		fprintf(stderr, "Could not delete tf session\n");
+	if (vaccel_tf_status_release(&status))
+		fprintf(stderr, "Could not release session delete status\n");
 unregister_resource:
 	if (vaccel_resource_unregister(&model, &vsess))
-		vaccel_error("Could not unregister model with session");
-close_session:
+		fprintf(stderr, "Could not unregister model from session\n");
+release_session:
 	if (vaccel_session_release(&vsess))
-		vaccel_error("Could not clear session");
-destroy_resource:
-	vaccel_resource_release(&model);
+		fprintf(stderr, "Could not release session\n");
+release_resource:
+	if (vaccel_resource_release(&model))
+		fprintf(stderr, "Could not release resource\n");
 
 	return ret;
 }
