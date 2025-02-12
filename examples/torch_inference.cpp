@@ -163,7 +163,7 @@ auto main(int argc, char **argv) -> int
 	ret = vaccel_session_init(&sess, 0);
 	if (ret != VACCEL_OK) {
 		fprintf(stderr, "Could not initialize vAccel session\n");
-		goto destroy_resource;
+		goto release_resource;
 	}
 
 	printf("Initialized vAccel session %" PRId64 "\n", sess.id);
@@ -171,19 +171,20 @@ auto main(int argc, char **argv) -> int
 	ret = vaccel_resource_register(&model, &sess);
 	if (ret != VACCEL_OK) {
 		fprintf(stderr, "Could not register model with session\n");
-		goto close_session;
+		goto release_session;
 	}
 
-	in = vaccel_torch_tensor_new(4, dims, VACCEL_TORCH_FLOAT);
-	if (in == nullptr) {
+	ret = vaccel_torch_tensor_new(&in, 4, dims, VACCEL_TORCH_FLOAT);
+	if (ret != VACCEL_OK) {
 		fprintf(stderr, "Could not allocate memory\n");
-		goto unregister_session;
+		goto unregister_resource;
 	}
 
 #ifdef USE_STB_IMAGE
 	if (!load_labels(argv[3], labels)) {
 		fprintf(stderr, "Could not load labels from %s", argv[3]);
-		return VACCEL_ENOENT;
+		ret = VACCEL_ENOENT;
+		goto unregister_resource;
 	}
 
 	int width;
@@ -195,7 +196,7 @@ auto main(int argc, char **argv) -> int
 	if (img_data == nullptr) {
 		std::cerr << "Failed to load image\n";
 		ret = VACCEL_EINVAL;
-		goto unregister_session;
+		goto unregister_resource;
 	}
 
 	preprocessed_data = new float[(size_t)(target_width * target_height *
@@ -204,7 +205,7 @@ auto main(int argc, char **argv) -> int
 		fprintf(stderr, "Could not allocate memory to process data");
 		stbi_image_free(img_data);
 		ret = VACCEL_ENOMEM;
-		goto unregister_session;
+		goto unregister_resource;
 	}
 
 	memset(preprocessed_data, 0,
@@ -215,7 +216,7 @@ auto main(int argc, char **argv) -> int
 	if (ret != 0) {
 		fprintf(stderr, "Could not preprocess image data");
 		stbi_image_free(img_data);
-		goto unregister_session;
+		goto unregister_resource;
 	}
 
 	stbi_image_free(img_data);
@@ -239,7 +240,7 @@ auto main(int argc, char **argv) -> int
 		sizeof(struct vaccel_torch_tensor) * 1);
 	if (out == nullptr) {
 		fprintf(stderr, "Could not allocate memory\n");
-		goto free_tensor;
+		goto delete_tensor;
 	}
 
 	/* Conducting torch inference */
@@ -247,7 +248,7 @@ auto main(int argc, char **argv) -> int
 					   &out, 1);
 	if (ret != VACCEL_OK) {
 		fprintf(stderr, "Could not run op: %d\n", ret);
-		goto free_tensor;
+		goto delete_tensor;
 	}
 
 	printf("Success!\n");
@@ -271,22 +272,22 @@ auto main(int argc, char **argv) -> int
 	std::cout << "Prediction: " << labels[max_idx] << '\n';
 #endif
 
-	if (vaccel_torch_tensor_destroy(out) != VACCEL_OK)
-		fprintf(stderr, "Could not destroy out tensor\n");
-free_tensor:
+	if (vaccel_torch_tensor_delete(out) != VACCEL_OK)
+		fprintf(stderr, "Could not delete out tensor\n");
+delete_tensor:
 	free(run_options.data);
-	if (vaccel_torch_tensor_destroy(in) != VACCEL_OK)
-		fprintf(stderr, "Could not destroy in tensor\n");
-unregister_session:
+	if (vaccel_torch_tensor_delete(in) != VACCEL_OK)
+		fprintf(stderr, "Could not delete in tensor\n");
+unregister_resource:
 #ifdef USE_STB_IMAGE
 	delete[] preprocessed_data;
 #endif
 	if (vaccel_resource_unregister(&model, &sess) != VACCEL_OK)
-		fprintf(stderr, "Could not unregister model with session\n");
-close_session:
+		fprintf(stderr, "Could not unregister model from session\n");
+release_session:
 	if (vaccel_session_release(&sess) != VACCEL_OK)
-		fprintf(stderr, "Could not clear session\n");
-destroy_resource:
+		fprintf(stderr, "Could not release session\n");
+release_resource:
 	vaccel_resource_release(&model);
 
 	return ret;
