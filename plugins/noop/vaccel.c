@@ -373,6 +373,7 @@ static int noop_tf_session_run(struct vaccel_session *session,
 	}
 
 	if (status) {
+		status->error_code = 0;
 		status->message = strdup("Operation handled by noop plugin");
 		if (!status->message)
 			goto free_tf;
