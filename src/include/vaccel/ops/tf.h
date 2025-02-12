@@ -12,9 +12,8 @@
 extern "C" {
 #endif
 
-/* This is one-to-one mapping with tensorflow's
- * data types representation: see `tensorflow/tensorflow/c/tf_datatype.h'
- */
+/* One-to-one mapping with tensorflow's data types' representation.
+ * See: `tensorflow/tensorflow/c/tf_datatype.h` */
 enum vaccel_tf_data_type {
 	VACCEL_TF_FLOAT = 1,
 	VACCEL_TF_DOUBLE = 2,
@@ -24,15 +23,14 @@ enum vaccel_tf_data_type {
 	VACCEL_TF_INT8 = 6,
 	VACCEL_TF_STRING = 7,
 	VACCEL_TF_COMPLEX64 = 8, // Single-precision complex
-	VACCEL_TF_COMPLEX =
-		8, // Old identifier kept for API backwards compatibility
+	VACCEL_TF_COMPLEX = 8, // Old identifier for backwards compatibility
 	VACCEL_TF_INT64 = 9,
 	VACCEL_TF_BOOL = 10,
 	VACCEL_TF_QINT8 = 11, // Quantized int8
 	VACCEL_TF_QUINT8 = 12, // Quantized uint8
 	VACCEL_TF_QINT32 = 13, // Quantized int32
 	VACCEL_TF_BFLOAT16 =
-		14, // Float32 truncated to 16 bits.  Only for cast ops.
+		14, // Float32 truncated to 16 bits. Only for cast ops
 	VACCEL_TF_QINT16 = 15, // Quantized int16
 	VACCEL_TF_QUINT16 = 16, // Quantized uint16
 	VACCEL_TF_UINT16 = 17,
@@ -45,76 +43,132 @@ enum vaccel_tf_data_type {
 };
 
 struct vaccel_tf_buffer {
-	/* Data of the buffer */
+	/* data of the buffer */
 	void *data;
 
-	/* Size of the buffer */
+	/* size of the buffer */
 	size_t size;
 };
 
-struct vaccel_tf_buffer *vaccel_tf_buffer_new(void *data, size_t size);
-void vaccel_tf_buffer_destroy(struct vaccel_tf_buffer *buffer);
-void *vaccel_tf_buffer_take_data(struct vaccel_tf_buffer *buffer, size_t *size);
-void *vaccel_tf_buffer_get_data(const struct vaccel_tf_buffer *buffer,
-				size_t *size);
+/* Initialize TF buffer.
+ * WARNING: This function will take ownership of the data. If
+ * vaccel_tf_buffer_release() is called it will try to free buffer.data */
+int vaccel_tf_buffer_init(struct vaccel_tf_buffer *buffer, void *data,
+			  size_t size);
+
+/* Release TF buffer data */
+int vaccel_tf_buffer_release(struct vaccel_tf_buffer *buffer);
+
+/* Allocate and initialize TF buffer.
+ * WARNING: This function will take ownership of the data. If
+ * vaccel_tf_buffer_delete() is called it will try to free buffer.data */
+int vaccel_tf_buffer_new(struct vaccel_tf_buffer **buffer, void *data,
+			 size_t size);
+
+/* Release TF buffer data and free TF buffer created with
+ * vaccel_tf_buffer_new() */
+int vaccel_tf_buffer_delete(struct vaccel_tf_buffer *buffer);
+
+/* (Re)Take ownership of the TF buffer data.
+ * Useful for releasing/deleting the TF buffer but not the encapsulated data */
+int vaccel_tf_buffer_take_data(struct vaccel_tf_buffer *buffer, void **data,
+			       size_t *size);
 
 struct vaccel_tf_node {
-	/* Name of the node */
+	/* name of the node */
 	char *name;
 
-	/* Id of the node */
+	/* id of the node */
 	int id;
 };
 
-struct vaccel_tf_node *vaccel_tf_node_new(const char *name, int id);
-void vaccel_tf_node_destroy(struct vaccel_tf_node *node);
-const char *vaccel_tf_node_get_name(struct vaccel_tf_node *node);
-int vaccel_tf_node_get_id(struct vaccel_tf_node *node);
+/* Initialize TF node */
+int vaccel_tf_node_init(struct vaccel_tf_node *node, const char *name, int id);
+
+/* Release TF node data */
+int vaccel_tf_node_release(struct vaccel_tf_node *node);
+
+/* Allocate and initialize TF node */
+int vaccel_tf_node_new(struct vaccel_tf_node **node, const char *name, int id);
+
+/* Release TF node data and free TF node created with vaccel_tf_node_new() */
+int vaccel_tf_node_delete(struct vaccel_tf_node *node);
 
 struct vaccel_tf_tensor {
-	/* Tensor's data */
+	/* tensor's data */
 	void *data;
 
-	/* Size of the data */
+	/* size of the data */
 	size_t size;
 
-	/* Do we own the data */
+	/* do we own the data */
 	bool owned;
 
-	/* Dimensions of the data */
+	/* dimensions of the data */
 	int nr_dims;
 	int64_t *dims;
 
-	/* Data type */
+	/* data type */
 	enum vaccel_tf_data_type data_type;
 };
 
-struct vaccel_tf_tensor *vaccel_tf_tensor_new(int nr_dims, int64_t *dims,
-					      enum vaccel_tf_data_type type);
+/* Initialize TF tensor */
+int vaccel_tf_tensor_init(struct vaccel_tf_tensor *tensor, int nr_dims,
+			  const int64_t *dims, enum vaccel_tf_data_type type);
 
-struct vaccel_tf_tensor *
-vaccel_tf_tensor_allocate(int nr_dims, int64_t *dims,
-			  enum vaccel_tf_data_type type, size_t total_size);
+/* Release TF tensor */
+int vaccel_tf_tensor_release(struct vaccel_tf_tensor *tensor);
 
-int vaccel_tf_tensor_destroy(struct vaccel_tf_tensor *tensor);
+/* Allocate and initialize TF tensor */
+int vaccel_tf_tensor_new(struct vaccel_tf_tensor **tensor, int nr_dims,
+			 const int64_t *dims, enum vaccel_tf_data_type type);
 
+/* Allocate and initialize TF tensor with tensor.data of size=total_size */
+int vaccel_tf_tensor_allocate(struct vaccel_tf_tensor **tensor, int nr_dims,
+			      const int64_t *dims,
+			      enum vaccel_tf_data_type type, size_t total_size);
+
+/* Release TF tensor data and free TF tensor created with
+ * vaccel_tf_tensor_new() */
+int vaccel_tf_tensor_delete(struct vaccel_tf_tensor *tensor);
+
+/* Set TF tensor tensor.data/size */
 int vaccel_tf_tensor_set_data(struct vaccel_tf_tensor *tensor, void *data,
 			      size_t size);
 
-void *vaccel_tf_tensor_get_data(struct vaccel_tf_tensor *tensor);
+/* Take ownership of the TF tensor data */
+int vaccel_tf_tensor_take_data(struct vaccel_tf_tensor *tensor, void **data,
+			       size_t *size);
 
 struct vaccel_tf_status {
-	/* TensorFlow error code */
+	/* tensorFlow error code */
 	uint8_t error_code;
 
-	/* TensorFlow error message */
-	const char *message;
+	/* tensorFlow error message */
+	char *message;
 };
 
+/* Initialize TF status */
+int vaccel_tf_status_init(struct vaccel_tf_status *status, uint8_t error_code,
+			  const char *message);
+
+/* Release TF status */
+int vaccel_tf_status_release(struct vaccel_tf_status *status);
+
+/* Allocate and initialize TF status */
+int vaccel_tf_status_new(struct vaccel_tf_status **status, uint8_t error_code,
+			 const char *message);
+
+/* Release TF status data and free TF status created with
+ * vaccel_tf_status_new() */
+int vaccel_tf_status_delete(struct vaccel_tf_status *status);
+
+/* Load new TF session from model resource */
 int vaccel_tf_session_load(struct vaccel_session *session,
 			   struct vaccel_resource *model,
 			   struct vaccel_tf_status *status);
 
+/* Run TF session created with vaccel_tf_session_load() */
 int vaccel_tf_session_run(struct vaccel_session *session,
 			  const struct vaccel_resource *model,
 			  const struct vaccel_tf_buffer *run_options,
@@ -124,6 +178,7 @@ int vaccel_tf_session_run(struct vaccel_session *session,
 			  struct vaccel_tf_tensor **out, int nr_outputs,
 			  struct vaccel_tf_status *status);
 
+/* Delete TF session created with vaccel_tf_session_load() */
 int vaccel_tf_session_delete(struct vaccel_session *session,
 			     struct vaccel_resource *model,
 			     struct vaccel_tf_status *status);
