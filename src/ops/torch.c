@@ -12,109 +12,105 @@
 #include <stdlib.h>
 #include <string.h>
 
-// Torch buffer creation, includes: [char* image, size_t size]
-// if set, during destruction calling `free`
-struct vaccel_torch_buffer *vaccel_torch_buffer_new(char *data, size_t size)
+int vaccel_torch_buffer_init(struct vaccel_torch_buffer *buffer, char *data,
+			     size_t size)
 {
-	struct vaccel_torch_buffer *ret = calloc(1, sizeof(*ret));
-	if (!ret)
-		return NULL;
+	if (!buffer)
+		return VACCEL_EINVAL;
 
-	ret->data = data;
-	ret->size = size;
+	buffer->data = data;
+	buffer->size = size;
 
-	return ret;
+	return VACCEL_OK;
 }
 
-// Destroy Torch buffer data
-void vaccel_torch_buffer_destroy(struct vaccel_torch_buffer *buffer)
+int vaccel_torch_buffer_release(struct vaccel_torch_buffer *buffer)
 {
+	if (!buffer)
+		return VACCEL_EINVAL;
+
 	if (buffer->data)
 		free(buffer->data);
-	free(buffer);
-}
 
-void *vaccel_torch_buffer_take_data(struct vaccel_torch_buffer *buffer,
-				    size_t *size)
-{
-	void *ptr;
-	if (!buffer)
-		return NULL;
-
-	*size = buffer->size;
-	ptr = buffer->data;
 	buffer->data = NULL;
 	buffer->size = 0;
 
-	return ptr;
+	return VACCEL_OK;
 }
 
-// TODO: Not a read-only pointer for buffer->data
-void *vaccel_torch_buffer_get_data(struct vaccel_torch_buffer *buffer,
-				   size_t *size)
+int vaccel_torch_buffer_new(struct vaccel_torch_buffer **buffer, char *data,
+			    size_t size)
 {
 	if (!buffer)
-		return NULL;
+		return VACCEL_EINVAL;
 
-	*size = buffer->size;
-	return buffer->data;
+	struct vaccel_torch_buffer *b = calloc(1, sizeof(*b));
+	if (!b)
+		return VACCEL_ENOMEM;
+
+	int ret = vaccel_torch_buffer_init(b, data, size);
+	if (ret) {
+		free(b);
+		return ret;
+	}
+
+	*buffer = b;
+
+	return VACCEL_OK;
 }
 
-struct vaccel_torch_tensor *
-vaccel_torch_tensor_new(int64_t nr_dims, const int64_t *dims,
-			enum vaccel_torch_data_type type)
+int vaccel_torch_buffer_delete(struct vaccel_torch_buffer *buffer)
 {
-	struct vaccel_torch_tensor *ret;
+	int ret = vaccel_torch_buffer_release(buffer);
+	if (ret)
+		return ret;
 
-	ret = calloc(1, sizeof(*ret));
-	if (!ret)
-		return NULL;
+	free(buffer);
 
-	ret->data_type = type;
-	ret->nr_dims = nr_dims;
-	ret->dims = calloc(nr_dims, sizeof(*ret->dims));
-	if (!ret->dims) {
-		free(ret);
-		return NULL;
-	}
+	return VACCEL_OK;
+}
+
+int vaccel_torch_buffer_take_data(struct vaccel_torch_buffer *buffer,
+				  void **data, size_t *size)
+{
+	if (!buffer || !data || !size)
+		return VACCEL_EINVAL;
+
+	*data = buffer->data;
+	*size = buffer->size;
+
+	buffer->data = NULL;
+	buffer->size = 0;
+
+	return VACCEL_OK;
+}
+
+int vaccel_torch_tensor_init(struct vaccel_torch_tensor *tensor,
+			     int64_t nr_dims, const int64_t *dims,
+			     enum vaccel_torch_data_type type)
+{
+	if (!tensor || nr_dims < 1)
+		return VACCEL_EINVAL;
+
+	tensor->data_type = type;
+	tensor->data = NULL;
+	tensor->size = 0;
+	tensor->owned = false;
+	tensor->nr_dims = nr_dims;
+	tensor->dims = calloc(nr_dims, sizeof(*dims));
+	if (!tensor->dims)
+		return VACCEL_ENOMEM;
 
 	if (dims) {
 		for (int64_t i = 0; i < nr_dims; i++) {
-			ret->dims[i] = dims[i];
+			tensor->dims[i] = dims[i];
 		}
 	}
 
-	return ret;
+	return VACCEL_OK;
 }
 
-struct vaccel_torch_tensor *
-vaccel_torch_tensor_allocate(int64_t nr_dims, int64_t *dims,
-			     enum vaccel_torch_data_type type,
-			     size_t total_size)
-{
-	struct vaccel_torch_tensor *ret =
-		vaccel_torch_tensor_new(nr_dims, dims, type);
-	if (!ret)
-		return NULL;
-
-	if (!total_size)
-		return ret;
-
-	ret->data = malloc(total_size);
-	if (!ret)
-		goto free_tensor;
-
-	ret->size = total_size;
-	ret->owned = true;
-
-	return ret;
-
-free_tensor:
-	free(ret);
-	return NULL;
-}
-
-int vaccel_torch_tensor_destroy(struct vaccel_torch_tensor *tensor)
+int vaccel_torch_tensor_release(struct vaccel_torch_tensor *tensor)
 {
 	if (!tensor)
 		return VACCEL_EINVAL;
@@ -124,7 +120,69 @@ int vaccel_torch_tensor_destroy(struct vaccel_torch_tensor *tensor)
 	if (tensor->data && tensor->owned)
 		free(tensor->data);
 
+	tensor->data = NULL;
+	tensor->size = 0;
+	tensor->owned = false;
+	tensor->nr_dims = 0;
+	tensor->dims = NULL;
+
+	return VACCEL_OK;
+}
+
+int vaccel_torch_tensor_new(struct vaccel_torch_tensor **tensor,
+			    int64_t nr_dims, const int64_t *dims,
+			    enum vaccel_torch_data_type type)
+{
+	if (!tensor)
+		return VACCEL_EINVAL;
+
+	struct vaccel_torch_tensor *t = calloc(1, sizeof(*t));
+	if (!t)
+		return VACCEL_EINVAL;
+
+	int ret = vaccel_torch_tensor_init(t, nr_dims, dims, type);
+	if (ret) {
+		free(t);
+		return ret;
+	}
+
+	*tensor = t;
+
+	return VACCEL_OK;
+}
+
+int vaccel_torch_tensor_allocate(struct vaccel_torch_tensor **tensor,
+				 int64_t nr_dims, const int64_t *dims,
+				 enum vaccel_torch_data_type type,
+				 size_t total_size)
+{
+	int ret = vaccel_torch_tensor_new(tensor, nr_dims, dims, type);
+	if (ret)
+		return ret;
+
+	if (!total_size)
+		return VACCEL_OK;
+
+	(*tensor)->data = malloc(total_size);
+	if (!(*tensor)->data) {
+		vaccel_torch_tensor_delete(*tensor);
+		return VACCEL_ENOMEM;
+	}
+
+	(*tensor)->size = total_size;
+	(*tensor)->owned = true;
+
+	return VACCEL_OK;
+}
+
+int vaccel_torch_tensor_delete(struct vaccel_torch_tensor *tensor)
+{
+	int ret = vaccel_torch_tensor_release(tensor);
+	if (ret)
+		return ret;
+
 	free(tensor);
+
 	return VACCEL_OK;
 }
 
@@ -134,18 +192,31 @@ int vaccel_torch_tensor_set_data(struct vaccel_torch_tensor *tensor, void *data,
 	if (!tensor)
 		return VACCEL_EINVAL;
 
+	if (tensor->data && tensor->owned)
+		vaccel_warn(
+			"Previous tensor data will not be freed by release");
+
 	tensor->data = data;
 	tensor->size = size;
+	tensor->owned = false;
 
 	return VACCEL_OK;
 }
 
-void *vaccel_torch_tensor_get_data(struct vaccel_torch_tensor *tensor)
+int vaccel_torch_tensor_take_data(struct vaccel_torch_tensor *tensor,
+				  void **data, size_t *size)
 {
-	if (!tensor)
-		return NULL;
+	if (!tensor || !data || !size)
+		return VACCEL_EINVAL;
 
-	return tensor->data;
+	*data = tensor->data;
+	*size = tensor->size;
+
+	tensor->data = NULL;
+	tensor->size = 0;
+	tensor->owned = false;
+
+	return VACCEL_OK;
 }
 
 typedef int (*torch_jitload_forward_fn_t)(
