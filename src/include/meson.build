@@ -7,7 +7,7 @@ vaccel_public_headers = files([
   'vaccel/config.h',
   'vaccel/core.h',
   'vaccel/error.h',
-  'vaccel/file.h',
+  'vaccel/blob.h',
   'vaccel/id.h',
   'vaccel/list.h',
   'vaccel/log.h',
