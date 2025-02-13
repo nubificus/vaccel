@@ -685,8 +685,8 @@ int vaccel_resource_init_from_buf(struct vaccel_resource *res, const void *buf,
 
 	bool rand = (filename == NULL);
 	const char *name = rand ? "file" : filename;
-	ret = vaccel_blob_from_buf(&res->blobs[0], buf, nr_bytes, false,
-				   name, res->rundir, rand);
+	ret = vaccel_blob_from_buf(&res->blobs[0], buf, nr_bytes, false, name,
+				   res->rundir, rand);
 	if (ret) {
 		vaccel_error("Could not create vaccel_blob from buffer");
 		goto cleanup_rundir;
