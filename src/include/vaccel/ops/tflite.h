@@ -12,10 +12,9 @@
 extern "C" {
 #endif
 
-/* This is one-to-one mapping with tensorflow lite's
- * data types representation: see 'tensorflow/tensorflow/lite/core/c/c_api_types.h'
- */
-enum vaccel_tflite_type {
+/* One-to-one mapping with Tensorflow Lite's data types' representation.
+ * See: `tensorflow/tensorflow/lite/core/c/c_api_types.h` */
+enum vaccel_tflite_data_type {
 	VACCEL_TFLITE_NOTYPE = 0,
 	VACCEL_TFLITE_FLOAT32 = 1,
 	VACCEL_TFLITE_INT32 = 2,
@@ -38,47 +37,66 @@ enum vaccel_tflite_type {
 };
 
 struct vaccel_tflite_tensor {
-	/* Tensor's data */
+	/* tensor's data */
 	void *data;
 
-	/* Size of the data */
+	/* size of the data */
 	size_t size;
 
-	/* Do we own the data */
+	/* do we own the data */
 	bool owned;
 
-	/* Dimensions of the data */
+	/* dimensions of the data */
 	int nr_dims;
 	int32_t *dims;
 
-	/* Data type */
-	enum vaccel_tflite_type data_type;
+	/* data type */
+	enum vaccel_tflite_data_type data_type;
 };
 
-struct vaccel_tflite_tensor *
-vaccel_tflite_tensor_new(int nr_dims, int32_t *dims,
-			 enum vaccel_tflite_type type);
+/* Initialize TFLite tensor */
+int vaccel_tflite_tensor_init(struct vaccel_tflite_tensor *tensor, int nr_dims,
+			      const int32_t *dims,
+			      enum vaccel_tflite_data_type type);
 
-struct vaccel_tflite_tensor *
-vaccel_tflite_tensor_allocate(int nr_dims, int32_t *dims,
-			      enum vaccel_tflite_type type, size_t total_size);
+/* Release TFLite tensor */
+int vaccel_tflite_tensor_release(struct vaccel_tflite_tensor *tensor);
 
-int vaccel_tflite_tensor_destroy(struct vaccel_tflite_tensor *tensor);
+/* Allocate and initialize TFLite tensor */
+int vaccel_tflite_tensor_new(struct vaccel_tflite_tensor **tensor, int nr_dims,
+			     const int32_t *dims,
+			     enum vaccel_tflite_data_type type);
 
+/* Allocate and initialize TFLite tensor with tensor.data of size=total_size */
+int vaccel_tflite_tensor_allocate(struct vaccel_tflite_tensor **tensor,
+				  int nr_dims, const int32_t *dims,
+				  enum vaccel_tflite_data_type type,
+				  size_t total_size);
+
+/* Release TFLite tensor data and free TFLite tensor created with
+ * vaccel_tf_tensor_new() */
+int vaccel_tflite_tensor_delete(struct vaccel_tflite_tensor *tensor);
+
+/* Set TFLite tensor tensor.data/size */
 int vaccel_tflite_tensor_set_data(struct vaccel_tflite_tensor *tensor,
 				  void *data, size_t size);
 
-void *vaccel_tflite_tensor_get_data(struct vaccel_tflite_tensor *tensor);
+/* Take ownership of the TFLite tensor data */
+int vaccel_tflite_tensor_take_data(struct vaccel_tflite_tensor *tensor,
+				   void **data, size_t *size);
 
+/* Load new TFLite session from model resource */
 int vaccel_tflite_session_load(struct vaccel_session *session,
 			       struct vaccel_resource *model);
 
+/* Run TFLite session created with vaccel_tf_session_load() */
 int vaccel_tflite_session_run(struct vaccel_session *session,
 			      const struct vaccel_resource *model,
 			      struct vaccel_tflite_tensor *const *in,
 			      int nr_inputs, struct vaccel_tflite_tensor **out,
 			      int nr_outputs, uint8_t *status);
 
+/* Delete TFLite session created with vaccel_tf_session_load() */
 int vaccel_tflite_session_delete(struct vaccel_session *session,
 				 struct vaccel_resource *model);
 

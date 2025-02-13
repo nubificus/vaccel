@@ -31,7 +31,7 @@ int main(int argc, char *argv[])
 	ret = vaccel_session_init(&vsess, 0);
 	if (ret) {
 		fprintf(stderr, "Could not initialize vAccel session\n");
-		goto destroy_resource;
+		goto release_resource;
 	}
 
 	printf("Initialized vAccel session %" PRId64 "\n", vsess.id);
@@ -39,13 +39,13 @@ int main(int argc, char *argv[])
 	ret = vaccel_resource_register(&model, &vsess);
 	if (ret) {
 		fprintf(stderr, "Could not register model with session\n");
-		goto close_session;
+		goto release_session;
 	}
 
 	uint8_t status;
 	ret = vaccel_tflite_session_load(&vsess, &model);
 	if (ret) {
-		fprintf(stderr, "Could not load graph from model\n");
+		fprintf(stderr, "Could not load session from model\n");
 		goto unregister_resource;
 	}
 
@@ -55,15 +55,18 @@ int main(int argc, char *argv[])
 	for (int i = 0; i < 30; ++i)
 		data[i] = 1.00;
 
-	struct vaccel_tflite_tensor *in =
-		vaccel_tflite_tensor_new(2, dims, VACCEL_TFLITE_FLOAT32);
-	if (!in) {
-		fprintf(stderr, "Could not allocate memory\n");
-		exit(1);
+	struct vaccel_tflite_tensor *in;
+	ret = vaccel_tflite_tensor_new(&in, 2, dims, VACCEL_TFLITE_FLOAT32);
+	if (ret) {
+		fprintf(stderr, "Could not create input tensor\n");
+		goto delete_tf_session;
 	}
 
-	in->data = data;
-	in->size = sizeof(float) * 30;
+	ret = vaccel_tflite_tensor_set_data(in, data, sizeof(data));
+	if (ret) {
+		fprintf(stderr, "Could not set input tensor data\n");
+		goto delete_in_tensor;
+	}
 
 	/* Output tensors */
 	struct vaccel_tflite_tensor *out;
@@ -72,7 +75,7 @@ int main(int argc, char *argv[])
 					&status);
 	if (ret) {
 		fprintf(stderr, "Could not run model: %d\n", ret);
-		goto unload_session;
+		goto delete_in_tensor;
 	}
 
 	printf("Success!\n");
@@ -86,21 +89,21 @@ int main(int argc, char *argv[])
 	for (unsigned int i = 0; i < min(10, out->size / sizeof(float)); ++i)
 		printf("%f\n", offsets[i]);
 
-	if (vaccel_tflite_tensor_destroy(out))
-		fprintf(stderr, "Could not destroy out tensor\n");
-unload_session:
-	if (vaccel_tflite_tensor_destroy(in))
-		fprintf(stderr, "Could not destroy in tensor\n");
-
+	if (vaccel_tflite_tensor_delete(out))
+		fprintf(stderr, "Could not delete output tensor\n");
+delete_in_tensor:
+	if (vaccel_tflite_tensor_delete(in))
+		fprintf(stderr, "Could not delete input tensor\n");
+delete_tf_session:
 	if (vaccel_tflite_session_delete(&vsess, &model))
 		fprintf(stderr, "Could not delete tf session\n");
 unregister_resource:
 	if (vaccel_resource_unregister(&model, &vsess))
-		fprintf(stderr, "Could not unregister model with session\n");
-close_session:
+		fprintf(stderr, "Could not unregister model from session\n");
+release_session:
 	if (vaccel_session_release(&vsess))
-		fprintf(stderr, "Could not clear session\n");
-destroy_resource:
+		fprintf(stderr, "Could not release session\n");
+release_resource:
 	vaccel_resource_release(&model);
 
 	return ret;
