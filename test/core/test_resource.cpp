@@ -136,6 +136,7 @@ TEST_CASE("resource_from_directory_path", "[core][resource]")
 
 	/* Register resources */
 	for (auto &resource : resources) {
+		REQUIRE(resource);
 		ret = vaccel_resource_register(resource, &sess);
 		REQUIRE(ret == VACCEL_OK);
 		REQUIRE(resource->nr_blobs ==
@@ -152,6 +153,9 @@ TEST_CASE("resource_from_directory_path", "[core][resource]")
 		for (size_t j = 0; j < resource->nr_blobs; j++) {
 			REQUIRE(resource->blobs[j]);
 			REQUIRE(resource->blobs[j]->path);
+			REQUIRE(resource->blobs[j]->type == VACCEL_BLOB_FILE);
+			REQUIRE_FALSE(resource->blobs[j]->path_owned);
+			REQUIRE_FALSE(resource->blobs[j]->data_owned);
 			REQUIRE(fs_path_is_file(resource->blobs[j]->path));
 
 			char filename[NAME_MAX];
@@ -215,9 +219,11 @@ TEST_CASE("resource_from_directory_path", "[core][resource]")
 			REQUIRE(res.blobs[i]);
 			REQUIRE(res.blobs[i]->path);
 			REQUIRE(res.blobs[i]->data);
+			REQUIRE(res.blobs[i]->type == VACCEL_BLOB_MAPPED);
+			REQUIRE_FALSE(res.blobs[i]->path_owned);
+			REQUIRE_FALSE(res.blobs[i]->data_owned);
 			REQUIRE(string_in_list(res.blobs[i]->name, dir_files,
 					       4));
-
 			size_t len;
 			unsigned char *buf;
 			ret = fs_file_read(res.blobs[i]->path, (void **)&buf,
@@ -356,6 +362,9 @@ TEST_CASE("resource_from_file_paths", "[core][resource]")
 		for (size_t j = 0; j < resource->nr_blobs; j++) {
 			REQUIRE(resource->blobs[j]);
 			REQUIRE(resource->blobs[j]->path);
+			REQUIRE(resource->blobs[j]->type == VACCEL_BLOB_FILE);
+			REQUIRE_FALSE(resource->blobs[j]->path_owned);
+			REQUIRE_FALSE(resource->blobs[j]->data_owned);
 			REQUIRE(fs_path_is_file(resource->blobs[j]->path));
 			REQUIRE(string_in_list(resource->blobs[j]->path, paths,
 					       2));
@@ -396,6 +405,9 @@ TEST_CASE("resource_from_file_paths", "[core][resource]")
 			REQUIRE(res.blobs[i]);
 			REQUIRE(res.blobs[i]->path);
 			REQUIRE(res.blobs[i]->data);
+			REQUIRE(res.blobs[i]->type == VACCEL_BLOB_MAPPED);
+			REQUIRE_FALSE(res.blobs[i]->path_owned);
+			REQUIRE_FALSE(res.blobs[i]->data_owned);
 			REQUIRE(string_in_list(res.blobs[i]->path, paths, 2));
 
 			size_t len;
@@ -562,6 +574,9 @@ TEST_CASE("resource_from_url_path", "[core][resource]")
 		REQUIRE(resource->blobs);
 		REQUIRE(resource->blobs[0]);
 		REQUIRE(resource->blobs[0]->path);
+		REQUIRE(resource->blobs[0]->type == VACCEL_BLOB_FILE);
+		REQUIRE(resource->blobs[0]->path_owned);
+		REQUIRE_FALSE(resource->blobs[0]->data_owned);
 		REQUIRE(resource->refcount == 1);
 	}
 
@@ -651,6 +666,12 @@ TEST_CASE("resource_from_buffer", "[core][resource]")
 	REQUIRE(res.nr_paths == 0);
 	REQUIRE(res.blobs);
 	REQUIRE(res.blobs[0]);
+	REQUIRE(res.blobs[0]->type == VACCEL_BLOB_MAPPED);
+	REQUIRE(res.blobs[0]->data);
+	REQUIRE(res.blobs[0]->data != buff);
+	REQUIRE(res.blobs[0]->size == len);
+	REQUIRE_FALSE(res.blobs[0]->data_owned);
+	REQUIRE(res.blobs[0]->path_owned);
 	REQUIRE(res.rundir);
 	REQUIRE(res.paths == nullptr);
 	REQUIRE(res.nr_paths == 0);
@@ -670,6 +691,12 @@ TEST_CASE("resource_from_buffer", "[core][resource]")
 	REQUIRE(alloc_res->nr_paths == 0);
 	REQUIRE(alloc_res->blobs);
 	REQUIRE(alloc_res->blobs[0]);
+	REQUIRE(alloc_res->blobs[0]->type == VACCEL_BLOB_MAPPED);
+	REQUIRE(alloc_res->blobs[0]->data);
+	REQUIRE(alloc_res->blobs[0]->data != buff);
+	REQUIRE(alloc_res->blobs[0]->size == len);
+	REQUIRE_FALSE(alloc_res->blobs[0]->data_owned);
+	REQUIRE(alloc_res->blobs[0]->path_owned);
 	REQUIRE(alloc_res->rundir);
 	REQUIRE(alloc_res->paths == nullptr);
 	REQUIRE(alloc_res->nr_paths == 0);
@@ -739,19 +766,27 @@ TEST_CASE("resource_from_blobs", "[core][resource]")
 	ret = vaccel_blob_init(&b1, path1);
 	REQUIRE(ret == VACCEL_OK);
 	REQUIRE(b1.type == VACCEL_BLOB_FILE);
+	REQUIRE_FALSE(b1.path_owned);
+	REQUIRE_FALSE(b1.data_owned);
 
 	ret = vaccel_blob_init(&b2, path2);
 	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(b1.type == VACCEL_BLOB_FILE);
+	REQUIRE(b2.type == VACCEL_BLOB_FILE);
+	REQUIRE_FALSE(b2.path_owned);
+	REQUIRE_FALSE(b2.data_owned);
 
 	/* Read blobs */
 	ret = vaccel_blob_read(&b1);
 	REQUIRE(ret == VACCEL_OK);
 	REQUIRE(b1.type == VACCEL_BLOB_MAPPED);
+	REQUIRE_FALSE(b1.path_owned);
+	REQUIRE_FALSE(b1.data_owned);
 
 	ret = vaccel_blob_read(&b2);
 	REQUIRE(ret == VACCEL_OK);
 	REQUIRE(b2.type == VACCEL_BLOB_MAPPED);
+	REQUIRE_FALSE(b2.path_owned);
+	REQUIRE_FALSE(b2.data_owned);
 
 	const struct vaccel_blob *vaccel_blobs[2] = { &b1, &b2 };
 
@@ -769,10 +804,17 @@ TEST_CASE("resource_from_blobs", "[core][resource]")
 	REQUIRE(res.rundir);
 	REQUIRE(res.blobs);
 	REQUIRE(res.nr_blobs == 2);
-	REQUIRE(res.blobs[0]);
-	REQUIRE(res.blobs[1]);
 	REQUIRE_FALSE(list_empty(&res.entry));
 	REQUIRE(res.refcount == 0);
+	for (size_t i = 0; i != res.nr_blobs; ++i) {
+		REQUIRE(res.blobs[i]);
+		REQUIRE(res.blobs[i]->type == VACCEL_BLOB_MAPPED);
+		REQUIRE(res.blobs[i]->path);
+		REQUIRE(res.blobs[i]->path_owned);
+		REQUIRE_FALSE(res.blobs[i]->data_owned);
+		REQUIRE(res.blobs[i]->data);
+		REQUIRE(res.blobs[i]->size);
+	}
 	resources[0] = &res;
 
 	/* Resource new from blobs */
@@ -789,10 +831,17 @@ TEST_CASE("resource_from_blobs", "[core][resource]")
 	REQUIRE(alloc_res->rundir);
 	REQUIRE(alloc_res->blobs);
 	REQUIRE(alloc_res->nr_blobs == 2);
-	REQUIRE(alloc_res->blobs[0]);
-	REQUIRE(alloc_res->blobs[1]);
 	REQUIRE_FALSE(list_empty(&alloc_res->entry));
 	REQUIRE(alloc_res->refcount == 0);
+	for (size_t i = 0; i != alloc_res->nr_blobs; ++i) {
+		REQUIRE(alloc_res->blobs[i]);
+		REQUIRE(alloc_res->blobs[i]->type == VACCEL_BLOB_MAPPED);
+		REQUIRE(alloc_res->blobs[i]->path);
+		REQUIRE(alloc_res->blobs[i]->path_owned);
+		REQUIRE_FALSE(alloc_res->blobs[i]->data_owned);
+		REQUIRE(alloc_res->blobs[i]->data);
+		REQUIRE(alloc_res->blobs[i]->size);
+	}
 	resources[1] = alloc_res;
 
 	/* Session init */
@@ -871,9 +920,19 @@ TEST_CASE("resource_init_fail", "[core][resource]")
 	ret = vaccel_blob_init(&b, test_path);
 	REQUIRE(ret == VACCEL_OK);
 	REQUIRE(b.type == VACCEL_BLOB_FILE);
+	REQUIRE_FALSE(b.path_owned);
+	REQUIRE_FALSE(b.data_owned);
+	REQUIRE(b.data == nullptr);
+	REQUIRE(b.size == 0);
+
 	ret = vaccel_blob_read(&b);
 	REQUIRE(ret == VACCEL_OK);
 	REQUIRE(b.type == VACCEL_BLOB_MAPPED);
+	REQUIRE_FALSE(b.path_owned);
+	REQUIRE_FALSE(b.data_owned);
+	REQUIRE(b.data);
+	REQUIRE(b.size);
+
 	const struct vaccel_blob *blobs[2] = { &b, nullptr };
 
 	SECTION("init invalid arguments")
@@ -1021,6 +1080,9 @@ TEST_CASE("resource_release_fail", "[core][resource]")
 
 	ret = vaccel_resource_register(&res, &sess);
 	REQUIRE(ret == VACCEL_OK);
+	REQUIRE(res.blobs[0]->type == VACCEL_BLOB_FILE);
+	REQUIRE_FALSE(res.blobs[0]->path_owned);
+	REQUIRE_FALSE(res.blobs[0]->data_owned);
 
 	SECTION("used resource")
 	{
@@ -1326,6 +1388,220 @@ TEST_CASE("vaccel_resource_get_all_by_type", "[core][resource]")
 
 	/* Close */
 	free(lib_path);
+}
+
+TEST_CASE("memory_only_resource", "[core][resource]")
+{
+	int ret;
+	char *file = abs_path(BUILD_ROOT, "examples/libmytestlib.so");
+	const size_t nr_resources = 2;
+	struct vaccel_resource *resources[nr_resources];
+	struct vaccel_session sess;
+
+	/* Session init */
+	REQUIRE(vaccel_session_init(&sess, 0) == VACCEL_OK);
+
+	/* Read blob */
+	size_t len;
+	unsigned char *buff;
+	ret = fs_file_read(file, (void **)&buff, &len);
+	REQUIRE(ret == VACCEL_OK);
+
+	/* Resource init from buffer */
+	struct vaccel_resource res;
+	ret = vaccel_resource_init_from_buf(&res, buff, len,
+					    VACCEL_RESOURCE_LIB, nullptr, true);
+	REQUIRE(ret == VACCEL_OK);
+	REQUIRE(res.id > 0);
+	REQUIRE(res.remote_id == -1);
+	REQUIRE(res.type == VACCEL_RESOURCE_LIB);
+	REQUIRE(res.path_type == VACCEL_PATH_LOCAL_FILE);
+	REQUIRE(res.nr_paths == 0);
+	REQUIRE(res.blobs);
+	REQUIRE(res.blobs[0]);
+	REQUIRE(res.blobs[0]->type == VACCEL_BLOB_BUF);
+	REQUIRE(res.blobs[0]->data);
+	REQUIRE(res.blobs[0]->data == buff);
+	REQUIRE(res.blobs[0]->size == len);
+	REQUIRE(res.blobs[0]->path == nullptr);
+	REQUIRE_FALSE(res.blobs[0]->data_owned);
+	REQUIRE_FALSE(res.blobs[0]->path_owned);
+	REQUIRE(res.rundir == nullptr);
+	REQUIRE(res.paths == nullptr);
+	REQUIRE(res.nr_paths == 0);
+	REQUIRE_FALSE(list_empty(&res.entry));
+	REQUIRE(res.refcount == 0);
+	resources[0] = &res;
+
+	/* Resource new from buffer */
+	struct vaccel_resource *alloc_res;
+	ret = vaccel_resource_from_buf(&alloc_res, buff, len,
+				       VACCEL_RESOURCE_LIB, nullptr, true);
+	REQUIRE(ret == VACCEL_OK);
+	REQUIRE(alloc_res->id == res.id + 1);
+	REQUIRE(alloc_res->remote_id == -1);
+	REQUIRE(alloc_res->type == VACCEL_RESOURCE_LIB);
+	REQUIRE(alloc_res->path_type == VACCEL_PATH_LOCAL_FILE);
+	REQUIRE(alloc_res->nr_paths == 0);
+	REQUIRE(alloc_res->blobs);
+	REQUIRE(alloc_res->blobs[0]);
+	REQUIRE(alloc_res->blobs[0]->type == VACCEL_BLOB_BUF);
+	REQUIRE(alloc_res->blobs[0]->data);
+	REQUIRE(alloc_res->blobs[0]->data == buff);
+	REQUIRE(alloc_res->blobs[0]->size == len);
+	REQUIRE(alloc_res->blobs[0]->path == nullptr);
+	REQUIRE_FALSE(alloc_res->blobs[0]->data_owned);
+	REQUIRE_FALSE(alloc_res->blobs[0]->path_owned);
+	REQUIRE(alloc_res->rundir == nullptr);
+	REQUIRE(alloc_res->paths == nullptr);
+	REQUIRE(alloc_res->nr_paths == 0);
+	REQUIRE_FALSE(list_empty(&alloc_res->entry));
+	REQUIRE(alloc_res->refcount == 0);
+	resources[1] = alloc_res;
+
+	for (auto &resource : resources) {
+		/* Register resources */
+		ret = vaccel_resource_register(resource, &sess);
+		REQUIRE(ret == VACCEL_OK);
+		REQUIRE(resource->refcount == 1);
+
+		/* Requirements */
+		REQUIRE(resource->type == VACCEL_RESOURCE_LIB);
+		REQUIRE(resource->path_type == VACCEL_PATH_LOCAL_FILE);
+		REQUIRE(resource->nr_paths == 0);
+		REQUIRE(resource->blobs);
+		REQUIRE(resource->blobs[0]);
+		REQUIRE(resource->blobs[0]->type == VACCEL_BLOB_BUF);
+		REQUIRE(resource->blobs[0]->data);
+		REQUIRE(resource->blobs[0]->data == buff);
+		REQUIRE(resource->blobs[0]->size == len);
+		REQUIRE(resource->blobs[0]->path == nullptr);
+		REQUIRE_FALSE(resource->blobs[0]->data_owned);
+		REQUIRE_FALSE(resource->blobs[0]->path_owned);
+		REQUIRE(resource->rundir == nullptr);
+		REQUIRE(resource->paths == nullptr);
+		REQUIRE(resource->nr_paths == 0);
+
+		/* Get by id */
+		struct vaccel_resource *found_by_id;
+		ret = vaccel_resource_get_by_id(&found_by_id, resource->id);
+		REQUIRE(ret == VACCEL_OK);
+		REQUIRE(found_by_id == resource);
+
+		/* Has resource */
+		REQUIRE(vaccel_session_has_resource(&sess, resource));
+
+		/* Unregister resources */
+		ret = vaccel_resource_unregister(resource, &sess);
+		REQUIRE(ret == VACCEL_OK);
+		REQUIRE_FALSE(vaccel_session_has_resource(&sess, resource));
+		REQUIRE(resource->refcount == 0);
+	}
+
+	/* Free resource */
+	ret = vaccel_resource_delete(alloc_res);
+	REQUIRE(ret == VACCEL_OK);
+
+	/* Release resource */
+	ret = vaccel_resource_release(&res);
+	REQUIRE(ret == VACCEL_OK);
+	REQUIRE(res.rundir == nullptr);
+	REQUIRE(res.blobs == nullptr);
+	REQUIRE(res.nr_blobs == 0);
+	REQUIRE(res.paths == nullptr);
+	REQUIRE(res.nr_paths == 0);
+	REQUIRE(res.id <= 0);
+
+	/* Release session */
+	REQUIRE(vaccel_session_release(&sess) == VACCEL_OK);
+
+	free(buff);
+	free(file);
+}
+
+TEST_CASE("memory_only_resource_virtio", "[core][resource]")
+{
+	int ret;
+	char *file = abs_path(BUILD_ROOT, "examples/libmytestlib.so");
+	struct vaccel_session vsess;
+
+	RESET_FAKE(plugin_virtio);
+	plugin_virtio_fake.custom_fake = mock_virtio_plugin_virtio;
+
+	/* Session init */
+	REQUIRE(vaccel_session_init(&vsess, VACCEL_PLUGIN_REMOTE) == VACCEL_OK);
+
+	/* Read blob */
+	size_t len;
+	unsigned char *buff;
+	ret = fs_file_read(file, (void **)&buff, &len);
+	REQUIRE(ret == VACCEL_OK);
+
+	/* Resource init from buffer */
+	struct vaccel_resource res;
+	ret = vaccel_resource_init_from_buf(&res, buff, len,
+					    VACCEL_RESOURCE_LIB, nullptr, true);
+	REQUIRE(ret == VACCEL_OK);
+	REQUIRE(res.id > 0);
+	REQUIRE(res.remote_id == -1);
+	REQUIRE(res.type == VACCEL_RESOURCE_LIB);
+	REQUIRE(res.path_type == VACCEL_PATH_LOCAL_FILE);
+	REQUIRE(res.nr_paths == 0);
+	REQUIRE(res.blobs);
+	REQUIRE(res.blobs[0]);
+	REQUIRE(res.blobs[0]->type == VACCEL_BLOB_BUF);
+	REQUIRE(res.blobs[0]->data);
+	REQUIRE(res.blobs[0]->data == buff);
+	REQUIRE(res.blobs[0]->size == len);
+	REQUIRE(res.blobs[0]->path == nullptr);
+	REQUIRE_FALSE(res.blobs[0]->data_owned);
+	REQUIRE_FALSE(res.blobs[0]->path_owned);
+	REQUIRE(res.rundir == nullptr);
+	REQUIRE(res.paths == nullptr);
+	REQUIRE(res.nr_paths == 0);
+	REQUIRE_FALSE(list_empty(&res.entry));
+	REQUIRE(res.refcount == 0);
+
+	/* Register resource */
+	ret = vaccel_resource_register(&res, &vsess);
+	REQUIRE(ret == VACCEL_OK);
+
+	/* Requirements */
+	REQUIRE(res.type == VACCEL_RESOURCE_LIB);
+	REQUIRE(res.path_type == VACCEL_PATH_LOCAL_FILE);
+	REQUIRE(res.nr_paths == 0);
+	REQUIRE(res.blobs);
+	REQUIRE(res.blobs[0]);
+	REQUIRE(res.blobs[0]->type == VACCEL_BLOB_BUF);
+	REQUIRE(res.blobs[0]->data);
+	REQUIRE(res.blobs[0]->data == buff);
+	REQUIRE(res.blobs[0]->size == len);
+	REQUIRE(res.blobs[0]->path == nullptr);
+	REQUIRE_FALSE(res.blobs[0]->data_owned);
+	REQUIRE_FALSE(res.blobs[0]->path_owned);
+	REQUIRE(res.rundir == nullptr);
+	REQUIRE(res.paths == nullptr);
+	REQUIRE(res.nr_paths == 0);
+
+	/* Unregister resource */
+	ret = vaccel_resource_unregister(&res, &vsess);
+	REQUIRE(ret == VACCEL_OK);
+
+	/* Release resource */
+	ret = vaccel_resource_release(&res);
+	REQUIRE(ret == VACCEL_OK);
+	REQUIRE(res.rundir == nullptr);
+	REQUIRE(res.blobs == nullptr);
+	REQUIRE(res.nr_blobs == 0);
+	REQUIRE(res.paths == nullptr);
+	REQUIRE(res.nr_paths == 0);
+	REQUIRE(res.id <= 0);
+
+	/* Release session */
+	REQUIRE(vaccel_session_release(&vsess) == VACCEL_OK);
+
+	free(buff);
+	free(file);
 }
 
 // Test case for resource component not bootstrapped
