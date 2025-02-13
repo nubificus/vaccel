@@ -484,6 +484,9 @@ static int noop_tflite_session_run(struct vaccel_session *session,
 		memcpy(out[i]->data, in[i]->data, in[i]->size);
 	}
 
+	if (status)
+		*status = 0;
+
 	return VACCEL_OK;
 
 free_tflite:
