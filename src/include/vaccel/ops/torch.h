@@ -25,6 +25,38 @@ enum vaccel_torch_data_type {
 	// TODO: Add all data types
 };
 
+struct vaccel_torch_buffer {
+	/* data of the buffer */
+	char *data;
+
+	/* size of the buffer */
+	size_t size;
+};
+
+/* Initialize Torch buffer.
+ * WARNING: This function will take ownership of the data. If
+ * vaccel_torch_buffer_release() is called it will try to free buffer.data */
+int vaccel_torch_buffer_init(struct vaccel_torch_buffer *buffer, char *data,
+			     size_t size);
+
+/* Release Torch buffer data */
+int vaccel_torch_buffer_release(struct vaccel_torch_buffer *buffer);
+
+/* Allocate and initialize Torch buffer.
+ * WARNING: This function will take ownership of the data. If
+ * vaccel_torch_buffer_delete() is called it will try to free buffer.data */
+int vaccel_torch_buffer_new(struct vaccel_torch_buffer **buffer, char *data,
+			    size_t size);
+
+/* Release Torch buffer data and free Torch buffer created with
+ * vaccel_torch_buffer_new() */
+int vaccel_torch_buffer_delete(struct vaccel_torch_buffer *buffer);
+
+/* (Re)Take ownership of the Torch buffer data.
+ * Useful for releasing/deleting the Torch buffer but not the encapsulated data */
+int vaccel_torch_buffer_take_data(struct vaccel_torch_buffer *buffer,
+				  void **data, size_t *size);
+
 struct vaccel_torch_tensor {
 	/* tensor's data */
 	void *data;
@@ -43,33 +75,38 @@ struct vaccel_torch_tensor {
 	enum vaccel_torch_data_type data_type;
 };
 
-struct vaccel_torch_tensor *
-vaccel_torch_tensor_new(int64_t nr_dims, const int64_t *dims,
-			enum vaccel_torch_data_type type);
-struct vaccel_torch_tensor *
-vaccel_torch_tensor_allocate(int64_t nr_dims, int64_t *dims,
-			     enum vaccel_torch_data_type type,
-			     size_t total_size);
-int vaccel_torch_tensor_destroy(struct vaccel_torch_tensor *tensor);
+/* Initialize Torch tensor */
+int vaccel_torch_tensor_init(struct vaccel_torch_tensor *tensor,
+			     int64_t nr_dims, const int64_t *dims,
+			     enum vaccel_torch_data_type type);
+
+/* Release Torch tensor */
+int vaccel_torch_tensor_release(struct vaccel_torch_tensor *tensor);
+
+/* Allocate and initialize Torch tensor */
+int vaccel_torch_tensor_new(struct vaccel_torch_tensor **tensor,
+			    int64_t nr_dims, const int64_t *dims,
+			    enum vaccel_torch_data_type type);
+
+/* Allocate and initialize Torch tensor with tensor.data of size=total_size */
+int vaccel_torch_tensor_allocate(struct vaccel_torch_tensor **tensor,
+				 int64_t nr_dims, const int64_t *dims,
+				 enum vaccel_torch_data_type type,
+				 size_t total_size);
+
+/* Release Torch tensor data and free Torch tensor created with
+ * vaccel_torch_tensor_new() */
+int vaccel_torch_tensor_delete(struct vaccel_torch_tensor *tensor);
+
+/* Set Torch tensor tensor.data/size */
 int vaccel_torch_tensor_set_data(struct vaccel_torch_tensor *tensor, void *data,
 				 size_t size);
-void *vaccel_torch_tensor_get_data(struct vaccel_torch_tensor *tensor);
 
-struct vaccel_torch_buffer {
-	/* data of the buffer */
-	char *data;
+/* Take ownership of the Torch tensor data */
+int vaccel_torch_tensor_take_data(struct vaccel_torch_tensor *tensor,
+				  void **data, size_t *size);
 
-	/* size of the buffer */
-	size_t size;
-};
-
-struct vaccel_torch_buffer *vaccel_torch_buffer_new(char *data, size_t size);
-void vaccel_torch_buffer_destroy(struct vaccel_torch_buffer *buffer);
-void *vaccel_torch_buffer_take_data(struct vaccel_torch_buffer *buffer,
-				    size_t *size);
-void *vaccel_torch_buffer_get_data(struct vaccel_torch_buffer *buffer,
-				   size_t *size);
-
+/* Run Torch jitload forward operation on model resource */
 int vaccel_torch_jitload_forward(struct vaccel_session *sess,
 				 const struct vaccel_resource *model,
 				 const struct vaccel_torch_buffer *run_options,
@@ -78,6 +115,7 @@ int vaccel_torch_jitload_forward(struct vaccel_session *sess,
 				 struct vaccel_torch_tensor **out_tensor,
 				 int nr_write);
 
+/* Run Torch sgemm operation */
 int vaccel_torch_sgemm(struct vaccel_session *sess,
 		       struct vaccel_torch_tensor **in_A,
 		       struct vaccel_torch_tensor **in_B,

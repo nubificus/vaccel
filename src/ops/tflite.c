@@ -16,61 +16,32 @@
 #include <stdlib.h>
 #include <string.h>
 
-struct vaccel_tflite_tensor *
-vaccel_tflite_tensor_new(int nr_dims, int32_t *dims,
-			 enum vaccel_tflite_type type)
+int vaccel_tflite_tensor_init(struct vaccel_tflite_tensor *tensor, int nr_dims,
+			      const int32_t *dims,
+			      enum vaccel_tflite_data_type type)
 {
-	struct vaccel_tflite_tensor *ret;
+	if (!tensor || nr_dims < 1)
+		return VACCEL_EINVAL;
 
-	ret = calloc(1, sizeof(*ret));
-	if (!ret)
-		return NULL;
+	tensor->data_type = type;
+	tensor->data = NULL;
+	tensor->size = 0;
+	tensor->owned = false;
+	tensor->nr_dims = nr_dims;
+	tensor->dims = calloc(nr_dims, sizeof(*dims));
+	if (!tensor->dims)
+		return VACCEL_ENOMEM;
 
-	ret->data_type = type;
-	ret->nr_dims = nr_dims;
-	ret->dims = calloc(nr_dims, sizeof(*dims));
-	if (!ret->dims) {
-		free(ret);
-		return NULL;
+	if (dims) {
+		for (int i = 0; i < nr_dims; i++) {
+			tensor->dims[i] = dims[i];
+		}
 	}
 
-	if (dims)
-		memcpy(ret->dims, dims, nr_dims * sizeof(*dims));
-
-	ret->data = NULL;
-	ret->size = 0;
-	ret->owned = false;
-
-	return ret;
+	return VACCEL_OK;
 }
 
-struct vaccel_tflite_tensor *
-vaccel_tflite_tensor_allocate(int nr_dims, int32_t *dims,
-			      enum vaccel_tflite_type type, size_t total_size)
-{
-	struct vaccel_tflite_tensor *ret =
-		vaccel_tflite_tensor_new(nr_dims, dims, type);
-	if (!ret)
-		return NULL;
-
-	if (!total_size)
-		return ret;
-
-	ret->data = malloc(total_size);
-	if (!ret)
-		goto free_tensor;
-
-	ret->size = total_size;
-	ret->owned = true;
-
-	return ret;
-
-free_tensor:
-	free(ret);
-	return NULL;
-}
-
-int vaccel_tflite_tensor_destroy(struct vaccel_tflite_tensor *tensor)
+int vaccel_tflite_tensor_release(struct vaccel_tflite_tensor *tensor)
 {
 	if (!tensor)
 		return VACCEL_EINVAL;
@@ -80,7 +51,69 @@ int vaccel_tflite_tensor_destroy(struct vaccel_tflite_tensor *tensor)
 	if (tensor->data && tensor->owned)
 		free(tensor->data);
 
+	tensor->data = NULL;
+	tensor->size = 0;
+	tensor->owned = false;
+	tensor->nr_dims = 0;
+	tensor->dims = NULL;
+
+	return VACCEL_OK;
+}
+
+int vaccel_tflite_tensor_new(struct vaccel_tflite_tensor **tensor, int nr_dims,
+			     const int32_t *dims,
+			     enum vaccel_tflite_data_type type)
+{
+	if (!tensor)
+		return VACCEL_EINVAL;
+
+	struct vaccel_tflite_tensor *t = calloc(1, sizeof(*t));
+	if (!t)
+		return VACCEL_ENOMEM;
+
+	int ret = vaccel_tflite_tensor_init(t, nr_dims, dims, type);
+	if (ret) {
+		free(t);
+		return ret;
+	}
+
+	*tensor = t;
+
+	return VACCEL_OK;
+}
+
+int vaccel_tflite_tensor_allocate(struct vaccel_tflite_tensor **tensor,
+				  int nr_dims, const int32_t *dims,
+				  enum vaccel_tflite_data_type type,
+				  size_t total_size)
+{
+	int ret = vaccel_tflite_tensor_new(tensor, nr_dims, dims, type);
+	if (ret)
+		return ret;
+
+	if (!total_size)
+		return VACCEL_OK;
+
+	(*tensor)->data = malloc(total_size);
+	if (!(*tensor)->data) {
+		vaccel_tflite_tensor_release(*tensor);
+		return VACCEL_ENOMEM;
+	}
+
+	(*tensor)->size = total_size;
+	(*tensor)->owned = true;
+
+	return VACCEL_OK;
+}
+
+int vaccel_tflite_tensor_delete(struct vaccel_tflite_tensor *tensor)
+{
+	int ret = vaccel_tflite_tensor_release(tensor);
+	if (ret)
+		return ret;
+
 	free(tensor);
+
 	return VACCEL_OK;
 }
 
@@ -91,7 +124,8 @@ int vaccel_tflite_tensor_set_data(struct vaccel_tflite_tensor *tensor,
 		return VACCEL_EINVAL;
 
 	if (tensor->data && tensor->owned)
-		free(tensor->data);
+		vaccel_warn(
+			"Previous tensor data will not be freed by release");
 
 	tensor->data = data;
 	tensor->size = size;
@@ -100,12 +134,20 @@ int vaccel_tflite_tensor_set_data(struct vaccel_tflite_tensor *tensor,
 	return VACCEL_OK;
 }
 
-void *vaccel_tflite_tensor_get_data(struct vaccel_tflite_tensor *tensor)
+int vaccel_tflite_tensor_take_data(struct vaccel_tflite_tensor *tensor,
+				   void **data, size_t *size)
 {
-	if (!tensor)
-		return NULL;
+	if (!tensor || !data || !size)
+		return VACCEL_EINVAL;
 
-	return tensor->data;
+	*data = tensor->data;
+	*size = tensor->size;
+
+	tensor->data = NULL;
+	tensor->size = 0;
+	tensor->owned = false;
+
+	return VACCEL_OK;
 }
 
 struct vaccel_prof_region tflite_load_stats =
