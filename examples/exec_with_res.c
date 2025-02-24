@@ -54,8 +54,8 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	ret = vaccel_resource_init_from_buf(&resource2, buff, len,
-					    VACCEL_RESOURCE_LIB, "lib.so");
+	ret = vaccel_resource_init_from_buf(
+		&resource2, buff, len, VACCEL_RESOURCE_LIB, "lib.so", false);
 	if (ret) {
 		vaccel_error(
 			"Could not create shared object2 resource from buffer: %s",

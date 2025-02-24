@@ -132,7 +132,8 @@ TEST_CASE("exec_with_resource", "[ops][exec]")
 	REQUIRE(object.paths[0]);
 
 	ret = vaccel_resource_init_from_buf(&object2, (unsigned char *)buff,
-					    len, VACCEL_RESOURCE_LIB, "lib.so");
+					    len, VACCEL_RESOURCE_LIB, "lib.so",
+					    false);
 	REQUIRE(ret == VACCEL_OK);
 
 	struct vaccel_session sess;
@@ -167,7 +168,7 @@ TEST_CASE("exec_with_resource", "[ops][exec]")
 	REQUIRE(sess.hint == 0);
 	REQUIRE_FALSE(list_empty(&sess.resources->registered[object.type]));
 	REQUIRE(sess.priv == nullptr);
-	REQUIRE(object.files);
+	REQUIRE(object.blobs);
 
 	ret = vaccel_resource_register(&object2, &sess2);
 	REQUIRE(ret == VACCEL_OK);
@@ -175,7 +176,7 @@ TEST_CASE("exec_with_resource", "[ops][exec]")
 	REQUIRE(sess2.hint == 0);
 	REQUIRE_FALSE(list_empty(&sess2.resources->registered[object2.type]));
 	REQUIRE(sess2.priv == nullptr);
-	REQUIRE(object2.files);
+	REQUIRE(object2.blobs);
 
 	input = 10;
 	struct vaccel_arg read[1] = {
