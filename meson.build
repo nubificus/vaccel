@@ -16,6 +16,8 @@ libvaccel_version = meson.project_version().split('-')[0]
 
 opt_tests = get_option('tests')
 opt_examples = get_option('examples').enable_if(opt_tests.enabled())
+opt_examples_model = get_option('examples-model')
+opt_examples_profile = get_option('examples-profile')
 
 slog_subproj = subproject('slog')
 libslog_dep = dependency('slog')
@@ -54,6 +56,8 @@ summary({
   'Build the no-op debugging plugin': opt_plugin_noop.enabled(),
   'Build the mbench plugin': opt_plugin_mbench.enabled(),
   'Build the examples': opt_examples.enabled(),
+  'Allow model specification in the examples': opt_examples_model.enabled(),
+  'Enable profiling code in the examples': opt_examples_profile.enabled(),
   'Enable testing': opt_tests.enabled(),
   },
   section : 'Configuration',
@@ -68,6 +72,8 @@ meson.add_dist_script(
   '-a', 'plugin-noop=' + (opt_plugin_noop.enabled() ? 'enabled' : 'disabled'),
   '-a', 'plugin-mbench=' + (opt_plugin_mbench.enabled() ? 'enabled' : 'disabled'),
   '-a', 'examples=' + (opt_examples.enabled() ? 'enabled' : 'disabled'),
+  '-a', 'examples-model=' + (opt_examples_model.enabled() ? 'enabled' : 'disabled'),
+  '-a', 'examples-profile=' + (opt_examples_profile.enabled() ? 'enabled' : 'disabled'),
   '-a', 'tests=' + (opt_tests.enabled() ? 'enabled' : 'disabled'))
 
 if opt_examples.enabled() and opt_plugin_noop.enabled() and opt_plugin_exec.enabled()

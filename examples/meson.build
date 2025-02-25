@@ -32,6 +32,13 @@ examples_sources = files([
   'local_and_virtio.c',
 ])
 
+
+if opt_examples_model.enabled()
+  vaccel_c_args += '-DVACCEL_EXAMPLES_MODEL_RESOURCE=1'
+endif
+if opt_examples_profile.enabled()
+  vaccel_c_args += '-DVACCEL_EXAMPLES_PROFILE=1'
+endif
 examples = []
 foreach e : examples_sources
   examples += executable(fs.stem(e),

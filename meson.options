@@ -23,6 +23,16 @@ option('examples',
   value : 'auto',
   description : 'Build the examples')
 
+option('examples-model',
+  type : 'feature',
+  value : 'disabled',
+  description : 'Allow to specify the model in examples')
+
+option('examples-profile',
+  type : 'feature',
+  value : 'disabled',
+  description : 'Enable profiling code in examples')
+
 option('tests',
   type : 'feature',
   value : 'auto',
