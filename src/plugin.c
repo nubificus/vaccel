@@ -407,7 +407,7 @@ int vaccel_plugin_load(const char *lib)
 	if (lib == NULL)
 		return VACCEL_EINVAL;
 
-	void *dl = dlopen(lib, RTLD_LAZY);
+	void *dl = dlopen(lib, RTLD_LAZY | RTLD_GLOBAL);
 	if (!dl) {
 		vaccel_error("Could not dlopen plugin %s: %s", lib, dlerror());
 		return VACCEL_ENOENT;
