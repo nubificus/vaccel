@@ -67,13 +67,14 @@ static int mbench_unpack(struct vaccel_session *session, const char *library,
 
 	return ret;
 }
-struct vaccel_op ops[] = {
-	VACCEL_OP_INIT(ops[0], VACCEL_OP_EXEC, mbench_unpack),
+struct vaccel_op mbench_ops[] = {
+	VACCEL_OP_INIT(mbench_ops[0], VACCEL_OP_EXEC, mbench_unpack),
 };
 
 static int init(void)
 {
-	return vaccel_plugin_register_ops(ops, sizeof(ops) / sizeof(ops[0]));
+	return vaccel_plugin_register_ops(
+		mbench_ops, sizeof(mbench_ops) / sizeof(mbench_ops[0]));
 }
 
 static int fini(void)

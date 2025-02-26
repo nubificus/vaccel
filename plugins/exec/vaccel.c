@@ -169,16 +169,17 @@ free:
 	return ret;
 }
 
-struct vaccel_op ops[] = {
-	VACCEL_OP_INIT(ops[0], VACCEL_OP_NOOP, noop),
-	VACCEL_OP_INIT(ops[1], VACCEL_OP_EXEC, exec),
-	VACCEL_OP_INIT(ops[2], VACCEL_OP_EXEC_WITH_RESOURCE,
+struct vaccel_op exec_ops[] = {
+	VACCEL_OP_INIT(exec_ops[0], VACCEL_OP_NOOP, noop),
+	VACCEL_OP_INIT(exec_ops[1], VACCEL_OP_EXEC, exec),
+	VACCEL_OP_INIT(exec_ops[2], VACCEL_OP_EXEC_WITH_RESOURCE,
 		       exec_with_resource),
 };
 
 static int init(void)
 {
-	return vaccel_plugin_register_ops(ops, sizeof(ops) / sizeof(ops[0]));
+	return vaccel_plugin_register_ops(
+		exec_ops, sizeof(exec_ops) / sizeof(exec_ops[0]));
 }
 
 static int fini(void)

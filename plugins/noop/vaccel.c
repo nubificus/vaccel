@@ -720,41 +720,44 @@ static int noop_opencv(struct vaccel_session *sess, struct vaccel_arg *read,
 	return VACCEL_OK;
 }
 
-struct vaccel_op ops[] = {
-	VACCEL_OP_INIT(ops[0], VACCEL_OP_NOOP, noop_noop),
-	VACCEL_OP_INIT(ops[1], VACCEL_OP_BLAS_SGEMM, noop_sgemm),
-	VACCEL_OP_INIT(ops[2], VACCEL_OP_IMAGE_CLASSIFY, noop_img_class),
-	VACCEL_OP_INIT(ops[3], VACCEL_OP_IMAGE_DETECT, noop_img_detect),
-	VACCEL_OP_INIT(ops[4], VACCEL_OP_IMAGE_SEGMENT, noop_img_segme),
-	VACCEL_OP_INIT(ops[5], VACCEL_OP_IMAGE_POSE, noop_img_pose),
-	VACCEL_OP_INIT(ops[6], VACCEL_OP_IMAGE_DEPTH, noop_img_depth),
-	VACCEL_OP_INIT(ops[7], VACCEL_OP_EXEC, noop_exec),
-	VACCEL_OP_INIT(ops[8], VACCEL_OP_TF_SESSION_LOAD, noop_tf_session_load),
-	VACCEL_OP_INIT(ops[9], VACCEL_OP_TF_SESSION_RUN, noop_tf_session_run),
-	VACCEL_OP_INIT(ops[10], VACCEL_OP_TF_SESSION_DELETE,
+struct vaccel_op noop_ops[] = {
+	VACCEL_OP_INIT(noop_ops[0], VACCEL_OP_NOOP, noop_noop),
+	VACCEL_OP_INIT(noop_ops[1], VACCEL_OP_BLAS_SGEMM, noop_sgemm),
+	VACCEL_OP_INIT(noop_ops[2], VACCEL_OP_IMAGE_CLASSIFY, noop_img_class),
+	VACCEL_OP_INIT(noop_ops[3], VACCEL_OP_IMAGE_DETECT, noop_img_detect),
+	VACCEL_OP_INIT(noop_ops[4], VACCEL_OP_IMAGE_SEGMENT, noop_img_segme),
+	VACCEL_OP_INIT(noop_ops[5], VACCEL_OP_IMAGE_POSE, noop_img_pose),
+	VACCEL_OP_INIT(noop_ops[6], VACCEL_OP_IMAGE_DEPTH, noop_img_depth),
+	VACCEL_OP_INIT(noop_ops[7], VACCEL_OP_EXEC, noop_exec),
+	VACCEL_OP_INIT(noop_ops[8], VACCEL_OP_TF_SESSION_LOAD,
+		       noop_tf_session_load),
+	VACCEL_OP_INIT(noop_ops[9], VACCEL_OP_TF_SESSION_RUN,
+		       noop_tf_session_run),
+	VACCEL_OP_INIT(noop_ops[10], VACCEL_OP_TF_SESSION_DELETE,
 		       noop_tf_session_delete),
-	VACCEL_OP_INIT(ops[11], VACCEL_OP_MINMAX, noop_minmax),
-	VACCEL_OP_INIT(ops[12], VACCEL_OP_FPGA_ARRAYCOPY, v_arraycopy),
-	VACCEL_OP_INIT(ops[13], VACCEL_OP_FPGA_VECTORADD, v_vectoradd),
-	VACCEL_OP_INIT(ops[14], VACCEL_OP_FPGA_PARALLEL, v_parallel),
-	VACCEL_OP_INIT(ops[15], VACCEL_OP_FPGA_MMULT, v_mmult),
-	VACCEL_OP_INIT(ops[16], VACCEL_OP_EXEC_WITH_RESOURCE,
+	VACCEL_OP_INIT(noop_ops[11], VACCEL_OP_MINMAX, noop_minmax),
+	VACCEL_OP_INIT(noop_ops[12], VACCEL_OP_FPGA_ARRAYCOPY, v_arraycopy),
+	VACCEL_OP_INIT(noop_ops[13], VACCEL_OP_FPGA_VECTORADD, v_vectoradd),
+	VACCEL_OP_INIT(noop_ops[14], VACCEL_OP_FPGA_PARALLEL, v_parallel),
+	VACCEL_OP_INIT(noop_ops[15], VACCEL_OP_FPGA_MMULT, v_mmult),
+	VACCEL_OP_INIT(noop_ops[16], VACCEL_OP_EXEC_WITH_RESOURCE,
 		       noop_exec_with_resource),
-	VACCEL_OP_INIT(ops[17], VACCEL_OP_TORCH_JITLOAD_FORWARD,
+	VACCEL_OP_INIT(noop_ops[17], VACCEL_OP_TORCH_JITLOAD_FORWARD,
 		       noop_torch_jitload_forward),
-	VACCEL_OP_INIT(ops[18], VACCEL_OP_TORCH_SGEMM, noop_torch_sgemm),
-	VACCEL_OP_INIT(ops[19], VACCEL_OP_OPENCV, noop_opencv),
-	VACCEL_OP_INIT(ops[20], VACCEL_OP_TFLITE_SESSION_LOAD,
+	VACCEL_OP_INIT(noop_ops[18], VACCEL_OP_TORCH_SGEMM, noop_torch_sgemm),
+	VACCEL_OP_INIT(noop_ops[19], VACCEL_OP_OPENCV, noop_opencv),
+	VACCEL_OP_INIT(noop_ops[20], VACCEL_OP_TFLITE_SESSION_LOAD,
 		       noop_tflite_session_load),
-	VACCEL_OP_INIT(ops[21], VACCEL_OP_TFLITE_SESSION_RUN,
+	VACCEL_OP_INIT(noop_ops[21], VACCEL_OP_TFLITE_SESSION_RUN,
 		       noop_tflite_session_run),
-	VACCEL_OP_INIT(ops[22], VACCEL_OP_TFLITE_SESSION_DELETE,
+	VACCEL_OP_INIT(noop_ops[22], VACCEL_OP_TFLITE_SESSION_DELETE,
 		       noop_tflite_session_delete),
 };
 
 static int init(void)
 {
-	return vaccel_plugin_register_ops(ops, sizeof(ops) / sizeof(ops[0]));
+	return vaccel_plugin_register_ops(
+		noop_ops, sizeof(noop_ops) / sizeof(noop_ops[0]));
 }
 
 static int fini(void)
