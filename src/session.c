@@ -406,10 +406,8 @@ int vaccel_session_resource_by_id(struct vaccel_session *sess,
 			}
 		}
 	}
-	vaccel_error("session:%" PRId64
-		     " Could not find a resource with id: %" PRId64,
-		     sess->id, id);
-	return VACCEL_EINVAL;
+
+	return VACCEL_ENOENT;
 }
 
 int vaccel_session_resource_by_type(struct vaccel_session *sess,
@@ -430,9 +428,7 @@ int vaccel_session_resource_by_type(struct vaccel_session *sess,
 		return VACCEL_OK;
 	}
 
-	vaccel_error("session:%" PRId64 " Could not find a matching resource",
-		     sess->id);
-	return VACCEL_EINVAL;
+	return VACCEL_ENOENT;
 }
 
 int vaccel_session_resources_by_type(struct vaccel_session *sess,
@@ -456,11 +452,8 @@ int vaccel_session_resources_by_type(struct vaccel_session *sess,
 	}
 
 	if (found == 0) {
-		vaccel_error("session:%" PRId64
-			     " Could not find a matching resource",
-			     sess->id);
 		*nr_found = 0;
-		return VACCEL_EINVAL;
+		return VACCEL_ENOENT;
 	}
 
 	/* Allocate space */

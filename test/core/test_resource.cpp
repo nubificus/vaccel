@@ -1174,7 +1174,7 @@ TEST_CASE("resource_find_by_id_fail", "[core][resource]")
 	// Attempt to find a resource by ID which fails (ID of 0 doesn't exist -
 	// starts at 1)
 	int const ret = vaccel_resource_get_by_id(&test_res, test_id);
-	REQUIRE(ret == VACCEL_EINVAL);
+	REQUIRE(ret == VACCEL_ENOENT);
 }
 
 TEST_CASE("vaccel_resource_get_by_type", "[core][resource]")
@@ -1191,13 +1191,13 @@ TEST_CASE("vaccel_resource_get_by_type", "[core][resource]")
 
 	/* Failing because there's no resource */
 	ret = vaccel_resource_get_by_type(&res_ptr, VACCEL_RESOURCE_LIB);
-	REQUIRE(ret == VACCEL_EINVAL);
+	REQUIRE(ret == VACCEL_ENOENT);
 
 	ret = vaccel_resource_get_by_type(&res_ptr, VACCEL_RESOURCE_MODEL);
-	REQUIRE(ret == VACCEL_EINVAL);
+	REQUIRE(ret == VACCEL_ENOENT);
 
 	ret = vaccel_resource_get_by_type(&res_ptr, VACCEL_RESOURCE_DATA);
-	REQUIRE(ret == VACCEL_EINVAL);
+	REQUIRE(ret == VACCEL_ENOENT);
 
 	/* Success */
 	struct vaccel_resource res;
@@ -1211,17 +1211,17 @@ TEST_CASE("vaccel_resource_get_by_type", "[core][resource]")
 
 	/* Failing because of wrong type, although a resource exists */
 	ret = vaccel_resource_get_by_type(&res_ptr, VACCEL_RESOURCE_MODEL);
-	REQUIRE(ret == VACCEL_EINVAL);
+	REQUIRE(ret == VACCEL_ENOENT);
 
 	ret = vaccel_resource_get_by_type(&res_ptr, VACCEL_RESOURCE_DATA);
-	REQUIRE(ret == VACCEL_EINVAL);
+	REQUIRE(ret == VACCEL_ENOENT);
 
 	/* Failing because the resource was released */
 	ret = vaccel_resource_release(&res);
 	REQUIRE(ret == VACCEL_OK);
 
 	ret = vaccel_resource_get_by_type(&res_ptr, VACCEL_RESOURCE_LIB);
-	REQUIRE(ret == VACCEL_EINVAL);
+	REQUIRE(ret == VACCEL_ENOENT);
 
 	/* Close */
 	free(lib_path);
@@ -1249,17 +1249,17 @@ TEST_CASE("vaccel_resource_get_all_by_type", "[core][resource]")
 	/* Failing because there's no resource */
 	ret = vaccel_resource_get_all_by_type(&res_ptr, &nr_found,
 					      VACCEL_RESOURCE_LIB);
-	REQUIRE(ret == VACCEL_EINVAL);
+	REQUIRE(ret == VACCEL_ENOENT);
 	REQUIRE(nr_found == 0);
 
 	ret = vaccel_resource_get_all_by_type(&res_ptr, &nr_found,
 					      VACCEL_RESOURCE_DATA);
-	REQUIRE(ret == VACCEL_EINVAL);
+	REQUIRE(ret == VACCEL_ENOENT);
 	REQUIRE(nr_found == 0);
 
 	ret = vaccel_resource_get_all_by_type(&res_ptr, &nr_found,
 					      VACCEL_RESOURCE_MODEL);
-	REQUIRE(ret == VACCEL_EINVAL);
+	REQUIRE(ret == VACCEL_ENOENT);
 	REQUIRE(nr_found == 0);
 
 	/* Success */
@@ -1297,12 +1297,12 @@ TEST_CASE("vaccel_resource_get_all_by_type", "[core][resource]")
 	/* Failing because of wrong type, although a resource exists */
 	ret = vaccel_resource_get_all_by_type(&res_ptr, &nr_found,
 					      VACCEL_RESOURCE_MODEL);
-	REQUIRE(ret == VACCEL_EINVAL);
+	REQUIRE(ret == VACCEL_ENOENT);
 	REQUIRE(nr_found == 0);
 
 	ret = vaccel_resource_get_all_by_type(&res_ptr, &nr_found,
 					      VACCEL_RESOURCE_DATA);
-	REQUIRE(ret == VACCEL_EINVAL);
+	REQUIRE(ret == VACCEL_ENOENT);
 	REQUIRE(nr_found == 0);
 
 	/* Failing because the resource was released */
@@ -1311,7 +1311,7 @@ TEST_CASE("vaccel_resource_get_all_by_type", "[core][resource]")
 
 	ret = vaccel_resource_get_all_by_type(&res_ptr, &nr_found,
 					      VACCEL_RESOURCE_LIB);
-	REQUIRE(ret == VACCEL_EINVAL);
+	REQUIRE(ret == VACCEL_ENOENT);
 	REQUIRE(nr_found == 0);
 
 	/* Close */
