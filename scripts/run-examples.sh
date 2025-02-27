@@ -41,24 +41,54 @@ set -x
 eval "${WRAPPER_CMD}" "${EXAMPLES_DIR}/noop"
 eval "${WRAPPER_CMD}" "${EXAMPLES_DIR}/classify" \
 	"${SHARE_DIR}/images/example.jpg" 1
+eval "${WRAPPER_CMD}" "${EXAMPLES_DIR}/classify" \
+	"${SHARE_DIR}/images/example.jpg" 1 \
+	"${SHARE_DIR}/models/torch/cnn_trace.pt"
 eval "${WRAPPER_CMD}" "${EXAMPLES_DIR}/classify_generic" \
 	"${SHARE_DIR}/images/example.jpg" 1
+eval "${WRAPPER_CMD}" "${EXAMPLES_DIR}/classify_generic" \
+	"${SHARE_DIR}/images/example.jpg" 1 \
+	"${SHARE_DIR}/models/torch/cnn_trace.pt"
 eval "${WRAPPER_CMD}" "${EXAMPLES_DIR}/depth" \
 	"${SHARE_DIR}/images/example.jpg" 1
+eval "${WRAPPER_CMD}" "${EXAMPLES_DIR}/depth" \
+	"${SHARE_DIR}/images/example.jpg" 1 \
+	"${SHARE_DIR}/models/torch/cnn_trace.pt"
 eval "${WRAPPER_CMD}" "${EXAMPLES_DIR}/depth_generic" \
 	"${SHARE_DIR}/images/example.jpg" 1
+eval "${WRAPPER_CMD}" "${EXAMPLES_DIR}/depth_generic" \
+	"${SHARE_DIR}/images/example.jpg" 1 \
+	"${SHARE_DIR}/models/torch/cnn_trace.pt"
 eval "${WRAPPER_CMD}" "${EXAMPLES_DIR}/detect" \
 	"${SHARE_DIR}/images/example.jpg" 1
+eval "${WRAPPER_CMD}" "${EXAMPLES_DIR}/detect" \
+	"${SHARE_DIR}/images/example.jpg" 1 \
+	"${SHARE_DIR}/models/torch/cnn_trace.pt"
 eval "${WRAPPER_CMD}" "${EXAMPLES_DIR}/detect_generic" \
 	"${SHARE_DIR}/images/example.jpg" 1
+eval "${WRAPPER_CMD}" "${EXAMPLES_DIR}/detect_generic" \
+	"${SHARE_DIR}/images/example.jpg" 1 \
+	"${SHARE_DIR}/models/torch/cnn_trace.pt"
 eval "${WRAPPER_CMD}" "${EXAMPLES_DIR}/pose" \
 	"${SHARE_DIR}/images/example.jpg" 1
+eval "${WRAPPER_CMD}" "${EXAMPLES_DIR}/pose" \
+	"${SHARE_DIR}/images/example.jpg" 1 \
+	"${SHARE_DIR}/models/torch/cnn_trace.pt"
 eval "${WRAPPER_CMD}" "${EXAMPLES_DIR}/pose_generic" \
 	"${SHARE_DIR}/images/example.jpg" 1
+eval "${WRAPPER_CMD}" "${EXAMPLES_DIR}/pose_generic" \
+	"${SHARE_DIR}/images/example.jpg" 1 \
+	"${SHARE_DIR}/models/torch/cnn_trace.pt"
 eval "${WRAPPER_CMD}" "${EXAMPLES_DIR}/segment" \
 	"${SHARE_DIR}/images/example.jpg" 1
+eval "${WRAPPER_CMD}" "${EXAMPLES_DIR}/segment" \
+	"${SHARE_DIR}/images/example.jpg" 1 \
+	"${SHARE_DIR}/models/torch/cnn_trace.pt"
 eval "${WRAPPER_CMD}" "${EXAMPLES_DIR}/segment_generic" \
 	"${SHARE_DIR}/images/example.jpg" 1
+eval "${WRAPPER_CMD}" "${EXAMPLES_DIR}/segment_generic" \
+	"${SHARE_DIR}/images/example.jpg" 1 \
+	"${SHARE_DIR}/models/torch/cnn_trace.pt"
 eval "${WRAPPER_CMD}" "${EXAMPLES_DIR}/sgemm"
 eval "${WRAPPER_CMD}" "${EXAMPLES_DIR}/sgemm_generic"
 eval "${WRAPPER_CMD}" "${EXAMPLES_DIR}/minmax" 2048 \
