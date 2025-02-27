@@ -80,6 +80,9 @@ int vaccel_resource_get_by_id(struct vaccel_resource **res, vaccel_id_t id)
 	if (!resources.initialized)
 		return VACCEL_EPERM;
 
+	if (!res)
+		return VACCEL_EINVAL;
+
 	for (int i = 0; i < VACCEL_RESOURCE_MAX; ++i) {
 		struct vaccel_resource *r;
 		struct vaccel_resource *tmp;
@@ -92,8 +95,7 @@ int vaccel_resource_get_by_id(struct vaccel_resource **res, vaccel_id_t id)
 		}
 	}
 
-	vaccel_error("Could not find a resource with id: %" PRId64, id);
-	return VACCEL_EINVAL;
+	return VACCEL_ENOENT;
 }
 
 int vaccel_resource_get_by_type(struct vaccel_resource **res,
@@ -113,8 +115,7 @@ int vaccel_resource_get_by_type(struct vaccel_resource **res,
 		return VACCEL_OK;
 	}
 
-	vaccel_error("Could not find a matching resource");
-	return VACCEL_EINVAL;
+	return VACCEL_ENOENT;
 }
 
 int vaccel_resource_get_all_by_type(struct vaccel_resource ***res,
@@ -138,9 +139,8 @@ int vaccel_resource_get_all_by_type(struct vaccel_resource ***res,
 	}
 
 	if (found == 0) {
-		vaccel_error("Could not find a matching resource");
 		*nr_found = 0;
-		return VACCEL_EINVAL;
+		return VACCEL_ENOENT;
 	}
 
 	/* Allocate space */

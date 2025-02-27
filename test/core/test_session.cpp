@@ -324,15 +324,15 @@ TEST_CASE("vaccel_session_resource_by_type", "[core][session]")
 
 	ret = vaccel_session_resource_by_type(&sess, &res_ptr,
 					      VACCEL_RESOURCE_LIB);
-	REQUIRE(ret == VACCEL_EINVAL);
+	REQUIRE(ret == VACCEL_ENOENT);
 
 	ret = vaccel_session_resource_by_type(&sess, &res_ptr,
 					      VACCEL_RESOURCE_MODEL);
-	REQUIRE(ret == VACCEL_EINVAL);
+	REQUIRE(ret == VACCEL_ENOENT);
 
 	ret = vaccel_session_resource_by_type(&sess, &res_ptr,
 					      VACCEL_RESOURCE_DATA);
-	REQUIRE(ret == VACCEL_EINVAL);
+	REQUIRE(ret == VACCEL_ENOENT);
 
 	/* Failing because the resource is not registered */
 	struct vaccel_resource res;
@@ -342,7 +342,7 @@ TEST_CASE("vaccel_session_resource_by_type", "[core][session]")
 
 	ret = vaccel_session_resource_by_type(&sess, &res_ptr,
 					      VACCEL_RESOURCE_LIB);
-	REQUIRE(ret == VACCEL_EINVAL);
+	REQUIRE(ret == VACCEL_ENOENT);
 
 	/* Success */
 	ret = vaccel_resource_register(&res, &sess);
@@ -356,11 +356,11 @@ TEST_CASE("vaccel_session_resource_by_type", "[core][session]")
 	/* Failing because of wrong type, although registered */
 	ret = vaccel_session_resource_by_type(&sess, &res_ptr,
 					      VACCEL_RESOURCE_MODEL);
-	REQUIRE(ret == VACCEL_EINVAL);
+	REQUIRE(ret == VACCEL_ENOENT);
 
 	ret = vaccel_session_resource_by_type(&sess, &res_ptr,
 					      VACCEL_RESOURCE_DATA);
-	REQUIRE(ret == VACCEL_EINVAL);
+	REQUIRE(ret == VACCEL_ENOENT);
 
 	/* Failing because the resource was unregistered */
 	ret = vaccel_resource_unregister(&res, &sess);
@@ -368,7 +368,7 @@ TEST_CASE("vaccel_session_resource_by_type", "[core][session]")
 
 	ret = vaccel_session_resource_by_type(&sess, &res_ptr,
 					      VACCEL_RESOURCE_LIB);
-	REQUIRE(ret == VACCEL_EINVAL);
+	REQUIRE(ret == VACCEL_ENOENT);
 
 	/* Close */
 	ret = vaccel_resource_release(&res);
@@ -404,7 +404,7 @@ TEST_CASE("vaccel_session_resource_by_id", "[core][session]")
 	REQUIRE(ret == VACCEL_OK);
 
 	ret = vaccel_session_resource_by_id(&sess, &res_ptr, 1);
-	REQUIRE(ret == VACCEL_EINVAL);
+	REQUIRE(ret == VACCEL_ENOENT);
 
 	/* Failing because the resource is not registered */
 	struct vaccel_resource res;
@@ -413,7 +413,7 @@ TEST_CASE("vaccel_session_resource_by_id", "[core][session]")
 	REQUIRE(ret == VACCEL_OK);
 
 	ret = vaccel_session_resource_by_id(&sess, &res_ptr, res.id);
-	REQUIRE(ret == VACCEL_EINVAL);
+	REQUIRE(ret == VACCEL_ENOENT);
 
 	/* Success */
 	ret = vaccel_resource_register(&res, &sess);
@@ -425,14 +425,14 @@ TEST_CASE("vaccel_session_resource_by_id", "[core][session]")
 
 	/* Failing because of wrong id */
 	ret = vaccel_session_resource_by_id(&sess, &res_ptr, res.id + 1);
-	REQUIRE(ret == VACCEL_EINVAL);
+	REQUIRE(ret == VACCEL_ENOENT);
 
 	/* Failing because the resource was unregistered */
 	ret = vaccel_resource_unregister(&res, &sess);
 	REQUIRE(ret == VACCEL_OK);
 
 	ret = vaccel_session_resource_by_id(&sess, &res_ptr, res.id);
-	REQUIRE(ret == VACCEL_EINVAL);
+	REQUIRE(ret == VACCEL_ENOENT);
 
 	/* Close */
 	ret = vaccel_resource_release(&res);
@@ -474,17 +474,17 @@ TEST_CASE("vaccel_session_resources_by_type", "[core][session]")
 
 	ret = vaccel_session_resources_by_type(&sess, &res_ptr, &nr_found,
 					       VACCEL_RESOURCE_LIB);
-	REQUIRE(ret == VACCEL_EINVAL);
+	REQUIRE(ret == VACCEL_ENOENT);
 	REQUIRE(nr_found == 0);
 
 	ret = vaccel_session_resources_by_type(&sess, &res_ptr, &nr_found,
 					       VACCEL_RESOURCE_MODEL);
-	REQUIRE(ret == VACCEL_EINVAL);
+	REQUIRE(ret == VACCEL_ENOENT);
 	REQUIRE(nr_found == 0);
 
 	ret = vaccel_session_resources_by_type(&sess, &res_ptr, &nr_found,
 					       VACCEL_RESOURCE_DATA);
-	REQUIRE(ret == VACCEL_EINVAL);
+	REQUIRE(ret == VACCEL_ENOENT);
 	REQUIRE(nr_found == 0);
 
 	/* Failing because the resource is not registered */
@@ -495,7 +495,7 @@ TEST_CASE("vaccel_session_resources_by_type", "[core][session]")
 
 	ret = vaccel_session_resources_by_type(&sess, &res_ptr, &nr_found,
 					       VACCEL_RESOURCE_LIB);
-	REQUIRE(ret == VACCEL_EINVAL);
+	REQUIRE(ret == VACCEL_ENOENT);
 	REQUIRE(nr_found == 0);
 
 	/* Success */
@@ -537,11 +537,11 @@ TEST_CASE("vaccel_session_resources_by_type", "[core][session]")
 	/* Failing because of wrong type, although registered */
 	ret = vaccel_session_resources_by_type(&sess, &res_ptr, &nr_found,
 					       VACCEL_RESOURCE_MODEL);
-	REQUIRE(ret == VACCEL_EINVAL);
+	REQUIRE(ret == VACCEL_ENOENT);
 
 	ret = vaccel_session_resources_by_type(&sess, &res_ptr, &nr_found,
 					       VACCEL_RESOURCE_DATA);
-	REQUIRE(ret == VACCEL_EINVAL);
+	REQUIRE(ret == VACCEL_ENOENT);
 
 	/* Failing because the resource was unregistered */
 	ret = vaccel_resource_unregister(&res, &sess);
@@ -549,7 +549,7 @@ TEST_CASE("vaccel_session_resources_by_type", "[core][session]")
 
 	ret = vaccel_session_resources_by_type(&sess, &res_ptr, &nr_found,
 					       VACCEL_RESOURCE_LIB);
-	REQUIRE(ret == VACCEL_EINVAL);
+	REQUIRE(ret == VACCEL_ENOENT);
 
 	/* Close */
 	ret = vaccel_resource_release(&res);
