@@ -60,10 +60,10 @@ int noop_minmax(struct vaccel_session *sess, const double *indata, int ndata,
 	return VACCEL_OK;
 }
 
-static int noop_img_class(struct vaccel_session *sess, const void *img,
-			  unsigned char *out_text, unsigned char *out_imgname,
-			  size_t len_img, size_t len_out_text,
-			  size_t len_out_imgname)
+static int noop_image_classify(struct vaccel_session *sess, const void *img,
+			       unsigned char *out_text,
+			       unsigned char *out_imgname, size_t len_img,
+			       size_t len_out_text, size_t len_out_imgname)
 {
 	if (!sess || !img) {
 		noop_error("Invalid input arguments\n");
@@ -74,7 +74,16 @@ static int noop_img_class(struct vaccel_session *sess, const void *img,
 	noop_debug("Calling Image classification for session %" PRId64 "",
 		   sess->id);
 
+	struct vaccel_resource *model = NULL;
+	ret = vaccel_session_resource_by_type(sess, &model,
+					      VACCEL_RESOURCE_MODEL);
+	if (ret && ret != VACCEL_ENOENT) {
+		noop_error("Failed to get model\n");
+		return ret;
+	}
+
 	noop_debug("Dumping arguments for Image classification:");
+	noop_debug("model: %s", (model) ? model->files[0]->path : NULL);
 	noop_debug("len_img: %zu", len_img);
 	noop_debug("len_out_text: %zu", len_out_text);
 	if (len_out_imgname)
@@ -97,9 +106,9 @@ static int noop_img_class(struct vaccel_session *sess, const void *img,
 	return VACCEL_OK;
 }
 
-static int noop_img_detect(struct vaccel_session *sess, const void *img,
-			   const unsigned char *out_imgname, size_t len_img,
-			   size_t len_out_imgname)
+static int noop_image_detect(struct vaccel_session *sess, const void *img,
+			     const unsigned char *out_imgname, size_t len_img,
+			     size_t len_out_imgname)
 {
 	if (!sess || !img) {
 		noop_error("Invalid input arguments\n");
@@ -109,7 +118,16 @@ static int noop_img_detect(struct vaccel_session *sess, const void *img,
 
 	noop_debug("Calling Image detection for session %" PRId64 "", sess->id);
 
+	struct vaccel_resource *model = NULL;
+	ret = vaccel_session_resource_by_type(sess, &model,
+					      VACCEL_RESOURCE_MODEL);
+	if (ret && ret != VACCEL_ENOENT) {
+		noop_error("Failed to get model\n");
+		return ret;
+	}
+
 	noop_debug("Dumping arguments for Image detection:");
+	noop_debug("model: %s", (model) ? model->files[0]->path : NULL);
 	noop_debug("len_img: %zu", len_img);
 	if (len_out_imgname)
 		noop_debug("len_out_imgname: %zu", len_out_imgname);
@@ -124,9 +142,9 @@ static int noop_img_detect(struct vaccel_session *sess, const void *img,
 	return VACCEL_OK;
 }
 
-static int noop_img_segme(struct vaccel_session *sess, const void *img,
-			  const unsigned char *out_imgname, size_t len_img,
-			  size_t len_out_imgname)
+static int noop_image_segment(struct vaccel_session *sess, const void *img,
+			      const unsigned char *out_imgname, size_t len_img,
+			      size_t len_out_imgname)
 {
 	if (!sess || !img) {
 		noop_error("Invalid input arguments\n");
@@ -137,7 +155,16 @@ static int noop_img_segme(struct vaccel_session *sess, const void *img,
 	noop_debug("Calling Image segmentation for session %" PRId64 "",
 		   sess->id);
 
+	struct vaccel_resource *model = NULL;
+	ret = vaccel_session_resource_by_type(sess, &model,
+					      VACCEL_RESOURCE_MODEL);
+	if (ret && ret != VACCEL_ENOENT) {
+		noop_error("Failed to get model\n");
+		return ret;
+	}
+
 	noop_debug("Dumping arguments for Image segmentation:");
+	noop_debug("model: %s", (model) ? model->files[0]->path : NULL);
 	noop_debug("len_img: %zu", len_img);
 	if (len_out_imgname)
 		noop_debug("len_out_imgname: %zu", len_out_imgname);
@@ -152,9 +179,9 @@ static int noop_img_segme(struct vaccel_session *sess, const void *img,
 	return VACCEL_OK;
 }
 
-static int noop_img_pose(struct vaccel_session *sess, const void *img,
-			 const unsigned char *out_imgname, size_t len_img,
-			 size_t len_out_imgname)
+static int noop_image_pose(struct vaccel_session *sess, const void *img,
+			   const unsigned char *out_imgname, size_t len_img,
+			   size_t len_out_imgname)
 {
 	if (!sess || !img) {
 		noop_error("Invalid input arguments\n");
@@ -164,7 +191,16 @@ static int noop_img_pose(struct vaccel_session *sess, const void *img,
 
 	noop_debug("Calling Image pose for session %" PRId64 "", sess->id);
 
+	struct vaccel_resource *model = NULL;
+	ret = vaccel_session_resource_by_type(sess, &model,
+					      VACCEL_RESOURCE_MODEL);
+	if (ret && ret != VACCEL_ENOENT) {
+		noop_error("Failed to get model\n");
+		return ret;
+	}
+
 	noop_debug("Dumping arguments for Image pose:");
+	noop_debug("model: %s", (model) ? model->files[0]->path : NULL);
 	noop_debug("len_img: %zu", len_img);
 	if (len_out_imgname)
 		noop_debug("len_out_imgname: %zu", len_out_imgname);
@@ -179,9 +215,9 @@ static int noop_img_pose(struct vaccel_session *sess, const void *img,
 	return VACCEL_OK;
 }
 
-static int noop_img_depth(struct vaccel_session *sess, const void *img,
-			  const unsigned char *out_imgname, size_t len_img,
-			  size_t len_out_imgname)
+static int noop_image_depth(struct vaccel_session *sess, const void *img,
+			    const unsigned char *out_imgname, size_t len_img,
+			    size_t len_out_imgname)
 {
 	if (!sess || !img) {
 		noop_error("Invalid input arguments\n");
@@ -191,7 +227,16 @@ static int noop_img_depth(struct vaccel_session *sess, const void *img,
 
 	noop_debug("Calling Image depth for session %" PRId64 "", sess->id);
 
+	struct vaccel_resource *model = NULL;
+	ret = vaccel_session_resource_by_type(sess, &model,
+					      VACCEL_RESOURCE_MODEL);
+	if (ret && ret != VACCEL_ENOENT) {
+		noop_error("Failed to get model\n");
+		return ret;
+	}
+
 	noop_debug("Dumping arguments for Image depth:");
+	noop_debug("model: %s", (model) ? model->files[0]->path : NULL);
 	noop_debug("len_img: %zu", len_img);
 	if (len_out_imgname)
 		noop_debug("len_out_imgname: %zu", len_out_imgname);
@@ -723,11 +768,11 @@ static int noop_opencv(struct vaccel_session *sess, struct vaccel_arg *read,
 struct vaccel_op ops[] = {
 	VACCEL_OP_INIT(ops[0], VACCEL_OP_NOOP, noop_noop),
 	VACCEL_OP_INIT(ops[1], VACCEL_OP_BLAS_SGEMM, noop_sgemm),
-	VACCEL_OP_INIT(ops[2], VACCEL_OP_IMAGE_CLASSIFY, noop_img_class),
-	VACCEL_OP_INIT(ops[3], VACCEL_OP_IMAGE_DETECT, noop_img_detect),
-	VACCEL_OP_INIT(ops[4], VACCEL_OP_IMAGE_SEGMENT, noop_img_segme),
-	VACCEL_OP_INIT(ops[5], VACCEL_OP_IMAGE_POSE, noop_img_pose),
-	VACCEL_OP_INIT(ops[6], VACCEL_OP_IMAGE_DEPTH, noop_img_depth),
+	VACCEL_OP_INIT(ops[2], VACCEL_OP_IMAGE_CLASSIFY, noop_image_classify),
+	VACCEL_OP_INIT(ops[3], VACCEL_OP_IMAGE_DETECT, noop_image_detect),
+	VACCEL_OP_INIT(ops[4], VACCEL_OP_IMAGE_SEGMENT, noop_image_segment),
+	VACCEL_OP_INIT(ops[5], VACCEL_OP_IMAGE_POSE, noop_image_pose),
+	VACCEL_OP_INIT(ops[6], VACCEL_OP_IMAGE_DEPTH, noop_image_depth),
 	VACCEL_OP_INIT(ops[7], VACCEL_OP_EXEC, noop_exec),
 	VACCEL_OP_INIT(ops[8], VACCEL_OP_TF_SESSION_LOAD, noop_tf_session_load),
 	VACCEL_OP_INIT(ops[9], VACCEL_OP_TF_SESSION_RUN, noop_tf_session_run),
