@@ -8,7 +8,7 @@
 #include <string.h>
 #include <time.h>
 
-struct vaccel_prof_region mbench_plugin_stats =
+static struct vaccel_prof_region mbench_plugin_stats =
 	VACCEL_PROF_REGION_INIT("vaccel_mbench_plugin");
 
 #define MAX_TIME 300000
@@ -79,6 +79,7 @@ static int init(void)
 static int fini(void)
 {
 	vaccel_prof_region_print(&mbench_plugin_stats);
+	vaccel_prof_region_release(&mbench_plugin_stats);
 
 	return VACCEL_OK;
 }

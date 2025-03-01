@@ -338,7 +338,7 @@ int vaccel_tf_status_delete(struct vaccel_tf_status *status)
 	return VACCEL_OK;
 }
 
-struct vaccel_prof_region tf_load_stats =
+static struct vaccel_prof_region tf_session_load_op_stats =
 	VACCEL_PROF_REGION_INIT("vaccel_tf_session_load");
 
 typedef int (*tf_session_load_fn_t)(struct vaccel_session *sess,
@@ -374,7 +374,7 @@ int vaccel_tf_session_load(struct vaccel_session *sess,
 		return VACCEL_EPERM;
 	}
 
-	vaccel_prof_region_start(&tf_load_stats);
+	vaccel_prof_region_start(&tf_session_load_op_stats);
 
 	tf_session_load_fn_t plugin_tf_session_load =
 		plugin_get_op_func(VACCEL_OP_TF_SESSION_LOAD, sess->hint);
@@ -386,11 +386,12 @@ int vaccel_tf_session_load(struct vaccel_session *sess,
 	ret = plugin_tf_session_load(sess, model, status);
 
 out:
-	vaccel_prof_region_stop(&tf_load_stats);
+	vaccel_prof_region_stop(&tf_session_load_op_stats);
+
 	return ret;
 }
 
-struct vaccel_prof_region tf_session_run_stats =
+static struct vaccel_prof_region tf_session_run_op_stats =
 	VACCEL_PROF_REGION_INIT("vaccel_tf_session_run");
 
 typedef int (*tf_session_run_fn_t)(
@@ -433,7 +434,7 @@ int vaccel_tf_session_run(struct vaccel_session *sess,
 		return VACCEL_EPERM;
 	}
 
-	vaccel_prof_region_start(&tf_session_run_stats);
+	vaccel_prof_region_start(&tf_session_run_op_stats);
 
 	tf_session_run_fn_t plugin_tf_session_run =
 		plugin_get_op_func(VACCEL_OP_TF_SESSION_RUN, sess->hint);
@@ -447,11 +448,12 @@ int vaccel_tf_session_run(struct vaccel_session *sess,
 				    status);
 
 out:
-	vaccel_prof_region_stop(&tf_session_run_stats);
+	vaccel_prof_region_stop(&tf_session_run_op_stats);
+
 	return ret;
 }
 
-struct vaccel_prof_region tf_session_delete_stats =
+static struct vaccel_prof_region tf_session_delete_op_stats =
 	VACCEL_PROF_REGION_INIT("vaccel_tf_session_delete");
 
 typedef int (*tf_session_delete_fn_t)(struct vaccel_session *sess,
@@ -485,6 +487,8 @@ int vaccel_tf_session_delete(struct vaccel_session *sess,
 		return VACCEL_EPERM;
 	}
 
+	vaccel_prof_region_start(&tf_session_delete_op_stats);
+
 	tf_session_delete_fn_t plugin_tf_session_delete =
 		plugin_get_op_func(VACCEL_OP_TF_SESSION_DELETE, sess->hint);
 	if (!plugin_tf_session_delete) {
@@ -495,7 +499,8 @@ int vaccel_tf_session_delete(struct vaccel_session *sess,
 	ret = plugin_tf_session_delete(sess, model, status);
 
 out:
-	vaccel_prof_region_stop(&tf_session_delete_stats);
+	vaccel_prof_region_stop(&tf_session_delete_op_stats);
+
 	return ret;
 }
 
@@ -505,7 +510,12 @@ __attribute__((constructor)) static void vaccel_tf_ops_init(void)
 
 __attribute__((destructor)) static void vaccel_tf_ops_fini(void)
 {
-	vaccel_prof_region_print(&tf_load_stats);
-	vaccel_prof_region_print(&tf_session_run_stats);
-	vaccel_prof_region_print(&tf_session_delete_stats);
+	vaccel_prof_region_print(&tf_session_load_op_stats);
+	vaccel_prof_region_release(&tf_session_load_op_stats);
+
+	vaccel_prof_region_print(&tf_session_run_op_stats);
+	vaccel_prof_region_release(&tf_session_run_op_stats);
+
+	vaccel_prof_region_print(&tf_session_delete_op_stats);
+	vaccel_prof_region_release(&tf_session_delete_op_stats);
 }
