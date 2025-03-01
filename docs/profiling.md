@@ -50,14 +50,17 @@ To simplify handling of multiple profiling regions, ie. when converting from
 non-vAccel profiling data types, vAccel provides functions for batch
 operations.
 
+**Initialize Array of Regions**: `vaccel_prof_regions_init()` initializes an
+array of regions.
+
+**Release Regions' Array Data**: `vaccel_prof_regions_release()` releases collected
+data from a region array.
+
 **Start by Name**: `vaccel_prof_regions_start_by_name()` starts data collection
 for a region, from an array of regions, with the specified name.
 
 **Stop by Name**: `vaccel_prof_regions_stop_by_name()` stops data collection
 for a region, from an array of regions, accordingly.
-
-**Clear Regions**: `vaccel_prof_regions_clear()` clears collected data from a
-region array.
 
 **Print All**: `vaccel_prof_regions_print_all()` prints profiling data for all
 regions in the array.
@@ -331,5 +334,8 @@ void my_operation(struct vaccel_session *session)
     my_timers_func(session->remote_id, timers, nr_timers);
 
     vaccel_prof_regions_print_all(timers, nr_timers);
+
+    vaccel_prof_regions_release(timers, nr_timers);
+    free(timers);
 }
 ```
