@@ -6,9 +6,13 @@
 #include "log.h"
 #include "op.h"
 #include "plugin.h"
+#include "prof.h"
 #include "session.h"
 #include <inttypes.h>
 #include <stdint.h>
+
+static struct vaccel_prof_region minmax_op_stats =
+	VACCEL_PROF_REGION_INIT("vaccel_minmax_op");
 
 typedef int (*minmax_fn_t)(struct vaccel_session *sess, const double *indata,
 			   int ndata, int low_threshold, int high_threshold,
@@ -18,19 +22,30 @@ int vaccel_minmax(struct vaccel_session *sess, const double *indata, int ndata,
 		  int low_threshold, int high_threshold, double *outdata,
 		  double *min, double *max)
 {
+	int ret;
+
 	if (!sess)
 		return VACCEL_EINVAL;
 
 	vaccel_debug("session:%" PRId64 " Looking for plugin implementing %s",
 		     sess->id, vaccel_op_type_to_str(VACCEL_OP_MINMAX));
 
+	vaccel_prof_region_start(&minmax_op_stats);
+
 	minmax_fn_t plugin_minmax =
 		plugin_get_op_func(VACCEL_OP_MINMAX, sess->hint);
-	if (!plugin_minmax)
-		return VACCEL_ENOTSUP;
+	if (!plugin_minmax) {
+		ret = VACCEL_ENOTSUP;
+		goto out;
+	}
 
-	return plugin_minmax(sess, indata, ndata, low_threshold, high_threshold,
-			     outdata, min, max);
+	ret = plugin_minmax(sess, indata, ndata, low_threshold, high_threshold,
+			    outdata, min, max);
+
+out:
+	vaccel_prof_region_stop(&minmax_op_stats);
+
+	return ret;
 }
 
 int vaccel_minmax_unpack(struct vaccel_session *sess, struct vaccel_arg *read,
@@ -61,4 +76,14 @@ int vaccel_minmax_unpack(struct vaccel_session *sess, struct vaccel_arg *read,
 
 	return vaccel_minmax(sess, indata, ndata, low_threshold, high_threshold,
 			     outdata, min, max);
+}
+
+__attribute__((constructor)) static void vaccel_ops_init(void)
+{
+}
+
+__attribute__((destructor)) static void vaccel_ops_fini(void)
+{
+	vaccel_prof_region_print(&minmax_op_stats);
+	vaccel_prof_region_release(&minmax_op_stats);
 }

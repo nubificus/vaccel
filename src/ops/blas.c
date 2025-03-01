@@ -11,7 +11,7 @@
 #include <inttypes.h>
 #include <stdint.h>
 
-struct vaccel_prof_region blas_op_stats =
+static struct vaccel_prof_region blas_op_stats =
 	VACCEL_PROF_REGION_INIT("vaccel_blas_op");
 
 typedef int (*sgemm_fn_t)(struct vaccel_session *sess, long long int m,
@@ -38,11 +38,14 @@ int vaccel_sgemm(struct vaccel_session *sess, long long int m, long long int n,
 
 	sgemm_fn_t plugin_sgemm =
 		plugin_get_op_func(VACCEL_OP_BLAS_SGEMM, sess->hint);
-	if (!plugin_sgemm)
-		return VACCEL_ENOTSUP;
+	if (!plugin_sgemm) {
+		ret = VACCEL_ENOTSUP;
+		goto out;
+	}
 
 	ret = plugin_sgemm(sess, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc);
 
+out:
 	vaccel_prof_region_stop(&blas_op_stats);
 
 	return ret;
@@ -86,4 +89,5 @@ __attribute__((constructor)) static void vaccel_ops_init(void)
 __attribute__((destructor)) static void vaccel_ops_fini(void)
 {
 	vaccel_prof_region_print(&blas_op_stats);
+	vaccel_prof_region_release(&blas_op_stats);
 }

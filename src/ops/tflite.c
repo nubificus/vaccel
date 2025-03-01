@@ -150,7 +150,7 @@ int vaccel_tflite_tensor_take_data(struct vaccel_tflite_tensor *tensor,
 	return VACCEL_OK;
 }
 
-struct vaccel_prof_region tflite_load_stats =
+static struct vaccel_prof_region tflite_session_load_op_stats =
 	VACCEL_PROF_REGION_INIT("vaccel_tflite_session_load");
 
 typedef int (*tflite_session_load_fn_t)(struct vaccel_session *sess,
@@ -184,7 +184,7 @@ int vaccel_tflite_session_load(struct vaccel_session *sess,
 		return VACCEL_EPERM;
 	}
 
-	vaccel_prof_region_start(&tflite_load_stats);
+	vaccel_prof_region_start(&tflite_session_load_op_stats);
 
 	tflite_session_load_fn_t plugin_tflite_session_load =
 		plugin_get_op_func(VACCEL_OP_TFLITE_SESSION_LOAD, sess->hint);
@@ -196,11 +196,12 @@ int vaccel_tflite_session_load(struct vaccel_session *sess,
 	ret = plugin_tflite_session_load(sess, model);
 
 out:
-	vaccel_prof_region_stop(&tflite_load_stats);
+	vaccel_prof_region_stop(&tflite_session_load_op_stats);
+
 	return ret;
 }
 
-struct vaccel_prof_region tflite_session_run_stats =
+static struct vaccel_prof_region tflite_session_run_op_stats =
 	VACCEL_PROF_REGION_INIT("vaccel_tflite_session_run");
 
 typedef int (*tflite_session_run_fn_t)(struct vaccel_session *sess,
@@ -241,7 +242,7 @@ int vaccel_tflite_session_run(struct vaccel_session *sess,
 		return VACCEL_EPERM;
 	}
 
-	vaccel_prof_region_start(&tflite_session_run_stats);
+	vaccel_prof_region_start(&tflite_session_run_op_stats);
 
 	tflite_session_run_fn_t plugin_tflite_session =
 		plugin_get_op_func(VACCEL_OP_TFLITE_SESSION_RUN, sess->hint);
@@ -254,11 +255,12 @@ int vaccel_tflite_session_run(struct vaccel_session *sess,
 				    status);
 
 out:
-	vaccel_prof_region_stop(&tflite_session_run_stats);
+	vaccel_prof_region_stop(&tflite_session_run_op_stats);
+
 	return ret;
 }
 
-struct vaccel_prof_region tflite_session_delete_stats =
+static struct vaccel_prof_region tflite_session_delete_op_stats =
 	VACCEL_PROF_REGION_INIT("vaccel_tflite_session_delete");
 
 typedef int (*tflite_session_delete_fn_t)(struct vaccel_session *sess,
@@ -292,6 +294,8 @@ int vaccel_tflite_session_delete(struct vaccel_session *sess,
 		return VACCEL_EPERM;
 	}
 
+	vaccel_prof_region_start(&tflite_session_delete_op_stats);
+
 	tflite_session_delete_fn_t plugin_tflite_session_delete =
 		plugin_get_op_func(VACCEL_OP_TFLITE_SESSION_DELETE, sess->hint);
 	if (!plugin_tflite_session_delete) {
@@ -302,7 +306,8 @@ int vaccel_tflite_session_delete(struct vaccel_session *sess,
 	ret = plugin_tflite_session_delete(sess, model);
 
 out:
-	vaccel_prof_region_stop(&tflite_session_delete_stats);
+	vaccel_prof_region_stop(&tflite_session_delete_op_stats);
+
 	return ret;
 }
 
@@ -312,7 +317,12 @@ __attribute__((constructor)) static void vaccel_tflite_ops_init(void)
 
 __attribute__((destructor)) static void vaccel_tflite_ops_fini(void)
 {
-	vaccel_prof_region_print(&tflite_load_stats);
-	vaccel_prof_region_print(&tflite_session_run_stats);
-	vaccel_prof_region_print(&tflite_session_delete_stats);
+	vaccel_prof_region_print(&tflite_session_load_op_stats);
+	vaccel_prof_region_release(&tflite_session_load_op_stats);
+
+	vaccel_prof_region_print(&tflite_session_run_op_stats);
+	vaccel_prof_region_release(&tflite_session_run_op_stats);
+
+	vaccel_prof_region_print(&tflite_session_delete_op_stats);
+	vaccel_prof_region_release(&tflite_session_delete_op_stats);
 }
