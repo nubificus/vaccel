@@ -13,7 +13,7 @@
 #include <inttypes.h>
 #include <stdint.h>
 
-struct vaccel_prof_region exec_op_stats =
+static struct vaccel_prof_region exec_op_stats =
 	VACCEL_PROF_REGION_INIT("vaccel_exec_op");
 
 typedef int (*exec_fn_t)(struct vaccel_session *sess, const char *library,
@@ -36,18 +36,21 @@ int vaccel_exec(struct vaccel_session *sess, const char *library,
 	vaccel_prof_region_start(&exec_op_stats);
 
 	exec_fn_t plugin_exec = plugin_get_op_func(VACCEL_OP_EXEC, sess->hint);
-	if (!plugin_exec)
-		return VACCEL_ENOTSUP;
+	if (!plugin_exec) {
+		ret = VACCEL_ENOTSUP;
+		goto out;
+	}
 
 	ret = plugin_exec(sess, library, fn_symbol, read, nr_read, write,
 			  nr_write);
 
+out:
 	vaccel_prof_region_stop(&exec_op_stats);
 
 	return ret;
 }
 
-struct vaccel_prof_region exec_res_op_stats =
+static struct vaccel_prof_region exec_res_op_stats =
 	VACCEL_PROF_REGION_INIT("vaccel_exec_with_resource_op");
 
 typedef int (*exec_with_resource_fn_t)(struct vaccel_session *sess,
@@ -89,13 +92,16 @@ int vaccel_exec_with_resource(struct vaccel_session *sess,
 
 	exec_with_resource_fn_t plugin_exec_with_resource =
 		plugin_get_op_func(VACCEL_OP_EXEC_WITH_RESOURCE, sess->hint);
-	if (!plugin_exec_with_resource)
-		return VACCEL_ENOTSUP;
+	if (!plugin_exec_with_resource) {
+		ret = VACCEL_ENOTSUP;
+		goto out;
+	}
 
 	ret = plugin_exec_with_resource(sess, resource, fn_symbol, read,
 					nr_read, write, nr_write);
 
-	vaccel_prof_region_stop(&exec_op_stats);
+out:
+	vaccel_prof_region_stop(&exec_res_op_stats);
 
 	return ret;
 }
@@ -152,5 +158,8 @@ __attribute__((constructor)) static void vaccel_ops_init(void)
 __attribute__((destructor)) static void vaccel_ops_fini(void)
 {
 	vaccel_prof_region_print(&exec_op_stats);
+	vaccel_prof_region_release(&exec_op_stats);
+
 	vaccel_prof_region_print(&exec_res_op_stats);
+	vaccel_prof_region_release(&exec_res_op_stats);
 }
