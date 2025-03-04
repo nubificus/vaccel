@@ -11,54 +11,59 @@
 int main(int argc, char *argv[])
 {
 	int ret;
-	int iter = 1;
 	char *file;
 	size_t file_size;
 	struct vaccel_session sess;
-	struct vaccel_arg args[2];
+	struct vaccel_prof_region mbench_stats =
+		VACCEL_PROF_REGION_INIT("mbench");
 
-	if (argc < 3) {
-		fprintf(stderr, "Usage: %s <time (ms)> <file> [<iterations>]\n",
+	if (argc < 3 || argc > 4) {
+		fprintf(stderr, "Usage: %s <time_ms> <lib_file> [iterations]\n",
 			argv[0]);
-		return 0;
+		return VACCEL_EINVAL;
 	}
-	if (argc == 4)
-		iter = atoi(argv[3]);
 
 	ret = vaccel_session_init(&sess, 0);
-	if (ret != VACCEL_OK) {
+	if (ret) {
 		fprintf(stderr, "Could not initialize session\n");
-		return 1;
+		return ret;
 	}
 
 	printf("Initialized session with id: %" PRId64 "\n", sess.id);
 
 	ret = fs_file_read(argv[2], (void **)&file, &file_size);
 	if (ret)
-		goto close_session;
+		goto release_session;
 
-	char lib[8] = "mbench";
-	char func[8] = "mbench";
-	memset(args, 0, sizeof(args));
-	args[0].size = sizeof(int);
-	args[0].buf = argv[1];
-	args[1].size = file_size;
-	args[1].buf = file;
+	struct vaccel_arg read[] = {
+		{ .size = sizeof(int), .buf = argv[1] },
+		{ .size = file_size, .buf = file },
+	};
 
-	for (int i = 0; i < iter; ++i) {
-		ret = vaccel_exec(&sess, lib, func, &args[0], 2, NULL, 0);
+	const int iter = (argc > 3) ? atoi(argv[3]) : 1;
+	for (int i = 0; i < iter; i++) {
+		vaccel_prof_region_start(&mbench_stats);
+
+		ret = vaccel_exec(&sess, "mbench", "mbench", read,
+				  sizeof(read) / sizeof(read[0]), NULL, 0);
+
+		vaccel_prof_region_stop(&mbench_stats);
+
 		if (ret) {
 			fprintf(stderr, "Could not run op: %d\n", ret);
-			goto close_session;
+			goto release_session;
 		}
 	}
 
-close_session:
+release_session:
 	free(file);
-	if (vaccel_session_release(&sess) != VACCEL_OK) {
-		fprintf(stderr, "Could not clear session\n");
+	if (vaccel_session_release(&sess)) {
+		fprintf(stderr, "Could not release session\n");
 		return 1;
 	}
+
+	vaccel_prof_region_print(&mbench_stats);
+	vaccel_prof_region_release(&mbench_stats);
 
 	return ret;
 }
