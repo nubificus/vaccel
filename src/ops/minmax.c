@@ -68,8 +68,6 @@ int vaccel_minmax_unpack(struct vaccel_session *sess, struct vaccel_arg *read,
 	int low_threshold = *(int *)read[2].buf;
 	int high_threshold = *(int *)read[3].buf;
 
-	vaccel_info("number of data: %d\n", *(int *)read[1].buf);
-	vaccel_info("number of data: %d\n", ndata);
 	double *outdata = (double *)write[0].buf;
 	double *min = (double *)write[1].buf;
 	double *max = (double *)write[2].buf;

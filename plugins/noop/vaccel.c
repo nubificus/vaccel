@@ -41,8 +41,8 @@ int noop_minmax(struct vaccel_session *sess, const double *indata, int ndata,
 		int low_threshold, int high_threshold, double *outdata,
 		double *min, double *max)
 {
-	double tmp_max = 10000.0;
-	double tmp_min = -1.0;
+	const double tmp_max = 10000.0;
+	const double tmp_min = -1.0;
 
 	if (!sess)
 		return VACCEL_EINVAL;
@@ -52,7 +52,7 @@ int noop_minmax(struct vaccel_session *sess, const double *indata, int ndata,
 	noop_debug("Dumping arguments for minmax: ndata:%d", ndata);
 	noop_debug("low: %d high: %d ", low_threshold, high_threshold);
 
-	noop_debug("will return dummy min and max values\n");
+	noop_debug("will return dummy min and max values");
 	memcpy(outdata, indata, ndata * sizeof(double));
 	*max = tmp_max;
 	*min = tmp_min;
@@ -66,7 +66,7 @@ static int noop_image_classify(struct vaccel_session *sess, const void *img,
 			       size_t len_out_text, size_t len_out_imgname)
 {
 	if (!sess || !img) {
-		noop_error("Invalid input arguments\n");
+		noop_error("Invalid input arguments");
 		return VACCEL_EINVAL;
 	}
 	int ret;
@@ -78,7 +78,7 @@ static int noop_image_classify(struct vaccel_session *sess, const void *img,
 	ret = vaccel_session_resource_by_type(sess, &model,
 					      VACCEL_RESOURCE_MODEL);
 	if (ret && ret != VACCEL_ENOENT) {
-		noop_error("Failed to get model\n");
+		noop_error("Failed to get model");
 		return ret;
 	}
 
@@ -111,7 +111,7 @@ static int noop_image_detect(struct vaccel_session *sess, const void *img,
 			     size_t len_out_imgname)
 {
 	if (!sess || !img) {
-		noop_error("Invalid input arguments\n");
+		noop_error("Invalid input arguments");
 		return VACCEL_EINVAL;
 	}
 	int ret;
@@ -122,7 +122,7 @@ static int noop_image_detect(struct vaccel_session *sess, const void *img,
 	ret = vaccel_session_resource_by_type(sess, &model,
 					      VACCEL_RESOURCE_MODEL);
 	if (ret && ret != VACCEL_ENOENT) {
-		noop_error("Failed to get model\n");
+		noop_error("Failed to get model");
 		return ret;
 	}
 
@@ -147,7 +147,7 @@ static int noop_image_segment(struct vaccel_session *sess, const void *img,
 			      size_t len_out_imgname)
 {
 	if (!sess || !img) {
-		noop_error("Invalid input arguments\n");
+		noop_error("Invalid input arguments");
 		return VACCEL_EINVAL;
 	}
 	int ret;
@@ -159,7 +159,7 @@ static int noop_image_segment(struct vaccel_session *sess, const void *img,
 	ret = vaccel_session_resource_by_type(sess, &model,
 					      VACCEL_RESOURCE_MODEL);
 	if (ret && ret != VACCEL_ENOENT) {
-		noop_error("Failed to get model\n");
+		noop_error("Failed to get model");
 		return ret;
 	}
 
@@ -184,7 +184,7 @@ static int noop_image_pose(struct vaccel_session *sess, const void *img,
 			   size_t len_out_imgname)
 {
 	if (!sess || !img) {
-		noop_error("Invalid input arguments\n");
+		noop_error("Invalid input arguments");
 		return VACCEL_EINVAL;
 	}
 	int ret;
@@ -195,7 +195,7 @@ static int noop_image_pose(struct vaccel_session *sess, const void *img,
 	ret = vaccel_session_resource_by_type(sess, &model,
 					      VACCEL_RESOURCE_MODEL);
 	if (ret && ret != VACCEL_ENOENT) {
-		noop_error("Failed to get model\n");
+		noop_error("Failed to get model");
 		return ret;
 	}
 
@@ -220,7 +220,7 @@ static int noop_image_depth(struct vaccel_session *sess, const void *img,
 			    size_t len_out_imgname)
 {
 	if (!sess || !img) {
-		noop_error("Invalid input arguments\n");
+		noop_error("Invalid input arguments");
 		return VACCEL_EINVAL;
 	}
 	int ret;
@@ -231,7 +231,7 @@ static int noop_image_depth(struct vaccel_session *sess, const void *img,
 	ret = vaccel_session_resource_by_type(sess, &model,
 					      VACCEL_RESOURCE_MODEL);
 	if (ret && ret != VACCEL_ENOENT) {
-		noop_error("Failed to get model\n");
+		noop_error("Failed to get model");
 		return ret;
 	}
 
@@ -254,12 +254,12 @@ static int noop_image_depth(struct vaccel_session *sess, const void *img,
 static void exec_gen_dummy_output(struct vaccel_arg *read,
 				  struct vaccel_arg *write)
 {
-	int nr_output = write[0].size / sizeof(int);
+	size_t nr_output = write[0].size / sizeof(int);
 	if (nr_output >= 1) {
-		noop_debug("will return dummy output = input\n");
+		noop_debug("will return dummy output = input");
 		int *input = (int *)read[0].buf;
 		int *output = (int *)write[0].buf;
-		for (int j = 0; j < nr_output; j++) {
+		for (size_t j = 0; j < nr_output; j++) {
 			output[j] = input[j];
 		}
 	}
@@ -270,7 +270,7 @@ static int noop_exec(struct vaccel_session *sess, const char *library,
 		     size_t nr_read, struct vaccel_arg *write, size_t nr_write)
 {
 	if (!sess || !library || !fn_symbol) {
-		noop_error("Invalid input arguments\n");
+		noop_error("Invalid input arguments");
 		return VACCEL_EINVAL;
 	}
 
@@ -294,12 +294,12 @@ static int noop_exec_with_resource(struct vaccel_session *sess,
 				   struct vaccel_arg *write, size_t nr_write)
 {
 	if (!sess) {
-		noop_error("Invalid session\n");
+		noop_error("Invalid session");
 		return VACCEL_EINVAL;
 	}
 
 	if (!object) {
-		noop_error("Invalid shared object\n");
+		noop_error("Invalid shared object");
 		return VACCEL_EINVAL;
 	}
 
@@ -334,19 +334,21 @@ static int noop_exec_with_resource(struct vaccel_session *sess,
 	return VACCEL_OK;
 }
 
-static int noop_tf_session_load(struct vaccel_session *session,
+static int noop_tf_session_load(struct vaccel_session *sess,
 				struct vaccel_resource *model,
 				struct vaccel_tf_status *status)
 {
-	if (!session) {
-		noop_error("Invalid session\n");
+	if (!sess) {
+		noop_error("Invalid session");
 		return VACCEL_EINVAL;
 	}
 
 	if (!model) {
-		noop_error("Invalid TensorFlow model\n");
+		noop_error("Invalid TensorFlow model");
 		return VACCEL_EINVAL;
 	}
+
+	noop_debug("Calling tf_session_load for session %" PRId64 "", sess->id);
 
 	if (status) {
 		status->message = strdup("Operation handled by noop plugin");
@@ -357,7 +359,7 @@ static int noop_tf_session_load(struct vaccel_session *session,
 	return VACCEL_OK;
 }
 
-static int noop_tf_session_run(struct vaccel_session *session,
+static int noop_tf_session_run(struct vaccel_session *sess,
 			       const struct vaccel_resource *model,
 			       const struct vaccel_tf_buffer *run_options,
 			       const struct vaccel_tf_node *in_nodes,
@@ -367,15 +369,17 @@ static int noop_tf_session_run(struct vaccel_session *session,
 			       struct vaccel_tf_tensor **out, int nr_outputs,
 			       struct vaccel_tf_status *status)
 {
-	if (!session) {
-		noop_error("Invalid session\n");
+	if (!sess) {
+		noop_error("Invalid session");
 		return VACCEL_EINVAL;
 	}
 
 	if (!model) {
-		noop_error("Invalid TensorFlow model\n");
+		noop_error("Invalid TensorFlow model");
 		return VACCEL_EINVAL;
 	}
+
+	noop_debug("Calling tf_session_run for session %" PRId64 "", sess->id);
 
 	if (run_options)
 		noop_debug("Run options -> %p, %zu", run_options->data,
@@ -441,19 +445,22 @@ free_tf:
 	return VACCEL_ENOMEM;
 }
 
-static int noop_tf_session_delete(struct vaccel_session *session,
+static int noop_tf_session_delete(struct vaccel_session *sess,
 				  const struct vaccel_resource *model,
 				  struct vaccel_tf_status *status)
 {
-	if (!session) {
-		noop_error("Invalid session\n");
+	if (!sess) {
+		noop_error("Invalid session");
 		return VACCEL_EINVAL;
 	}
 
 	if (!model) {
-		noop_error("Invalid TensorFlow model\n");
+		noop_error("Invalid TensorFlow model");
 		return VACCEL_EINVAL;
 	}
+
+	noop_debug("Calling tf_session_delete for session %" PRId64 "",
+		   sess->id);
 
 	if (status) {
 		status->message = strdup("Operation handled by noop plugin");
@@ -464,38 +471,44 @@ static int noop_tf_session_delete(struct vaccel_session *session,
 	return VACCEL_OK;
 }
 
-static int noop_tflite_session_load(struct vaccel_session *session,
+static int noop_tflite_session_load(struct vaccel_session *sess,
 				    struct vaccel_resource *model)
 {
-	if (!session) {
-		noop_error("Invalid session\n");
+	if (!sess) {
+		noop_error("Invalid session");
 		return VACCEL_EINVAL;
 	}
 
 	if (!model) {
-		noop_error("Invalid model\n");
+		noop_error("Invalid model");
 		return VACCEL_EINVAL;
 	}
+
+	noop_debug("Calling tflite_session_load for session %" PRId64 "",
+		   sess->id);
 
 	return VACCEL_OK;
 }
 
-static int noop_tflite_session_run(struct vaccel_session *session,
+static int noop_tflite_session_run(struct vaccel_session *sess,
 				   const struct vaccel_resource *model,
 				   struct vaccel_tflite_tensor *const *in,
 				   int nr_inputs,
 				   struct vaccel_tflite_tensor **out,
 				   int nr_outputs, uint8_t *status)
 {
-	if (!session) {
-		noop_error("Invalid session\n");
+	if (!sess) {
+		noop_error("Invalid session");
 		return VACCEL_EINVAL;
 	}
 
 	if (!model) {
-		noop_error("Invalid model\n");
+		noop_error("Invalid model");
 		return VACCEL_EINVAL;
 	}
+
+	noop_debug("Calling tflite_session_run for session %" PRId64 "",
+		   sess->id);
 
 	noop_debug("Number of inputs: %d", nr_inputs);
 	for (int i = 0; i < nr_inputs; ++i) {
@@ -549,44 +562,83 @@ free_tflite:
 	return VACCEL_ENOMEM;
 }
 
-static int noop_tflite_session_delete(struct vaccel_session *session,
+static int noop_tflite_session_delete(struct vaccel_session *sess,
 				      const struct vaccel_resource *model)
 {
-	if (!session) {
-		noop_error("Invalid session\n");
+	if (!sess) {
+		noop_error("Invalid session");
 		return VACCEL_EINVAL;
 	}
 
 	if (!model) {
-		noop_error("Invalid model\n");
+		noop_error("Invalid model");
 		return VACCEL_EINVAL;
 	}
 
+	noop_debug("Calling tflite_session_delete for session %" PRId64 "",
+		   sess->id);
+
 	return VACCEL_OK;
 }
 
-static int v_arraycopy(struct vaccel_session *session, const int *a, int *b,
-		       size_t c)
+int noop_fpga_arraycopy(struct vaccel_session *sess, int a[], int out_a[],
+			size_t len_a)
 {
-	noop_debug("Calling v_arraycopy for session %" PRId64 "", session->id);
+	noop_debug("Calling fpga_arraycopy for session %" PRId64 "", sess->id);
 
-	noop_debug("Dumping arguments for v_arracycopy:");
-	noop_debug("size: %zu ", c);
+	noop_debug("Dumping arguments for fpga_arraycopy:");
+	noop_debug("len_a: %zu ", len_a);
 
 	/* Fill output with dummy values */
-	for (size_t i = 0; i < c; i++) {
-		b[i] = a[i];
+	for (size_t i = 0; i < len_a; i++) {
+		out_a[i] = a[i];
 	}
 
 	return VACCEL_OK;
 }
 
-static int v_vectoradd(struct vaccel_session *session, const float *a,
-		       const float *b, float *c, size_t len_a, size_t len_b)
+int noop_fpga_mmult(struct vaccel_session *sess, float a[], float b[],
+		    float c[], size_t len_a)
 {
-	noop_debug("Calling v_vectoradd for session %" PRId64 "", session->id);
+	noop_debug("Calling fpga_mmult for session %" PRId64 "", sess->id);
 
-	noop_debug("Dumping arguments for v_vectoradd:");
+	noop_debug("Dumping arguments for fpga_mmult:");
+	noop_debug("len_a: %zu", len_a);
+
+	/* Fill output with dummy values */
+	const float dummy_val = 9.1F;
+	for (size_t i = 0; i < len_a; i++) {
+		c[i] = dummy_val;
+	}
+
+	return VACCEL_OK;
+}
+
+int noop_fpga_parallel(struct vaccel_session *sess, float a[], float b[],
+		       float add_output[], float mult_output[], size_t len_a)
+{
+	noop_debug("Calling fpga_parallel for session %" PRId64 "", sess->id);
+
+	noop_debug("Dumping arguments for fpga_parallel:");
+	noop_debug("len_a: %zu", len_a);
+
+	/* Fill output with dummy values */
+	for (size_t i = 0; i < len_a; i++) {
+		add_output[i] = a[i] + b[i];
+		mult_output[i] = 1;
+	}
+
+	return VACCEL_OK;
+}
+
+int noop_fpga_vadd(struct vaccel_session *sess, float a[], float b[], float c[],
+		   size_t len_a, size_t len_b)
+{
+	(void)len_b;
+
+	noop_debug("Calling fpga_vadd for session %" PRId64 "", sess->id);
+
+	noop_debug("Dumping arguments for fpga_vadd:");
 	noop_debug("len_a: %zu len_b: %zu ", len_a, len_b);
 
 	/* Fill output with dummy values */
@@ -597,60 +649,26 @@ static int v_vectoradd(struct vaccel_session *session, const float *a,
 	return VACCEL_OK;
 }
 
-static int v_parallel(struct vaccel_session *session, const float *a,
-		      const float *b, float *add_out, float *mult_out,
-		      size_t len_a)
-{
-	noop_debug("Calling v_parallel for session %" PRId64 "", session->id);
-
-	noop_debug("Dumping arguments for v_parallel:");
-	noop_debug("len_a: %zu", len_a);
-
-	/* Fill output with dummy values */
-	for (size_t i = 0; i < len_a; i++) {
-		add_out[i] = a[i] + b[i];
-		mult_out[i] = 1;
-	}
-
-	return VACCEL_OK;
-}
-
-static int v_mmult(struct vaccel_session *session, float *a, float *b,
-		   float *c_out, size_t len_a)
-{
-	noop_debug("Calling v_mmult for session %" PRId64 "", session->id);
-
-	noop_debug("Dumping arguments for v_mmult:");
-	noop_debug("len_a: %zu", len_a);
-
-	/* Fill output with dummy values */
-	for (size_t i = 0; i < len_a; i++) {
-		c_out[i] = 9.1;
-	}
-
-	return VACCEL_OK;
-}
-
 static int noop_torch_jitload_forward(
-	struct vaccel_session *session, const struct vaccel_resource *model,
+	struct vaccel_session *sess, const struct vaccel_resource *model,
 	const struct vaccel_torch_buffer *run_options,
 	struct vaccel_torch_tensor **in_tensor, int nr_read,
 	struct vaccel_torch_tensor **out_tensor, int nr_write)
 {
 	(void)run_options;
 
-	if (!session) {
-		noop_error("Invalid session \n");
+	if (!sess) {
+		noop_error("Invalid session");
 		return VACCEL_EINVAL;
 	}
 
 	if (!model) {
-		noop_error("Invalid model path \n");
+		noop_error("Invalid model path");
 		return VACCEL_EINVAL;
 	}
 
-	noop_debug("Calling jitload_forward for session %" PRId64 "",
-		   session->id);
+	noop_debug("Calling torch_jitload_forward for session %" PRId64 "",
+		   sess->id);
 
 	noop_debug("Number of inputs: %d", nr_read);
 	for (int i = 0; i < nr_read; ++i) {
@@ -665,23 +683,17 @@ static int noop_torch_jitload_forward(
 	}
 
 	noop_debug("Number of outputs: %d", nr_write);
-	int *malloced = NULL;
-	if (nr_write > 0) {
-		malloced = calloc(nr_write, sizeof(*malloced));
-		if (!malloced)
-			return VACCEL_ENOMEM;
+	for (int i = 0; i < nr_write; ++i) {
+		out_tensor[i] = NULL;
 	}
 	for (int i = 0; i < nr_write; ++i) {
-		if (!out_tensor[i]) {
-			out_tensor[i] = malloc(sizeof(*out_tensor[i]));
-			if (!out_tensor[i])
-				goto free_torch;
-			malloced[i] = 1;
-		}
+		out_tensor[i] = malloc(sizeof(*out_tensor[i]));
+		if (!out_tensor[i])
+			goto free_torch;
 		out_tensor[i]->nr_dims = in_tensor[i]->nr_dims;
 		out_tensor[i]->data_type = in_tensor[i]->data_type;
-		out_tensor[i]->size = in_tensor[i]->size;
 		out_tensor[i]->owned = 1;
+		out_tensor[i]->size = in_tensor[i]->size;
 		out_tensor[i]->dims = malloc(sizeof(*out_tensor[i]->dims) *
 					     in_tensor[i]->nr_dims);
 		out_tensor[i]->data =
@@ -693,8 +705,6 @@ static int noop_torch_jitload_forward(
 		memcpy(out_tensor[i]->data, in_tensor[i]->data,
 		       in_tensor[i]->size);
 	}
-	if (malloced)
-		free(malloced);
 
 	return VACCEL_OK;
 
@@ -708,15 +718,12 @@ free_torch:
 		if (out_tensor[i]->data)
 			free(out_tensor[i]->data);
 
-		if (malloced[i])
-			free(out_tensor[i]);
+		free(out_tensor[i]);
 	}
-	free(malloced);
-
 	return VACCEL_ENOMEM;
 }
 
-static int noop_torch_sgemm(struct vaccel_session *session,
+static int noop_torch_sgemm(struct vaccel_session *sess,
 			    struct vaccel_torch_tensor **in_A,
 			    struct vaccel_torch_tensor **in_B,
 			    struct vaccel_torch_tensor **in_C, int M, int N,
@@ -727,12 +734,12 @@ static int noop_torch_sgemm(struct vaccel_session *session,
 	(void)in_C;
 	(void)out;
 
-	if (!session) {
-		noop_error("Invalid session \n");
+	if (!sess) {
+		noop_error("Invalid session");
 		return VACCEL_EINVAL;
 	}
 
-	noop_debug("Calling torch_sgemm for session %" PRId64 "", session->id);
+	noop_debug("Calling torch_sgemm for session %" PRId64 "", sess->id);
 	noop_debug("Dumping arguments for torch_sgemm:");
 	noop_debug("m: %d n: %d k: %d", M, N, K);
 	return VACCEL_OK;
@@ -756,11 +763,6 @@ static int noop_opencv(struct vaccel_session *sess, struct vaccel_arg *read,
 		header = write[i].buf;
 		header[0] = write[i].size / sizeof(float);
 	}
-#if 0
-	uint8_t *p;
-	p = write[1].buf;
-	p[10] = 1;
-#endif
 
 	return VACCEL_OK;
 }
@@ -779,10 +781,10 @@ struct vaccel_op ops[] = {
 	VACCEL_OP_INIT(ops[10], VACCEL_OP_TF_SESSION_DELETE,
 		       noop_tf_session_delete),
 	VACCEL_OP_INIT(ops[11], VACCEL_OP_MINMAX, noop_minmax),
-	VACCEL_OP_INIT(ops[12], VACCEL_OP_FPGA_ARRAYCOPY, v_arraycopy),
-	VACCEL_OP_INIT(ops[13], VACCEL_OP_FPGA_VECTORADD, v_vectoradd),
-	VACCEL_OP_INIT(ops[14], VACCEL_OP_FPGA_PARALLEL, v_parallel),
-	VACCEL_OP_INIT(ops[15], VACCEL_OP_FPGA_MMULT, v_mmult),
+	VACCEL_OP_INIT(ops[12], VACCEL_OP_FPGA_ARRAYCOPY, noop_fpga_arraycopy),
+	VACCEL_OP_INIT(ops[13], VACCEL_OP_FPGA_VECTORADD, noop_fpga_vadd),
+	VACCEL_OP_INIT(ops[14], VACCEL_OP_FPGA_PARALLEL, noop_fpga_parallel),
+	VACCEL_OP_INIT(ops[15], VACCEL_OP_FPGA_MMULT, noop_fpga_mmult),
 	VACCEL_OP_INIT(ops[16], VACCEL_OP_EXEC_WITH_RESOURCE,
 		       noop_exec_with_resource),
 	VACCEL_OP_INIT(ops[17], VACCEL_OP_TORCH_JITLOAD_FORWARD,

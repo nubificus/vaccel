@@ -11,6 +11,8 @@
 static struct vaccel_prof_region mbench_plugin_stats =
 	VACCEL_PROF_REGION_INIT("vaccel_mbench_plugin");
 
+#define NS_PER_SEC 1000000000L
+#define NS_PER_MS 1000000L
 #define MAX_TIME 300000
 
 static int mbench(int time)
@@ -19,18 +21,19 @@ static int mbench(int time)
 	int sec = 0;
 	int usec = 1;
 	struct timespec t;
-	uint64_t sts;
-	uint64_t ets;
+	int64_t sts;
+	int64_t ets;
 
 	if (time > (int)MAX_TIME || time < 1)
 		return VACCEL_EINVAL;
 
 	clock_gettime(CLOCK_MONOTONIC_RAW, &t);
-	sts = t.tv_sec * 1e9 + t.tv_nsec; // nsec
+	sts = (int64_t)t.tv_sec * NS_PER_SEC + (int64_t)t.tv_nsec; // nsec
 	while (1) {
 		clock_gettime(CLOCK_MONOTONIC_RAW, &t);
-		ets = t.tv_sec * 1e9 + t.tv_nsec; // nsec
-		if ((ets - sts) / 1000000 >= (uint64_t)time)
+		ets = (int64_t)t.tv_sec * NS_PER_SEC +
+		      (int64_t)t.tv_nsec; // nsec
+		if ((ets - sts) / NS_PER_MS >= (int64_t)time)
 			break;
 	}
 
@@ -43,10 +46,12 @@ static int mbench_unpack(struct vaccel_session *session, const char *library,
 			 const char *fn_symbol, void *read, size_t nr_read,
 			 void *write, size_t nr_write)
 {
+	(void)write;
+	(void)nr_write;
+
 	struct vaccel_arg *read_args = (struct vaccel_arg *)read;
 	int time;
 	int ret;
-	//void *buf;
 
 	vaccel_debug("Calling mbench for session %" PRId64, session->id);
 
@@ -57,7 +62,6 @@ static int mbench_unpack(struct vaccel_session *session, const char *library,
 		return VACCEL_EINVAL;
 
 	time = atoi(read_args[0].buf);
-	//buf = read_args[1].buf;
 
 	vaccel_prof_region_start(&mbench_plugin_stats);
 
@@ -67,6 +71,7 @@ static int mbench_unpack(struct vaccel_session *session, const char *library,
 
 	return ret;
 }
+
 struct vaccel_op ops[] = {
 	VACCEL_OP_INIT(ops[0], VACCEL_OP_EXEC, mbench_unpack),
 };
