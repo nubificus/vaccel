@@ -15,6 +15,8 @@
 #include <string.h>
 #include <time.h>
 
+#define NS_PER_SEC 1000000000L
+
 enum { MIN_SAMPLES = 1024, MAX_NAME = 256 };
 
 static uint64_t get_tstamp_nsec(void)
@@ -23,7 +25,7 @@ static uint64_t get_tstamp_nsec(void)
 
 	clock_gettime(CLOCK_MONOTONIC_RAW, &tp);
 
-	return (tp.tv_sec * 1e9) + tp.tv_nsec;
+	return (uint64_t)tp.tv_sec * NS_PER_SEC + (uint64_t)tp.tv_nsec;
 }
 
 bool vaccel_prof_enabled(void)

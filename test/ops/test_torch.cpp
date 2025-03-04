@@ -446,9 +446,7 @@ TEST_CASE("torch_inference", "[ops][torch]")
 	REQUIRE(vaccel_torch_tensor_set_data(in, data, sizeof(data)) ==
 		VACCEL_OK);
 
-	auto *out = (struct vaccel_torch_tensor *)malloc(
-		sizeof(struct vaccel_torch_tensor));
-	REQUIRE(out != nullptr);
+	struct vaccel_torch_tensor *out = nullptr;
 
 	ret = vaccel_torch_jitload_forward(&vsess, &model, &run_options, &in, 1,
 					   &out, 1);

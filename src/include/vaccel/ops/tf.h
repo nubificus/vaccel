@@ -164,12 +164,12 @@ int vaccel_tf_status_new(struct vaccel_tf_status **status, uint8_t error_code,
 int vaccel_tf_status_delete(struct vaccel_tf_status *status);
 
 /* Load new TF session from model resource */
-int vaccel_tf_session_load(struct vaccel_session *session,
+int vaccel_tf_session_load(struct vaccel_session *sess,
 			   struct vaccel_resource *model,
 			   struct vaccel_tf_status *status);
 
 /* Run TF session created with vaccel_tf_session_load() */
-int vaccel_tf_session_run(struct vaccel_session *session,
+int vaccel_tf_session_run(struct vaccel_session *sess,
 			  const struct vaccel_resource *model,
 			  const struct vaccel_tf_buffer *run_options,
 			  const struct vaccel_tf_node *in_nodes,
@@ -179,7 +179,7 @@ int vaccel_tf_session_run(struct vaccel_session *session,
 			  struct vaccel_tf_status *status);
 
 /* Delete TF session created with vaccel_tf_session_load() */
-int vaccel_tf_session_delete(struct vaccel_session *session,
+int vaccel_tf_session_delete(struct vaccel_session *sess,
 			     struct vaccel_resource *model,
 			     struct vaccel_tf_status *status);
 

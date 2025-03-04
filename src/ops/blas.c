@@ -54,7 +54,7 @@ out:
 int vaccel_sgemm_unpack(struct vaccel_session *sess, struct vaccel_arg *read,
 			int nr_read, struct vaccel_arg *write, int nr_write)
 {
-	if (nr_read != 7) {
+	if (nr_read != 10) {
 		vaccel_error("Wrong number of read arguments in SGEMM: %d",
 			     nr_read);
 		return VACCEL_EINVAL;
@@ -70,13 +70,13 @@ int vaccel_sgemm_unpack(struct vaccel_session *sess, struct vaccel_arg *read,
 	long long int n = *(long long int *)read[1].buf;
 	long long int k = *(long long int *)read[2].buf;
 	float alpha = *(float *)read[3].buf;
-	long long int lda = (long long int)read[4].size;
 	float *a = (float *)read[4].buf;
-	long long int ldb = (long long int)read[5].size;
-	float *b = (float *)read[5].buf;
-	float beta = *(float *)read[6].buf;
+	long long int lda = *(long long int *)read[5].buf;
+	float *b = (float *)read[6].buf;
+	long long int ldb = *(long long int *)read[7].buf;
+	float beta = *(float *)read[8].buf;
+	long long int ldc = *(long long int *)read[9].buf;
 
-	long long int ldc = (long long int)write[0].size;
 	float *c = (float *)write[0].buf;
 
 	return vaccel_sgemm(sess, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc);

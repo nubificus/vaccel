@@ -36,6 +36,10 @@ auto load_labels(const std::string &file_name,
 	return true;
 }
 
+const int target_width = 224;
+const int target_height = 224;
+const int target_channels = 3;
+
 auto preprocess(const unsigned char *image_data, int width, int height,
 		int channels, float *output_buffer) -> int
 {
@@ -43,10 +47,6 @@ auto preprocess(const unsigned char *image_data, int width, int height,
 		std::cerr << "Error: Only 3-channel RGB images are supported\n";
 		return VACCEL_EINVAL;
 	}
-
-	/* Target dimensions for resizing */
-	const int target_width = 224;
-	const int target_height = 224;
 
 	/* Mean and standard deviation for normalization */
 	const float mean[] = { 0.485F, 0.456F, 0.406F };
@@ -89,8 +89,11 @@ auto preprocess(const unsigned char *image_data, int width, int height,
 	return VACCEL_OK;
 }
 
-auto generate_random_input(int min_value = 1, int max_value = 100,
-			   size_t vector_size = 150528,
+enum { RND_INPUT_MIN = 1, RND_INPUT_MAX = 100, VEC_SIZE_DEFAULT = 150528 };
+
+auto generate_random_input(int min_value = RND_INPUT_MIN,
+			   int max_value = RND_INPUT_MAX,
+			   size_t vector_size = VEC_SIZE_DEFAULT,
 			   bool is_print = true) -> std::vector<float>
 {
 	// Create a random number generator engine
@@ -117,32 +120,26 @@ auto generate_random_input(int min_value = 1, int max_value = 100,
 	return res_data;
 }
 
-const int target_width = 224;
-const int target_height = 224;
-const int target_channels = 3;
-
 #ifdef USE_STB_IMAGE
 const int nr_req_args = 4;
-const std::string usage_args = "image-path model-path labels-path";
+const std::string usage_args = "<image_file> <model_file> <labels_file>";
 #else
 const int nr_req_args = 3;
-const std::string usage_args = "image-path model-path";
+const std::string usage_args = "<image_file> <model_file>";
 #endif
 
 auto main(int argc, char **argv) -> int
 {
-	if (argc < nr_req_args) {
-		std::cerr << "Usage: " << argv[0] << " " << usage_args << '\n';
-		return VACCEL_EINVAL;
-	}
-
 	struct vaccel_session sess;
 	struct vaccel_resource model;
 	struct vaccel_torch_buffer run_options;
 	int ret;
-	int64_t dims[] = { 1, 3, 224, 224 };
+	int64_t dims[] = { 1, target_channels, target_width, target_height };
 	struct vaccel_torch_tensor *in;
 	struct vaccel_torch_tensor *out;
+	struct vaccel_prof_region torch_jitload_forward_stats =
+		VACCEL_PROF_REGION_INIT("torch_jitload_forward");
+
 	std::vector<float> res_data;
 #ifdef USE_STB_IMAGE
 	float *preprocessed_data = nullptr;
@@ -152,13 +149,21 @@ auto main(int argc, char **argv) -> int
 	std::vector<std::string> labels;
 #endif
 
+	if (argc < nr_req_args || argc > (nr_req_args + 1)) {
+		std::cerr << "Usage: " << argv[0] << " " << usage_args
+			  << " [iterations]\n";
+		return VACCEL_EINVAL;
+	}
+
+	const int iter = (argc > nr_req_args) ? atoi(argv[nr_req_args]) : 1;
+
 	ret = vaccel_resource_init(&model, argv[2], VACCEL_RESOURCE_MODEL);
-	if (ret != 0) {
-		fprintf(stderr, "Could not create model resource\n");
+	if (ret != VACCEL_OK) {
+		fprintf(stderr, "Could not initialize model resource\n");
 		return ret;
 	}
 
-	printf("Initialized vAccel resource %" PRId64 "\n", model.id);
+	printf("Initialized model resource %" PRId64 "\n", model.id);
 
 	ret = vaccel_session_init(&sess, 0);
 	if (ret != VACCEL_OK) {
@@ -213,7 +218,7 @@ auto main(int argc, char **argv) -> int
 		       sizeof(float));
 
 	ret = preprocess(img_data, width, height, channels, preprocessed_data);
-	if (ret != 0) {
+	if (ret != VACCEL_OK) {
 		fprintf(stderr, "Could not preprocess image data");
 		stbi_image_free(img_data);
 		goto unregister_resource;
@@ -226,7 +231,8 @@ auto main(int argc, char **argv) -> int
 		   sizeof(float);
 #else
 	res_data = generate_random_input();
-	res_data.resize((size_t)(224 * 224 * 3));
+	res_data.resize(
+		(size_t)(target_width * target_height * target_channels));
 
 	in->data = res_data.data();
 	in->size = res_data.size() * sizeof(float);
@@ -235,49 +241,50 @@ auto main(int argc, char **argv) -> int
 	run_options.data = strdup("mobilenet");
 	run_options.size = strlen(run_options.data) + 1;
 
-	/* Output tensor */
-	out = (struct vaccel_torch_tensor *)malloc(
-		sizeof(struct vaccel_torch_tensor) * 1);
-	if (out == nullptr) {
-		fprintf(stderr, "Could not allocate memory\n");
-		goto delete_tensor;
-	}
+	for (int i = 0; i < iter; i++) {
+		vaccel_prof_region_start(&torch_jitload_forward_stats);
 
-	/* Conducting torch inference */
-	ret = vaccel_torch_jitload_forward(&sess, &model, &run_options, &in, 1,
-					   &out, 1);
-	if (ret != VACCEL_OK) {
-		fprintf(stderr, "Could not run op: %d\n", ret);
-		goto delete_tensor;
-	}
+		ret = vaccel_torch_jitload_forward(&sess, &model, &run_options,
+						   &in, 1, &out, 1);
 
-	printf("Success!\n");
-	printf("Result Tensor :\n");
-	printf("Output tensor => type:%u nr_dims:%" PRId64 "\n", out->data_type,
-	       out->nr_dims);
-	printf("size: %zu B\n", out->size);
+		vaccel_prof_region_stop(&torch_jitload_forward_stats);
+
+		if (ret != VACCEL_OK) {
+			fprintf(stderr, "Could not run op: %d\n", ret);
+			goto delete_in_tensor;
+		}
+
+		printf("Success!\n");
+		printf("Result Tensor :\n");
+		printf("Output tensor => type:%u nr_dims:%" PRId64 "\n",
+		       out->data_type, out->nr_dims);
+		printf("size: %zu B\n", out->size);
 
 #ifdef USE_STB_IMAGE
-	response_ptr = reinterpret_cast<float *>(out->data);
-	max = response_ptr[0];
-	max_idx = 0;
+		response_ptr = reinterpret_cast<float *>(out->data);
+		max = response_ptr[0];
+		max_idx = 0;
 
-	for (auto i = 1; i != 1000; ++i) {
-		if (response_ptr[i] > max) {
-			max = response_ptr[i];
-			max_idx = i;
+		for (auto i = 1; i != 1000; ++i) {
+			if (response_ptr[i] > max) {
+				max = response_ptr[i];
+				max_idx = i;
+			}
+		}
+
+		std::cout << "Prediction: " << labels[max_idx] << '\n';
+#endif
+
+		if (vaccel_torch_tensor_delete(out) != VACCEL_OK) {
+			fprintf(stderr, "could not delete output tensor\n");
+			goto delete_in_tensor;
 		}
 	}
 
-	std::cout << "Prediction: " << labels[max_idx] << '\n';
-#endif
-
-	if (vaccel_torch_tensor_delete(out) != VACCEL_OK)
-		fprintf(stderr, "Could not delete out tensor\n");
-delete_tensor:
+delete_in_tensor:
 	free(run_options.data);
 	if (vaccel_torch_tensor_delete(in) != VACCEL_OK)
-		fprintf(stderr, "Could not delete in tensor\n");
+		fprintf(stderr, "Could not delete input tensor\n");
 unregister_resource:
 #ifdef USE_STB_IMAGE
 	delete[] preprocessed_data;
@@ -288,7 +295,11 @@ release_session:
 	if (vaccel_session_release(&sess) != VACCEL_OK)
 		fprintf(stderr, "Could not release session\n");
 release_resource:
-	vaccel_resource_release(&model);
+	if (vaccel_resource_release(&model) != VACCEL_OK)
+		fprintf(stderr, "Could not release model resource\n");
+
+	vaccel_prof_region_print(&torch_jitload_forward_stats);
+	vaccel_prof_region_release(&torch_jitload_forward_stats);
 
 	return ret;
 }
