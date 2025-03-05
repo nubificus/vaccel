@@ -12,7 +12,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-struct vaccel_prof_region image_op_stats =
+static struct vaccel_prof_region image_op_stats =
 	VACCEL_PROF_REGION_INIT("vaccel_image_op");
 
 typedef int (*image_op_no_text_fn_t)(struct vaccel_session *sess,
@@ -195,4 +195,5 @@ __attribute__((constructor)) static void vaccel_ops_init(void)
 __attribute__((destructor)) static void vaccel_ops_fini(void)
 {
 	vaccel_prof_region_print(&image_op_stats);
+	vaccel_prof_region_release(&image_op_stats);
 }

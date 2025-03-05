@@ -17,24 +17,24 @@
 
 extern "C" {
 
-#define M 512
-#define N 512
-#define K 512
-#define ELEM_2D(array, i, j, ld) (*((array) + (i) * (ld) + (j)))
+#define ELEM_2D(array, i, j, ld) (*((array) + (ptrdiff_t)((i) * (ld)) + (j)))
 
-void init(int m, int n, int k, float *A, float *B, float *C)
+enum { M = 512, N = 512, K = 512 };
+
+void init(long long int m, long long int n, long long int k, float *A, float *B,
+	  float *C)
 {
-	for (int i = 0; i < m; ++i)
-		for (int j = 0; j < k; ++j)
-			ELEM_2D(A, i, j, k) = ((float)i * j) / m;
+	for (long long int i = 0; i < m; ++i)
+		for (long long int j = 0; j < k; ++j)
+			ELEM_2D(A, i, j, k) = ((float)i * (float)j) / (float)m;
 
-	for (int i = 0; i < k; ++i)
-		for (int j = 0; j < n; ++j)
-			ELEM_2D(B, i, j, n) = ((float)i * j) / m;
+	for (long long int i = 0; i < k; ++i)
+		for (long long int j = 0; j < n; ++j)
+			ELEM_2D(B, i, j, n) = ((float)i * (float)j) / (float)m;
 
-	for (int i = 0; i < m; ++i)
-		for (int j = 0; j < n; ++j)
-			ELEM_2D(C, i, j, n) = ((float)i * j) / m;
+	for (long long int i = 0; i < m; ++i)
+		for (long long int j = 0; j < n; ++j)
+			ELEM_2D(C, i, j, n) = ((float)i * (float)j) / (float)m;
 }
 }
 

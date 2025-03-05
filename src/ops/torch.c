@@ -5,6 +5,7 @@
 #include "log.h"
 #include "op.h"
 #include "plugin.h"
+#include "prof.h"
 #include "resource.h"
 #include "session.h"
 #include <inttypes.h>
@@ -219,6 +220,9 @@ int vaccel_torch_tensor_take_data(struct vaccel_torch_tensor *tensor,
 	return VACCEL_OK;
 }
 
+static struct vaccel_prof_region torch_jitload_forward_op_stats =
+	VACCEL_PROF_REGION_INIT("vaccel_torch_jitload_forward_op");
+
 typedef int (*torch_jitload_forward_fn_t)(
 	struct vaccel_session *sess, const struct vaccel_resource *model,
 	const struct vaccel_torch_buffer *run_options,
@@ -233,6 +237,8 @@ int vaccel_torch_jitload_forward(struct vaccel_session *sess,
 				 struct vaccel_torch_tensor **out_tensor,
 				 int nr_write)
 {
+	int ret;
+
 	if (!sess)
 		return VACCEL_EINVAL;
 
@@ -254,14 +260,26 @@ int vaccel_torch_jitload_forward(struct vaccel_session *sess,
 		return VACCEL_EPERM;
 	}
 
+	vaccel_prof_region_start(&torch_jitload_forward_op_stats);
+
 	torch_jitload_forward_fn_t plugin_torch_jitload_forward =
 		plugin_get_op_func(VACCEL_OP_TORCH_JITLOAD_FORWARD, sess->hint);
-	if (!plugin_torch_jitload_forward)
-		return VACCEL_ENOTSUP;
+	if (!plugin_torch_jitload_forward) {
+		ret = VACCEL_ENOTSUP;
+		goto out;
+	}
 
-	return plugin_torch_jitload_forward(sess, model, run_options, in_tensor,
-					    nr_read, out_tensor, nr_write);
+	ret = plugin_torch_jitload_forward(sess, model, run_options, in_tensor,
+					   nr_read, out_tensor, nr_write);
+
+out:
+	vaccel_prof_region_stop(&torch_jitload_forward_op_stats);
+
+	return ret;
 }
+
+static struct vaccel_prof_region torch_sgemm_op_stats =
+	VACCEL_PROF_REGION_INIT("vaccel_sgemm_op");
 
 typedef int (*torch_sgemm_fn_t)(struct vaccel_session *sess,
 				struct vaccel_torch_tensor **in_A,
@@ -275,6 +293,8 @@ int vaccel_torch_sgemm(struct vaccel_session *sess,
 		       struct vaccel_torch_tensor **in_C, int M, int N, int K,
 		       struct vaccel_torch_tensor **out)
 {
+	int ret;
+
 	if (!sess)
 		return VACCEL_EINVAL;
 
@@ -282,12 +302,32 @@ int vaccel_torch_sgemm(struct vaccel_session *sess,
 		     " Looking for plugin implementing torch sgemm operation",
 		     sess->id);
 
+	vaccel_prof_region_start(&torch_sgemm_op_stats);
+
 	torch_sgemm_fn_t plugin_torch_sgemm =
 		plugin_get_op_func(VACCEL_OP_TORCH_SGEMM, sess->hint);
 	if (!plugin_torch_sgemm) {
-		vaccel_debug("Plugin loading failed");
-		return VACCEL_ENOTSUP;
+		ret = VACCEL_ENOTSUP;
+		goto out;
 	}
 
-	return plugin_torch_sgemm(sess, in_A, in_B, in_C, M, N, K, out);
+	ret = plugin_torch_sgemm(sess, in_A, in_B, in_C, M, N, K, out);
+
+out:
+	vaccel_prof_region_stop(&torch_sgemm_op_stats);
+
+	return ret;
+}
+
+__attribute__((constructor)) static void vaccel_ops_init(void)
+{
+}
+
+__attribute__((destructor)) static void vaccel_ops_fini(void)
+{
+	vaccel_prof_region_print(&torch_jitload_forward_op_stats);
+	vaccel_prof_region_release(&torch_jitload_forward_op_stats);
+
+	vaccel_prof_region_print(&torch_sgemm_op_stats);
+	vaccel_prof_region_release(&torch_sgemm_op_stats);
 }

@@ -15,6 +15,8 @@
 #include <string.h>
 #include <time.h>
 
+#define NS_PER_SEC 1000000000L
+
 enum { MIN_SAMPLES = 1024, MAX_NAME = 256 };
 
 static uint64_t get_tstamp_nsec(void)
@@ -23,7 +25,7 @@ static uint64_t get_tstamp_nsec(void)
 
 	clock_gettime(CLOCK_MONOTONIC_RAW, &tp);
 
-	return (tp.tv_sec * 1e9) + tp.tv_nsec;
+	return (uint64_t)tp.tv_sec * NS_PER_SEC + (uint64_t)tp.tv_nsec;
 }
 
 bool vaccel_prof_enabled(void)
@@ -36,6 +38,7 @@ bool vaccel_prof_enabled(void)
 static void prof_sample_start(struct vaccel_prof_sample *sample)
 {
 	sample->start = get_tstamp_nsec();
+	sample->time = 0;
 }
 
 static void prof_sample_stop(struct vaccel_prof_sample *sample)
@@ -168,13 +171,13 @@ free_name:
 	return VACCEL_ENOMEM;
 }
 
-int vaccel_prof_region_destroy(struct vaccel_prof_region *region)
+int vaccel_prof_region_release(struct vaccel_prof_region *region)
 {
 	if (!vaccel_prof_enabled())
 		return VACCEL_OK;
 
 	if (!region) {
-		vaccel_error("[prof] destroy region: Invalid profiling region");
+		vaccel_error("[prof] release region: Invalid profiling region");
 		return VACCEL_EINVAL;
 	}
 
@@ -288,25 +291,46 @@ int vaccel_prof_regions_stop_by_name(struct vaccel_prof_region *regions,
 	return VACCEL_OK;
 }
 
-void vaccel_prof_regions_clear(struct vaccel_prof_region *regions, int nregions)
-{
-	for (int i = 0; i < nregions; i++) {
-		free(regions[i].samples);
-		regions[i].samples = NULL;
-		regions[i].size = 0;
-	}
-}
-
 int vaccel_prof_regions_init(struct vaccel_prof_region *regions, int nregions)
 {
+	if (!vaccel_prof_enabled())
+		return VACCEL_OK;
+
+	if (!regions) {
+		vaccel_error(
+			"[prof] init regions: Invalid profiling region array");
+		return VACCEL_EINVAL;
+	}
+
 	for (int i = 0; i < nregions; i++) {
 		regions[i].size = 0;
 		regions[i].samples = NULL;
 		int ret = vaccel_prof_region_init(&regions[i], NULL);
 		if (ret != VACCEL_OK) {
-			vaccel_prof_regions_clear(regions, i);
+			vaccel_prof_regions_release(regions, i);
 			return ret;
 		}
+	}
+
+	return VACCEL_OK;
+}
+
+int vaccel_prof_regions_release(struct vaccel_prof_region *regions,
+				int nregions)
+{
+	if (!vaccel_prof_enabled())
+		return VACCEL_OK;
+
+	if (!regions) {
+		vaccel_error(
+			"[prof] release regions: Invalid profiling region array");
+		return VACCEL_EINVAL;
+	}
+
+	for (int i = 0; i < nregions; i++) {
+		free(regions[i].samples);
+		regions[i].samples = NULL;
+		regions[i].size = 0;
 	}
 
 	return VACCEL_OK;
@@ -320,7 +344,7 @@ int vaccel_prof_regions_print_all(struct vaccel_prof_region *regions,
 
 	if (!regions) {
 		vaccel_error(
-			"[prof] print region: Invalid profiling region array");
+			"[prof] print regions: Invalid profiling region array");
 		return VACCEL_EINVAL;
 	}
 
@@ -351,7 +375,7 @@ int vaccel_prof_regions_print_all_to_buf(char **tbuf, size_t tbuf_len,
 
 	if (!regions) {
 		vaccel_error(
-			"[prof] print region: Invalid profiling region array");
+			"[prof] print regions: Invalid profiling region array");
 		return -VACCEL_EINVAL;
 	}
 

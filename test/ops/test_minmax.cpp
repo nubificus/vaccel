@@ -13,16 +13,10 @@
 
 #include "utils.hpp"
 #include "vaccel.h"
-#include <bits/time.h>
 #include <catch.hpp>
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
-#include <ctime>
-
-#define timespec_usec(t) \
-	((double)(t).tv_nsec / 10e3 + (double)(t).tv_sec * 10e6)
-#define time_diff_usec(t0, t1) (timespec_usec((t1)) - timespec_usec((t0)))
 
 TEST_CASE("min_max", "[ops][minmax]")
 {
@@ -62,20 +56,9 @@ TEST_CASE("min_max", "[ops][minmax]")
 	REQUIRE(session.resources);
 	REQUIRE(session.priv == nullptr);
 
-	struct timespec t0;
-	struct timespec t1;
-	clock_gettime(CLOCK_MONOTONIC_RAW, &t0);
-
 	ret = vaccel_minmax(&session, indata, ndata, low_threshold,
 			    high_threshold, outdata, &min, &max);
-
-	clock_gettime(CLOCK_MONOTONIC_RAW, &t1);
 	REQUIRE(ret == VACCEL_OK);
-
-	fprintf(stdout, "min: %lf max: %lf Execution time: %lf msec\n", min,
-		max,
-		((double)(t1.tv_sec - t0.tv_sec) * 1000.0) +
-			((double)(t1.tv_nsec - t0.tv_nsec) / 1.0e6));
 
 	ret = vaccel_session_release(&session);
 	REQUIRE(session.id);
@@ -130,9 +113,6 @@ TEST_CASE("min_max_generic", "[ops][minmax]")
 	REQUIRE(session.resources);
 	REQUIRE(session.priv == nullptr);
 
-	struct timespec t0;
-	struct timespec t1;
-
 	vaccel_op_type_t op_type = VACCEL_OP_MINMAX;
 	struct vaccel_arg read[5] = {
 		{ .argtype = 0,
@@ -152,17 +132,9 @@ TEST_CASE("min_max_generic", "[ops][minmax]")
 		{ .argtype = 0, .size = sizeof(double), .buf = &min },
 		{ .argtype = 0, .size = sizeof(double), .buf = &max },
 	};
-	clock_gettime(CLOCK_MONOTONIC_RAW, &t0);
 
 	ret = vaccel_genop(&session, &read[0], 5, &write[0], 3);
-
-	clock_gettime(CLOCK_MONOTONIC_RAW, &t1);
 	REQUIRE(ret == VACCEL_OK);
-
-	fprintf(stdout, "min: %lf max: %lf Execution time: %lf msec\n", min,
-		max,
-		((double)(t1.tv_sec - t0.tv_sec) * 1000.0) +
-			((double)(t1.tv_nsec - t0.tv_nsec) / 1.0e6));
 
 	ret = vaccel_session_release(&session);
 	REQUIRE(session.id);

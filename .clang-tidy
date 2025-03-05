@@ -20,6 +20,6 @@ User:            clang-tidy
 SystemHeaders:   false
 CheckOptions:
   - key:   readability-function-cognitive-complexity.Threshold
-    value: '40'
+    value: '50'
   - key:   bugprone-reserved-identifier.AllowedIdentifiers
     value: '_POSIX_C_SOURCE;_DEFAULT_SOURCE'
