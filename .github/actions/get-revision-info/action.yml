@@ -17,19 +17,16 @@ runs:
           if [ "${{ github.event.pull_request.merged }}" == true ]; then
             sha="${{ github.sha }}"
             branch="${{ github.base_ref }}"
-            echo "PR merged. SHA: $sha, Branch: $branch"
+            echo "PR merged. SHA: ${sha}, Branch: ${branch}"
           else
             sha="${{ github.event.pull_request.head.sha }}"
             branch="${{ github.event.pull_request.head.ref }}"
-            echo "PR not yet merged. SHA: $sha, Branch: $branch"
+            echo "PR not yet merged. SHA: ${sha}, Branch: ${branch}"
           fi
-        elif [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-          sha="${{ github.sha }}"
-          branch="${{ github.event.ref_name }}"
-          echo "Workflow dispatch event. SHA: $sha, Branch: $branch"
         else
-          echo "Event not supported."
-          exit 1
+          sha="${{ github.sha }}"
+          branch="${{ github.ref_name }}"
+          echo "${{ github.event_name }} event. SHA: ${sha}, Branch: ${branch}"
         fi
         echo "sha=${sha}" >> "$GITHUB_OUTPUT"
         echo "branch=${branch}" >> "$GITHUB_OUTPUT"
