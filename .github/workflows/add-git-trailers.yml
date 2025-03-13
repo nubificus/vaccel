@@ -20,7 +20,7 @@ env:
 jobs:
   git-trailers:
     name: Add Git Trailers
-    runs-on: [gcc-2204-amd64]
+    runs-on: [base-2204-amd64]
     permissions:
       contents: write
       pull-requests: write

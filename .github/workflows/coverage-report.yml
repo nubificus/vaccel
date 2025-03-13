@@ -28,7 +28,7 @@ env:
 jobs:
   coverage-report:
     name: Coverage Report
-    runs-on: [gcc-dind-2204-amd64]
+    runs-on: [base-dind-2204-amd64]
     strategy:
       matrix:
         build-type: [plain]
@@ -50,6 +50,7 @@ jobs:
           echo "repo=${{ github.event.repository.name }}" >> "$GITHUB_OUTPUT"
           echo "repo-default=${{ github.event.repository.name }}_${{ github.event.repository.default_branch }}" \
             >> "$GITHUB_OUTPUT"
+
         shell: bash
 
       - name: Initialize workspace

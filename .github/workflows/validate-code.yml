@@ -11,7 +11,7 @@ on:
         default: 'main'
       runner:
         type: string
-        default: '["gcc", "dind", "2204"]'
+        default: '["base", "dind", "2204"]'
       runner-archs:
         type: string
         default: '["amd64"]'
@@ -69,13 +69,6 @@ jobs:
           fetch-depth: 0
           remote-actions-repo: ${{ inputs.actions-repo }}
           token: ${{ secrets.GIT_CLONE_PAT || github.token }}
-
-      # FIXME: Temp
-      - name: Install libcurl & stb
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libcurl4-openssl-dev libstb-dev
-        shell: bash
 
       - name: Download artifacts from s3
         id: download-artifacts
@@ -145,13 +138,6 @@ jobs:
           fetch-depth: 0
           remote-actions-repo: ${{ inputs.actions-repo }}
           token: ${{ secrets.GIT_CLONE_PAT || github.token }}
-
-      # FIXME: Temp
-      - name: Install libcurl & stb
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libcurl4-openssl-dev libstb-dev
-        shell: bash
 
       - name: Download artifacts from s3
         id: download-artifacts
