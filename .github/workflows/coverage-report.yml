@@ -28,7 +28,7 @@ env:
 jobs:
   coverage-report:
     name: Coverage Report
-    runs-on: [gcc-dind-2204-amd64]
+    runs-on: [base-dind-2204-amd64]
     strategy:
       matrix:
         build-type: [plain]
