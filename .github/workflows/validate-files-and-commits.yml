@@ -19,7 +19,7 @@ env:
 jobs:
   linter-commitlint:
     name: Lint Commit Messages
-    runs-on: [gcc-dind-2204-amd64]
+    runs-on: [base-dind-2204-amd64]
     steps:
       - name: Checkout .github directory
         uses: actions/checkout@v4
@@ -42,7 +42,7 @@ jobs:
 
   linter-typos:
     name: Spell Check Repo
-    runs-on: [gcc-dind-2204-amd64]
+    runs-on: [base-dind-2204-amd64]
     steps:
       - name: Checkout .github directory
         uses: actions/checkout@v4
@@ -65,7 +65,7 @@ jobs:
 
   linter-license-eye:
     name: Check License Headers
-    runs-on: [gcc-dind-2204-amd64]
+    runs-on: [base-dind-2204-amd64]
     steps:
       - name: Checkout .github directory
         uses: actions/checkout@v4
