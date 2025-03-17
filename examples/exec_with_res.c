@@ -56,8 +56,8 @@ int main(int argc, char *argv[])
 		goto unregister_resource;
 	}
 
-	ret = vaccel_resource_init_from_buf(&resource2, buff, len,
-					    VACCEL_RESOURCE_LIB, "lib.so");
+	ret = vaccel_resource_init_from_buf(
+		&resource2, buff, len, VACCEL_RESOURCE_LIB, "lib.so", false);
 	if (ret) {
 		fprintf(stderr,
 			"Could not initialize lib resource 2 from buffer: %s\n",
