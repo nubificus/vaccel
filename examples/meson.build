@@ -19,7 +19,7 @@ examples_sources = files([
   'minmax_generic.c',
   'tf_inference.c',
   'tflite_inference.c',
-  'torch_inference.cpp',
+  'torch_inference.c',
   'pynq_vector_add.c',
   'pynq_vector_add_generic.c',
   'pynq_parallel.c',
@@ -38,7 +38,7 @@ foreach e : examples_sources
     sources : e,
     c_args : vaccel_c_args,
     cpp_args : vaccel_cpp_args,
-    dependencies : [libvaccel_internal_dep],
+    dependencies : [libvaccel_internal_dep, libm_dep],
     install : true)
 endforeach
 

@@ -35,6 +35,8 @@ if cpp.has_header('stb/stb_image.h')
   vaccel_cpp_args += '-DUSE_STB_IMAGE'
 endif
 
+libm_dep = cc.find_library('m')
+
 subdir('src')
 subdir('plugins')
 subdir('python')
