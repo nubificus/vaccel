@@ -21,7 +21,8 @@ subdir('ops')
 subdir('utils')
 
 tests_cpp_args = vaccel_cpp_args + [
-  '-DCATCH_CONFIG_FAST_COMPILE'
+  '-DCATCH_CONFIG_FAST_COMPILE',
+  '-Wno-format-truncation'
 ]
 
 tests_args = [
