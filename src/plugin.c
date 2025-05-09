@@ -127,7 +127,7 @@ static int plugin_check_version(const struct vaccel_plugin_info *pinfo)
 	}
 
 	if (minor1 != vminor1 || minor2 != vminor2 ||
-	    strcmp(extra, vextra) != 0) {
+	    (extra && vextra && strcmp(extra, vextra) != 0)) {
 		vaccel_warn(
 			"Plugin may be incompatible with current vAccel version (built w/ %s, used w/ %s)",
 			pinfo->vaccel_version, VACCEL_VERSION);
