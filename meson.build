@@ -63,7 +63,7 @@ summary({
 
 meson.add_dist_script(
   'scripts/common/dist.sh',
-  '-n', 'vaccel',
+  '-n', meson.project_name(),
   '-v', meson.project_version(),
   '-t', get_option('buildtype'),
   '-a', 'plugin-exec=' + (opt_plugin_exec.enabled() ? 'enabled' : 'disabled'),
@@ -74,10 +74,12 @@ meson.add_dist_script(
 
 if opt_examples.enabled() and opt_plugin_noop.enabled() and opt_plugin_exec.enabled()
   run_target('run-examples',
-    command : 'scripts/run-examples.sh',
+    command : ['scripts/run-examples.sh', meson.project_name()],
+    env : {'PKG_CONFIG_PATH': get_option('pkg_config_path')},
     depends : [examples, libvaccel_noop, libvaccel_exec])
   run_target('run-examples-valgrind',
-    command : ['scripts/run-examples.sh', '', 'true'],
+    command : ['scripts/run-examples.sh', meson.project_name(), '1'],
+    env : {'PKG_CONFIG_PATH': get_option('pkg_config_path')},
     depends : [examples, libvaccel_noop, libvaccel_exec])
 endif
 
