@@ -5,6 +5,9 @@ users:
   dependabotbot:
     name: dependabot[bot]
     email: support@github.com
+  vaccel-botbot:
+    name: vaccel-bot[bot]
+    email: 175908213+vaccel-bot[bot]@users.noreply.github.com
   ananos:
     name: Anastassios Nanos
     email: ananos@nubificus.co.uk
