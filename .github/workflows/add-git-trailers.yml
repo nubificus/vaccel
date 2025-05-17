@@ -50,7 +50,7 @@ jobs:
 
       - name: Generate vaccel-bot token
         id: generate-token
-        uses: actions/create-github-app-token@v1
+        uses: actions/create-github-app-token@v2
         with:
           app-id: ${{ vars.VACCEL_BOT_APP_ID }}
           private-key: ${{ secrets.VACCEL_BOT_PRIVATE_KEY }}
