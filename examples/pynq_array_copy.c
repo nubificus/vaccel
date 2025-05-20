@@ -16,7 +16,7 @@ int main(int argc, char *argv[])
 		VACCEL_PROF_REGION_INIT("fpga_arraycopy");
 
 	int a[N] = { 12, 15, 12, 15, 12, 15 };
-	int b[N];
+	int b[N] = { 0, 0, 0, 0, 0, 0 };
 	size_t array_len = (size_t)N;
 
 	if (argc > 2) {

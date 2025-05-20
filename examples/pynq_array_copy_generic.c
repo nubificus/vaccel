@@ -16,7 +16,7 @@ int main(int argc, char *argv[])
 		VACCEL_PROF_REGION_INIT("fpga_arraycopy");
 
 	int a[N] = { 12, 15, 12, 15, 12, 11 };
-	int b[N];
+	int b[N] = { 0, 0, 0, 0, 0, 0 };
 	size_t array_len = (size_t)N;
 
 	if (argc > 2) {
@@ -33,11 +33,14 @@ int main(int argc, char *argv[])
 	printf("Initialized session with id: %" PRId64 "\n", sess.id);
 
 	vaccel_op_type_t op_type = VACCEL_OP_FPGA_ARRAYCOPY;
-	struct vaccel_arg read[] = { { .size = sizeof(vaccel_op_type_t),
-				       .buf = &op_type },
-				     { .size = sizeof(a), .buf = (char *)a } };
+	struct vaccel_arg read[] = {
+		{ .size = sizeof(vaccel_op_type_t),
+		  .buf = &op_type,
+		  .argtype = 0 },
+		{ .size = sizeof(a), .buf = (char *)a, .argtype = 0 }
+	};
 	struct vaccel_arg write[] = {
-		{ .size = sizeof(b), .buf = b },
+		{ .size = sizeof(b), .buf = b, .argtype = 0 },
 	};
 
 	const int iter = (argc > 1) ? atoi(argv[1]) : 1;

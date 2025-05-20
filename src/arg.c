@@ -127,7 +127,7 @@ int vaccel_expect_nonserial_arg(struct vaccel_arg_list *args,
 	if (curr_idx >= (int)args->size)
 		return VACCEL_EINVAL;
 
-	args->list[curr_idx].buf = malloc(expected_size);
+	args->list[curr_idx].buf = calloc(1, expected_size);
 	if (!args->list[curr_idx].buf)
 		return VACCEL_ENOMEM;
 

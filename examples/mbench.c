@@ -36,8 +36,8 @@ int main(int argc, char *argv[])
 		goto release_session;
 
 	struct vaccel_arg read[] = {
-		{ .size = sizeof(int), .buf = argv[1] },
-		{ .size = file_size, .buf = file },
+		{ .size = sizeof(int), .buf = argv[1], .argtype = 0 },
+		{ .size = file_size, .buf = file, .argtype = 0 },
 	};
 
 	const int iter = (argc > 3) ? atoi(argv[3]) : 1;

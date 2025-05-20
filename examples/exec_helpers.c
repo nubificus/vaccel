@@ -14,7 +14,7 @@ int main(int argc, char *argv[])
 	int ret;
 	struct vaccel_session sess;
 	int input = INPUT_VAL;
-	int output;
+	int output = 0;
 	struct vaccel_resource object;
 	struct vaccel_prof_region mytestfunc_stats =
 		VACCEL_PROF_REGION_INIT("mytestfunc");
