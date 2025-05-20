@@ -3,12 +3,13 @@
 #include "vaccel.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 int main(int argc, char *argv[])
 {
 	int ret;
-	double min;
-	double max;
+	double min = 0;
+	double max = 0;
 	int low_threshold;
 	int high_threshold;
 	struct vaccel_prof_region minmax_stats =
@@ -54,6 +55,7 @@ int main(int argc, char *argv[])
 		ret = VACCEL_ENOMEM;
 		goto free_out;
 	}
+	memset(outdata, 0, ndata * sizeof(double));
 
 	low_threshold = atoi(argv[3]);
 	high_threshold = atoi(argv[4]);

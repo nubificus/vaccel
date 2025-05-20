@@ -18,8 +18,8 @@ int main(int argc, char *argv[])
 		VACCEL_PROF_REGION_INIT("mytestfunc");
 
 	int input = INPUT_VAL;
-	int output1;
-	int output2;
+	int output1 = 0;
+	int output2 = 0;
 
 	if (argc < 2 || argc > 3) {
 		fprintf(stderr, "Usage: %s <lib_file> [iterations]\n", argv[0]);
@@ -97,10 +97,11 @@ int main(int argc, char *argv[])
 		printf("output1: %d\n", output1);
 	}
 
-	struct vaccel_arg read_2[] = { { .size = sizeof(input),
-					 .buf = &input } };
+	struct vaccel_arg read_2[] = {
+		{ .size = sizeof(input), .buf = &input, .argtype = ARGTYPE }
+	};
 	struct vaccel_arg write_2[] = {
-		{ .size = sizeof(output2), .buf = &output2 },
+		{ .size = sizeof(output2), .buf = &output2, .argtype = ARGTYPE },
 	};
 
 	for (int i = 0; i < iter; i++) {

@@ -14,7 +14,7 @@ int main(int argc, char *argv[])
 	int ret;
 	char *image = NULL;
 	size_t image_size;
-	char out_imagename[STR_SIZE_MAX];
+	char out_imagename[STR_SIZE_MAX] = { '\0' };
 	struct vaccel_session sess;
 	struct vaccel_resource model = { .id = -1 };
 	struct vaccel_prof_region segment_stats =
@@ -56,11 +56,16 @@ int main(int argc, char *argv[])
 		goto unregister_resource;
 
 	vaccel_op_type_t op_type = VACCEL_OP_IMAGE_SEGMENT;
-	struct vaccel_arg read[] = { { .size = sizeof(vaccel_op_type_t),
-				       .buf = &op_type },
-				     { .size = image_size, .buf = image } };
+	struct vaccel_arg read[] = {
+		{ .size = sizeof(vaccel_op_type_t),
+		  .buf = &op_type,
+		  .argtype = 0 },
+		{ .size = image_size, .buf = image, .argtype = 0 }
+	};
 	struct vaccel_arg write[] = {
-		{ .size = sizeof(out_imagename), .buf = out_imagename },
+		{ .size = sizeof(out_imagename),
+		  .buf = out_imagename,
+		  .argtype = 0 },
 	};
 
 	const int iter = (argc > 2) ? atoi(argv[2]) : 1;
