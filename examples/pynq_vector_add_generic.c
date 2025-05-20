@@ -34,12 +34,15 @@ int main(int argc, char *argv[])
 	printf("Initialized session with id: %" PRId64 "\n", sess.id);
 
 	vaccel_op_type_t op_type = VACCEL_OP_FPGA_VECTORADD;
-	struct vaccel_arg read[] = { { .size = sizeof(vaccel_op_type_t),
-				       .buf = &op_type },
-				     { .size = sizeof(a), .buf = (char *)a },
-				     { .size = sizeof(b), .buf = (char *)b } };
+	struct vaccel_arg read[] = {
+		{ .size = sizeof(vaccel_op_type_t),
+		  .buf = &op_type,
+		  .argtype = 0 },
+		{ .size = sizeof(a), .buf = (char *)a, .argtype = 0 },
+		{ .size = sizeof(b), .buf = (char *)b, .argtype = 0 }
+	};
 	struct vaccel_arg write[] = {
-		{ .size = array_len, .buf = c },
+		{ .size = array_len, .buf = c, .argtype = 0 },
 	};
 
 	const int iter = (argc > 1) ? atoi(argv[1]) : 1;

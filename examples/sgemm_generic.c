@@ -59,20 +59,22 @@ int main(int argc, char *argv[])
 
 	vaccel_op_type_t op_type = VACCEL_OP_BLAS_SGEMM;
 	struct vaccel_arg read[] = {
-		{ .size = sizeof(vaccel_op_type_t), .buf = &op_type },
-		{ .size = sizeof(m), .buf = &m },
-		{ .size = sizeof(n), .buf = &n },
-		{ .size = sizeof(k), .buf = &k },
-		{ .size = sizeof(alpha), .buf = (void *)&alpha },
-		{ .size = sizeof(a), .buf = a },
-		{ .size = sizeof(k), .buf = &k },
-		{ .size = sizeof(b), .buf = b },
-		{ .size = sizeof(n), .buf = &n },
-		{ .size = sizeof(beta), .buf = (void *)&beta },
-		{ .size = sizeof(n), .buf = &n },
+		{ .size = sizeof(vaccel_op_type_t),
+		  .buf = &op_type,
+		  .argtype = 0 },
+		{ .size = sizeof(m), .buf = &m, .argtype = 0 },
+		{ .size = sizeof(n), .buf = &n, .argtype = 0 },
+		{ .size = sizeof(k), .buf = &k, .argtype = 0 },
+		{ .size = sizeof(alpha), .buf = (void *)&alpha, .argtype = 0 },
+		{ .size = sizeof(a), .buf = a, .argtype = 0 },
+		{ .size = sizeof(k), .buf = &k, .argtype = 0 },
+		{ .size = sizeof(b), .buf = b, .argtype = 0 },
+		{ .size = sizeof(n), .buf = &n, .argtype = 0 },
+		{ .size = sizeof(beta), .buf = (void *)&beta, .argtype = 0 },
+		{ .size = sizeof(n), .buf = &n, .argtype = 0 },
 	};
 	struct vaccel_arg write[] = {
-		{ .size = sizeof(c), .buf = c },
+		{ .size = sizeof(c), .buf = c, .argtype = 0 },
 	};
 
 	const int iter = (argc > 1) ? atoi(argv[1]) : 1;

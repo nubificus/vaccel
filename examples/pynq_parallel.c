@@ -17,8 +17,8 @@ int main(int argc, char *argv[])
 
 	float a[N] = { 1, 2, 3, 4 };
 	float b[N] = { 2, 3, 4, 5 };
-	float c[N];
-	float d[N];
+	float c[N] = { 0, 0, 0, 0 };
+	float d[N] = { 0, 0, 0, 0 };
 	const size_t array_len = (size_t)N;
 
 	if (argc > 2) {

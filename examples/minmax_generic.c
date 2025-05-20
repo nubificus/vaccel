@@ -3,12 +3,13 @@
 #include "vaccel.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 int main(int argc, char *argv[])
 {
 	int ret;
-	double min;
-	double max;
+	double min = 0;
+	double max = 0;
 	int low_threshold;
 	int high_threshold;
 	struct vaccel_prof_region minmax_stats =
@@ -54,6 +55,7 @@ int main(int argc, char *argv[])
 		ret = VACCEL_ENOMEM;
 		goto free_out;
 	}
+	memset(outdata, 0, ndata * sizeof(double));
 
 	low_threshold = atoi(argv[3]);
 	high_threshold = atoi(argv[4]);
@@ -67,16 +69,18 @@ int main(int argc, char *argv[])
 
 	vaccel_op_type_t op_type = VACCEL_OP_MINMAX;
 	struct vaccel_arg read[] = {
-		{ .size = sizeof(vaccel_op_type_t), .buf = &op_type },
-		{ .size = ndata * sizeof(double), .buf = indata },
-		{ .size = sizeof(int), .buf = &ndata },
-		{ .size = sizeof(int), .buf = &low_threshold },
-		{ .size = sizeof(int), .buf = &high_threshold },
+		{ .size = sizeof(vaccel_op_type_t),
+		  .buf = &op_type,
+		  .argtype = 0 },
+		{ .size = ndata * sizeof(double), .buf = indata, .argtype = 0 },
+		{ .size = sizeof(int), .buf = &ndata, .argtype = 0 },
+		{ .size = sizeof(int), .buf = &low_threshold, .argtype = 0 },
+		{ .size = sizeof(int), .buf = &high_threshold, .argtype = 0 },
 	};
 	struct vaccel_arg write[] = {
-		{ .size = sizeof(double) * ndata, .buf = outdata },
-		{ .size = sizeof(double), .buf = &min },
-		{ .size = sizeof(double), .buf = &max },
+		{ .size = sizeof(double) * ndata, .buf = outdata, .argtype = 0 },
+		{ .size = sizeof(double), .buf = &min, .argtype = 0 },
+		{ .size = sizeof(double), .buf = &max, .argtype = 0 },
 	};
 
 	const int iter = (argc > 5) ? atoi(argv[5]) : 1;
