@@ -34,13 +34,13 @@ int main(int argc, char **argv)
 
 	vaccel_op_type_t op_type = VACCEL_OP_EXEC;
 	struct vaccel_arg read[] = {
-		{ .size = sizeof(uint8_t), .buf = &op_type },
-		{ .size = strlen(argv[1]) + 1, .buf = argv[1] },
-		{ .size = strlen(func) + 1, .buf = func },
-		{ .size = sizeof(input), .buf = (void *)&input }
+		{ .size = sizeof(uint8_t), .buf = &op_type, .argtype = 0 },
+		{ .size = strlen(argv[1]) + 1, .buf = argv[1], .argtype = 0 },
+		{ .size = strlen(func) + 1, .buf = func, .argtype = 0 },
+		{ .size = sizeof(input), .buf = (void *)&input, .argtype = 0 }
 	};
 	struct vaccel_arg write[] = {
-		{ .size = sizeof(output), .buf = &output },
+		{ .size = sizeof(output), .buf = &output, .argtype = 0 },
 	};
 
 	const int iter = (argc > 2) ? atoi(argv[2]) : 1;

@@ -13,7 +13,7 @@ int main(int argc, char *argv[])
 {
 	int ret;
 	int input = INPUT_VAL;
-	int output;
+	int output = 0;
 	struct vaccel_session virtio_sess;
 	struct vaccel_session local_sess;
 	struct vaccel_session *sess;
