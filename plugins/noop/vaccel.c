@@ -83,7 +83,7 @@ static int noop_image_classify(struct vaccel_session *sess, const void *img,
 	}
 
 	noop_debug("Dumping arguments for Image classification:");
-	noop_debug("model: %s", (model) ? model->files[0]->path : NULL);
+	noop_debug("model: %s", (model) ? model->blobs[0]->path : NULL);
 	noop_debug("len_img: %zu", len_img);
 	noop_debug("len_out_text: %zu", len_out_text);
 	if (len_out_imgname)
@@ -127,7 +127,7 @@ static int noop_image_detect(struct vaccel_session *sess, const void *img,
 	}
 
 	noop_debug("Dumping arguments for Image detection:");
-	noop_debug("model: %s", (model) ? model->files[0]->path : NULL);
+	noop_debug("model: %s", (model) ? model->blobs[0]->path : NULL);
 	noop_debug("len_img: %zu", len_img);
 	if (len_out_imgname)
 		noop_debug("len_out_imgname: %zu", len_out_imgname);
@@ -164,7 +164,7 @@ static int noop_image_segment(struct vaccel_session *sess, const void *img,
 	}
 
 	noop_debug("Dumping arguments for Image segmentation:");
-	noop_debug("model: %s", (model) ? model->files[0]->path : NULL);
+	noop_debug("model: %s", (model) ? model->blobs[0]->path : NULL);
 	noop_debug("len_img: %zu", len_img);
 	if (len_out_imgname)
 		noop_debug("len_out_imgname: %zu", len_out_imgname);
@@ -200,7 +200,7 @@ static int noop_image_pose(struct vaccel_session *sess, const void *img,
 	}
 
 	noop_debug("Dumping arguments for Image pose:");
-	noop_debug("model: %s", (model) ? model->files[0]->path : NULL);
+	noop_debug("model: %s", (model) ? model->blobs[0]->path : NULL);
 	noop_debug("len_img: %zu", len_img);
 	if (len_out_imgname)
 		noop_debug("len_out_imgname: %zu", len_out_imgname);
@@ -236,7 +236,7 @@ static int noop_image_depth(struct vaccel_session *sess, const void *img,
 	}
 
 	noop_debug("Dumping arguments for Image depth:");
-	noop_debug("model: %s", (model) ? model->files[0]->path : NULL);
+	noop_debug("model: %s", (model) ? model->blobs[0]->path : NULL);
 	noop_debug("len_img: %zu", len_img);
 	if (len_out_imgname)
 		noop_debug("len_out_imgname: %zu", len_out_imgname);

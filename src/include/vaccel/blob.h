@@ -47,6 +47,8 @@ struct vaccel_blob {
 	size_t size;
 };
 
+typedef struct vaccel_blob vaccel_blob;
+
 int vaccel_blob_persist(struct vaccel_blob *blob, const char *dir,
 			const char *filename, bool randomize);
 int vaccel_blob_init(struct vaccel_blob *blob, const char *path);
