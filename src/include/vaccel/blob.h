@@ -2,11 +2,10 @@
 
 #pragma once
 
+#include "utils/enum.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#include "utils/enum.h"
-#include "utils/path.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -18,7 +17,7 @@ extern "C" {
 #define VACCEL_BLOB_TYPE_ENUM_LIST(VACCEL_ENUM_ITEM) \
 	VACCEL_ENUM_ITEM(NONE, 0, _ENUM_PREFIX)      \
 	VACCEL_ENUM_ITEM(FILE, _ENUM_PREFIX)         \
-	VACCEL_ENUM_ITEM(BUF, _ENUM_PREFIX)          \
+	VACCEL_ENUM_ITEM(BUFFER, _ENUM_PREFIX)       \
 	VACCEL_ENUM_ITEM(MAPPED, _ENUM_PREFIX)
 
 VACCEL_ENUM_DEF_WITH_STR_FUNCS(vaccel_blob_type, _ENUM_PREFIX,
