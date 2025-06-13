@@ -151,7 +151,7 @@ TEST_CASE("blob_from_buffer", "[core][blob]")
 	REQUIRE(blob.data != nullptr);
 	REQUIRE(blob.size == len);
 	REQUIRE(blob.type == VACCEL_BLOB_MAPPED);
-	REQUIRE_FALSE(blob.data_owned);
+	REQUIRE(blob.data_owned);
 
 	blobs[0] = &blob;
 
@@ -166,7 +166,7 @@ TEST_CASE("blob_from_buffer", "[core][blob]")
 		REQUIRE(alloc_blob->data != nullptr);
 		REQUIRE(alloc_blob->size == len);
 		REQUIRE(alloc_blob->type == VACCEL_BLOB_MAPPED);
-		REQUIRE_FALSE(alloc_blob->data_owned);
+		REQUIRE(alloc_blob->data_owned);
 
 		for (size_t i = 0; i < len; i++)
 			REQUIRE(alloc_blob->data[i] == buf[i]);
@@ -186,7 +186,7 @@ TEST_CASE("blob_from_buffer", "[core][blob]")
 		REQUIRE(alloc_blob->data != nullptr);
 		REQUIRE(alloc_blob->size == len);
 		REQUIRE(alloc_blob->type == VACCEL_BLOB_MAPPED);
-		REQUIRE_FALSE(alloc_blob->data_owned);
+		REQUIRE(alloc_blob->data_owned);
 
 		for (size_t i = 0; i < len; i++)
 			REQUIRE(alloc_blob->data[i] == buf[i]);
@@ -205,7 +205,7 @@ TEST_CASE("blob_from_buffer", "[core][blob]")
 		REQUIRE(alloc_blob->path_owned == false);
 		REQUIRE(alloc_blob->data != nullptr);
 		REQUIRE(alloc_blob->size == len);
-		REQUIRE(alloc_blob->type == VACCEL_BLOB_BUF);
+		REQUIRE(alloc_blob->type == VACCEL_BLOB_BUFFER);
 		REQUIRE_FALSE(alloc_blob->data_owned);
 
 		for (size_t i = 0; i < len; i++)
@@ -224,7 +224,7 @@ TEST_CASE("blob_from_buffer", "[core][blob]")
 	REQUIRE(alloc_blob->data != nullptr);
 	REQUIRE(alloc_blob->size == len);
 	REQUIRE(alloc_blob->type == VACCEL_BLOB_MAPPED);
-	REQUIRE_FALSE(alloc_blob->data_owned);
+	REQUIRE(alloc_blob->data_owned);
 
 	blobs[1] = alloc_blob;
 
@@ -510,7 +510,7 @@ TEST_CASE("blob_from_buffer_owned_data", "[core][blob]")
 	REQUIRE(blob.data != buf);
 	REQUIRE(blob.size == len);
 	REQUIRE(blob.type == VACCEL_BLOB_MAPPED);
-	REQUIRE_FALSE(blob.data_owned);
+	REQUIRE(blob.data_owned);
 
 	blobs[0] = &blob;
 
@@ -526,7 +526,7 @@ TEST_CASE("blob_from_buffer_owned_data", "[core][blob]")
 		REQUIRE(alloc_blob->data != buf);
 		REQUIRE(alloc_blob->size == len);
 		REQUIRE(alloc_blob->type == VACCEL_BLOB_MAPPED);
-		REQUIRE_FALSE(alloc_blob->data_owned);
+		REQUIRE(alloc_blob->data_owned);
 
 		for (size_t i = 0; i < len; i++)
 			REQUIRE(alloc_blob->data[i] == buf[i]);
@@ -547,7 +547,7 @@ TEST_CASE("blob_from_buffer_owned_data", "[core][blob]")
 		REQUIRE(alloc_blob->data != buf);
 		REQUIRE(alloc_blob->size == len);
 		REQUIRE(alloc_blob->type == VACCEL_BLOB_MAPPED);
-		REQUIRE_FALSE(alloc_blob->data_owned);
+		REQUIRE(alloc_blob->data_owned);
 
 		for (size_t i = 0; i < len; i++)
 			REQUIRE(alloc_blob->data[i] == buf[i]);
@@ -566,7 +566,7 @@ TEST_CASE("blob_from_buffer_owned_data", "[core][blob]")
 		REQUIRE(alloc_blob->data != nullptr);
 		REQUIRE(alloc_blob->data != buf);
 		REQUIRE(alloc_blob->size == len);
-		REQUIRE(alloc_blob->type == VACCEL_BLOB_BUF);
+		REQUIRE(alloc_blob->type == VACCEL_BLOB_BUFFER);
 		REQUIRE(alloc_blob->data_owned);
 
 		for (size_t i = 0; i < len; i++)
@@ -576,7 +576,7 @@ TEST_CASE("blob_from_buffer_owned_data", "[core][blob]")
 					  alloc_file_name, false);
 		REQUIRE(ret == VACCEL_OK);
 		REQUIRE(alloc_blob->type == VACCEL_BLOB_MAPPED);
-		REQUIRE_FALSE(alloc_blob->data_owned);
+		REQUIRE(alloc_blob->data_owned);
 
 		ret = vaccel_blob_delete(alloc_blob);
 		REQUIRE(ret == VACCEL_OK);
@@ -593,7 +593,7 @@ TEST_CASE("blob_from_buffer_owned_data", "[core][blob]")
 		REQUIRE(alloc_blob->data != nullptr);
 		REQUIRE(alloc_blob->data != buf);
 		REQUIRE(alloc_blob->size == len);
-		REQUIRE(alloc_blob->type == VACCEL_BLOB_BUF);
+		REQUIRE(alloc_blob->type == VACCEL_BLOB_BUFFER);
 		REQUIRE(alloc_blob->data_owned);
 
 		for (size_t i = 0; i < len; i++)
@@ -613,7 +613,7 @@ TEST_CASE("blob_from_buffer_owned_data", "[core][blob]")
 	REQUIRE(alloc_blob->data != buf);
 	REQUIRE(alloc_blob->size == len);
 	REQUIRE(alloc_blob->type == VACCEL_BLOB_MAPPED);
-	REQUIRE_FALSE(alloc_blob->data_owned);
+	REQUIRE(alloc_blob->data_owned);
 
 	blobs[1] = alloc_blob;
 

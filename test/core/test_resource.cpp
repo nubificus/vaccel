@@ -670,7 +670,7 @@ TEST_CASE("resource_from_buffer", "[core][resource]")
 	REQUIRE(res.blobs[0]->data);
 	REQUIRE(res.blobs[0]->data != buff);
 	REQUIRE(res.blobs[0]->size == len);
-	REQUIRE_FALSE(res.blobs[0]->data_owned);
+	REQUIRE(res.blobs[0]->data_owned);
 	REQUIRE(res.blobs[0]->path_owned);
 	REQUIRE(res.rundir);
 	REQUIRE(res.paths == nullptr);
@@ -695,7 +695,7 @@ TEST_CASE("resource_from_buffer", "[core][resource]")
 	REQUIRE(alloc_res->blobs[0]->data);
 	REQUIRE(alloc_res->blobs[0]->data != buff);
 	REQUIRE(alloc_res->blobs[0]->size == len);
-	REQUIRE_FALSE(alloc_res->blobs[0]->data_owned);
+	REQUIRE(alloc_res->blobs[0]->data_owned);
 	REQUIRE(alloc_res->blobs[0]->path_owned);
 	REQUIRE(alloc_res->rundir);
 	REQUIRE(alloc_res->paths == nullptr);
@@ -760,8 +760,10 @@ TEST_CASE("resource_from_blobs_mem_only", "[core][resource]")
 			 "examples/models/tf/lstm2/variables/variables.index");
 
 	/* Read blob */
-	size_t len1, len2;
-	unsigned char *buff1, *buff2;
+	size_t len1;
+	size_t len2;
+	unsigned char *buff1;
+	unsigned char *buff2;
 	ret = fs_file_read(path1, (void **)&buff1, &len1);
 	REQUIRE(ret == VACCEL_OK);
 
@@ -772,7 +774,7 @@ TEST_CASE("resource_from_blobs_mem_only", "[core][resource]")
 	ret = vaccel_blob_init_from_buf(&b1, buff1, len1, true, "buf", nullptr,
 					true);
 	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(b1.type == VACCEL_BLOB_BUF);
+	REQUIRE(b1.type == VACCEL_BLOB_BUFFER);
 	REQUIRE(b1.data_owned);
 	REQUIRE_FALSE(b1.path_owned);
 	REQUIRE(b1.data);
@@ -781,7 +783,7 @@ TEST_CASE("resource_from_blobs_mem_only", "[core][resource]")
 	ret = vaccel_blob_init_from_buf(&b2, buff2, len2, true, "buf", nullptr,
 					true);
 	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(b2.type == VACCEL_BLOB_BUF);
+	REQUIRE(b2.type == VACCEL_BLOB_BUFFER);
 	REQUIRE(b2.data_owned);
 	REQUIRE_FALSE(b2.path_owned);
 	REQUIRE(b2.data);
@@ -807,10 +809,10 @@ TEST_CASE("resource_from_blobs_mem_only", "[core][resource]")
 	REQUIRE(res.refcount == 0);
 	for (size_t i = 0; i != res.nr_blobs; ++i) {
 		REQUIRE(res.blobs[i]);
-		REQUIRE(res.blobs[i]->type == VACCEL_BLOB_BUF);
+		REQUIRE(res.blobs[i]->type == VACCEL_BLOB_BUFFER);
 		REQUIRE(res.blobs[i]->path == nullptr);
 		REQUIRE_FALSE(res.blobs[i]->path_owned);
-		REQUIRE(res.blobs[i]->data_owned);
+		REQUIRE_FALSE(res.blobs[i]->data_owned);
 		REQUIRE(res.blobs[i]->data);
 		REQUIRE(res.blobs[i]->size);
 	}
@@ -841,10 +843,10 @@ TEST_CASE("resource_from_blobs_mem_only", "[core][resource]")
 	REQUIRE_FALSE(list_empty(&res.entry));
 	for (size_t i = 0; i != res.nr_blobs; ++i) {
 		REQUIRE(res.blobs[i]);
-		REQUIRE(res.blobs[i]->type == VACCEL_BLOB_BUF);
+		REQUIRE(res.blobs[i]->type == VACCEL_BLOB_BUFFER);
 		REQUIRE(res.blobs[i]->path == nullptr);
 		REQUIRE_FALSE(res.blobs[i]->path_owned);
-		REQUIRE(res.blobs[i]->data_owned);
+		REQUIRE_FALSE(res.blobs[i]->data_owned);
 		REQUIRE(res.blobs[i]->data);
 		REQUIRE(res.blobs[i]->size);
 	}
@@ -950,7 +952,7 @@ TEST_CASE("resource_from_blobs", "[core][resource]")
 		REQUIRE(res.blobs[i]->type == VACCEL_BLOB_MAPPED);
 		REQUIRE(res.blobs[i]->path);
 		REQUIRE(res.blobs[i]->path_owned);
-		REQUIRE_FALSE(res.blobs[i]->data_owned);
+		REQUIRE(res.blobs[i]->data_owned);
 		REQUIRE(res.blobs[i]->data);
 		REQUIRE(res.blobs[i]->size);
 	}
@@ -977,7 +979,7 @@ TEST_CASE("resource_from_blobs", "[core][resource]")
 		REQUIRE(alloc_res->blobs[i]->type == VACCEL_BLOB_MAPPED);
 		REQUIRE(alloc_res->blobs[i]->path);
 		REQUIRE(alloc_res->blobs[i]->path_owned);
-		REQUIRE_FALSE(alloc_res->blobs[i]->data_owned);
+		REQUIRE(alloc_res->blobs[i]->data_owned);
 		REQUIRE(alloc_res->blobs[i]->data);
 		REQUIRE(alloc_res->blobs[i]->size);
 	}
@@ -1558,7 +1560,7 @@ TEST_CASE("memory_only_resource", "[core][resource]")
 	REQUIRE(res.nr_paths == 0);
 	REQUIRE(res.blobs);
 	REQUIRE(res.blobs[0]);
-	REQUIRE(res.blobs[0]->type == VACCEL_BLOB_BUF);
+	REQUIRE(res.blobs[0]->type == VACCEL_BLOB_BUFFER);
 	REQUIRE(res.blobs[0]->data);
 	REQUIRE(res.blobs[0]->data == buff);
 	REQUIRE(res.blobs[0]->size == len);
@@ -1584,7 +1586,7 @@ TEST_CASE("memory_only_resource", "[core][resource]")
 	REQUIRE(alloc_res->nr_paths == 0);
 	REQUIRE(alloc_res->blobs);
 	REQUIRE(alloc_res->blobs[0]);
-	REQUIRE(alloc_res->blobs[0]->type == VACCEL_BLOB_BUF);
+	REQUIRE(alloc_res->blobs[0]->type == VACCEL_BLOB_BUFFER);
 	REQUIRE(alloc_res->blobs[0]->data);
 	REQUIRE(alloc_res->blobs[0]->data == buff);
 	REQUIRE(alloc_res->blobs[0]->size == len);
@@ -1610,7 +1612,7 @@ TEST_CASE("memory_only_resource", "[core][resource]")
 		REQUIRE(resource->nr_paths == 0);
 		REQUIRE(resource->blobs);
 		REQUIRE(resource->blobs[0]);
-		REQUIRE(resource->blobs[0]->type == VACCEL_BLOB_BUF);
+		REQUIRE(resource->blobs[0]->type == VACCEL_BLOB_BUFFER);
 		REQUIRE(resource->blobs[0]->data);
 		REQUIRE(resource->blobs[0]->data == buff);
 		REQUIRE(resource->blobs[0]->size == len);
@@ -1688,7 +1690,7 @@ TEST_CASE("memory_only_resource_virtio", "[core][resource]")
 	REQUIRE(res.nr_paths == 0);
 	REQUIRE(res.blobs);
 	REQUIRE(res.blobs[0]);
-	REQUIRE(res.blobs[0]->type == VACCEL_BLOB_BUF);
+	REQUIRE(res.blobs[0]->type == VACCEL_BLOB_BUFFER);
 	REQUIRE(res.blobs[0]->data);
 	REQUIRE(res.blobs[0]->data == buff);
 	REQUIRE(res.blobs[0]->size == len);
@@ -1711,7 +1713,7 @@ TEST_CASE("memory_only_resource_virtio", "[core][resource]")
 	REQUIRE(res.nr_paths == 0);
 	REQUIRE(res.blobs);
 	REQUIRE(res.blobs[0]);
-	REQUIRE(res.blobs[0]->type == VACCEL_BLOB_BUF);
+	REQUIRE(res.blobs[0]->type == VACCEL_BLOB_BUFFER);
 	REQUIRE(res.blobs[0]->data);
 	REQUIRE(res.blobs[0]->data == buff);
 	REQUIRE(res.blobs[0]->size == len);
