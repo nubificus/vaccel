@@ -4,6 +4,7 @@
 #define _DEFAULT_SOURCE
 
 #include "resource.h"
+#include "blob.h"
 #include "core.h"
 #include "error.h"
 #include "id_pool.h"
@@ -11,7 +12,6 @@
 #include "log.h"
 #include "plugin.h"
 #include "session.h"
-#include "blob.h"
 #include "utils/fs.h"
 #include "utils/net.h"
 #include "utils/path.h"
@@ -704,7 +704,7 @@ int vaccel_resource_init_from_buf(struct vaccel_resource *res, const void *buf,
 delete_blob:
 	delete_blobs(res->blobs, res->nr_blobs);
 cleanup_rundir:
-	if (!mem_only)
+	if (res->rundir)
 		resource_destroy_rundir(res);
 free_blobs:
 	free(res->blobs);
@@ -732,14 +732,10 @@ int vaccel_resource_init_from_blobs(struct vaccel_resource *res,
 	/* Confirm input blobs are valid */
 	ret = VACCEL_EINVAL;
 	for (size_t i = 0; i != nr_blobs; i++) {
-		if (!blobs[i])
-			goto empty_attributes;
-		if (blobs[i]->type == VACCEL_BLOB_NONE)
-			goto empty_attributes;
-		if (!blobs[i]->size || !blobs[i]->data || !blobs[i]->name)
+		if (!blobs[i] || blobs[i]->type >= VACCEL_BLOB_MAX ||
+		    !blobs[i]->size || !blobs[i]->data || !blobs[i]->name)
 			goto empty_attributes;
 	}
-	ret = VACCEL_OK;
 
 	get_resource_id(res);
 	if (res->id < 0)
@@ -758,7 +754,7 @@ int vaccel_resource_init_from_blobs(struct vaccel_resource *res,
 	/* Check if rundir should be created */
 	bool create_rundir = false;
 	for (size_t i = 0; i != nr_blobs; i++) {
-		if (blobs[i]->type != VACCEL_BLOB_BUF) {
+		if (blobs[i]->type != VACCEL_BLOB_BUFFER) {
 			create_rundir = true;
 			break;
 		}
@@ -772,12 +768,13 @@ int vaccel_resource_init_from_blobs(struct vaccel_resource *res,
 		res->rundir = NULL;
 	}
 
-	bool own = true;
+	bool randomize = false;
 	size_t nr_r_blobs = 0;
 	for (size_t i = 0; i < nr_blobs; i++) {
 		ret = vaccel_blob_from_buf(&res->blobs[i], blobs[i]->data,
-					   blobs[i]->size, own, blobs[i]->name,
-					   res->rundir, false);
+					   blobs[i]->size, blobs[i]->data_owned,
+					   blobs[i]->name, res->rundir,
+					   randomize);
 		if (ret) {
 			vaccel_error(
 				"Could not create vaccel_blob from buffer");

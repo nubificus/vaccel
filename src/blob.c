@@ -17,9 +17,9 @@
 #include <sys/mman.h>
 #include <unistd.h>
 
-/* Persist a file in the filesystem
+/* Persist a blob in the filesystem.
  *
- * For files that have been initialized from in-memory data, this
+ * For blobs that have been initialized from in-memory data, this
  * will persist them in the filesystem under the requested directory
  * using the provided filename.
  *
@@ -30,7 +30,7 @@ int vaccel_blob_persist(struct vaccel_blob *blob, const char *dir,
 			const char *filename, bool randomize)
 {
 	if (!blob || !blob->data || !blob->size ||
-	    blob->type == VACCEL_BLOB_NONE) {
+	    blob->type >= VACCEL_BLOB_MAX) {
 		vaccel_error("Invalid blob");
 		return VACCEL_EINVAL;
 	}
@@ -97,7 +97,7 @@ int vaccel_blob_persist(struct vaccel_blob *blob, const char *dir,
 		}
 	}
 
-	if (!blob->name || (blob->name && strcmp(blob->name, filename))) {
+	if (!blob->name || (blob->name && strcmp(blob->name, filename) != 0)) {
 		if (blob->name) {
 			free(blob->name);
 			blob->name = NULL;
@@ -148,11 +148,15 @@ int vaccel_blob_persist(struct vaccel_blob *blob, const char *dir,
 		blob->size = old_size;
 		goto free_name;
 	}
-	/* Free the allocated memory */
-	if (blob->type == VACCEL_BLOB_BUF && blob->data_owned)
+
+	/* If the blob data was owned, free the allocated memory */
+	if (blob->type == VACCEL_BLOB_BUFFER && blob->data_owned)
 		free(old_ptr);
-	blob->data_owned = false;
+
+	/* The file is mmap'ed to data so the relevant memory is always owned */
+	blob->data_owned = true;
 	blob->type = VACCEL_BLOB_MAPPED;
+
 	return VACCEL_OK;
 
 free_name:
@@ -168,9 +172,9 @@ remove_file:
 	return ret;
 }
 
-/* Initialize a file resource from an existing file in the filesystem
+/* Initialize a blob from an existing file in the filesystem.
  *
- * The path of the system will be copied.
+ * The file path will be copied and stored.
  */
 int vaccel_blob_init(struct vaccel_blob *blob, const char *path)
 {
@@ -202,14 +206,13 @@ int vaccel_blob_init(struct vaccel_blob *blob, const char *path)
 	return VACCEL_OK;
 }
 
-/* Initialize a file from in-memory data.
+/* Initialize a blob from in-memory data.
  *
- * This will set the data of the file and it will persist
- * them in the filesystem if the relevant dir is provided.
+ * This will set the data of the blob and persist them in a file in the
+ * filesystem if the relevant dir is provided.
  *
- * It does not take ownership of the data pointer, but the user is responsible
- * of making sure that the memory it points to outlives the `vaccel_file`
- * resource.
+ * If `own` is 'true' the data will not be owned and the user is responsible
+ * for ensuring the provided memory outlives the `vaccel_blob` instance.
  */
 int vaccel_blob_init_from_buf(struct vaccel_blob *blob, const uint8_t *buf,
 			      size_t size, bool own, const char *name,
@@ -224,60 +227,62 @@ int vaccel_blob_init_from_buf(struct vaccel_blob *blob, const uint8_t *buf,
 		return VACCEL_EINVAL;
 	}
 
+	blob->data = (uint8_t *)buf;
+	blob->data_owned = false;
 	blob->name = NULL;
 	blob->path = NULL;
 	blob->path_owned = false;
-	if (!own) {
-		blob->data = (uint8_t *)buf;
-	} else {
-		blob->data = (uint8_t *)malloc(size);
-		if (!blob->data)
-			return VACCEL_ENOMEM;
-		memcpy(blob->data, buf, size);
-	}
 	blob->size = size;
-	blob->data_owned = own;
-	blob->type = VACCEL_BLOB_BUF;
+	blob->type = VACCEL_BLOB_BUFFER;
 
-	blob->name = strdup(name);
-	if (!blob->name) {
-		ret = VACCEL_ENOMEM;
-		goto err;
-	}
+	if (!dir) {
+		if (own) {
+			blob->data = (uint8_t *)malloc(size);
+			if (!blob->data) {
+				ret = VACCEL_ENOMEM;
+				goto err;
+			}
+			memcpy(blob->data, buf, size);
+			blob->data_owned = own;
+		}
 
-	if (dir) {
-		ret = vaccel_blob_persist(blob, dir, name, randomize);
-		if (ret) {
-			free(blob->name);
+		blob->name = strdup(name);
+		if (!blob->name) {
+			ret = VACCEL_ENOMEM;
 			goto err;
 		}
+	} else {
+		ret = vaccel_blob_persist(blob, dir, name, randomize);
+		if (ret)
+			goto err;
 	}
 
 	return VACCEL_OK;
 err:
-	if (own)
+	if (blob->data_owned && blob->data)
 		free(blob->data);
 	blob->data = NULL;
-	blob->size = 0;
 	blob->data_owned = false;
-	blob->type = VACCEL_BLOB_NONE;
+	blob->size = 0;
+	blob->type = VACCEL_BLOB_MAX;
 	return ret;
 }
 
-/* Release blob resources
+/* Release blob resources.
  *
- * Releases any resources reserved for the file, If the file
- * has been persisted it will remove the file from the filesystem.
- * If the data of the file have been read in memory the memory
- * will be deallocated.
+ * Releases any resources reserved for the blob.
+ *
+ * If the blob has been persisted this will remove the file from the filesystem.
+ * If the data of the file have been read in memory, the memory will be
+ * deallocated.
  */
 int vaccel_blob_release(struct vaccel_blob *blob)
 {
 	if (!blob)
 		return VACCEL_EINVAL;
 
-	if (!vaccel_blob_initialized(blob)) {
-		vaccel_error("Cannot release uninitialized file");
+	if (blob->type >= VACCEL_BLOB_MAX) {
+		vaccel_error("Cannot release uninitialized blob");
 		return VACCEL_EINVAL;
 	}
 
@@ -285,48 +290,48 @@ int vaccel_blob_release(struct vaccel_blob *blob)
 		free(blob->name);
 	blob->name = NULL;
 
-	/* There is a path in the disk representing the file,
-	 * which means that if we hold a pointer to the contents
-	 * of the file, this has been mapped, so unmap it */
-	if (blob->type == VACCEL_BLOB_MAPPED && blob->data && blob->size) {
-		int ret = munmap(blob->data, blob->size);
-		if (ret) {
-			vaccel_error("Failed to unmap file %s (size=%d): %s",
-				     blob->path, blob->size, strerror(errno));
-			return ret;
+	if (blob->data && blob->size && blob->data_owned) {
+		if (blob->type == VACCEL_BLOB_MAPPED) {
+			int ret = munmap(blob->data, blob->size);
+			if (ret) {
+				vaccel_error(
+					"Failed to unmap file %s (size=%d): %s",
+					blob->path, blob->size,
+					strerror(errno));
+				return ret;
+			}
 		}
+
+		if (blob->type == VACCEL_BLOB_BUFFER)
+			free(blob->data);
 	}
-
-	if (blob->type == VACCEL_BLOB_BUF && blob->data_owned)
-		free(blob->data);
-
 	blob->data = NULL;
 	blob->size = 0;
 	blob->data_owned = false;
 
-	/* If we own the path to the file, just remove it from the
-	 * file system */
-	if (blob->type == VACCEL_BLOB_MAPPED && blob->path_owned) {
-		vaccel_debug("Removing file %s", blob->path);
-		if (fs_file_remove(blob->path))
-			vaccel_warn("Could not remove file %s", blob->path);
+	if (blob->path) {
+		/* If we own the path to the file, remove it from the
+		 * filesystem */
+		if (blob->path_owned) {
+			vaccel_debug("Removing file %s", blob->path);
+			if (fs_file_remove(blob->path))
+				vaccel_warn("Could not remove file %s",
+					    blob->path);
+		}
+		free(blob->path);
 	}
+	blob->path = NULL;
 	blob->path_owned = false;
 
-	if (blob->type != VACCEL_BLOB_BUF)
-		free(blob->path);
-
-	blob->path = NULL;
-	blob->type = VACCEL_BLOB_NONE;
+	blob->type = VACCEL_BLOB_MAX;
 
 	return VACCEL_OK;
 }
 
-/* Allocate and initialize a blob resource from an existing file in the
- * filesystem
+/* Allocate and initialize a blob from an existing file in the filesystem.
  *
  * This function will allocate a new blob struct before calling
- * vaccel_file_init(),
+ * `vaccel_blob_init()`.
  */
 int vaccel_blob_new(struct vaccel_blob **blob, const char *path)
 {
@@ -349,10 +354,10 @@ int vaccel_blob_new(struct vaccel_blob **blob, const char *path)
 	return VACCEL_OK;
 }
 
-/* Allocate and initialize a blob resource from in-memory data.
+/* Allocate and initialize a blob from in-memory data.
  *
  * This function will allocate a new blob struct before calling
- * vaccel_file_init_from_buf(),
+ * `vaccel_blob_init_from_buf()`.
  */
 int vaccel_blob_from_buf(struct vaccel_blob **blob, const uint8_t *buf,
 			 size_t size, bool own, const char *name,
@@ -378,10 +383,10 @@ int vaccel_blob_from_buf(struct vaccel_blob **blob, const uint8_t *buf,
 	return VACCEL_OK;
 }
 
-/* Release blob resources and free file object
+/* Release blob resources and free object.
  *
- * This function will cleanup and free file objects created with
- * vaccel_file_new() or vaccel_file_from_*() functions.
+ * This function will cleanup and free objects created with `vaccel_blob_new()`
+ * or `vaccel_blob_from_*()` functions.
  */
 int vaccel_blob_delete(struct vaccel_blob *blob)
 {
@@ -394,30 +399,13 @@ int vaccel_blob_delete(struct vaccel_blob *blob)
 	return VACCEL_OK;
 }
 
-/* Check if the blob has been initialized
+/* Read the blob in memory.
  *
- * A file is initialized either if a path to the file
- * has been set or data has been loaded from memory
- */
-bool vaccel_blob_initialized(struct vaccel_blob *blob)
-{
-	if (!blob || blob->type == VACCEL_BLOB_NONE)
-		return false;
-
-	return ((blob->type == VACCEL_BLOB_FILE && blob->path) ||
-		(blob->type == VACCEL_BLOB_BUF && blob->data && blob->size) ||
-		(blob->type == VACCEL_BLOB_MAPPED && blob->data && blob->size &&
-		 blob->path));
-}
-
-/* Read the blob in-memory
- *
- * This reads the content of the file in memory, if it has not
- * been read already.
+ * This reads the content of the file in memory if it has not already been read.
  */
 int vaccel_blob_read(struct vaccel_blob *blob)
 {
-	if (!blob || blob->type == VACCEL_BLOB_NONE)
+	if (!blob || blob->type >= VACCEL_BLOB_MAX)
 		return VACCEL_EINVAL;
 
 	if (blob->data)
@@ -433,14 +421,14 @@ int vaccel_blob_read(struct vaccel_blob *blob)
 	return ret;
 }
 
-/* Get a pointer to the data of the file
+/* Get the data of the blob.
  *
- * If the data have not been loaded to memory, this will
- * do so, through a call to `vaccel_file_read`.
+ * If the data have not been loaded to memory, this will do so through a call to
+ * `vaccel_file_read()`.
  */
 uint8_t *vaccel_blob_data(struct vaccel_blob *blob, size_t *size)
 {
-	if (!blob || blob->type == VACCEL_BLOB_NONE)
+	if (!blob || blob->type >= VACCEL_BLOB_MAX)
 		return NULL;
 
 	/* Make sure the data has been read in memory */
@@ -454,11 +442,12 @@ uint8_t *vaccel_blob_data(struct vaccel_blob *blob, size_t *size)
 	return blob->data;
 }
 
-/* Get the path of the blob
+/* Get the path of the blob.
  *
- * If the file is owned this will be the path of the file that
- * was created when persisted. Otherwise, it will be the path of
- * the file from which the vaccel_file was created
+ * If the file is owned this will be the path of the file that was created when
+ * persisted. Otherwise, it will be the path of the file from which the
+ * `vaccel_blob` was created.
+ * If the blob is not backed by a file, `NULL` will be returned.
  */
 const char *vaccel_blob_path(struct vaccel_blob *blob)
 {
