@@ -348,7 +348,13 @@ int vaccel_session_release(struct vaccel_session *sess)
 		return VACCEL_EINVAL;
 	}
 
-	/* if we're using virtio as a plugin offload the session cleanup to the
+	ret = session_cleanup_resources(sess);
+	if (ret) {
+		vaccel_error("Could not cleanup session resources");
+		return ret;
+	}
+
+	/* If we're using virtio as a plugin, offload the session cleanup to the
 	 * host */
 	if (sess->is_virtio) {
 		struct vaccel_plugin *virtio = plugin_virtio();
@@ -363,12 +369,6 @@ int vaccel_session_release(struct vaccel_session *sess)
 				"Could not release VirtIO session, no VirtIO Plugin loaded yet");
 			return VACCEL_ENOTSUP;
 		}
-	}
-
-	ret = session_cleanup_resources(sess);
-	if (ret) {
-		vaccel_error("Could not cleanup session resources");
-		return ret;
 	}
 
 	sessions.all[sess->id - 1] = NULL;
