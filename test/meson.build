@@ -33,12 +33,19 @@ tests_args = [
 tests_env = environment()
 tests_env.set('VACCEL_LOG_LEVEL', '4')
 tests_env.set('VACCEL_PLUGINS','')
-tests_env.set('VACCEL_EXEC_DLCLOSE', '1')
+tests_env.set('VACCEL_EXEC_DLCLOSE_ENABLED', '1')
+
+tests_env_core = tests_env
+tests_env_core.set('VACCEL_BOOTSTRAP_ENABLED', '0')
+tests_env_core.set('VACCEL_CLEANUP_ENABLED', '0')
 
 tests_env_noop = tests_env
 tests_env_noop.set('VACCEL_PLUGINS', libvaccel_noop.full_path())
+
 tests_env_exec = tests_env
 tests_env_exec.set('VACCEL_PLUGINS', libvaccel_exec.full_path())
+tests_env_exec_lazy = tests_env_exec
+tests_env_exec_lazy.set('VACCEL_EXEC_DLOPEN_MODE', 'lazy')
 
 libtests_main = library('tests-main',
   ['main.cpp', 'utils.cpp', utils_hpp, 'mock_virtio.cpp', 'mock_virtio.hpp'],
@@ -58,9 +65,6 @@ foreach t : tests_core_sources + tests_utils_sources
     install : false)
 
   if name == 'test_core'
-    tests_env_core = tests_env
-    tests_env_core.set('VACCEL_BOOTSTRAP_ENABLED', '0')
-    tests_env_core.set('VACCEL_CLEANUP_ENABLED', '0')
     test(name, exe,
       args : tests_args,
       env : tests_env_core,
@@ -99,6 +103,11 @@ foreach t : tests_ops_sources
     test(name + '+exec', exe,
       args : tests_args,
       env : tests_env_exec,
+      is_parallel : false)
+
+    test(name + '+exec+lazy', exe,
+      args : tests_args,
+      env : tests_env_exec_lazy,
       is_parallel : false)
   endif
 endforeach
