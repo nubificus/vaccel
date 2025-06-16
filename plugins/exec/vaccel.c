@@ -5,9 +5,15 @@
 #include "vaccel.h"
 #include <dlfcn.h>
 #include <inttypes.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
+
+#define DLOPEN_MODE_ENV "VACCEL_EXEC_DLOPEN_MODE"
+#define DLCLOSE_ENABLED_ENV "VACCEL_EXEC_DLCLOSE_ENABLED"
+#define DLCLOSE_ENABLED_OLD_ENV "VACCEL_EXEC_DLCLOSE"
 
 #define exec_debug(fmt, ...) vaccel_debug("[exec] " fmt, ##__VA_ARGS__)
 #define exec_error(fmt, ...) vaccel_error("[exec] " fmt, ##__VA_ARGS__)
@@ -16,6 +22,34 @@
 	vaccel_debug("[exec_with_resource] " fmt, ##__VA_ARGS__)
 #define exec_res_error(fmt, ...) \
 	vaccel_error("[exec_with_resource] " fmt, ##__VA_ARGS__)
+
+static int get_dlopen_mode(void)
+{
+	const char *mode_env = getenv(DLOPEN_MODE_ENV);
+
+	if (mode_env && strcasecmp(mode_env, "lazy") == 0)
+		return RTLD_LAZY;
+	return RTLD_NOW;
+}
+
+static bool get_dlclose_enabled(void)
+{
+	const char *close_env = getenv(DLCLOSE_ENABLED_ENV);
+	const char *close_old_env = getenv(DLCLOSE_ENABLED_OLD_ENV);
+	const char *dlclose_enabled_env = close_env;
+
+	if (close_old_env && !close_env) {
+		vaccel_warn("%s is deprecated. Use %s instead.\n",
+			    DLCLOSE_ENABLED_OLD_ENV, DLCLOSE_ENABLED_ENV);
+		dlclose_enabled_env = close_old_env;
+	}
+
+	if (dlclose_enabled_env &&
+	    (strcmp(dlclose_enabled_env, "1") == 0 ||
+	     strcasecmp(dlclose_enabled_env, "true") == 0))
+		return true;
+	return false;
+}
 
 static int noop(struct vaccel_session *session)
 {
@@ -33,7 +67,7 @@ static int exec(struct vaccel_session *session, const char *library,
 
 	/* Load main library */
 	exec_debug("Library: %s", library);
-	void *dl = dlopen(library, RTLD_NOW);
+	void *dl = dlopen(library, get_dlopen_mode());
 	if (!dl) {
 		exec_error("dlopen: %s", dlerror());
 		return VACCEL_EINVAL;
@@ -65,9 +99,7 @@ static int exec(struct vaccel_session *session, const char *library,
 		return VACCEL_ENOEXEC;
 
 	/* Unload libraries if chosen */
-	char *do_dlclose = getenv("VACCEL_EXEC_DLCLOSE");
-	if (do_dlclose &&
-	    (strcmp(do_dlclose, "1") == 0 || strcmp(do_dlclose, "true") == 0)) {
+	if (get_dlclose_enabled()) {
 		if (dlclose(dl)) {
 			exec_error("dlclose: %s", dlerror());
 			return VACCEL_EINVAL;
@@ -99,12 +131,13 @@ static int exec_with_resource(struct vaccel_session *session,
 		return VACCEL_ENOMEM;
 
 	/* Load dependency libraries if any */
+	int dlopen_mode = get_dlopen_mode();
 	size_t nr_deps = resource->nr_files - 1;
 	for (size_t i = 0; i < nr_deps; i++) {
 		char *dep_library = resource->files[i]->path;
-		dl[i] = dlopen(dep_library, RTLD_NOW | RTLD_GLOBAL);
+		dl[i] = dlopen(dep_library, dlopen_mode | RTLD_GLOBAL);
 		if (!dl[i]) {
-			exec_res_error("dlopen: %s", dep_library, dlerror());
+			exec_res_error("dlopen %s: %s", dep_library, dlerror());
 			ret = VACCEL_EINVAL;
 			goto free;
 		}
@@ -113,10 +146,10 @@ static int exec_with_resource(struct vaccel_session *session,
 	/* Load main library */
 	char *library = resource->files[nr_deps]->path;
 	exec_res_debug("Library: %s", library);
-	dl[nr_deps] = dlopen(library, RTLD_NOW);
+	dl[nr_deps] = dlopen(library, dlopen_mode);
 	void *ldl = dl[nr_deps];
 	if (!ldl) {
-		exec_res_error("dlopen: %s", library, dlerror());
+		exec_res_error("dlopen %s: %s", library, dlerror());
 		ret = VACCEL_EINVAL;
 		goto free;
 	}
@@ -126,7 +159,7 @@ static int exec_with_resource(struct vaccel_session *session,
 	int (*fptr)(void *, size_t, void *, size_t) =
 		(int (*)(void *, size_t, void *, size_t))dlsym(ldl, fn_symbol);
 	if (!fptr) {
-		exec_res_error("%s", dlerror());
+		exec_res_error("dlsym: %s", dlerror());
 		ret = VACCEL_EINVAL;
 		goto free;
 	}
@@ -146,12 +179,12 @@ static int exec_with_resource(struct vaccel_session *session,
 	ret = (*fptr)(read, nr_read, write, nr_write);
 
 	/* Unload libraries if chosen */
-	char *do_dlclose = getenv("VACCEL_EXEC_DLCLOSE");
-	if (do_dlclose &&
-	    (strcmp(do_dlclose, "1") == 0 || strcmp(do_dlclose, "true") == 0)) {
+	if (get_dlclose_enabled()) {
 		for (size_t i = resource->nr_files; i > 0; i--) {
+			char *dep_library = resource->files[i - 1]->path;
 			if (dlclose(dl[i - 1])) {
-				exec_res_error("dlclose: %s", dlerror());
+				exec_res_error("dlclose %s: %s", dep_library,
+					       dlerror());
 				ret = VACCEL_EINVAL;
 				goto free;
 			}

@@ -132,7 +132,7 @@ eval "${WRAPPER_CMD}" "${EXAMPLES_DIR}/mbench 1" \
 set +x
 
 export VACCEL_PLUGINS="${EXEC_DIR}/libvaccel-exec.so"
-export VACCEL_EXEC_DLCLOSE=1
+export VACCEL_EXEC_DLCLOSE_ENABLED=1
 printf "\n$(tput setaf 2)%s$(tput sgr0)\n" \
 	"Run examples with plugin '${VACCEL_PLUGINS}'"
 set -x
