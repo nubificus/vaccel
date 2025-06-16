@@ -217,6 +217,9 @@ static int do_cleanup(void)
 
 int vaccel_cleanup(void)
 {
+	if (!vaccel.initialized)
+		return VACCEL_OK;
+
 	int ret = do_cleanup();
 	if (ret)
 		return ret;
