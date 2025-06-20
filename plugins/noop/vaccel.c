@@ -83,7 +83,7 @@ static int noop_image_classify(struct vaccel_session *sess, const void *img,
 	}
 
 	noop_debug("Dumping arguments for Image classification:");
-	noop_debug("model: %s", (model) ? model->files[0]->path : NULL);
+	noop_debug("model: %s", (model) ? model->blobs[0]->path : NULL);
 	noop_debug("len_img: %zu", len_img);
 	noop_debug("len_out_text: %zu", len_out_text);
 	if (len_out_imgname)
@@ -127,7 +127,7 @@ static int noop_image_detect(struct vaccel_session *sess, const void *img,
 	}
 
 	noop_debug("Dumping arguments for Image detection:");
-	noop_debug("model: %s", (model) ? model->files[0]->path : NULL);
+	noop_debug("model: %s", (model) ? model->blobs[0]->path : NULL);
 	noop_debug("len_img: %zu", len_img);
 	if (len_out_imgname)
 		noop_debug("len_out_imgname: %zu", len_out_imgname);
@@ -164,7 +164,7 @@ static int noop_image_segment(struct vaccel_session *sess, const void *img,
 	}
 
 	noop_debug("Dumping arguments for Image segmentation:");
-	noop_debug("model: %s", (model) ? model->files[0]->path : NULL);
+	noop_debug("model: %s", (model) ? model->blobs[0]->path : NULL);
 	noop_debug("len_img: %zu", len_img);
 	if (len_out_imgname)
 		noop_debug("len_out_imgname: %zu", len_out_imgname);
@@ -200,7 +200,7 @@ static int noop_image_pose(struct vaccel_session *sess, const void *img,
 	}
 
 	noop_debug("Dumping arguments for Image pose:");
-	noop_debug("model: %s", (model) ? model->files[0]->path : NULL);
+	noop_debug("model: %s", (model) ? model->blobs[0]->path : NULL);
 	noop_debug("len_img: %zu", len_img);
 	if (len_out_imgname)
 		noop_debug("len_out_imgname: %zu", len_out_imgname);
@@ -236,7 +236,7 @@ static int noop_image_depth(struct vaccel_session *sess, const void *img,
 	}
 
 	noop_debug("Dumping arguments for Image depth:");
-	noop_debug("model: %s", (model) ? model->files[0]->path : NULL);
+	noop_debug("model: %s", (model) ? model->blobs[0]->path : NULL);
 	noop_debug("len_img: %zu", len_img);
 	if (len_out_imgname)
 		noop_debug("len_out_imgname: %zu", len_out_imgname);
@@ -308,9 +308,9 @@ static int noop_exec_with_resource(struct vaccel_session *sess,
 
 	noop_debug("Dumping arguments for exec_with_resource:");
 
-	size_t nr_deps = object->nr_files - 1;
+	size_t nr_deps = object->nr_blobs - 1;
 	for (size_t i = 0; i < nr_deps; i++) {
-		char *dep_library = object->files[i]->path;
+		char *dep_library = object->blobs[i]->path;
 		if (dep_library == NULL) {
 			vaccel_error("Could not get path of file %zu", i);
 			return VACCEL_EINVAL;
@@ -318,7 +318,7 @@ static int noop_exec_with_resource(struct vaccel_session *sess,
 		noop_debug("dep library: %s", dep_library);
 	}
 
-	char *library = object->files[nr_deps]->path;
+	char *library = object->blobs[nr_deps]->path;
 	if (library == NULL) {
 		vaccel_error("Could not get path of file %zu", nr_deps);
 		return VACCEL_EINVAL;
