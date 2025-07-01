@@ -1113,3 +1113,40 @@ int vaccel_resource_directory(struct vaccel_resource *res, char *out_path,
 
 	return VACCEL_OK;
 }
+
+int vaccel_resource_sync(struct vaccel_resource *res,
+			 struct vaccel_session *sess)
+{
+	int ret;
+
+	if (!resources.initialized)
+		return VACCEL_EPERM;
+
+	if (!res || res->blobs[0]->type != VACCEL_BLOB_BUFFER || !sess)
+		return VACCEL_EINVAL;
+
+	if (!sess->is_virtio) {
+		vaccel_warn("Non-VirtIO session, no need to sync");
+		return VACCEL_OK;
+	}
+
+	struct vaccel_plugin *virtio = plugin_virtio();
+	if (virtio) {
+		ret = virtio->info->resource_sync(res, sess);
+		if (ret != VACCEL_OK) {
+			vaccel_error(
+				"session:%" PRId64
+				" Could not synchronize resource %"
+				PRId64,	sess->id, res->id);
+			return ret;
+		}
+	} else {
+		vaccel_error(
+			"session:%" PRId64
+			" Could not synchronize remote resource: no VirtIO Plugin loaded yet",
+			sess->id);
+		return VACCEL_ENOTSUP;
+	}
+
+	return VACCEL_OK;
+}
