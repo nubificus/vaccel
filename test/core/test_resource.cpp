@@ -1299,6 +1299,59 @@ TEST_CASE("resource_multiple_sessions", "[core][resource]")
 	free(test_path);
 }
 
+// Test case for resource sync
+TEST_CASE("resource_sync", "[core][resource]")
+{
+	int ret;
+	struct vaccel_resource res;
+	struct vaccel_session sess;
+	char *test_path = abs_path(BUILD_ROOT, "examples/libmytestlib.so");
+	vaccel_resource_type_t const test_type = VACCEL_RESOURCE_LIB;
+
+	REQUIRE(vaccel_session_init(&sess, 0) == VACCEL_OK);
+
+	ret = vaccel_resource_init(&res, test_path, test_type);
+	REQUIRE(ret == VACCEL_OK);
+
+	/* Null arguments */
+	ret = vaccel_resource_sync(nullptr, &sess);
+	REQUIRE(ret == VACCEL_EINVAL);
+
+	ret = vaccel_resource_sync(&res, nullptr);
+	REQUIRE(ret == VACCEL_EINVAL);
+
+	/* Non-registered */
+	ret = vaccel_resource_sync(&res, &sess);
+	REQUIRE(ret == VACCEL_EPERM);
+
+	ret = vaccel_resource_register(&res, &sess);
+	REQUIRE(ret == VACCEL_OK);
+
+	/* Wrong blob type (non-buffer) */
+	ret = vaccel_resource_sync(&res, &sess);
+	REQUIRE(ret == VACCEL_EINVAL);
+
+	vaccel_blob_type_t const btype = res.blobs[0]->type;
+	res.blobs[0]->type = VACCEL_BLOB_BUFFER;
+
+	/* Non-virtio -> OK */
+	ret = vaccel_resource_sync(&res, &sess);
+	REQUIRE(ret == VACCEL_OK);
+
+	res.blobs[0]->type = btype;
+
+	ret = vaccel_resource_unregister(&res, &sess);
+	REQUIRE(ret == VACCEL_OK);
+
+	ret = vaccel_resource_release(&res);
+	REQUIRE(ret == VACCEL_OK);
+
+	ret = vaccel_session_release(&sess);
+	REQUIRE(ret == VACCEL_OK);
+
+	free(test_path);
+}
+
 // Test case for resource register failures
 TEST_CASE("resource_register_fail", "[core][resource]")
 {
