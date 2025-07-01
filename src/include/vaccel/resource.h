@@ -131,6 +131,11 @@ int vaccel_resource_delete(struct vaccel_resource *res);
 
 struct vaccel_session;
 
+/* Synchronize the content of the resource based on
+ * possible remote changes */
+int vaccel_resource_sync(struct vaccel_resource *res,
+			 struct vaccel_session *sess);
+
 /* Register resource with session */
 int vaccel_resource_register(struct vaccel_resource *res,
 			     struct vaccel_session *sess);
