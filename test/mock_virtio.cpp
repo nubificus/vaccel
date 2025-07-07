@@ -10,21 +10,20 @@ static auto mock_virtio_session_init(struct vaccel_session *sess,
 				     uint32_t flags) -> int
 {
 	sess->remote_id = 1;
-	(void)flags;
+	sess->hint = flags;
 	return VACCEL_OK;
 }
 
 static auto mock_virtio_session_update(struct vaccel_session *sess,
 				       uint32_t flags) -> int
 {
-	(void)sess;
-	(void)flags;
+	sess->hint = flags;
 	return VACCEL_OK;
 }
 
-static auto mock_virtio_session_free(struct vaccel_session *sess) -> int
+static auto mock_virtio_session_release(struct vaccel_session *sess) -> int
 {
-	(void)sess;
+	sess->remote_id = -1;
 	return VACCEL_OK;
 }
 
@@ -39,7 +38,7 @@ static auto mock_virtio_resource_register(struct vaccel_resource *res,
 static auto mock_virtio_resource_unregister(struct vaccel_resource *res,
 					    struct vaccel_session *sess) -> int
 {
-	(void)res;
+	res->remote_id = -1;
 	(void)sess;
 	return VACCEL_OK;
 }
@@ -48,7 +47,7 @@ auto mock_virtio_plugin_virtio() -> struct vaccel_plugin *
 {
 	plugin_info.name = "fake_virtio";
 	plugin_info.session_init = mock_virtio_session_init;
-	plugin_info.session_release = mock_virtio_session_free;
+	plugin_info.session_release = mock_virtio_session_release;
 	plugin_info.session_update = mock_virtio_session_update;
 	plugin_info.resource_register = mock_virtio_resource_register;
 	plugin_info.resource_unregister = mock_virtio_resource_unregister;

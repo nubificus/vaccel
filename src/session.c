@@ -77,6 +77,9 @@ static struct registered_resource *
 find_registered_resource(const struct vaccel_session *sess,
 			 const struct vaccel_resource *res)
 {
+	if (!sess || !res)
+		return NULL;
+
 	struct session_resources *resources = sess->resources;
 	vaccel_list_t *list = &resources->registered[res->type];
 
@@ -247,6 +250,8 @@ int vaccel_session_init(struct vaccel_session *sess, uint32_t flags)
 	if (sess->id < 0)
 		return -(int)sess->id;
 
+	sess->priv = NULL;
+
 	virtio = plugin_virtio();
 	if ((flags & VACCEL_PLUGIN_REMOTE) ||
 	    (plugin_nr_registered() == 1 && virtio)) {
@@ -371,11 +376,44 @@ int vaccel_session_release(struct vaccel_session *sess)
 		}
 	}
 
+	sess->priv = NULL;
 	sessions.all[sess->id - 1] = NULL;
 
 	vaccel_debug("Released session %" PRId64, sess->id);
 
 	put_session_id(sess);
+
+	return VACCEL_OK;
+}
+
+int vaccel_session_new(struct vaccel_session **sess, uint32_t flags)
+{
+	if (!sess)
+		return VACCEL_EINVAL;
+
+	struct vaccel_session *s =
+		(struct vaccel_session *)malloc(sizeof(struct vaccel_session));
+	if (!s)
+		return VACCEL_ENOMEM;
+
+	int ret = vaccel_session_init(s, flags);
+	if (ret) {
+		free(s);
+		return ret;
+	}
+
+	*sess = s;
+
+	return VACCEL_OK;
+}
+
+int vaccel_session_delete(struct vaccel_session *sess)
+{
+	int ret = vaccel_session_release(sess);
+	if (ret)
+		return ret;
+
+	free(sess);
 
 	return VACCEL_OK;
 }

@@ -33,14 +33,20 @@ struct vaccel_session {
 	bool is_virtio;
 };
 
-/* Initialize a new session with the runtime */
+/* Initialize session */
 int vaccel_session_init(struct vaccel_session *sess, uint32_t flags);
 
-/* Update a session with new flags */
+/* Update session with new flags */
 int vaccel_session_update(struct vaccel_session *sess, uint32_t flags);
 
-/* Tear down a session */
+/* Release session data */
 int vaccel_session_release(struct vaccel_session *sess);
+
+/* Allocate and initialize session */
+int vaccel_session_new(struct vaccel_session **sess, uint32_t flags);
+
+/* Release session data and free session created with `vaccel_session_new()` */
+int vaccel_session_delete(struct vaccel_session *sess);
 
 /* Check if a resource is registered with a session */
 bool vaccel_session_has_resource(const struct vaccel_session *sess,
