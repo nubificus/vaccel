@@ -418,6 +418,40 @@ TEST_CASE("torch_tensor_ops", "[ops][torch]")
 	free(data);
 }
 
+TEST_CASE("torch_model_load", "[ops][torch]")
+{
+	struct vaccel_session vsess;
+	struct vaccel_resource model;
+	char *model_path =
+		abs_path(SOURCE_ROOT, "examples/models/torch/cnn_trace.pt");
+
+	REQUIRE(vaccel_session_init(&vsess, 0) == VACCEL_OK);
+	REQUIRE(vaccel_resource_init(&model, model_path,
+				     VACCEL_RESOURCE_DATA) == VACCEL_OK);
+
+	/* Null arguments*/
+	REQUIRE(vaccel_torch_model_load(&vsess, nullptr) == VACCEL_EINVAL);
+	REQUIRE(vaccel_torch_model_load(nullptr, &model) == VACCEL_EINVAL);
+
+	/* Wrong resource type*/
+	REQUIRE(vaccel_torch_model_load(&vsess, &model) == VACCEL_EINVAL);
+	model.type = VACCEL_RESOURCE_MODEL;
+
+	/* Non-registered resource */
+	REQUIRE(vaccel_torch_model_load(&vsess, &model) == VACCEL_EPERM);
+
+	REQUIRE(vaccel_resource_register(&model, &vsess) == VACCEL_OK);
+
+	/* OK */
+	REQUIRE(vaccel_torch_model_load(&vsess, &model) == VACCEL_OK);
+
+	REQUIRE(vaccel_resource_unregister(&model, &vsess) == VACCEL_OK);
+	REQUIRE(vaccel_session_release(&vsess) == VACCEL_OK);
+	REQUIRE(vaccel_resource_release(&model) == VACCEL_OK);
+
+	free(model_path);
+}
+
 TEST_CASE("torch_inference", "[ops][torch]")
 {
 	struct vaccel_session vsess;
@@ -448,8 +482,8 @@ TEST_CASE("torch_inference", "[ops][torch]")
 
 	struct vaccel_torch_tensor *out = nullptr;
 
-	ret = vaccel_torch_jitload_forward(&vsess, &model, &run_options, &in, 1,
-					   &out, 1);
+	ret = vaccel_torch_model_run(&vsess, &model, &run_options, &in, 1, &out,
+				     1);
 	REQUIRE(ret == VACCEL_OK);
 	REQUIRE(out->data_type == in->data_type);
 	REQUIRE(out->nr_dims == in->nr_dims);

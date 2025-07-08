@@ -161,8 +161,10 @@ int main(int argc, char **argv)
 	int64_t dims[] = { 1, target_channels, target_width, target_height };
 	struct vaccel_torch_tensor *in;
 	struct vaccel_torch_tensor *out;
-	struct vaccel_prof_region torch_jitload_forward_stats =
-		VACCEL_PROF_REGION_INIT("torch_jitload_forward");
+	struct vaccel_prof_region torch_model_load_stats =
+		VACCEL_PROF_REGION_INIT("torch_model_load");
+	struct vaccel_prof_region torch_model_run_stats =
+		VACCEL_PROF_REGION_INIT("torch_model_run");
 #ifdef USE_STB_IMAGE
 	float *preprocessed_data = NULL;
 	float max;
@@ -203,6 +205,16 @@ int main(int argc, char **argv)
 		fprintf(stderr, "Could not register model with session\n");
 		goto release_session;
 	}
+
+	vaccel_prof_region_start(&torch_model_load_stats);
+
+	ret = vaccel_torch_model_load(&sess, &model);
+	if (ret != VACCEL_OK) {
+		vaccel_error("Could not load torch model");
+		goto unregister_resource;
+	}
+
+	vaccel_prof_region_stop(&torch_model_load_stats);
 
 	ret = vaccel_torch_tensor_new(&in, 4, dims, VACCEL_TORCH_FLOAT);
 	if (ret != VACCEL_OK) {
@@ -264,12 +276,12 @@ int main(int argc, char **argv)
 	run_options.size = strlen(run_options.data) + 1;
 
 	for (int i = 0; i < iter; i++) {
-		vaccel_prof_region_start(&torch_jitload_forward_stats);
+		vaccel_prof_region_start(&torch_model_run_stats);
 
-		ret = vaccel_torch_jitload_forward(&sess, &model, &run_options,
-						   &in, 1, &out, 1);
+		ret = vaccel_torch_model_run(&sess, &model, &run_options, &in,
+					     1, &out, 1);
 
-		vaccel_prof_region_stop(&torch_jitload_forward_stats);
+		vaccel_prof_region_stop(&torch_model_run_stats);
 
 		if (ret != VACCEL_OK) {
 			fprintf(stderr, "Could not run op: %d\n", ret);
@@ -333,8 +345,10 @@ release_resource:
 	if (vaccel_resource_release(&model) != VACCEL_OK)
 		fprintf(stderr, "Could not release model resource\n");
 
-	vaccel_prof_region_print(&torch_jitload_forward_stats);
-	vaccel_prof_region_release(&torch_jitload_forward_stats);
+	vaccel_prof_region_print(&torch_model_load_stats);
+	vaccel_prof_region_release(&torch_model_load_stats);
 
+	vaccel_prof_region_print(&torch_model_run_stats);
+	vaccel_prof_region_release(&torch_model_run_stats);
 	return ret;
 }

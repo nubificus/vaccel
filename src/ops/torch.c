@@ -220,31 +220,23 @@ int vaccel_torch_tensor_take_data(struct vaccel_torch_tensor *tensor,
 	return VACCEL_OK;
 }
 
-static struct vaccel_prof_region torch_jitload_forward_op_stats =
-	VACCEL_PROF_REGION_INIT("vaccel_torch_jitload_forward_op");
+static struct vaccel_prof_region torch_model_load_op_stats =
+	VACCEL_PROF_REGION_INIT("vaccel_torch_model_load_op");
 
-typedef int (*torch_jitload_forward_fn_t)(
-	struct vaccel_session *sess, const struct vaccel_resource *model,
-	const struct vaccel_torch_buffer *run_options,
-	struct vaccel_torch_tensor **in_tensor, int nr_read,
-	struct vaccel_torch_tensor **out_tensor, int nr_write);
+typedef int (*torch_model_load_fn_t)(struct vaccel_session *sess,
+				     const struct vaccel_resource *model);
 
-int vaccel_torch_jitload_forward(struct vaccel_session *sess,
-				 const struct vaccel_resource *model,
-				 const struct vaccel_torch_buffer *run_options,
-				 struct vaccel_torch_tensor **in_tensor,
-				 int nr_read,
-				 struct vaccel_torch_tensor **out_tensor,
-				 int nr_write)
+int vaccel_torch_model_load(struct vaccel_session *sess,
+			    const struct vaccel_resource *model)
 {
 	int ret;
 
-	if (!sess)
+	if (!sess || !model)
 		return VACCEL_EINVAL;
 
 	vaccel_debug(
 		"session:%" PRId64
-		" Looking for plugin implementing torch_jitload_forward operation",
+		" Looking for plugin implementing torch_model_load operation",
 		sess->id);
 
 	if (model->type != VACCEL_RESOURCE_MODEL) {
@@ -260,20 +252,76 @@ int vaccel_torch_jitload_forward(struct vaccel_session *sess,
 		return VACCEL_EPERM;
 	}
 
-	vaccel_prof_region_start(&torch_jitload_forward_op_stats);
+	vaccel_prof_region_start(&torch_model_load_op_stats);
 
-	torch_jitload_forward_fn_t plugin_torch_jitload_forward =
-		plugin_get_op_func(VACCEL_OP_TORCH_JITLOAD_FORWARD, sess->hint);
-	if (!plugin_torch_jitload_forward) {
+	torch_model_load_fn_t plugin_torch_model_load =
+		plugin_get_op_func(VACCEL_OP_TORCH_MODEL_LOAD, sess->hint);
+	if (!plugin_torch_model_load) {
 		ret = VACCEL_ENOTSUP;
 		goto out;
 	}
 
-	ret = plugin_torch_jitload_forward(sess, model, run_options, in_tensor,
-					   nr_read, out_tensor, nr_write);
+	ret = plugin_torch_model_load(sess, model);
 
 out:
-	vaccel_prof_region_stop(&torch_jitload_forward_op_stats);
+	vaccel_prof_region_stop(&torch_model_load_op_stats);
+
+	return ret;
+}
+
+static struct vaccel_prof_region torch_model_run_op_stats =
+	VACCEL_PROF_REGION_INIT("vaccel_torch_model_run_op");
+
+typedef int (*torch_model_run_fn_t)(
+	struct vaccel_session *sess, const struct vaccel_resource *model,
+	const struct vaccel_torch_buffer *run_options,
+	struct vaccel_torch_tensor **in_tensor, int nr_read,
+	struct vaccel_torch_tensor **out_tensor, int nr_write);
+
+int vaccel_torch_model_run(struct vaccel_session *sess,
+			   const struct vaccel_resource *model,
+			   const struct vaccel_torch_buffer *run_options,
+			   struct vaccel_torch_tensor **in_tensor, int nr_read,
+			   struct vaccel_torch_tensor **out_tensor,
+			   int nr_write)
+{
+	int ret;
+
+	if (!sess)
+		return VACCEL_EINVAL;
+
+	vaccel_debug(
+		"session:%" PRId64
+		" Looking for plugin implementing torch_model_run operation",
+		sess->id);
+
+	if (model->type != VACCEL_RESOURCE_MODEL) {
+		vaccel_error(
+			"Invalid resource type: expected VACCEL_RESOURCE_MODEL");
+		return VACCEL_EINVAL;
+	}
+
+	if (!vaccel_session_has_resource(sess, model)) {
+		vaccel_error("Resource %" PRId64
+			     " is not registered to session %" PRId64 "",
+			     model->id, sess->id);
+		return VACCEL_EPERM;
+	}
+
+	vaccel_prof_region_start(&torch_model_run_op_stats);
+
+	torch_model_run_fn_t plugin_torch_model_run =
+		plugin_get_op_func(VACCEL_OP_TORCH_MODEL_RUN, sess->hint);
+	if (!plugin_torch_model_run) {
+		ret = VACCEL_ENOTSUP;
+		goto out;
+	}
+
+	ret = plugin_torch_model_run(sess, model, run_options, in_tensor,
+				     nr_read, out_tensor, nr_write);
+
+out:
+	vaccel_prof_region_stop(&torch_model_run_op_stats);
 
 	return ret;
 }
@@ -325,8 +373,11 @@ __attribute__((constructor)) static void vaccel_ops_init(void)
 
 __attribute__((destructor)) static void vaccel_ops_fini(void)
 {
-	vaccel_prof_region_print(&torch_jitload_forward_op_stats);
-	vaccel_prof_region_release(&torch_jitload_forward_op_stats);
+	vaccel_prof_region_print(&torch_model_load_op_stats);
+	vaccel_prof_region_release(&torch_model_load_op_stats);
+
+	vaccel_prof_region_print(&torch_model_run_op_stats);
+	vaccel_prof_region_release(&torch_model_run_op_stats);
 
 	vaccel_prof_region_print(&torch_sgemm_op_stats);
 	vaccel_prof_region_release(&torch_sgemm_op_stats);
