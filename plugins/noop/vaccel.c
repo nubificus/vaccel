@@ -649,6 +649,44 @@ int noop_fpga_vadd(struct vaccel_session *sess, float a[], float b[], float c[],
 	return VACCEL_OK;
 }
 
+static int noop_torch_load_model(struct vaccel_session *sess,
+				 const struct vaccel_resource *model)
+{
+	if (!sess) {
+		noop_error("Invalid session");
+		return VACCEL_EINVAL;
+	}
+
+	if (!model) {
+		noop_error("Invalid model path");
+		return VACCEL_EINVAL;
+	}
+
+	noop_debug("Calling torch_load_model for session %" PRId64 "",
+		   sess->id);
+
+	int ret = VACCEL_OK;
+	struct vaccel_blob *blob = model->blobs[0];
+	switch (blob->type) {
+	case VACCEL_BLOB_FILE:
+		noop_debug("Loading model from file %s", blob->path);
+		break;
+	case VACCEL_BLOB_MAPPED:
+		noop_debug("Mapped model, loading from file %s", blob->path);
+		break;
+	case VACCEL_BLOB_BUFFER:
+		noop_debug("Loading model from buffer of length: %u",
+			   blob->size);
+		break;
+	default:
+		noop_error("The model blob has an invalid type.");
+		ret = VACCEL_EINVAL;
+		break;
+	}
+
+	return ret;
+}
+
 static int noop_torch_jitload_forward(
 	struct vaccel_session *sess, const struct vaccel_resource *model,
 	const struct vaccel_torch_buffer *run_options,
@@ -787,15 +825,17 @@ struct vaccel_op ops[] = {
 	VACCEL_OP_INIT(ops[15], VACCEL_OP_FPGA_MMULT, noop_fpga_mmult),
 	VACCEL_OP_INIT(ops[16], VACCEL_OP_EXEC_WITH_RESOURCE,
 		       noop_exec_with_resource),
-	VACCEL_OP_INIT(ops[17], VACCEL_OP_TORCH_JITLOAD_FORWARD,
+	VACCEL_OP_INIT(ops[17], VACCEL_OP_TORCH_LOAD_MODEL,
+		       noop_torch_load_model),
+	VACCEL_OP_INIT(ops[18], VACCEL_OP_TORCH_JITLOAD_FORWARD,
 		       noop_torch_jitload_forward),
-	VACCEL_OP_INIT(ops[18], VACCEL_OP_TORCH_SGEMM, noop_torch_sgemm),
-	VACCEL_OP_INIT(ops[19], VACCEL_OP_OPENCV, noop_opencv),
-	VACCEL_OP_INIT(ops[20], VACCEL_OP_TFLITE_SESSION_LOAD,
+	VACCEL_OP_INIT(ops[19], VACCEL_OP_TORCH_SGEMM, noop_torch_sgemm),
+	VACCEL_OP_INIT(ops[20], VACCEL_OP_OPENCV, noop_opencv),
+	VACCEL_OP_INIT(ops[21], VACCEL_OP_TFLITE_SESSION_LOAD,
 		       noop_tflite_session_load),
-	VACCEL_OP_INIT(ops[21], VACCEL_OP_TFLITE_SESSION_RUN,
+	VACCEL_OP_INIT(ops[22], VACCEL_OP_TFLITE_SESSION_RUN,
 		       noop_tflite_session_run),
-	VACCEL_OP_INIT(ops[22], VACCEL_OP_TFLITE_SESSION_DELETE,
+	VACCEL_OP_INIT(ops[23], VACCEL_OP_TFLITE_SESSION_DELETE,
 		       noop_tflite_session_delete),
 };
 

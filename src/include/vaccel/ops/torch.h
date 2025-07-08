@@ -106,6 +106,10 @@ int vaccel_torch_tensor_set_data(struct vaccel_torch_tensor *tensor, void *data,
 int vaccel_torch_tensor_take_data(struct vaccel_torch_tensor *tensor,
 				  void **data, size_t *size);
 
+/* Load torch Model */
+int vaccel_torch_load_model(struct vaccel_session *sess,
+			    const struct vaccel_resource *model);
+
 /* Run Torch jitload forward operation on model resource */
 int vaccel_torch_jitload_forward(struct vaccel_session *sess,
 				 const struct vaccel_resource *model,
