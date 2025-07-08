@@ -220,6 +220,55 @@ int vaccel_torch_tensor_take_data(struct vaccel_torch_tensor *tensor,
 	return VACCEL_OK;
 }
 
+static struct vaccel_prof_region torch_load_model_op_stats =
+	VACCEL_PROF_REGION_INIT("vaccel_torch_load_model_op");
+
+typedef int (*torch_load_model_fn_t)(struct vaccel_session *sess,
+				     const struct vaccel_resource *model);
+
+int vaccel_torch_load_model(struct vaccel_session *sess,
+			    const struct vaccel_resource *model)
+{
+	int ret;
+
+	if (!sess || !model)
+		return VACCEL_EINVAL;
+
+	vaccel_debug(
+		"session:%" PRId64
+		" Looking for plugin implementing torch_load_model operation",
+		sess->id);
+
+	if (model->type != VACCEL_RESOURCE_MODEL) {
+		vaccel_error(
+			"Invalid resource type: expected VACCEL_RESOURCE_MODEL");
+		return VACCEL_EINVAL;
+	}
+
+	if (!vaccel_session_has_resource(sess, model)) {
+		vaccel_error("Resource %" PRId64
+			     " is not registered to session %" PRId64 "",
+			     model->id, sess->id);
+		return VACCEL_EPERM;
+	}
+
+	vaccel_prof_region_start(&torch_load_model_op_stats);
+
+	torch_load_model_fn_t plugin_torch_load_model =
+		plugin_get_op_func(VACCEL_OP_TORCH_LOAD_MODEL, sess->hint);
+	if (!plugin_torch_load_model) {
+		ret = VACCEL_ENOTSUP;
+		goto out;
+	}
+
+	ret = plugin_torch_load_model(sess, model);
+
+out:
+	vaccel_prof_region_stop(&torch_load_model_op_stats);
+
+	return ret;
+}
+
 static struct vaccel_prof_region torch_jitload_forward_op_stats =
 	VACCEL_PROF_REGION_INIT("vaccel_torch_jitload_forward_op");
 
