@@ -649,11 +649,51 @@ int noop_fpga_vadd(struct vaccel_session *sess, float a[], float b[], float c[],
 	return VACCEL_OK;
 }
 
-static int noop_torch_jitload_forward(
-	struct vaccel_session *sess, const struct vaccel_resource *model,
-	const struct vaccel_torch_buffer *run_options,
-	struct vaccel_torch_tensor **in_tensor, int nr_read,
-	struct vaccel_torch_tensor **out_tensor, int nr_write)
+static int noop_torch_model_load(struct vaccel_session *sess,
+				 const struct vaccel_resource *model)
+{
+	if (!sess) {
+		noop_error("Invalid session");
+		return VACCEL_EINVAL;
+	}
+
+	if (!model) {
+		noop_error("Invalid model path");
+		return VACCEL_EINVAL;
+	}
+
+	noop_debug("Calling torch_model_load for session %" PRId64 "",
+		   sess->id);
+
+	int ret = VACCEL_OK;
+	struct vaccel_blob *blob = model->blobs[0];
+	switch (blob->type) {
+	case VACCEL_BLOB_FILE:
+		noop_debug("Loading model from file %s", blob->path);
+		break;
+	case VACCEL_BLOB_MAPPED:
+		noop_debug("Mapped model, loading from file %s", blob->path);
+		break;
+	case VACCEL_BLOB_BUFFER:
+		noop_debug("Loading model from buffer of length: %u",
+			   blob->size);
+		break;
+	default:
+		noop_error("The model blob has an invalid type.");
+		ret = VACCEL_EINVAL;
+		break;
+	}
+
+	return ret;
+}
+
+static int noop_torch_model_run(struct vaccel_session *sess,
+				const struct vaccel_resource *model,
+				const struct vaccel_torch_buffer *run_options,
+				struct vaccel_torch_tensor **in_tensor,
+				int nr_read,
+				struct vaccel_torch_tensor **out_tensor,
+				int nr_write)
 {
 	(void)run_options;
 
@@ -667,8 +707,7 @@ static int noop_torch_jitload_forward(
 		return VACCEL_EINVAL;
 	}
 
-	noop_debug("Calling torch_jitload_forward for session %" PRId64 "",
-		   sess->id);
+	noop_debug("Calling torch_model_run for session %" PRId64 "", sess->id);
 
 	noop_debug("Number of inputs: %d", nr_read);
 	for (int i = 0; i < nr_read; ++i) {
@@ -787,15 +826,17 @@ struct vaccel_op ops[] = {
 	VACCEL_OP_INIT(ops[15], VACCEL_OP_FPGA_MMULT, noop_fpga_mmult),
 	VACCEL_OP_INIT(ops[16], VACCEL_OP_EXEC_WITH_RESOURCE,
 		       noop_exec_with_resource),
-	VACCEL_OP_INIT(ops[17], VACCEL_OP_TORCH_JITLOAD_FORWARD,
-		       noop_torch_jitload_forward),
-	VACCEL_OP_INIT(ops[18], VACCEL_OP_TORCH_SGEMM, noop_torch_sgemm),
-	VACCEL_OP_INIT(ops[19], VACCEL_OP_OPENCV, noop_opencv),
-	VACCEL_OP_INIT(ops[20], VACCEL_OP_TFLITE_SESSION_LOAD,
+	VACCEL_OP_INIT(ops[17], VACCEL_OP_TORCH_MODEL_LOAD,
+		       noop_torch_model_load),
+	VACCEL_OP_INIT(ops[18], VACCEL_OP_TORCH_MODEL_RUN,
+		       noop_torch_model_run),
+	VACCEL_OP_INIT(ops[19], VACCEL_OP_TORCH_SGEMM, noop_torch_sgemm),
+	VACCEL_OP_INIT(ops[20], VACCEL_OP_OPENCV, noop_opencv),
+	VACCEL_OP_INIT(ops[21], VACCEL_OP_TFLITE_SESSION_LOAD,
 		       noop_tflite_session_load),
-	VACCEL_OP_INIT(ops[21], VACCEL_OP_TFLITE_SESSION_RUN,
+	VACCEL_OP_INIT(ops[22], VACCEL_OP_TFLITE_SESSION_RUN,
 		       noop_tflite_session_run),
-	VACCEL_OP_INIT(ops[22], VACCEL_OP_TFLITE_SESSION_DELETE,
+	VACCEL_OP_INIT(ops[23], VACCEL_OP_TFLITE_SESSION_DELETE,
 		       noop_tflite_session_delete),
 };
 
