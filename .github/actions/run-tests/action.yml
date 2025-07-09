@@ -27,8 +27,10 @@ runs:
       working-directory: ${{ inputs.source-path }}
       if: ${{ inputs.valgrind == 'true' }}
       run: |
+          # Needed for armv7l OpenSSL "reachable" mem & SIGKILL
+          export OPENSSL_armcap=0
           meson test \
-            --wrap="${{ env.SCRIPTS_VALGRIND_CMD }}" \
+            --wrap="${{ env.SCRIPTS_VALGRIND_CMD }} --sigill-diagnostics=no" \
             -t 7 \
             --print-errorlogs \
             -C "${{ inputs.build-path }}"

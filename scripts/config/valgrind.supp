@@ -5,3 +5,33 @@
    Memcheck:Addr4
    obj:/usr/lib/arm-linux-gnueabihf/libssh.so*
 }
+
+{
+   OpenSSL reachable blocks (libcrypto)
+   Memcheck:Leak
+   obj:/usr/lib/arm-linux-gnueabihf/libcrypto.so*
+}
+
+{
+   OpenSSL reachable blocks (libssl)
+   Memcheck:Leak
+   obj:/usr/lib/arm-linux-gnueabihf/libssl.so*
+}
+
+{
+   libcurl reachable blocks
+   Memcheck:Leak
+   obj:/usr/lib/arm-linux-gnueabihf/libcurl.so*
+}
+
+{
+   libtasn1 reachable blocks
+   Memcheck:Leak
+   obj:/usr/lib/arm-linux-gnueabihf/libtasn1.so*
+}
+
+{
+   libstdc++ reachable blocks
+   Memcheck:Leak
+   obj:/usr/lib/arm-linux-gnueabihf/libstdc++.so*
+}
