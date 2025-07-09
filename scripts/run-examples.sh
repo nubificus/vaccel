@@ -7,9 +7,17 @@ SCRIPTS_DIR=$(cd -- "$(dirname -- "$0")" >/dev/null && pwd -P)
 # shellcheck source=scripts/config/variables.env
 . "${SCRIPTS_DIR}/config/variables.env"
 
+BIN_FILE="/bin/ls"
+ARCH_INFO=$(file "$BIN_FILE")
+if echo "$ARCH_INFO" | grep -q "32-bit"; then
+	VALGRIND_SIGILL_OPT="--sigill-diagnostics=no"
+	export OPENSSL_armcap=0
+fi
+
 PREFIX=${1:-"/usr/local"}
 VALGRIND=$2
 [ "${VALGRIND}" = "true" ] && WRAPPER_CMD=${SCRIPTS_VALGRIND_CMD:-'valgrind'}
+[ "${VALGRIND}" = "true" ] && WRAPPER_CMD="$WRAPPER_CMD $VALGRIND_SIGILL_OPT"
 if [ -n "${MESON_BUILD_ROOT}" ]; then
 	LIB_DIR=${MESON_BUILD_ROOT}/src
 	EXAMPLES_DIR=${MESON_BUILD_ROOT}/examples
