@@ -22,11 +22,18 @@ runs:
 
     - name: Run examples
       run: |
-        if [ "${{ inputs.package }}" == "vaccel" ]; then
-          "${{ github.workspace }}"/scripts/run-examples.sh \
-            "${{ inputs.prefix }}" "${{ inputs.valgrind }}"
+        if [ "${{ inputs.package }}" = "vaccel" ]; then
+          package="${{ inputs.package }}"
         else
-          "${{ github.workspace }}"/scripts/run-examples.sh \
-            "${{ inputs.prefix }}" "${{ inputs.valgrind }}" "/usr"
+          package="vaccel-${{ inputs.package }}"
         fi
+        if [ "${{ inputs.valgrind }}" = "true" ]; then
+          use_valgrind=1
+        else
+          use_valgrind=0
+        fi
+        export PKG_CONFIG_PATH=$(find "${{ inputs.prefix }}" \
+          -type d -name "pkgconfig" | head -1)
+        "${{ github.workspace }}"/scripts/run-examples.sh \
+          "${package}" "${use_valgrind}"
       shell: bash

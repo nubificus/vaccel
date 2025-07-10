@@ -17,8 +17,8 @@ int main(int argc, char *argv[])
 
 	float a[N] = { 1, 2, 3, 4 };
 	float b[N] = { 2, 3, 4, 5 };
-	float c[N];
-	float d[N];
+	float c[N] = { 0, 0, 0, 0 };
+	float d[N] = { 0, 0, 0, 0 };
 	const size_t array_len = (size_t)N;
 
 	if (argc > 2) {
@@ -36,13 +36,15 @@ int main(int argc, char *argv[])
 
 	vaccel_op_type_t op_type = VACCEL_OP_FPGA_PARALLEL;
 	struct vaccel_arg read[] = {
-		{ .size = sizeof(vaccel_op_type_t), .buf = &op_type },
-		{ .size = sizeof(a), .buf = (char *)a },
-		{ .size = sizeof(b), .buf = (char *)b },
+		{ .size = sizeof(vaccel_op_type_t),
+		  .buf = &op_type,
+		  .argtype = 0 },
+		{ .size = sizeof(a), .buf = (char *)a, .argtype = 0 },
+		{ .size = sizeof(b), .buf = (char *)b, .argtype = 0 },
 	};
 	struct vaccel_arg write[] = {
-		{ .size = sizeof(a), .buf = c },
-		{ .size = sizeof(a), .buf = d },
+		{ .size = sizeof(a), .buf = c, .argtype = 0 },
+		{ .size = sizeof(a), .buf = d, .argtype = 0 },
 	};
 
 	const int iter = (argc > 1) ? atoi(argv[1]) : 1;
