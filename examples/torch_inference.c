@@ -204,6 +204,12 @@ int main(int argc, char **argv)
 		goto release_session;
 	}
 
+	ret = vaccel_torch_load_model(&sess, &model);
+	if (ret != VACCEL_OK) {
+		vaccel_error("Could not load torch model");
+		goto unregister_resource;
+	}
+
 	ret = vaccel_torch_tensor_new(&in, 4, dims, VACCEL_TORCH_FLOAT);
 	if (ret != VACCEL_OK) {
 		fprintf(stderr, "Could not allocate memory\n");
