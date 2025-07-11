@@ -582,6 +582,8 @@ int vaccel_resource_init_multi(struct vaccel_resource *res, const char **paths,
 	if (res->id < 0)
 		return -(int)res->id;
 
+	res->plugin_priv = NULL;
+	res->pstate = PLUGIN_PRIV_STATE_EMPTY;
 	res->paths = (char **)malloc(nr_paths * sizeof(char *));
 	if (!res->paths) {
 		ret = VACCEL_ENOMEM;
@@ -668,6 +670,9 @@ int vaccel_resource_init_from_buf(struct vaccel_resource *res, const void *buf,
 	if (res->id < 0)
 		return -(int)res->id;
 
+	res->plugin_priv = NULL;
+	res->pstate = PLUGIN_PRIV_STATE_EMPTY;
+
 	res->blobs =
 		(struct vaccel_blob **)malloc(sizeof(struct vaccel_blob *));
 	if (!res->blobs) {
@@ -740,6 +745,9 @@ int vaccel_resource_init_from_blobs(struct vaccel_resource *res,
 	get_resource_id(res);
 	if (res->id < 0)
 		return -(int)res->id;
+
+	res->plugin_priv = NULL;
+	res->pstate = PLUGIN_PRIV_STATE_EMPTY;
 
 	res->blobs = (struct vaccel_blob **)malloc(
 		nr_blobs * sizeof(struct vaccel_blob *));
@@ -852,6 +860,14 @@ int vaccel_resource_release(struct vaccel_resource *res)
 		res->paths = NULL;
 	}
 	res->nr_paths = 0;
+
+	if (res->pstate == PLUGIN_PRIV_STATE_NEED_FREE) {
+		vaccel_debug("Freeing resource's plugin data");
+		free(res->plugin_priv);
+	}
+
+	res->plugin_priv = NULL;
+	res->pstate = PLUGIN_PRIV_STATE_EMPTY;
 
 	list_unlink_entry(&res->entry);
 
