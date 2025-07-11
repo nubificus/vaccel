@@ -108,6 +108,27 @@ int vaccel_torch_tensor_init(struct vaccel_torch_tensor *tensor,
 		}
 	}
 
+	tensor->res = NULL;
+	tensor->is_res = false;
+
+	return VACCEL_OK;
+}
+
+int vaccel_torch_tensor_init_from_res(struct vaccel_torch_tensor *tensor,
+				      struct vaccel_resource *res,
+				      int64_t nr_dims, const int64_t *dims,
+				      enum vaccel_torch_data_type type)
+{
+	if (!res)
+		return VACCEL_EINVAL;
+
+	int ret = vaccel_torch_tensor_init(tensor, nr_dims, dims, type);
+	if (ret)
+		return ret;
+
+	tensor->is_res = true;
+	tensor->res = res;
+
 	return VACCEL_OK;
 }
 
@@ -126,6 +147,8 @@ int vaccel_torch_tensor_release(struct vaccel_torch_tensor *tensor)
 	tensor->owned = false;
 	tensor->nr_dims = 0;
 	tensor->dims = NULL;
+	tensor->res = NULL;
+	tensor->is_res = false;
 
 	return VACCEL_OK;
 }
@@ -148,6 +171,24 @@ int vaccel_torch_tensor_new(struct vaccel_torch_tensor **tensor,
 	}
 
 	*tensor = t;
+
+	return VACCEL_OK;
+}
+
+int vaccel_torch_tensor_new_from_res(struct vaccel_torch_tensor **tensor,
+				     struct vaccel_resource *res,
+				     int64_t nr_dims, const int64_t *dims,
+				     enum vaccel_torch_data_type type)
+{
+	if (!tensor || !res)
+		return VACCEL_EINVAL;
+
+	int ret = vaccel_torch_tensor_new(tensor, nr_dims, dims, type);
+	if (ret)
+		return ret;
+
+	(*tensor)->res = res;
+	(*tensor)->is_res = true;
 
 	return VACCEL_OK;
 }
