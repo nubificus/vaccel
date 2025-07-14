@@ -351,6 +351,7 @@ static int noop_tf_session_load(struct vaccel_session *sess,
 	noop_debug("Calling tf_session_load for session %" PRId64 "", sess->id);
 
 	if (status) {
+		status->error_code = 0;
 		status->message = strdup("Operation handled by noop plugin");
 		if (!status->message)
 			return VACCEL_ENOMEM;
@@ -391,8 +392,8 @@ static int noop_tf_session_run(struct vaccel_session *sess,
 			   in_nodes[i].id);
 		noop_debug("\t#dims: %d -> {", in[i]->nr_dims);
 		for (int j = 0; j < in[i]->nr_dims; ++j)
-			printf("%" PRId64 "%s", in[i]->dims[j],
-			       (j == in[i]->nr_dims - 1) ? "}\n" : " ");
+			noop_debug("\t\t%" PRId64, in[i]->dims[j]);
+		noop_debug("\t}");
 
 		noop_debug("\tData type: %d", in[i]->data_type);
 		noop_debug("\tData -> %p, %zu", in[i]->data, in[i]->size);
@@ -463,6 +464,7 @@ static int noop_tf_session_delete(struct vaccel_session *sess,
 		   sess->id);
 
 	if (status) {
+		status->error_code = 0;
 		status->message = strdup("Operation handled by noop plugin");
 		if (!status->message)
 			return VACCEL_ENOMEM;
@@ -514,8 +516,8 @@ static int noop_tflite_session_run(struct vaccel_session *sess,
 	for (int i = 0; i < nr_inputs; ++i) {
 		noop_debug("\t#dims: %d -> {", in[i]->nr_dims);
 		for (int j = 0; j < in[i]->nr_dims; ++j)
-			printf("%" PRId32 "%s", in[i]->dims[j],
-			       (j == in[i]->nr_dims - 1) ? "}\n" : " ");
+			noop_debug("\t\t%" PRId32, in[i]->dims[j]);
+		noop_debug("\t}");
 
 		noop_debug("\tData type: %d", in[i]->data_type);
 		noop_debug("\tData -> %p, %zu", in[i]->data, in[i]->size);
@@ -713,8 +715,8 @@ static int noop_torch_model_run(struct vaccel_session *sess,
 	for (int i = 0; i < nr_read; ++i) {
 		noop_debug("\t#dims: %" PRId64 " -> {", in_tensor[i]->nr_dims);
 		for (int j = 0; j < in_tensor[i]->nr_dims; ++j)
-			printf("%" PRId64 "%s", in_tensor[i]->dims[j],
-			       (j == in_tensor[i]->nr_dims - 1) ? "}\n" : " ");
+			noop_debug("\t\t%" PRId64, in_tensor[i]->dims[j]);
+		noop_debug("\t}");
 
 		noop_debug("\tData type: %d", in_tensor[i]->data_type);
 		noop_debug("\tData -> %p, %zu B", in_tensor[i]->data,

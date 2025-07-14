@@ -94,9 +94,13 @@ eval "${CONFIG_WRAPPER_CMD}" "${EXAMPLES_DIR}/pynq_parallel_generic"
 eval "${CONFIG_WRAPPER_CMD}" "${EXAMPLES_DIR}/pynq_vector_add"
 eval "${CONFIG_WRAPPER_CMD}" "${EXAMPLES_DIR}/pynq_vector_add_generic"
 eval "${CONFIG_WRAPPER_CMD}" "${EXAMPLES_DIR}/tf_inference" \
-	"${SHARE_DIR}/models/tf/lstm2"
+	"${SHARE_DIR}/images/example.jpg" \
+	'https://s3.nbfc.io/models/tf/resnet18-v2-7_saved_model.tar.xz' \
+	"${SHARE_DIR}/labels/imagenet.txt"
 eval "${CONFIG_WRAPPER_CMD}" "${EXAMPLES_DIR}/tflite_inference" \
-	"${SHARE_DIR}/models/tf/lstm2.tflite"
+	"${SHARE_DIR}/images/example.jpg" \
+	'https://s3.nbfc.io/models/tf/resnet18-v2-7_float32.tflite' \
+	"${SHARE_DIR}/labels/imagenet.txt"
 eval "${CONFIG_WRAPPER_CMD}" "${EXAMPLES_DIR}/torch_inference" \
 	"${SHARE_DIR}/images/example.jpg" \
 	'https://s3.nbfc.io/torch/mobilenet.pt' \

@@ -32,10 +32,19 @@ examples_sources = files([
   'local_and_virtio.c',
 ])
 
+subdir('common')
+
 examples = []
 foreach e : examples_sources
-  examples += executable(fs.stem(e),
-    sources : e,
+  name = fs.stem(e)
+  if name.contains('inference')
+    sources = [e, examples_common_sources, examples_common_headers]
+  else
+    sources = e
+  endif
+  examples += executable(name,
+    sources,
+    include_directories : include_directories('common'),
     c_args : vaccel_c_args,
     cpp_args : vaccel_cpp_args,
     dependencies : [libvaccel_internal_dep, libm_dep],
