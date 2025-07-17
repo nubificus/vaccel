@@ -2,7 +2,6 @@
 
 #include "arg.h"
 #include "error.h"
-#include "log.h"
 #include "op.h"
 #include "plugin.h"
 #include "prof.h"
@@ -24,15 +23,12 @@ int vaccel_opencv(struct vaccel_session *sess, struct vaccel_arg *read,
 	if (!sess)
 		return VACCEL_EINVAL;
 
-	vaccel_debug(
-		"session:%" PRId64
-		" Looking for plugin implementing the Optical Flow operation",
-		sess->id);
+	vaccel_op_type_t op_type = VACCEL_OP_OPENCV;
+	op_debug_plugin_lookup(sess, op_type);
 
 	vaccel_prof_region_start(&opencv_op_stats);
 
-	opencv_fn_t plugin_opencv =
-		plugin_get_op_func(VACCEL_OP_OPENCV, sess->hint);
+	opencv_fn_t plugin_opencv = plugin_get_op_func(op_type, sess->hint);
 	if (!plugin_opencv) {
 		ret = VACCEL_ENOTSUP;
 		goto out;

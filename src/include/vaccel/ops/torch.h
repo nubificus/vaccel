@@ -106,11 +106,11 @@ int vaccel_torch_tensor_set_data(struct vaccel_torch_tensor *tensor, void *data,
 int vaccel_torch_tensor_take_data(struct vaccel_torch_tensor *tensor,
 				  void **data, size_t *size);
 
-/* Run Torch model load */
+/* Load Torch model from resource */
 int vaccel_torch_model_load(struct vaccel_session *sess,
 			    const struct vaccel_resource *model);
 
-/* Run Torch model run operation on model resource */
+/* Run inference on loaded Torch model */
 int vaccel_torch_model_run(struct vaccel_session *sess,
 			   const struct vaccel_resource *model,
 			   const struct vaccel_torch_buffer *run_options,
@@ -118,7 +118,7 @@ int vaccel_torch_model_run(struct vaccel_session *sess,
 			   struct vaccel_torch_tensor **out_tensor,
 			   int nr_write);
 
-/* Run Torch sgemm operation */
+/* Perform Torch SGEMM */
 int vaccel_torch_sgemm(struct vaccel_session *sess,
 		       struct vaccel_torch_tensor **in_A,
 		       struct vaccel_torch_tensor **in_B,

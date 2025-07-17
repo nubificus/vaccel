@@ -620,7 +620,7 @@ TEST_CASE("tf_inference", "[ops][tf]")
 
 	struct vaccel_tf_status status;
 
-	ret = vaccel_tf_session_load(&vsess, &model, &status);
+	ret = vaccel_tf_model_load(&vsess, &model, &status);
 	REQUIRE(ret == VACCEL_OK);
 
 	REQUIRE(vaccel_tf_status_release(&status) == VACCEL_OK);
@@ -648,8 +648,8 @@ TEST_CASE("tf_inference", "[ops][tf]")
 
 	struct vaccel_tf_tensor *out;
 
-	ret = vaccel_tf_session_run(&vsess, &model, &run_options, &in_node, &in,
-				    1, &out_node, &out, 1, &status);
+	ret = vaccel_tf_model_run(&vsess, &model, &run_options, &in_node, &in,
+				  1, &out_node, &out, 1, &status);
 	REQUIRE(ret == VACCEL_OK);
 	REQUIRE(out->data_type == in->data_type);
 	REQUIRE(out->nr_dims == in->nr_dims);
@@ -669,7 +669,7 @@ TEST_CASE("tf_inference", "[ops][tf]")
 	REQUIRE(vaccel_tf_tensor_delete(in) == VACCEL_OK);
 	REQUIRE(vaccel_tf_tensor_delete(out) == VACCEL_OK);
 
-	ret = vaccel_tf_session_delete(&vsess, &model, &status);
+	ret = vaccel_tf_model_unload(&vsess, &model, &status);
 	REQUIRE(ret == VACCEL_OK);
 
 	REQUIRE(vaccel_tf_status_release(&status) == VACCEL_OK);

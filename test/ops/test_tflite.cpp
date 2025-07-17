@@ -286,7 +286,7 @@ TEST_CASE("tflite_inference", "[ops][tflite]")
 	REQUIRE(vaccel_session_init(&vsess, 0) == VACCEL_OK);
 	REQUIRE(vaccel_resource_register(&model, &vsess) == VACCEL_OK);
 
-	ret = vaccel_tflite_session_load(&vsess, &model);
+	ret = vaccel_tflite_model_load(&vsess, &model);
 	REQUIRE(ret == VACCEL_OK);
 
 	int32_t dims[] = { 1, 30 };
@@ -302,8 +302,7 @@ TEST_CASE("tflite_inference", "[ops][tflite]")
 
 	uint8_t status;
 	struct vaccel_tflite_tensor *out;
-	ret = vaccel_tflite_session_run(&vsess, &model, &in, 1, &out, 1,
-					&status);
+	ret = vaccel_tflite_model_run(&vsess, &model, &in, 1, &out, 1, &status);
 	REQUIRE(ret == VACCEL_OK);
 	REQUIRE(out->data_type == in->data_type);
 	REQUIRE(out->nr_dims == in->nr_dims);
@@ -318,7 +317,7 @@ TEST_CASE("tflite_inference", "[ops][tflite]")
 	REQUIRE(vaccel_tflite_tensor_delete(in) == VACCEL_OK);
 	REQUIRE(vaccel_tflite_tensor_delete(out) == VACCEL_OK);
 
-	ret = vaccel_tflite_session_delete(&vsess, &model);
+	ret = vaccel_tflite_model_unload(&vsess, &model);
 	REQUIRE(ret == VACCEL_OK);
 
 	REQUIRE(vaccel_resource_unregister(&model, &vsess) == VACCEL_OK);

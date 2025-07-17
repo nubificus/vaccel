@@ -267,9 +267,11 @@ void vaccel_config_print_debug(struct vaccel_config *config)
 		return;
 
 	char log_level_str[NAME_MAX];
-	strncpy(log_level_str, vaccel_log_level_to_base_str(config->log_level),
-		NAME_MAX);
-	vaccel_str_to_lower(log_level_str, NAME_MAX, NULL);
+	//trncpy(log_level_str, vaccel_log_level_to_base_str(config->log_level),
+	//	NAME_MAX);
+	//vaccel_str_to_lower(log_level_str, NAME_MAX, NULL);
+	vaccel_str_to_lower(vaccel_log_level_to_base_str(config->log_level),
+			    log_level_str, NAME_MAX, NULL);
 
 	vaccel_debug("Config:");
 	vaccel_debug("  plugins = %s", config->plugins);

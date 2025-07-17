@@ -34,8 +34,7 @@ int vaccel_image_op(vaccel_op_type_t op_type, struct vaccel_session *sess,
 	if (!sess)
 		return VACCEL_EINVAL;
 
-	vaccel_debug("session:%" PRId64 " Looking for plugin implementing %s",
-		     sess->id, vaccel_op_type_to_str(op_type));
+	op_debug_plugin_lookup(sess, op_type);
 
 	vaccel_prof_region_start(&image_op_stats);
 

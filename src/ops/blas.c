@@ -30,14 +30,12 @@ int vaccel_sgemm(struct vaccel_session *sess, long long int m, long long int n,
 	if (!sess)
 		return VACCEL_EINVAL;
 
-	vaccel_debug("session:%" PRId64
-		     " Looking for plugin implementing BLAS SGEMM",
-		     sess->id);
+	vaccel_op_type_t op_type = VACCEL_OP_BLAS_SGEMM;
+	op_debug_plugin_lookup(sess, op_type);
 
 	vaccel_prof_region_start(&blas_op_stats);
 
-	sgemm_fn_t plugin_sgemm =
-		plugin_get_op_func(VACCEL_OP_BLAS_SGEMM, sess->hint);
+	sgemm_fn_t plugin_sgemm = plugin_get_op_func(op_type, sess->hint);
 	if (!plugin_sgemm) {
 		ret = VACCEL_ENOTSUP;
 		goto out;

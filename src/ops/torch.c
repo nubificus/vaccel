@@ -234,10 +234,8 @@ int vaccel_torch_model_load(struct vaccel_session *sess,
 	if (!sess || !model)
 		return VACCEL_EINVAL;
 
-	vaccel_debug(
-		"session:%" PRId64
-		" Looking for plugin implementing torch_model_load operation",
-		sess->id);
+	vaccel_op_type_t op_type = VACCEL_OP_TORCH_MODEL_LOAD;
+	op_debug_plugin_lookup(sess, op_type);
 
 	if (model->type != VACCEL_RESOURCE_MODEL) {
 		vaccel_error(
@@ -255,7 +253,7 @@ int vaccel_torch_model_load(struct vaccel_session *sess,
 	vaccel_prof_region_start(&torch_model_load_op_stats);
 
 	torch_model_load_fn_t plugin_torch_model_load =
-		plugin_get_op_func(VACCEL_OP_TORCH_MODEL_LOAD, sess->hint);
+		plugin_get_op_func(op_type, sess->hint);
 	if (!plugin_torch_model_load) {
 		ret = VACCEL_ENOTSUP;
 		goto out;
@@ -287,13 +285,11 @@ int vaccel_torch_model_run(struct vaccel_session *sess,
 {
 	int ret;
 
-	if (!sess)
+	if (!sess || !model)
 		return VACCEL_EINVAL;
 
-	vaccel_debug(
-		"session:%" PRId64
-		" Looking for plugin implementing torch_model_run operation",
-		sess->id);
+	vaccel_op_type_t op_type = VACCEL_OP_TORCH_MODEL_RUN;
+	op_debug_plugin_lookup(sess, op_type);
 
 	if (model->type != VACCEL_RESOURCE_MODEL) {
 		vaccel_error(
@@ -311,7 +307,7 @@ int vaccel_torch_model_run(struct vaccel_session *sess,
 	vaccel_prof_region_start(&torch_model_run_op_stats);
 
 	torch_model_run_fn_t plugin_torch_model_run =
-		plugin_get_op_func(VACCEL_OP_TORCH_MODEL_RUN, sess->hint);
+		plugin_get_op_func(op_type, sess->hint);
 	if (!plugin_torch_model_run) {
 		ret = VACCEL_ENOTSUP;
 		goto out;
@@ -346,14 +342,13 @@ int vaccel_torch_sgemm(struct vaccel_session *sess,
 	if (!sess)
 		return VACCEL_EINVAL;
 
-	vaccel_debug("session:%" PRId64
-		     " Looking for plugin implementing torch sgemm operation",
-		     sess->id);
+	vaccel_op_type_t op_type = VACCEL_OP_TORCH_SGEMM;
+	op_debug_plugin_lookup(sess, op_type);
 
 	vaccel_prof_region_start(&torch_sgemm_op_stats);
 
 	torch_sgemm_fn_t plugin_torch_sgemm =
-		plugin_get_op_func(VACCEL_OP_TORCH_SGEMM, sess->hint);
+		plugin_get_op_func(op_type, sess->hint);
 	if (!plugin_torch_sgemm) {
 		ret = VACCEL_ENOTSUP;
 		goto out;
@@ -374,11 +369,10 @@ __attribute__((constructor)) static void vaccel_ops_init(void)
 __attribute__((destructor)) static void vaccel_ops_fini(void)
 {
 	vaccel_prof_region_print(&torch_model_load_op_stats);
-	vaccel_prof_region_release(&torch_model_load_op_stats);
-
 	vaccel_prof_region_print(&torch_model_run_op_stats);
-	vaccel_prof_region_release(&torch_model_run_op_stats);
-
 	vaccel_prof_region_print(&torch_sgemm_op_stats);
+
+	vaccel_prof_region_release(&torch_model_load_op_stats);
+	vaccel_prof_region_release(&torch_model_run_op_stats);
 	vaccel_prof_region_release(&torch_sgemm_op_stats);
 }

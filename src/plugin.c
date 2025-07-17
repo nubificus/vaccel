@@ -6,8 +6,6 @@
 #include "vaccel.h"
 #include <assert.h>
 #include <dlfcn.h>
-#include <limits.h>
-#include <linux/limits.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -244,12 +242,6 @@ int plugin_unregister(struct vaccel_plugin *plugin)
 	return VACCEL_OK;
 }
 
-static int plugin_gen_op_name(char *name, size_t size, struct vaccel_op *op)
-{
-	strncpy(name, vaccel_op_type_to_base_str(op->type), size);
-	return vaccel_str_to_lower(name, size, NULL);
-}
-
 int vaccel_plugin_register_op(struct vaccel_op *op)
 {
 	if (!op || !op->func) {
@@ -268,15 +260,13 @@ int vaccel_plugin_register_op(struct vaccel_op *op)
 		return VACCEL_EINVAL;
 	}
 
-	char op_name[NAME_MAX];
-	int ret = plugin_gen_op_name(op_name, NAME_MAX, op);
-	if (ret)
-		return ret;
-
 	list_add_tail(&plugin->ops, &op->plugin_entry);
 	list_add_tail(&plugins.ops[op->type], &op->func_entry);
 
-	vaccel_debug("Registered op %s from plugin %s", op_name,
+	char op_name[VACCEL_ENUM_STR_MAX];
+	vaccel_debug("Registered op %s from plugin %s",
+		     vaccel_op_type_name(op->type, op_name,
+					 VACCEL_ENUM_STR_MAX),
 		     plugin->info->name);
 
 	return VACCEL_OK;

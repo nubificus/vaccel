@@ -23,12 +23,12 @@ int vaccel_noop(struct vaccel_session *sess)
 	if (!sess)
 		return VACCEL_EINVAL;
 
-	vaccel_debug("session:%" PRId64 " Looking for plugin implementing noop",
-		     sess->id);
+	vaccel_op_type_t op_type = VACCEL_OP_NOOP;
+	op_debug_plugin_lookup(sess, op_type);
 
 	vaccel_prof_region_start(&noop_op_stats);
 
-	noop_fn_t plugin_noop = plugin_get_op_func(VACCEL_OP_NOOP, sess->hint);
+	noop_fn_t plugin_noop = plugin_get_op_func(op_type, sess->hint);
 	if (!plugin_noop)
 		return VACCEL_ENOTSUP;
 

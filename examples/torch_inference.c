@@ -29,7 +29,7 @@ int main(int argc, char **argv)
 	}
 
 	ret = vaccel_resource_init(&model, argv[2], VACCEL_RESOURCE_MODEL);
-	if (ret != VACCEL_OK) {
+	if (ret) {
 		fprintf(stderr, "Could not initialize model resource\n");
 		return ret;
 	}
@@ -37,7 +37,7 @@ int main(int argc, char **argv)
 	printf("Initialized model resource %" PRId64 "\n", model.id);
 
 	ret = vaccel_session_init(&sess, 0);
-	if (ret != VACCEL_OK) {
+	if (ret) {
 		fprintf(stderr, "Could not initialize vAccel session\n");
 		goto release_resource;
 	}
@@ -45,7 +45,7 @@ int main(int argc, char **argv)
 	printf("Initialized vAccel session %" PRId64 "\n", sess.id);
 
 	ret = vaccel_resource_register(&model, &sess);
-	if (ret != VACCEL_OK) {
+	if (ret) {
 		fprintf(stderr, "Could not register model with session\n");
 		goto release_session;
 	}
@@ -53,8 +53,8 @@ int main(int argc, char **argv)
 	vaccel_prof_region_start(&torch_model_load_stats);
 
 	ret = vaccel_torch_model_load(&sess, &model);
-	if (ret != VACCEL_OK) {
-		vaccel_error("Could not load torch model");
+	if (ret) {
+		vaccel_error("Could not load model");
 		goto unregister_resource;
 	}
 
@@ -62,7 +62,7 @@ int main(int argc, char **argv)
 
 	struct vaccel_torch_tensor *in;
 	ret = vaccel_torch_tensor_new(&in, 4, dims, VACCEL_TORCH_FLOAT);
-	if (ret != VACCEL_OK) {
+	if (ret) {
 		fprintf(stderr, "Could not allocate memory\n");
 		goto unregister_resource;
 	}
@@ -71,7 +71,7 @@ int main(int argc, char **argv)
 						  INFERENCE_IMAGE_FORMAT_TORCH,
 						  (float **)&in->data,
 						  &in->size);
-	if (ret != VACCEL_OK) {
+	if (ret) {
 		fprintf(stderr, "Could not load and preprocess image\n");
 		goto delete_in_tensor;
 	}
@@ -88,7 +88,7 @@ int main(int argc, char **argv)
 
 		vaccel_prof_region_stop(&torch_model_run_stats);
 
-		if (ret != VACCEL_OK) {
+		if (ret) {
 			fprintf(stderr, "Could not run op: %d\n", ret);
 			goto delete_in_tensor;
 		}
