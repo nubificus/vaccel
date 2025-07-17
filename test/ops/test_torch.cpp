@@ -420,33 +420,41 @@ TEST_CASE("torch_tensor_ops", "[ops][torch]")
 
 TEST_CASE("torch_model_load", "[ops][torch]")
 {
-	struct vaccel_session vsess;
+	int ret;
+	struct vaccel_session sess;
 	struct vaccel_resource model;
 	char *model_path =
 		abs_path(SOURCE_ROOT, "examples/models/torch/cnn_trace.pt");
 
-	REQUIRE(vaccel_session_init(&vsess, 0) == VACCEL_OK);
+	REQUIRE(vaccel_session_init(&sess, 0) == VACCEL_OK);
 	REQUIRE(vaccel_resource_init(&model, model_path,
 				     VACCEL_RESOURCE_DATA) == VACCEL_OK);
 
-	/* Null arguments*/
-	REQUIRE(vaccel_torch_model_load(&vsess, nullptr) == VACCEL_EINVAL);
-	REQUIRE(vaccel_torch_model_load(nullptr, &model) == VACCEL_EINVAL);
+	SECTION("invalid arguments")
+	{
+		/* Null arguments*/
+		ret = vaccel_torch_model_load(&sess, nullptr);
+		REQUIRE(ret == VACCEL_EINVAL);
+		ret = vaccel_torch_model_load(nullptr, &model);
+		REQUIRE(ret == VACCEL_EINVAL);
 
-	/* Wrong resource type*/
-	REQUIRE(vaccel_torch_model_load(&vsess, &model) == VACCEL_EINVAL);
-	model.type = VACCEL_RESOURCE_MODEL;
+		/* Invalid resource type*/
+		ret = vaccel_torch_model_load(&sess, &model);
+		REQUIRE(ret == VACCEL_EINVAL);
+		model.type = VACCEL_RESOURCE_MODEL;
 
-	/* Non-registered resource */
-	REQUIRE(vaccel_torch_model_load(&vsess, &model) == VACCEL_EPERM);
+		/* Resource not registered */
+		ret = vaccel_torch_model_load(&sess, &model);
+		REQUIRE(ret == VACCEL_EPERM);
+	}
 
-	REQUIRE(vaccel_resource_register(&model, &vsess) == VACCEL_OK);
+	REQUIRE(vaccel_resource_register(&model, &sess) == VACCEL_OK);
 
-	/* OK */
-	REQUIRE(vaccel_torch_model_load(&vsess, &model) == VACCEL_OK);
+	ret = vaccel_torch_model_load(&sess, &model);
+	REQUIRE(ret == VACCEL_OK);
 
-	REQUIRE(vaccel_resource_unregister(&model, &vsess) == VACCEL_OK);
-	REQUIRE(vaccel_session_release(&vsess) == VACCEL_OK);
+	REQUIRE(vaccel_resource_unregister(&model, &sess) == VACCEL_OK);
+	REQUIRE(vaccel_session_release(&sess) == VACCEL_OK);
 	REQUIRE(vaccel_resource_release(&model) == VACCEL_OK);
 
 	free(model_path);
@@ -454,7 +462,7 @@ TEST_CASE("torch_model_load", "[ops][torch]")
 
 TEST_CASE("torch_inference", "[ops][torch]")
 {
-	struct vaccel_session vsess;
+	struct vaccel_session sess;
 	struct vaccel_resource model;
 	int ret;
 	char *model_path =
@@ -462,8 +470,11 @@ TEST_CASE("torch_inference", "[ops][torch]")
 
 	REQUIRE(vaccel_resource_init(&model, model_path,
 				     VACCEL_RESOURCE_MODEL) == VACCEL_OK);
-	REQUIRE(vaccel_session_init(&vsess, 0) == VACCEL_OK);
-	REQUIRE(vaccel_resource_register(&model, &vsess) == VACCEL_OK);
+	REQUIRE(vaccel_session_init(&sess, 0) == VACCEL_OK);
+	REQUIRE(vaccel_resource_register(&model, &sess) == VACCEL_OK);
+
+	ret = vaccel_torch_model_load(&sess, &model);
+	REQUIRE(ret == VACCEL_OK);
 
 	struct vaccel_torch_buffer run_options;
 	REQUIRE(vaccel_torch_buffer_init(&run_options, nullptr, 0) ==
@@ -482,7 +493,7 @@ TEST_CASE("torch_inference", "[ops][torch]")
 
 	struct vaccel_torch_tensor *out = nullptr;
 
-	ret = vaccel_torch_model_run(&vsess, &model, &run_options, &in, 1, &out,
+	ret = vaccel_torch_model_run(&sess, &model, &run_options, &in, 1, &out,
 				     1);
 	REQUIRE(ret == VACCEL_OK);
 	REQUIRE(out->data_type == in->data_type);
@@ -498,8 +509,8 @@ TEST_CASE("torch_inference", "[ops][torch]")
 	REQUIRE(vaccel_torch_tensor_delete(in) == VACCEL_OK);
 	REQUIRE(vaccel_torch_tensor_delete(out) == VACCEL_OK);
 
-	REQUIRE(vaccel_resource_unregister(&model, &vsess) == VACCEL_OK);
-	REQUIRE(vaccel_session_release(&vsess) == VACCEL_OK);
+	REQUIRE(vaccel_resource_unregister(&model, &sess) == VACCEL_OK);
+	REQUIRE(vaccel_session_release(&sess) == VACCEL_OK);
 	REQUIRE(vaccel_resource_release(&model) == VACCEL_OK);
 
 	free(model_path);

@@ -413,7 +413,8 @@ int vaccel_tf_model_unload(struct vaccel_session *sess,
 	}
 
 	if (!vaccel_session_has_resource(sess, model)) {
-		vaccel_error("Resource %u is not registered to session %u",
+		vaccel_error("Resource %" PRId64
+			     " is not registered to session %" PRId64 "",
 			     model->id, sess->id);
 		return VACCEL_EPERM;
 	}
@@ -442,19 +443,20 @@ typedef int (*tf_model_run_fn_t)(struct vaccel_session *sess,
 				 const struct vaccel_resource *model,
 				 const struct vaccel_tf_buffer *run_options,
 				 const struct vaccel_tf_node *in_nodes,
-				 struct vaccel_tf_tensor *const *in,
+				 struct vaccel_tf_tensor *const *in_tensors,
 				 int nr_inputs,
 				 const struct vaccel_tf_node *out_nodes,
-				 struct vaccel_tf_tensor **out, int nr_outputs,
+				 struct vaccel_tf_tensor **out_tensors,
+				 int nr_outputs,
 				 struct vaccel_tf_status *status);
 
 int vaccel_tf_model_run(struct vaccel_session *sess,
 			const struct vaccel_resource *model,
 			const struct vaccel_tf_buffer *run_options,
 			const struct vaccel_tf_node *in_nodes,
-			struct vaccel_tf_tensor *const *in, int nr_inputs,
-			const struct vaccel_tf_node *out_nodes,
-			struct vaccel_tf_tensor **out, int nr_outputs,
+			struct vaccel_tf_tensor *const *in_tensors,
+			int nr_inputs, const struct vaccel_tf_node *out_nodes,
+			struct vaccel_tf_tensor **out_tensors, int nr_outputs,
 			struct vaccel_tf_status *status)
 {
 	int ret;
@@ -486,9 +488,9 @@ int vaccel_tf_model_run(struct vaccel_session *sess,
 		goto out;
 	}
 
-	ret = plugin_tf_model_run(sess, model, run_options, in_nodes, in,
-				  nr_inputs, out_nodes, out, nr_outputs,
-				  status);
+	ret = plugin_tf_model_run(sess, model, run_options, in_nodes,
+				  in_tensors, nr_inputs, out_nodes, out_tensors,
+				  nr_outputs, status);
 
 out:
 	vaccel_prof_region_stop(&tf_model_run_op_stats);

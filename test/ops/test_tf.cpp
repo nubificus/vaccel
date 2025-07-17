@@ -606,6 +606,97 @@ TEST_CASE("tf_tensor_ops", "[ops][tf]")
 	free(data);
 }
 
+TEST_CASE("tf_model_load", "[ops][tf]")
+{
+	int ret;
+	struct vaccel_session sess;
+	struct vaccel_resource model;
+	char *model_path = abs_path(SOURCE_ROOT, "examples/models/tf/lstm2");
+
+	REQUIRE(vaccel_session_init(&sess, 0) == VACCEL_OK);
+	REQUIRE(vaccel_resource_init(&model, model_path,
+				     VACCEL_RESOURCE_DATA) == VACCEL_OK);
+
+	SECTION("invalid arguments")
+	{
+		/* Null arguments*/
+		ret = vaccel_tf_model_load(&sess, nullptr, nullptr);
+		REQUIRE(ret == VACCEL_EINVAL);
+		ret = vaccel_tf_model_load(nullptr, &model, nullptr);
+		REQUIRE(ret == VACCEL_EINVAL);
+
+		/* Invalid resource type*/
+		ret = vaccel_tf_model_load(&sess, &model, nullptr);
+		REQUIRE(ret == VACCEL_EINVAL);
+		model.type = VACCEL_RESOURCE_MODEL;
+
+		/* Resource not registered */
+		ret = vaccel_tf_model_load(&sess, &model, nullptr);
+		REQUIRE(ret == VACCEL_EPERM);
+	}
+
+	REQUIRE(vaccel_resource_register(&model, &sess) == VACCEL_OK);
+
+	struct vaccel_tf_status status;
+	ret = vaccel_tf_model_load(&sess, &model, &status);
+	REQUIRE(ret == VACCEL_OK);
+	REQUIRE(status.error_code == 0);
+
+	REQUIRE(vaccel_resource_unregister(&model, &sess) == VACCEL_OK);
+	REQUIRE(vaccel_session_release(&sess) == VACCEL_OK);
+	REQUIRE(vaccel_resource_release(&model) == VACCEL_OK);
+
+	free(model_path);
+}
+
+TEST_CASE("tf_model_unload", "[ops][tf]")
+{
+	int ret;
+	struct vaccel_session sess;
+	struct vaccel_resource model;
+	char *model_path = abs_path(SOURCE_ROOT, "examples/models/tf/lstm2");
+
+	REQUIRE(vaccel_session_init(&sess, 0) == VACCEL_OK);
+	REQUIRE(vaccel_resource_init(&model, model_path,
+				     VACCEL_RESOURCE_MODEL) == VACCEL_OK);
+
+	SECTION("resource not registered")
+	{
+		/* Resource not registered */
+		ret = vaccel_tf_model_unload(&sess, &model, nullptr);
+		REQUIRE(ret == VACCEL_EPERM);
+	}
+
+	REQUIRE(vaccel_resource_register(&model, &sess) == VACCEL_OK);
+	REQUIRE(vaccel_tf_model_load(&sess, &model, nullptr) == VACCEL_OK);
+
+	SECTION("invalid arguments")
+	{
+		/* Null arguments*/
+		ret = vaccel_tf_model_unload(&sess, nullptr, nullptr);
+		REQUIRE(ret == VACCEL_EINVAL);
+		ret = vaccel_tf_model_unload(nullptr, &model, nullptr);
+		REQUIRE(ret == VACCEL_EINVAL);
+
+		/* Invalid resource type*/
+		model.type = VACCEL_RESOURCE_DATA;
+		ret = vaccel_tf_model_unload(&sess, &model, nullptr);
+		REQUIRE(ret == VACCEL_EINVAL);
+		model.type = VACCEL_RESOURCE_MODEL;
+	}
+
+	struct vaccel_tf_status status;
+	ret = vaccel_tf_model_unload(&sess, &model, &status);
+	REQUIRE(ret == VACCEL_OK);
+	REQUIRE(status.error_code == 0);
+
+	REQUIRE(vaccel_resource_unregister(&model, &sess) == VACCEL_OK);
+	REQUIRE(vaccel_session_release(&sess) == VACCEL_OK);
+	REQUIRE(vaccel_resource_release(&model) == VACCEL_OK);
+
+	free(model_path);
+}
+
 TEST_CASE("tf_inference", "[ops][tf]")
 {
 	struct vaccel_session vsess;

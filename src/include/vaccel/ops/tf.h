@@ -173,9 +173,9 @@ int vaccel_tf_model_run(struct vaccel_session *sess,
 			const struct vaccel_resource *model,
 			const struct vaccel_tf_buffer *run_options,
 			const struct vaccel_tf_node *in_nodes,
-			struct vaccel_tf_tensor *const *in, int nr_inputs,
-			const struct vaccel_tf_node *out_nodes,
-			struct vaccel_tf_tensor **out, int nr_outputs,
+			struct vaccel_tf_tensor *const *in_tensors,
+			int nr_inputs, const struct vaccel_tf_node *out_nodes,
+			struct vaccel_tf_tensor **out_tensors, int nr_outputs,
 			struct vaccel_tf_status *status);
 
 /* Unload loaded TF model */

@@ -114,9 +114,9 @@ int vaccel_torch_model_load(struct vaccel_session *sess,
 int vaccel_torch_model_run(struct vaccel_session *sess,
 			   const struct vaccel_resource *model,
 			   const struct vaccel_torch_buffer *run_options,
-			   struct vaccel_torch_tensor **in_tensor, int nr_read,
-			   struct vaccel_torch_tensor **out_tensor,
-			   int nr_write);
+			   struct vaccel_torch_tensor *const *inputs,
+			   int nr_inputs, struct vaccel_torch_tensor **outputs,
+			   int nr_outputs);
 
 /* Perform Torch SGEMM */
 int vaccel_torch_sgemm(struct vaccel_session *sess,
