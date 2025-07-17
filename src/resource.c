@@ -170,7 +170,7 @@ static void put_resource_id(struct vaccel_resource *res)
 {
 	if (id_pool_put(&resources.id_pool, res->id))
 		vaccel_warn("Could not return resource ID to pool");
-	res->id = -1;
+	res->id = 0;
 }
 
 void resource_refcount_inc(struct vaccel_resource *res)
@@ -205,9 +205,8 @@ long int vaccel_resource_refcount(const struct vaccel_resource *res)
 
 int resource_create_rundir(struct vaccel_resource *res)
 {
-	if (!res || !res->id) {
-		vaccel_error(
-			"BUG! Trying to create rundir for invalid resource");
+	if (!res || res->id <= 0) {
+		vaccel_error("Trying to create rundir for invalid resource");
 		return VACCEL_EINVAL;
 	}
 
@@ -524,7 +523,7 @@ static int resource_init_with_paths(struct vaccel_resource *res,
 	    type >= VACCEL_RESOURCE_MAX)
 		return VACCEL_EINVAL;
 
-	res->remote_id = -1;
+	res->remote_id = 0;
 	res->type = type;
 	res->blobs = NULL;
 	res->nr_blobs = 0;
@@ -543,10 +542,10 @@ static int resource_init_with_blobs(struct vaccel_resource *res,
 				    vaccel_resource_type_t type)
 {
 	if (!res || !res->blobs || !res->nr_blobs ||
-	    type >= VACCEL_RESOURCE_MAX || !res->id)
+	    type >= VACCEL_RESOURCE_MAX || res->id <= 0)
 		return VACCEL_EINVAL;
 
-	res->remote_id = -1;
+	res->remote_id = 0;
 	res->type = type;
 	res->path_type = VACCEL_PATH_LOCAL_FILE;
 	res->paths = NULL;

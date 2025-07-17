@@ -40,14 +40,6 @@ void init(long long int m, long long int n, long long int k, float *A, float *B,
 
 TEST_CASE("sgemm", "[ops][blas]")
 {
-	// Open a file stream for output data
-	// FILE* data_fp = NULL;
-
-	// const char* path_output = "../../test/empty.txt";
-	// data_fp = fopen(path_output, "wb");
-	// REQUIRE(data_fp);
-
-	// Initialize matrices A, B, and C with specific values
 	float const alpha = 32412.0;
 	float const beta = 2123.0;
 	float A[M * K];
@@ -55,32 +47,12 @@ TEST_CASE("sgemm", "[ops][blas]")
 	float C[M * N];
 	init(M, N, K, A, B, C);
 
-	// Initialize a VAccel session
 	struct vaccel_session session;
-	session.id = 1;
-	session.resources = nullptr;
-	session.priv = nullptr;
+	REQUIRE(vaccel_session_init(&session, 0) == VACCEL_OK);
 
-	int ret = vaccel_session_init(&session, 0);
-	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(session.id);
-	REQUIRE(session.hint == 0);
-	REQUIRE(session.resources);
-	REQUIRE(session.priv == nullptr);
-	// Invoke the sgemm function with the initialized matrices and session
-	ret = vaccel_sgemm(&session, M, N, K, alpha, (float *)A, K, (float *)B,
-			   N, beta, (float *)C, N);
+	int ret = vaccel_sgemm(&session, M, N, K, alpha, (float *)A, K,
+			       (float *)B, N, beta, (float *)C, N);
 	REQUIRE(ret == VACCEL_OK);
 
-	// Write the result matrix C to a file
-	// fwrite(C, sizeof(float), M * N, data_fp);
-
-	// Free the VAccel session
-	ret = vaccel_session_release(&session);
-
-	REQUIRE(session.id);
-	REQUIRE(session.hint == 0);
-	REQUIRE(session.resources == nullptr);
-	REQUIRE(session.priv == nullptr);
-	REQUIRE(ret == VACCEL_OK);
+	REQUIRE(vaccel_session_release(&session) == VACCEL_OK);
 }

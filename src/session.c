@@ -41,7 +41,7 @@ static void put_session_id(struct vaccel_session *sess)
 {
 	if (id_pool_put(&sessions.ids, sess->id))
 		vaccel_warn("Could not return resource ID to pool");
-	sess->id = -1;
+	sess->id = 0;
 }
 
 int sessions_bootstrap(void)
@@ -145,9 +145,8 @@ int session_unregister_resource(struct vaccel_session *sess,
 
 static int session_initialize_resources(struct vaccel_session *sess)
 {
-	if (!sess || !sess->id) {
-		vaccel_error(
-			"BUG! Trying to create rundir for invalid session");
+	if (!sess || sess->id <= 0) {
+		vaccel_error("Trying to create rundir for invalid session");
 		return VACCEL_EINVAL;
 	}
 

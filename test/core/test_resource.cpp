@@ -3,24 +3,23 @@
 /*
  * The code below performs unit testing to resources.
  *
- * 1)  resource_bootstrap()
- * 2)  resource_new()
- * 3)  resource_destroy()
- * 4)  resource_create_rundir()
- * 5)  vaccel_resource_get_by_id()
- * 6)  vaccel_resource_init(), from dir
- * 7)  vaccel_resource_init(), from blob
- * 8)  vaccel_resource_init(), from URL
- * 9)  vaccel_resource_init_multi()
- * 10) vaccel_resource_init_from_buf()
- * 11) vaccel_resource_init_from_blobs()
- * 12) vaccel_resource_register()
- * 13) vaccel_resource_unregister()
- * 14) vaccel_resource_release()
- * 15) vaccel_resource_directory()
- * 16) vaccel_session_has_resource()
- * 17) vaccel_resource_get_by_type()
- * 18) vaccel_resource_get_all_by_type()
+ * 1)  resource_new()
+ * 2)  resource_destroy()
+ * 3)  resource_create_rundir()
+ * 4)  vaccel_resource_get_by_id()
+ * 5)  vaccel_resource_init(), from dir
+ * 6)  vaccel_resource_init(), from blob
+ * 7)  vaccel_resource_init(), from URL
+ * 8)  vaccel_resource_init_multi()
+ * 9) vaccel_resource_init_from_buf()
+ * 10) vaccel_resource_init_from_blobs()
+ * 11) vaccel_resource_register()
+ * 12) vaccel_resource_unregister()
+ * 13) vaccel_resource_release()
+ * 14) vaccel_resource_directory()
+ * 15) vaccel_session_has_resource()
+ * 16) vaccel_resource_get_by_type()
+ * 17) vaccel_resource_get_all_by_type()
  *
  */
 
@@ -103,7 +102,7 @@ TEST_CASE("resource_from_directory_path", "[core][resource]")
 	ret = vaccel_resource_init(&res, dir_path, VACCEL_RESOURCE_DATA);
 	REQUIRE(ret == VACCEL_OK);
 	REQUIRE(res.id > 0);
-	REQUIRE(res.remote_id == -1);
+	REQUIRE(res.remote_id == 0);
 	REQUIRE(res.blobs == nullptr);
 	REQUIRE(res.nr_blobs == 0);
 	REQUIRE(res.type == VACCEL_RESOURCE_DATA);
@@ -119,7 +118,7 @@ TEST_CASE("resource_from_directory_path", "[core][resource]")
 	ret = vaccel_resource_new(&alloc_res, dir_path, VACCEL_RESOURCE_DATA);
 	REQUIRE(ret == VACCEL_OK);
 	REQUIRE(alloc_res->id == res.id + 1);
-	REQUIRE(alloc_res->remote_id == -1);
+	REQUIRE(alloc_res->remote_id == 0);
 	REQUIRE(alloc_res->blobs == nullptr);
 	REQUIRE(alloc_res->nr_blobs == 0);
 	REQUIRE(alloc_res->type == VACCEL_RESOURCE_DATA);
@@ -305,7 +304,7 @@ TEST_CASE("resource_from_file_paths", "[core][resource]")
 					 VACCEL_RESOURCE_DATA);
 	REQUIRE(ret == VACCEL_OK);
 	REQUIRE(res.id > 0);
-	REQUIRE(res.remote_id == -1);
+	REQUIRE(res.remote_id == 0);
 	REQUIRE(res.type == VACCEL_RESOURCE_DATA);
 	REQUIRE(res.path_type == VACCEL_PATH_LOCAL_FILE);
 	REQUIRE(res.nr_paths == 2);
@@ -328,7 +327,7 @@ TEST_CASE("resource_from_file_paths", "[core][resource]")
 					VACCEL_RESOURCE_DATA);
 	REQUIRE(ret == VACCEL_OK);
 	REQUIRE(alloc_res->id == res.id + 1);
-	REQUIRE(alloc_res->remote_id == -1);
+	REQUIRE(alloc_res->remote_id == 0);
 	REQUIRE(alloc_res->type == VACCEL_RESOURCE_DATA);
 	REQUIRE(alloc_res->path_type == VACCEL_PATH_LOCAL_FILE);
 	REQUIRE(alloc_res->nr_paths == 2);
@@ -490,7 +489,7 @@ TEST_CASE("resource_from_url_path", "[core][resource]")
 	ret = vaccel_resource_init(&res, url, VACCEL_RESOURCE_DATA);
 	REQUIRE(ret == VACCEL_OK);
 	REQUIRE(res.id > 0);
-	REQUIRE(res.remote_id == -1);
+	REQUIRE(res.remote_id == 0);
 	REQUIRE(res.type == VACCEL_RESOURCE_DATA);
 	REQUIRE(res.path_type == VACCEL_PATH_REMOTE_FILE);
 	REQUIRE(res.nr_paths == 1);
@@ -508,7 +507,7 @@ TEST_CASE("resource_from_url_path", "[core][resource]")
 	ret = vaccel_resource_new(&alloc_res, url, VACCEL_RESOURCE_DATA);
 	REQUIRE(ret == VACCEL_OK);
 	REQUIRE(alloc_res->id == res.id + 1);
-	REQUIRE(alloc_res->remote_id == -1);
+	REQUIRE(alloc_res->remote_id == 0);
 	REQUIRE(alloc_res->type == VACCEL_RESOURCE_DATA);
 	REQUIRE(alloc_res->path_type == VACCEL_PATH_REMOTE_FILE);
 	REQUIRE(alloc_res->nr_paths == 1);
@@ -660,7 +659,7 @@ TEST_CASE("resource_from_buffer", "[core][resource]")
 		&res, buff, len, VACCEL_RESOURCE_LIB, "lib.so", false);
 	REQUIRE(ret == VACCEL_OK);
 	REQUIRE(res.id > 0);
-	REQUIRE(res.remote_id == -1);
+	REQUIRE(res.remote_id == 0);
 	REQUIRE(res.type == VACCEL_RESOURCE_LIB);
 	REQUIRE(res.path_type == VACCEL_PATH_LOCAL_FILE);
 	REQUIRE(res.nr_paths == 0);
@@ -685,7 +684,7 @@ TEST_CASE("resource_from_buffer", "[core][resource]")
 				       VACCEL_RESOURCE_LIB, "lib.so", false);
 	REQUIRE(ret == VACCEL_OK);
 	REQUIRE(alloc_res->id == res.id + 1);
-	REQUIRE(alloc_res->remote_id == -1);
+	REQUIRE(alloc_res->remote_id == 0);
 	REQUIRE(alloc_res->type == VACCEL_RESOURCE_LIB);
 	REQUIRE(alloc_res->path_type == VACCEL_PATH_LOCAL_FILE);
 	REQUIRE(alloc_res->nr_paths == 0);
@@ -797,7 +796,7 @@ TEST_CASE("resource_from_blobs_mem_only", "[core][resource]")
 					      VACCEL_RESOURCE_DATA);
 	REQUIRE(ret == VACCEL_OK);
 	REQUIRE(res.id > 0);
-	REQUIRE(res.remote_id == -1);
+	REQUIRE(res.remote_id == 0);
 	REQUIRE(res.type == VACCEL_RESOURCE_DATA);
 	REQUIRE(res.path_type == VACCEL_PATH_LOCAL_FILE);
 	REQUIRE(res.paths == nullptr);
@@ -939,7 +938,7 @@ TEST_CASE("resource_from_blobs", "[core][resource]")
 					      VACCEL_RESOURCE_DATA);
 	REQUIRE(ret == VACCEL_OK);
 	REQUIRE(res.id > 0);
-	REQUIRE(res.remote_id == -1);
+	REQUIRE(res.remote_id == 0);
 	REQUIRE(res.type == VACCEL_RESOURCE_DATA);
 	REQUIRE(res.path_type == VACCEL_PATH_LOCAL_FILE);
 	REQUIRE(res.paths == nullptr);
@@ -966,7 +965,7 @@ TEST_CASE("resource_from_blobs", "[core][resource]")
 					 VACCEL_RESOURCE_DATA);
 	REQUIRE(ret == VACCEL_OK);
 	REQUIRE(alloc_res->id == res.id + 1);
-	REQUIRE(alloc_res->remote_id == -1);
+	REQUIRE(alloc_res->remote_id == 0);
 	REQUIRE(alloc_res->type == VACCEL_RESOURCE_DATA);
 	REQUIRE(alloc_res->path_type == VACCEL_PATH_LOCAL_FILE);
 	REQUIRE(alloc_res->paths == nullptr);
@@ -1556,7 +1555,7 @@ TEST_CASE("memory_only_resource", "[core][resource]")
 					    VACCEL_RESOURCE_LIB, nullptr, true);
 	REQUIRE(ret == VACCEL_OK);
 	REQUIRE(res.id > 0);
-	REQUIRE(res.remote_id == -1);
+	REQUIRE(res.remote_id == 0);
 	REQUIRE(res.type == VACCEL_RESOURCE_LIB);
 	REQUIRE(res.path_type == VACCEL_PATH_LOCAL_FILE);
 	REQUIRE(res.nr_paths == 0);
@@ -1582,7 +1581,7 @@ TEST_CASE("memory_only_resource", "[core][resource]")
 				       VACCEL_RESOURCE_LIB, nullptr, true);
 	REQUIRE(ret == VACCEL_OK);
 	REQUIRE(alloc_res->id == res.id + 1);
-	REQUIRE(alloc_res->remote_id == -1);
+	REQUIRE(alloc_res->remote_id == 0);
 	REQUIRE(alloc_res->type == VACCEL_RESOURCE_LIB);
 	REQUIRE(alloc_res->path_type == VACCEL_PATH_LOCAL_FILE);
 	REQUIRE(alloc_res->nr_paths == 0);
@@ -1686,7 +1685,7 @@ TEST_CASE("memory_only_resource_virtio", "[core][resource]")
 					    VACCEL_RESOURCE_LIB, nullptr, true);
 	REQUIRE(ret == VACCEL_OK);
 	REQUIRE(res.id > 0);
-	REQUIRE(res.remote_id == -1);
+	REQUIRE(res.remote_id == 0);
 	REQUIRE(res.type == VACCEL_RESOURCE_LIB);
 	REQUIRE(res.path_type == VACCEL_PATH_LOCAL_FILE);
 	REQUIRE(res.nr_paths == 0);

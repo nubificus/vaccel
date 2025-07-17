@@ -45,27 +45,13 @@ TEST_CASE("min_max", "[ops][minmax]")
 	int const high_threshold = 4000;
 
 	struct vaccel_session session;
-	session.id = 1;
-	session.resources = nullptr;
-	session.priv = nullptr;
-
-	ret = vaccel_session_init(&session, 0);
-	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(session.id);
-	REQUIRE(session.hint == 0);
-	REQUIRE(session.resources);
-	REQUIRE(session.priv == nullptr);
+	REQUIRE(vaccel_session_init(&session, 0) == VACCEL_OK);
 
 	ret = vaccel_minmax(&session, indata, ndata, low_threshold,
 			    high_threshold, outdata, &min, &max);
 	REQUIRE(ret == VACCEL_OK);
 
-	ret = vaccel_session_release(&session);
-	REQUIRE(session.id);
-	REQUIRE(session.hint == 0);
-	REQUIRE(session.resources == nullptr);
-	REQUIRE(session.priv == nullptr);
-	REQUIRE(ret == VACCEL_OK);
+	REQUIRE(vaccel_session_release(&session) == VACCEL_OK);
 
 	ret = fclose(fp);
 	REQUIRE(!ret);
@@ -102,16 +88,7 @@ TEST_CASE("min_max_generic", "[ops][minmax]")
 	int high_threshold = 4000;
 
 	struct vaccel_session session;
-	session.id = 1;
-	session.resources = nullptr;
-	session.priv = nullptr;
-
-	ret = vaccel_session_init(&session, 0);
-	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(session.id);
-	REQUIRE(session.hint == 0);
-	REQUIRE(session.resources);
-	REQUIRE(session.priv == nullptr);
+	REQUIRE(vaccel_session_init(&session, 0) == VACCEL_OK);
 
 	vaccel_op_type_t op_type = VACCEL_OP_MINMAX;
 	struct vaccel_arg read[5] = {
@@ -136,12 +113,7 @@ TEST_CASE("min_max_generic", "[ops][minmax]")
 	ret = vaccel_genop(&session, &read[0], 5, &write[0], 3);
 	REQUIRE(ret == VACCEL_OK);
 
-	ret = vaccel_session_release(&session);
-	REQUIRE(session.id);
-	REQUIRE(session.hint == 0);
-	REQUIRE(session.resources == nullptr);
-	REQUIRE(session.priv == nullptr);
-	REQUIRE(ret == VACCEL_OK);
+	REQUIRE(vaccel_session_release(&session) == VACCEL_OK);
 
 	ret = fclose(fp);
 	REQUIRE(!ret);
