@@ -273,6 +273,94 @@ TEST_CASE("tflite_tensor_ops", "[ops][tflite]")
 	free(data);
 }
 
+TEST_CASE("tflite_model_load", "[ops][tf]")
+{
+	int ret;
+	struct vaccel_session sess;
+	struct vaccel_resource model;
+	char *model_path =
+		abs_path(SOURCE_ROOT, "examples/models/tf/lstm2.tflite");
+
+	REQUIRE(vaccel_session_init(&sess, 0) == VACCEL_OK);
+	REQUIRE(vaccel_resource_init(&model, model_path,
+				     VACCEL_RESOURCE_DATA) == VACCEL_OK);
+
+	SECTION("invalid arguments")
+	{
+		/* Null arguments*/
+		ret = vaccel_tflite_model_load(&sess, nullptr);
+		REQUIRE(ret == VACCEL_EINVAL);
+		ret = vaccel_tflite_model_load(nullptr, &model);
+		REQUIRE(ret == VACCEL_EINVAL);
+
+		/* Invalid resource type*/
+		ret = vaccel_tflite_model_load(&sess, &model);
+		REQUIRE(ret == VACCEL_EINVAL);
+		model.type = VACCEL_RESOURCE_MODEL;
+
+		/* Resource not registered */
+		ret = vaccel_tflite_model_load(&sess, &model);
+		REQUIRE(ret == VACCEL_EPERM);
+	}
+
+	REQUIRE(vaccel_resource_register(&model, &sess) == VACCEL_OK);
+
+	ret = vaccel_tflite_model_load(&sess, &model);
+	REQUIRE(ret == VACCEL_OK);
+
+	REQUIRE(vaccel_resource_unregister(&model, &sess) == VACCEL_OK);
+	REQUIRE(vaccel_session_release(&sess) == VACCEL_OK);
+	REQUIRE(vaccel_resource_release(&model) == VACCEL_OK);
+
+	free(model_path);
+}
+
+TEST_CASE("tflite_model_unload", "[ops][tf]")
+{
+	int ret;
+	struct vaccel_session sess;
+	struct vaccel_resource model;
+	char *model_path =
+		abs_path(SOURCE_ROOT, "examples/models/tf/lstm2.tflite");
+
+	REQUIRE(vaccel_session_init(&sess, 0) == VACCEL_OK);
+	REQUIRE(vaccel_resource_init(&model, model_path,
+				     VACCEL_RESOURCE_MODEL) == VACCEL_OK);
+
+	SECTION("resource not registered")
+	{
+		ret = vaccel_tflite_model_unload(&sess, &model);
+		REQUIRE(ret == VACCEL_EPERM);
+	}
+
+	REQUIRE(vaccel_resource_register(&model, &sess) == VACCEL_OK);
+	REQUIRE(vaccel_tflite_model_load(&sess, &model) == VACCEL_OK);
+
+	SECTION("invalid arguments")
+	{
+		/* Null arguments*/
+		ret = vaccel_tflite_model_unload(&sess, nullptr);
+		REQUIRE(ret == VACCEL_EINVAL);
+		ret = vaccel_tflite_model_unload(nullptr, &model);
+		REQUIRE(ret == VACCEL_EINVAL);
+
+		/* Invalid resource type*/
+		model.type = VACCEL_RESOURCE_DATA;
+		ret = vaccel_tflite_model_unload(&sess, &model);
+		REQUIRE(ret == VACCEL_EINVAL);
+		model.type = VACCEL_RESOURCE_MODEL;
+	}
+
+	ret = vaccel_tflite_model_unload(&sess, &model);
+	REQUIRE(ret == VACCEL_OK);
+
+	REQUIRE(vaccel_resource_unregister(&model, &sess) == VACCEL_OK);
+	REQUIRE(vaccel_session_release(&sess) == VACCEL_OK);
+	REQUIRE(vaccel_resource_release(&model) == VACCEL_OK);
+
+	free(model_path);
+}
+
 TEST_CASE("tflite_inference", "[ops][tflite]")
 {
 	struct vaccel_session vsess;

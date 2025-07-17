@@ -273,15 +273,15 @@ static struct vaccel_prof_region torch_model_run_op_stats =
 typedef int (*torch_model_run_fn_t)(
 	struct vaccel_session *sess, const struct vaccel_resource *model,
 	const struct vaccel_torch_buffer *run_options,
-	struct vaccel_torch_tensor **in_tensor, int nr_read,
-	struct vaccel_torch_tensor **out_tensor, int nr_write);
+	struct vaccel_torch_tensor *const *inputs, int nr_inputs,
+	struct vaccel_torch_tensor **outputs, int nr_outputs);
 
 int vaccel_torch_model_run(struct vaccel_session *sess,
 			   const struct vaccel_resource *model,
 			   const struct vaccel_torch_buffer *run_options,
-			   struct vaccel_torch_tensor **in_tensor, int nr_read,
-			   struct vaccel_torch_tensor **out_tensor,
-			   int nr_write)
+			   struct vaccel_torch_tensor *const *inputs,
+			   int nr_inputs, struct vaccel_torch_tensor **outputs,
+			   int nr_outputs)
 {
 	int ret;
 
@@ -313,8 +313,8 @@ int vaccel_torch_model_run(struct vaccel_session *sess,
 		goto out;
 	}
 
-	ret = plugin_torch_model_run(sess, model, run_options, in_tensor,
-				     nr_read, out_tensor, nr_write);
+	ret = plugin_torch_model_run(sess, model, run_options, inputs,
+				     nr_inputs, outputs, nr_outputs);
 
 out:
 	vaccel_prof_region_stop(&torch_model_run_op_stats);

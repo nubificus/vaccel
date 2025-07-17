@@ -249,15 +249,16 @@ static struct vaccel_prof_region tflite_model_run_op_stats =
 
 typedef int (*tflite_model_run_fn_t)(struct vaccel_session *sess,
 				     const struct vaccel_resource *model,
-				     struct vaccel_tflite_tensor *const *in,
+				     struct vaccel_tflite_tensor *const *inputs,
 				     int nr_inputs,
-				     struct vaccel_tflite_tensor **out,
+				     struct vaccel_tflite_tensor **outputs,
 				     int nr_outputs, uint8_t *status);
 
 int vaccel_tflite_model_run(struct vaccel_session *sess,
 			    const struct vaccel_resource *model,
-			    struct vaccel_tflite_tensor *const *in,
-			    int nr_inputs, struct vaccel_tflite_tensor **out,
+			    struct vaccel_tflite_tensor *const *inputs,
+			    int nr_inputs,
+			    struct vaccel_tflite_tensor **outputs,
 			    int nr_outputs, uint8_t *status)
 {
 	int ret;
@@ -290,8 +291,8 @@ int vaccel_tflite_model_run(struct vaccel_session *sess,
 		goto out;
 	}
 
-	ret = plugin_tflite_model(sess, model, in, nr_inputs, out, nr_outputs,
-				  status);
+	ret = plugin_tflite_model(sess, model, inputs, nr_inputs, outputs,
+				  nr_outputs, status);
 
 out:
 	vaccel_prof_region_stop(&tflite_model_run_op_stats);
