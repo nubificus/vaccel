@@ -17,7 +17,7 @@ int main(int argc, char *argv[])
 	char out_text[STR_SIZE_MAX] = { '\0' };
 	char out_imagename[STR_SIZE_MAX] = { '\0' };
 	struct vaccel_session sess;
-	struct vaccel_resource model = { .id = -1 };
+	struct vaccel_resource model = { .id = 0 };
 	struct vaccel_prof_region classify_stats =
 		VACCEL_PROF_REGION_INIT("classify");
 

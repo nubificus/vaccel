@@ -23,7 +23,7 @@ static auto mock_virtio_session_update(struct vaccel_session *sess,
 
 static auto mock_virtio_session_release(struct vaccel_session *sess) -> int
 {
-	sess->remote_id = -1;
+	sess->remote_id = 0;
 	return VACCEL_OK;
 }
 
@@ -38,7 +38,7 @@ static auto mock_virtio_resource_register(struct vaccel_resource *res,
 static auto mock_virtio_resource_unregister(struct vaccel_resource *res,
 					    struct vaccel_session *sess) -> int
 {
-	res->remote_id = -1;
+	res->remote_id = 0;
 	(void)sess;
 	return VACCEL_OK;
 }

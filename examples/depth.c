@@ -16,7 +16,7 @@ int main(int argc, char *argv[])
 	size_t image_size;
 	char out_imagename[STR_SIZE_MAX] = { '\0' };
 	struct vaccel_session sess;
-	struct vaccel_resource model = { .id = -1 };
+	struct vaccel_resource model = { .id = 0 };
 	struct vaccel_prof_region depth_stats =
 		VACCEL_PROF_REGION_INIT("depth");
 

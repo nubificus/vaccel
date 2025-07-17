@@ -41,7 +41,7 @@ TEST_CASE("vaccel_session_init", "[core][session]")
 	struct vaccel_session sess;
 	ret = vaccel_session_init(&sess, 1);
 	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(sess.id);
+	REQUIRE(sess.id > 0);
 	REQUIRE(sess.hint == 1);
 	REQUIRE(sess.resources);
 	REQUIRE(sess.priv == nullptr);
@@ -68,7 +68,7 @@ TEST_CASE("vaccel_session_release", "[core][session]")
 	{
 		ret = vaccel_session_release(nullptr);
 		REQUIRE(ret == VACCEL_EINVAL);
-		REQUIRE(sess.id);
+		REQUIRE(sess.id > 0);
 		REQUIRE(sess.hint == 1);
 		REQUIRE(sess.resources);
 		REQUIRE(sess.priv == nullptr);
@@ -76,7 +76,7 @@ TEST_CASE("vaccel_session_release", "[core][session]")
 
 	ret = vaccel_session_release(&sess);
 	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(sess.id);
+	REQUIRE(sess.id == 0);
 	REQUIRE(sess.hint == 1);
 	REQUIRE(sess.resources == nullptr);
 	REQUIRE(sess.priv == nullptr);
@@ -441,9 +441,6 @@ TEST_CASE("vaccel_session_resource_by_id", "[core][session]")
 		REQUIRE(ret == VACCEL_EINVAL);
 
 		ret = vaccel_session_resource_by_id(&sess, &res_ptr, 0);
-		REQUIRE(ret == VACCEL_EINVAL);
-
-		ret = vaccel_session_resource_by_id(&sess, &res_ptr, -1);
 		REQUIRE(ret == VACCEL_EINVAL);
 	}
 
