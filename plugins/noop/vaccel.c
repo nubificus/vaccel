@@ -310,7 +310,7 @@ static int noop_tf_model_load(struct vaccel_session *sess,
 	noop_debug("Calling tf_model_load for session %" PRId64 "", sess->id);
 
 	if (status) {
-		status->error_code = 0;
+		status->code = 0;
 		status->message = strdup("Operation handled by noop plugin");
 		if (!status->message)
 			return VACCEL_ENOMEM;
@@ -336,7 +336,7 @@ static int noop_tf_model_unload(struct vaccel_session *sess,
 	noop_debug("Calling tf_model_unload for session %" PRId64 "", sess->id);
 
 	if (status) {
-		status->error_code = 0;
+		status->code = 0;
 		status->message = strdup("Operation handled by noop plugin");
 		if (!status->message)
 			return VACCEL_ENOMEM;
@@ -407,7 +407,7 @@ static int noop_tf_model_run(struct vaccel_session *sess,
 	}
 
 	if (status) {
-		status->error_code = 0;
+		status->code = 0;
 		status->message = strdup("Operation handled by noop plugin");
 		if (!status->message)
 			goto free_tf;

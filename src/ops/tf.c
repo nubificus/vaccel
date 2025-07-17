@@ -278,13 +278,13 @@ int vaccel_tf_tensor_take_data(struct vaccel_tf_tensor *tensor, void **data,
 	return VACCEL_OK;
 }
 
-int vaccel_tf_status_init(struct vaccel_tf_status *status, uint8_t error_code,
+int vaccel_tf_status_init(struct vaccel_tf_status *status, uint8_t code,
 			  const char *message)
 {
 	if (!status || !message)
 		return VACCEL_EINVAL;
 
-	status->error_code = error_code;
+	status->code = code;
 	status->message = strdup(message);
 	if (!status->message)
 		return VACCEL_ENOMEM;
@@ -300,13 +300,13 @@ int vaccel_tf_status_release(struct vaccel_tf_status *status)
 	if (status->message)
 		free(status->message);
 
-	status->error_code = 0;
+	status->code = 0;
 	status->message = NULL;
 
 	return VACCEL_OK;
 }
 
-int vaccel_tf_status_new(struct vaccel_tf_status **status, uint8_t error_code,
+int vaccel_tf_status_new(struct vaccel_tf_status **status, uint8_t code,
 			 const char *message)
 {
 	if (!status)
@@ -316,7 +316,7 @@ int vaccel_tf_status_new(struct vaccel_tf_status **status, uint8_t error_code,
 	if (!s)
 		return VACCEL_ENOMEM;
 
-	int ret = vaccel_tf_status_init(s, error_code, message);
+	int ret = vaccel_tf_status_init(s, code, message);
 	if (ret) {
 		free(s);
 		return ret;
