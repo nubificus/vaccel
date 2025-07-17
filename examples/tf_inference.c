@@ -58,7 +58,7 @@ int main(int argc, char *argv[])
 	vaccel_prof_region_stop(&tf_model_load_stats);
 
 	printf("Session load status => code:%" PRIu8 " message:%s\n",
-	       status.error_code, status.message);
+	       status.code, status.message);
 	if (ret) {
 		fprintf(stderr, "Could not load graph from model\n");
 		goto unregister_resource;
@@ -104,7 +104,7 @@ int main(int argc, char *argv[])
 		vaccel_prof_region_stop(&tf_model_run_stats);
 
 		printf("Session run status => code:%" PRIu8 " message:%s\n",
-		       status.error_code, status.message);
+		       status.code, status.message);
 		if (ret) {
 			fprintf(stderr, "Could not run op: %d\n", ret);
 			goto release_tf_status;
@@ -150,7 +150,7 @@ delete_tf_model:
 	vaccel_prof_region_stop(&tf_model_unload_stats);
 
 	printf("Session delete status => code:%" PRIu8 " message:%s\n",
-	       status.error_code, status.message);
+	       status.code, status.message);
 	if (vaccel_tf_status_release(&status))
 		fprintf(stderr, "Could not release model unload status\n");
 unregister_resource:

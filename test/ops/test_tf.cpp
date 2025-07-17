@@ -258,15 +258,15 @@ TEST_CASE("tf_node_delete", "[ops][tf]")
 TEST_CASE("tf_status_init", "[ops][tf]")
 {
 	int ret;
-	uint8_t const error_code = 1;
+	uint8_t const code = 1;
 	const char *message = "test";
 	struct vaccel_tf_status status;
 
 	SECTION("success")
 	{
-		ret = vaccel_tf_status_init(&status, error_code, message);
+		ret = vaccel_tf_status_init(&status, code, message);
 		REQUIRE(ret == VACCEL_OK);
-		REQUIRE(status.error_code == error_code);
+		REQUIRE(status.code == code);
 		REQUIRE(strcmp(status.message, message) == 0);
 
 		REQUIRE(vaccel_tf_status_release(&status) == VACCEL_OK);
@@ -274,10 +274,10 @@ TEST_CASE("tf_status_init", "[ops][tf]")
 
 	SECTION("invalid arguments")
 	{
-		ret = vaccel_tf_status_init(nullptr, error_code, message);
+		ret = vaccel_tf_status_init(nullptr, code, message);
 		REQUIRE(ret == VACCEL_EINVAL);
 
-		ret = vaccel_tf_status_init(&status, error_code, nullptr);
+		ret = vaccel_tf_status_init(&status, code, nullptr);
 		REQUIRE(ret == VACCEL_EINVAL);
 	}
 }
@@ -285,18 +285,18 @@ TEST_CASE("tf_status_init", "[ops][tf]")
 TEST_CASE("tf_status_release", "[ops][tf]")
 {
 	int ret;
-	uint8_t const error_code = 1;
+	uint8_t const code = 1;
 	const char *message = "test";
 	struct vaccel_tf_status status;
 
 	SECTION("success")
 	{
-		REQUIRE(vaccel_tf_status_init(&status, error_code, message) ==
+		REQUIRE(vaccel_tf_status_init(&status, code, message) ==
 			VACCEL_OK);
 
 		ret = vaccel_tf_status_release(&status);
 		REQUIRE(ret == VACCEL_OK);
-		REQUIRE(status.error_code == 0);
+		REQUIRE(status.code == 0);
 		REQUIRE(status.message == nullptr);
 	}
 
@@ -310,13 +310,13 @@ TEST_CASE("tf_status_release", "[ops][tf]")
 TEST_CASE("tf_status_new", "[ops][tf]")
 {
 	int ret;
-	uint8_t const error_code = 1;
+	uint8_t const code = 1;
 	const char *message = "test";
 	struct vaccel_tf_status *status = nullptr;
 
 	SECTION("success")
 	{
-		ret = vaccel_tf_status_new(&status, error_code, message);
+		ret = vaccel_tf_status_new(&status, code, message);
 		REQUIRE(ret == VACCEL_OK);
 		REQUIRE(status != nullptr);
 
@@ -325,10 +325,10 @@ TEST_CASE("tf_status_new", "[ops][tf]")
 
 	SECTION("invalid arguments")
 	{
-		ret = vaccel_tf_status_new(nullptr, error_code, message);
+		ret = vaccel_tf_status_new(nullptr, code, message);
 		REQUIRE(ret == VACCEL_EINVAL);
 
-		ret = vaccel_tf_status_new(&status, error_code, nullptr);
+		ret = vaccel_tf_status_new(&status, code, nullptr);
 		REQUIRE(ret == VACCEL_EINVAL);
 	}
 }
@@ -336,13 +336,13 @@ TEST_CASE("tf_status_new", "[ops][tf]")
 TEST_CASE("tf_status_delete", "[ops][tf]")
 {
 	int ret;
-	uint8_t const error_code = 1;
+	uint8_t const code = 1;
 	const char *message = "test";
 	struct vaccel_tf_status *status = nullptr;
 
 	SECTION("success")
 	{
-		REQUIRE(vaccel_tf_status_new(&status, error_code, message) ==
+		REQUIRE(vaccel_tf_status_new(&status, code, message) ==
 			VACCEL_OK);
 
 		ret = vaccel_tf_status_delete(status);
@@ -640,7 +640,8 @@ TEST_CASE("tf_model_load", "[ops][tf]")
 	struct vaccel_tf_status status;
 	ret = vaccel_tf_model_load(&sess, &model, &status);
 	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(status.error_code == 0);
+	REQUIRE(status.code == 0);
+	REQUIRE(status.message != nullptr);
 
 	REQUIRE(vaccel_resource_unregister(&model, &sess) == VACCEL_OK);
 	REQUIRE(vaccel_session_release(&sess) == VACCEL_OK);
@@ -688,7 +689,8 @@ TEST_CASE("tf_model_unload", "[ops][tf]")
 	struct vaccel_tf_status status;
 	ret = vaccel_tf_model_unload(&sess, &model, &status);
 	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(status.error_code == 0);
+	REQUIRE(status.code == 0);
+	REQUIRE(status.message != nullptr);
 
 	REQUIRE(vaccel_resource_unregister(&model, &sess) == VACCEL_OK);
 	REQUIRE(vaccel_session_release(&sess) == VACCEL_OK);
@@ -750,7 +752,7 @@ TEST_CASE("tf_inference", "[ops][tf]")
 	for (size_t i = 0; i < out->size / sizeof(float); i++)
 		REQUIRE(((float *)out->data)[i] == ((float *)in->data)[i]);
 	REQUIRE(out->owned);
-	REQUIRE(status.error_code == 0);
+	REQUIRE(status.code == 0);
 
 	REQUIRE(vaccel_tf_status_release(&status) == VACCEL_OK);
 

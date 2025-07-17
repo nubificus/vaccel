@@ -141,22 +141,22 @@ int vaccel_tf_tensor_take_data(struct vaccel_tf_tensor *tensor, void **data,
 			       size_t *size);
 
 struct vaccel_tf_status {
-	/* tensorFlow error code */
-	uint8_t error_code;
+	/* TF code */
+	uint8_t code;
 
-	/* tensorFlow error message */
+	/* TF message */
 	char *message;
 };
 
 /* Initialize TF status */
-int vaccel_tf_status_init(struct vaccel_tf_status *status, uint8_t error_code,
+int vaccel_tf_status_init(struct vaccel_tf_status *status, uint8_t code,
 			  const char *message);
 
 /* Release TF status */
 int vaccel_tf_status_release(struct vaccel_tf_status *status);
 
 /* Allocate and initialize TF status */
-int vaccel_tf_status_new(struct vaccel_tf_status **status, uint8_t error_code,
+int vaccel_tf_status_new(struct vaccel_tf_status **status, uint8_t code,
 			 const char *message);
 
 /* Release TF status data and free TF status created with
