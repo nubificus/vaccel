@@ -10,14 +10,14 @@
 int main(int argc, char *argv[])
 {
 	int ret;
-	struct vaccel_session vsess;
+	struct vaccel_session sess;
 	struct vaccel_resource model;
-	struct vaccel_prof_region tf_session_load_stats =
-		VACCEL_PROF_REGION_INIT("tf_session_load");
-	struct vaccel_prof_region tf_session_run_stats =
-		VACCEL_PROF_REGION_INIT("tf_session_run");
-	struct vaccel_prof_region tf_session_delete_stats =
-		VACCEL_PROF_REGION_INIT("tf_session_delete");
+	struct vaccel_prof_region tf_model_load_stats =
+		VACCEL_PROF_REGION_INIT("tf_model_load");
+	struct vaccel_prof_region tf_model_run_stats =
+		VACCEL_PROF_REGION_INIT("tf_model_run");
+	struct vaccel_prof_region tf_model_unload_stats =
+		VACCEL_PROF_REGION_INIT("tf_model_unload");
 
 	if (argc < 4 || argc > 5) {
 		fprintf(stderr,
@@ -34,15 +34,15 @@ int main(int argc, char *argv[])
 
 	printf("Initialized model resource %" PRId64 "\n", model.id);
 
-	ret = vaccel_session_init(&vsess, 0);
+	ret = vaccel_session_init(&sess, 0);
 	if (ret) {
 		fprintf(stderr, "Could not initialize vAccel session\n");
 		goto release_resource;
 	}
 
-	printf("Initialized vAccel session %" PRId64 "\n", vsess.id);
+	printf("Initialized vAccel session %" PRId64 "\n", sess.id);
 
-	ret = vaccel_resource_register(&model, &vsess);
+	ret = vaccel_resource_register(&model, &sess);
 	if (ret) {
 		fprintf(stderr, "Could not register model with session\n");
 		goto release_session;
@@ -51,11 +51,11 @@ int main(int argc, char *argv[])
 	struct vaccel_tf_status status;
 	status.message = NULL;
 
-	vaccel_prof_region_start(&tf_session_load_stats);
+	vaccel_prof_region_start(&tf_model_load_stats);
 
-	ret = vaccel_tf_session_load(&vsess, &model, &status);
+	ret = vaccel_tf_model_load(&sess, &model, &status);
 
-	vaccel_prof_region_stop(&tf_session_load_stats);
+	vaccel_prof_region_stop(&tf_model_load_stats);
 
 	printf("Session load status => code:%" PRIu8 " message:%s\n",
 	       status.error_code, status.message);
@@ -65,7 +65,7 @@ int main(int argc, char *argv[])
 	}
 
 	if (vaccel_tf_status_release(&status))
-		fprintf(stderr, "Could not release session load status\n");
+		fprintf(stderr, "Could not release model load status\n");
 
 	/* Input tensors & nodes */
 	struct vaccel_tf_node in_node = { "serving_default_data", 0 };
@@ -77,14 +77,14 @@ int main(int argc, char *argv[])
 	ret = vaccel_tf_tensor_new(&in, 4, dims, VACCEL_TF_FLOAT);
 	if (ret) {
 		fprintf(stderr, "Could not create input tensor\n");
-		goto delete_tf_session;
+		goto delete_tf_model;
 	}
 
 	ret = inference_load_and_preprocess_image(argv[1],
 						  INFERENCE_IMAGE_FORMAT_TF,
 						  (float **)&in->data,
 						  &in->size);
-	if (ret != VACCEL_OK) {
+	if (ret) {
 		fprintf(stderr, "Could not load and preprocess image\n");
 		goto delete_in_tensor;
 	}
@@ -96,12 +96,12 @@ int main(int argc, char *argv[])
 
 	const int iter = (argc > 4) ? atoi(argv[4]) : 1;
 	for (int i = 0; i < iter; i++) {
-		vaccel_prof_region_start(&tf_session_run_stats);
+		vaccel_prof_region_start(&tf_model_run_stats);
 
-		ret = vaccel_tf_session_run(&vsess, &model, NULL, &in_node, &in,
-					    1, &out_node, &out, 1, &status);
+		ret = vaccel_tf_model_run(&sess, &model, NULL, &in_node, &in, 1,
+					  &out_node, &out, 1, &status);
 
-		vaccel_prof_region_stop(&tf_session_run_stats);
+		vaccel_prof_region_stop(&tf_model_run_stats);
 
 		printf("Session run status => code:%" PRIu8 " message:%s\n",
 		       status.error_code, status.message);
@@ -129,7 +129,7 @@ int main(int argc, char *argv[])
 		if (i < (iter - 1)) {
 			if (vaccel_tf_status_release(&status)) {
 				fprintf(stderr,
-					"Could not release session run status\n");
+					"Could not release model run status\n");
 				goto delete_in_tensor;
 			}
 		}
@@ -137,39 +137,39 @@ int main(int argc, char *argv[])
 
 release_tf_status:
 	if (vaccel_tf_status_release(&status))
-		fprintf(stderr, "Could not release session run status\n");
+		fprintf(stderr, "Could not release model run status\n");
 delete_in_tensor:
 	if (vaccel_tf_tensor_delete(in))
 		fprintf(stderr, "Could not delete input tensor\n");
-delete_tf_session:
-	vaccel_prof_region_start(&tf_session_delete_stats);
+delete_tf_model:
+	vaccel_prof_region_start(&tf_model_unload_stats);
 
-	if (vaccel_tf_session_delete(&vsess, &model, &status))
-		fprintf(stderr, "Could not delete tf session\n");
+	if (vaccel_tf_model_unload(&sess, &model, &status))
+		fprintf(stderr, "Could not unload tf model\n");
 
-	vaccel_prof_region_stop(&tf_session_delete_stats);
+	vaccel_prof_region_stop(&tf_model_unload_stats);
 
 	printf("Session delete status => code:%" PRIu8 " message:%s\n",
 	       status.error_code, status.message);
 	if (vaccel_tf_status_release(&status))
-		fprintf(stderr, "Could not release session delete status\n");
+		fprintf(stderr, "Could not release model unload status\n");
 unregister_resource:
-	if (vaccel_resource_unregister(&model, &vsess))
+	if (vaccel_resource_unregister(&model, &sess))
 		fprintf(stderr, "Could not unregister model from session\n");
 release_session:
-	if (vaccel_session_release(&vsess))
+	if (vaccel_session_release(&sess))
 		fprintf(stderr, "Could not release session\n");
 release_resource:
 	if (vaccel_resource_release(&model))
 		fprintf(stderr, "Could not release resource\n");
 
-	vaccel_prof_region_print(&tf_session_load_stats);
-	vaccel_prof_region_print(&tf_session_run_stats);
-	vaccel_prof_region_print(&tf_session_delete_stats);
+	vaccel_prof_region_print(&tf_model_load_stats);
+	vaccel_prof_region_print(&tf_model_unload_stats);
+	vaccel_prof_region_print(&tf_model_run_stats);
 
-	vaccel_prof_region_release(&tf_session_load_stats);
-	vaccel_prof_region_release(&tf_session_run_stats);
-	vaccel_prof_region_release(&tf_session_delete_stats);
+	vaccel_prof_region_release(&tf_model_load_stats);
+	vaccel_prof_region_release(&tf_model_unload_stats);
+	vaccel_prof_region_release(&tf_model_run_stats);
 
 	return ret;
 }

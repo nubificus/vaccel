@@ -163,25 +163,25 @@ int vaccel_tf_status_new(struct vaccel_tf_status **status, uint8_t error_code,
  * vaccel_tf_status_new() */
 int vaccel_tf_status_delete(struct vaccel_tf_status *status);
 
-/* Load new TF session from model resource */
-int vaccel_tf_session_load(struct vaccel_session *sess,
+/* Load TF model from resource */
+int vaccel_tf_model_load(struct vaccel_session *sess,
+			 struct vaccel_resource *model,
+			 struct vaccel_tf_status *status);
+
+/* Run inference on loaded TF model */
+int vaccel_tf_model_run(struct vaccel_session *sess,
+			const struct vaccel_resource *model,
+			const struct vaccel_tf_buffer *run_options,
+			const struct vaccel_tf_node *in_nodes,
+			struct vaccel_tf_tensor *const *in, int nr_inputs,
+			const struct vaccel_tf_node *out_nodes,
+			struct vaccel_tf_tensor **out, int nr_outputs,
+			struct vaccel_tf_status *status);
+
+/* Unload loaded TF model */
+int vaccel_tf_model_unload(struct vaccel_session *sess,
 			   struct vaccel_resource *model,
 			   struct vaccel_tf_status *status);
-
-/* Run TF session created with vaccel_tf_session_load() */
-int vaccel_tf_session_run(struct vaccel_session *sess,
-			  const struct vaccel_resource *model,
-			  const struct vaccel_tf_buffer *run_options,
-			  const struct vaccel_tf_node *in_nodes,
-			  struct vaccel_tf_tensor *const *in, int nr_inputs,
-			  const struct vaccel_tf_node *out_nodes,
-			  struct vaccel_tf_tensor **out, int nr_outputs,
-			  struct vaccel_tf_status *status);
-
-/* Delete TF session created with vaccel_tf_session_load() */
-int vaccel_tf_session_delete(struct vaccel_session *sess,
-			     struct vaccel_resource *model,
-			     struct vaccel_tf_status *status);
 
 #ifdef __cplusplus
 }

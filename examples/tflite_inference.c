@@ -10,14 +10,14 @@
 int main(int argc, char *argv[])
 {
 	int ret;
-	struct vaccel_session vsess;
+	struct vaccel_session sess;
 	struct vaccel_resource model;
-	struct vaccel_prof_region tflite_session_load_stats =
-		VACCEL_PROF_REGION_INIT("tflite_session_load");
-	struct vaccel_prof_region tflite_session_run_stats =
-		VACCEL_PROF_REGION_INIT("tflite_session_run");
-	struct vaccel_prof_region tflite_session_delete_stats =
-		VACCEL_PROF_REGION_INIT("tflite_session_delete");
+	struct vaccel_prof_region tflite_model_load_stats =
+		VACCEL_PROF_REGION_INIT("tflite_model_load");
+	struct vaccel_prof_region tflite_model_run_stats =
+		VACCEL_PROF_REGION_INIT("tflite_model_run");
+	struct vaccel_prof_region tflite_model_unload_stats =
+		VACCEL_PROF_REGION_INIT("tflite_model_unload");
 
 	if (argc < 4 || argc > 5) {
 		fprintf(stderr,
@@ -33,28 +33,28 @@ int main(int argc, char *argv[])
 	}
 	printf("Initialized model resource %" PRId64 "\n", model.id);
 
-	ret = vaccel_session_init(&vsess, 0);
+	ret = vaccel_session_init(&sess, 0);
 	if (ret) {
 		fprintf(stderr, "Could not initialize vAccel session\n");
 		goto release_resource;
 	}
 
-	printf("Initialized vAccel session %" PRId64 "\n", vsess.id);
+	printf("Initialized vAccel session %" PRId64 "\n", sess.id);
 
-	ret = vaccel_resource_register(&model, &vsess);
+	ret = vaccel_resource_register(&model, &sess);
 	if (ret) {
 		fprintf(stderr, "Could not register model with session\n");
 		goto release_session;
 	}
 
-	vaccel_prof_region_start(&tflite_session_load_stats);
+	vaccel_prof_region_start(&tflite_model_load_stats);
 
-	ret = vaccel_tflite_session_load(&vsess, &model);
+	ret = vaccel_tflite_model_load(&sess, &model);
 
-	vaccel_prof_region_stop(&tflite_session_load_stats);
+	vaccel_prof_region_stop(&tflite_model_load_stats);
 
 	if (ret) {
-		fprintf(stderr, "Could not load session from model\n");
+		fprintf(stderr, "Could not load model\n");
 		goto unregister_resource;
 	}
 
@@ -65,14 +65,14 @@ int main(int argc, char *argv[])
 	ret = vaccel_tflite_tensor_new(&in, 4, dims, VACCEL_TFLITE_FLOAT32);
 	if (ret) {
 		fprintf(stderr, "Could not create input tensor\n");
-		goto delete_tflite_session;
+		goto delete_tflite_model;
 	}
 
 	ret = inference_load_and_preprocess_image(argv[1],
 						  INFERENCE_IMAGE_FORMAT_TF,
 						  (float **)&in->data,
 						  &in->size);
-	if (ret != VACCEL_OK) {
+	if (ret) {
 		fprintf(stderr, "Could not load and preprocess image\n");
 		goto delete_in_tensor;
 	}
@@ -83,12 +83,12 @@ int main(int argc, char *argv[])
 
 	const int iter = (argc > 4) ? atoi(argv[4]) : 1;
 	for (int i = 0; i < iter; i++) {
-		vaccel_prof_region_start(&tflite_session_run_stats);
+		vaccel_prof_region_start(&tflite_model_run_stats);
 
-		ret = vaccel_tflite_session_run(&vsess, &model, &in, 1, &out, 1,
-						&status);
+		ret = vaccel_tflite_model_run(&sess, &model, &in, 1, &out, 1,
+					      &status);
 
-		vaccel_prof_region_stop(&tflite_session_run_stats);
+		vaccel_prof_region_stop(&tflite_model_run_stats);
 
 		printf("Session run status: %" PRIu8 "\n", status);
 		if (ret) {
@@ -116,29 +116,29 @@ int main(int argc, char *argv[])
 delete_in_tensor:
 	if (vaccel_tflite_tensor_delete(in))
 		fprintf(stderr, "Could not delete input tensor\n");
-delete_tflite_session:
-	vaccel_prof_region_start(&tflite_session_delete_stats);
+delete_tflite_model:
+	vaccel_prof_region_start(&tflite_model_unload_stats);
 
-	if (vaccel_tflite_session_delete(&vsess, &model))
-		fprintf(stderr, "Could not delete tf session\n");
+	if (vaccel_tflite_model_unload(&sess, &model))
+		fprintf(stderr, "Could not unload model\n");
 
-	vaccel_prof_region_stop(&tflite_session_delete_stats);
+	vaccel_prof_region_stop(&tflite_model_unload_stats);
 unregister_resource:
-	if (vaccel_resource_unregister(&model, &vsess))
+	if (vaccel_resource_unregister(&model, &sess))
 		fprintf(stderr, "Could not unregister model from session\n");
 release_session:
-	if (vaccel_session_release(&vsess))
+	if (vaccel_session_release(&sess))
 		fprintf(stderr, "Could not release session\n");
 release_resource:
 	vaccel_resource_release(&model);
 
-	vaccel_prof_region_print(&tflite_session_load_stats);
-	vaccel_prof_region_print(&tflite_session_run_stats);
-	vaccel_prof_region_print(&tflite_session_delete_stats);
+	vaccel_prof_region_print(&tflite_model_load_stats);
+	vaccel_prof_region_print(&tflite_model_unload_stats);
+	vaccel_prof_region_print(&tflite_model_run_stats);
 
-	vaccel_prof_region_release(&tflite_session_load_stats);
-	vaccel_prof_region_release(&tflite_session_run_stats);
-	vaccel_prof_region_release(&tflite_session_delete_stats);
+	vaccel_prof_region_release(&tflite_model_load_stats);
+	vaccel_prof_region_release(&tflite_model_unload_stats);
+	vaccel_prof_region_release(&tflite_model_run_stats);
 
 	return ret;
 }

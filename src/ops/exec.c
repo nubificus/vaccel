@@ -30,12 +30,12 @@ int vaccel_exec(struct vaccel_session *sess, const char *library,
 	if (!sess)
 		return VACCEL_EINVAL;
 
-	vaccel_debug("session:%" PRId64 " Looking for plugin implementing exec",
-		     sess->id);
+	vaccel_op_type_t op_type = VACCEL_OP_EXEC;
+	op_debug_plugin_lookup(sess, op_type);
 
 	vaccel_prof_region_start(&exec_op_stats);
 
-	exec_fn_t plugin_exec = plugin_get_op_func(VACCEL_OP_EXEC, sess->hint);
+	exec_fn_t plugin_exec = plugin_get_op_func(op_type, sess->hint);
 	if (!plugin_exec) {
 		ret = VACCEL_ENOTSUP;
 		goto out;
@@ -48,6 +48,24 @@ out:
 	vaccel_prof_region_stop(&exec_op_stats);
 
 	return ret;
+}
+
+int vaccel_exec_unpack(struct vaccel_session *sess, struct vaccel_arg *read,
+		       int nr_read, struct vaccel_arg *write, int nr_write)
+{
+	if (nr_read < 2) {
+		vaccel_error("Wrong number of read arguments in exec: %d",
+			     nr_read);
+		return VACCEL_EINVAL;
+	}
+
+	/* Pop the first two arguments */
+	char *library = (char *)read[0].buf;
+	char *fn_symbol = (char *)read[1].buf;
+
+	/* Pass on the rest of the read and all write arguments */
+	return vaccel_exec(sess, library, fn_symbol, &read[2], nr_read - 2,
+			   write, nr_write);
 }
 
 static struct vaccel_prof_region exec_res_op_stats =
@@ -71,9 +89,8 @@ int vaccel_exec_with_resource(struct vaccel_session *sess,
 	if (!sess || !resource)
 		return VACCEL_EINVAL;
 
-	vaccel_debug("session:%" PRId64
-		     " Looking for plugin implementing exec with resource",
-		     sess->id);
+	vaccel_op_type_t op_type = VACCEL_OP_EXEC_WITH_RESOURCE;
+	op_debug_plugin_lookup(sess, op_type);
 
 	if (resource->type != VACCEL_RESOURCE_LIB) {
 		vaccel_error(
@@ -91,7 +108,7 @@ int vaccel_exec_with_resource(struct vaccel_session *sess,
 	vaccel_prof_region_start(&exec_res_op_stats);
 
 	exec_with_resource_fn_t plugin_exec_with_resource =
-		plugin_get_op_func(VACCEL_OP_EXEC_WITH_RESOURCE, sess->hint);
+		plugin_get_op_func(op_type, sess->hint);
 	if (!plugin_exec_with_resource) {
 		ret = VACCEL_ENOTSUP;
 		goto out;
@@ -104,24 +121,6 @@ out:
 	vaccel_prof_region_stop(&exec_res_op_stats);
 
 	return ret;
-}
-
-int vaccel_exec_unpack(struct vaccel_session *sess, struct vaccel_arg *read,
-		       int nr_read, struct vaccel_arg *write, int nr_write)
-{
-	if (nr_read < 2) {
-		vaccel_error("Wrong number of read arguments in exec: %d",
-			     nr_read);
-		return VACCEL_EINVAL;
-	}
-
-	/* Pop the first two arguments */
-	char *library = (char *)read[0].buf;
-	char *fn_symbol = (char *)read[1].buf;
-
-	/* Pass on the rest of the read and all write arguments */
-	return vaccel_exec(sess, library, fn_symbol, &read[2], nr_read - 2,
-			   write, nr_write);
 }
 
 int vaccel_exec_with_res_unpack(struct vaccel_session *sess,
@@ -158,8 +157,8 @@ __attribute__((constructor)) static void vaccel_ops_init(void)
 __attribute__((destructor)) static void vaccel_ops_fini(void)
 {
 	vaccel_prof_region_print(&exec_op_stats);
-	vaccel_prof_region_release(&exec_op_stats);
-
 	vaccel_prof_region_print(&exec_res_op_stats);
+
+	vaccel_prof_region_release(&exec_op_stats);
 	vaccel_prof_region_release(&exec_res_op_stats);
 }

@@ -85,20 +85,20 @@ int vaccel_tflite_tensor_set_data(struct vaccel_tflite_tensor *tensor,
 int vaccel_tflite_tensor_take_data(struct vaccel_tflite_tensor *tensor,
 				   void **data, size_t *size);
 
-/* Load new TFLite session from model resource */
-int vaccel_tflite_session_load(struct vaccel_session *sess,
+/* Load TFLite model from resource */
+int vaccel_tflite_model_load(struct vaccel_session *sess,
+			     struct vaccel_resource *model);
+
+/* Run inference on loaded TFLite model */
+int vaccel_tflite_model_run(struct vaccel_session *sess,
+			    const struct vaccel_resource *model,
+			    struct vaccel_tflite_tensor *const *in,
+			    int nr_inputs, struct vaccel_tflite_tensor **out,
+			    int nr_outputs, uint8_t *status);
+
+/* Unload loaded TFLite model */
+int vaccel_tflite_model_unload(struct vaccel_session *sess,
 			       struct vaccel_resource *model);
-
-/* Run TFLite session created with vaccel_tf_session_load() */
-int vaccel_tflite_session_run(struct vaccel_session *sess,
-			      const struct vaccel_resource *model,
-			      struct vaccel_tflite_tensor *const *in,
-			      int nr_inputs, struct vaccel_tflite_tensor **out,
-			      int nr_outputs, uint8_t *status);
-
-/* Delete TFLite session created with vaccel_tf_session_load() */
-int vaccel_tflite_session_delete(struct vaccel_session *sess,
-				 struct vaccel_resource *model);
 
 #ifdef __cplusplus
 }

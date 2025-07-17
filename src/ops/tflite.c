@@ -150,26 +150,69 @@ int vaccel_tflite_tensor_take_data(struct vaccel_tflite_tensor *tensor,
 	return VACCEL_OK;
 }
 
-static struct vaccel_prof_region tflite_session_load_op_stats =
-	VACCEL_PROF_REGION_INIT("vaccel_tflite_session_load");
+static struct vaccel_prof_region tflite_model_load_op_stats =
+	VACCEL_PROF_REGION_INIT("vaccel_tflite_model_load");
 
-typedef int (*tflite_session_load_fn_t)(struct vaccel_session *sess,
+typedef int (*tflite_model_load_fn_t)(struct vaccel_session *sess,
+				      struct vaccel_resource *model);
+
+int vaccel_tflite_model_load(struct vaccel_session *sess,
+			     struct vaccel_resource *model)
+{
+	int ret;
+
+	if (!sess || !model)
+		return VACCEL_EINVAL;
+
+	vaccel_op_type_t op_type = VACCEL_OP_TFLITE_MODEL_LOAD;
+	op_debug_plugin_lookup(sess, op_type);
+
+	if (model->type != VACCEL_RESOURCE_MODEL) {
+		vaccel_error(
+			"Invalid resource type: expected VACCEL_RESOURCE_MODEL");
+		return VACCEL_EINVAL;
+	}
+
+	if (!vaccel_session_has_resource(sess, model)) {
+		vaccel_error("Resource %" PRId64
+			     " is not registered to session %" PRId64 "",
+			     model->id, sess->id);
+		return VACCEL_EPERM;
+	}
+
+	vaccel_prof_region_start(&tflite_model_load_op_stats);
+
+	tflite_model_load_fn_t plugin_tflite_model_load =
+		plugin_get_op_func(op_type, sess->hint);
+	if (!plugin_tflite_model_load) {
+		ret = VACCEL_ENOTSUP;
+		goto out;
+	}
+
+	ret = plugin_tflite_model_load(sess, model);
+
+out:
+	vaccel_prof_region_stop(&tflite_model_load_op_stats);
+
+	return ret;
+}
+
+static struct vaccel_prof_region tflite_model_unload_op_stats =
+	VACCEL_PROF_REGION_INIT("vaccel_tflite_model_unload");
+
+typedef int (*tflite_model_unload_fn_t)(struct vaccel_session *sess,
 					struct vaccel_resource *model);
 
-int vaccel_tflite_session_load(struct vaccel_session *sess,
+int vaccel_tflite_model_unload(struct vaccel_session *sess,
 			       struct vaccel_resource *model)
 {
 	int ret;
 
-	if (!sess) {
-		vaccel_debug("Invalid session");
+	if (!sess || !model)
 		return VACCEL_EINVAL;
-	}
 
-	vaccel_debug(
-		"session:%" PRId64
-		" Looking for plugin implementing tflite_session_load operation",
-		sess->id);
+	vaccel_op_type_t op_type = VACCEL_OP_TFLITE_MODEL_UNLOAD;
+	op_debug_plugin_lookup(sess, op_type);
 
 	if (model->type != VACCEL_RESOURCE_MODEL) {
 		vaccel_error(
@@ -184,50 +227,46 @@ int vaccel_tflite_session_load(struct vaccel_session *sess,
 		return VACCEL_EPERM;
 	}
 
-	vaccel_prof_region_start(&tflite_session_load_op_stats);
+	vaccel_prof_region_start(&tflite_model_unload_op_stats);
 
-	tflite_session_load_fn_t plugin_tflite_session_load =
-		plugin_get_op_func(VACCEL_OP_TFLITE_SESSION_LOAD, sess->hint);
-	if (!plugin_tflite_session_load) {
+	tflite_model_unload_fn_t plugin_tflite_model_unload =
+		plugin_get_op_func(op_type, sess->hint);
+	if (!plugin_tflite_model_unload) {
 		ret = VACCEL_ENOTSUP;
 		goto out;
 	}
 
-	ret = plugin_tflite_session_load(sess, model);
+	ret = plugin_tflite_model_unload(sess, model);
 
 out:
-	vaccel_prof_region_stop(&tflite_session_load_op_stats);
+	vaccel_prof_region_stop(&tflite_model_unload_op_stats);
 
 	return ret;
 }
 
-static struct vaccel_prof_region tflite_session_run_op_stats =
-	VACCEL_PROF_REGION_INIT("vaccel_tflite_session_run");
+static struct vaccel_prof_region tflite_model_run_op_stats =
+	VACCEL_PROF_REGION_INIT("vaccel_tflite_model_run");
 
-typedef int (*tflite_session_run_fn_t)(struct vaccel_session *sess,
-				       const struct vaccel_resource *model,
-				       struct vaccel_tflite_tensor *const *in,
-				       int nr_inputs,
-				       struct vaccel_tflite_tensor **out,
-				       int nr_outputs, uint8_t *status);
+typedef int (*tflite_model_run_fn_t)(struct vaccel_session *sess,
+				     const struct vaccel_resource *model,
+				     struct vaccel_tflite_tensor *const *in,
+				     int nr_inputs,
+				     struct vaccel_tflite_tensor **out,
+				     int nr_outputs, uint8_t *status);
 
-int vaccel_tflite_session_run(struct vaccel_session *sess,
-			      const struct vaccel_resource *model,
-			      struct vaccel_tflite_tensor *const *in,
-			      int nr_inputs, struct vaccel_tflite_tensor **out,
-			      int nr_outputs, uint8_t *status)
+int vaccel_tflite_model_run(struct vaccel_session *sess,
+			    const struct vaccel_resource *model,
+			    struct vaccel_tflite_tensor *const *in,
+			    int nr_inputs, struct vaccel_tflite_tensor **out,
+			    int nr_outputs, uint8_t *status)
 {
 	int ret;
 
-	if (!sess) {
-		vaccel_debug("Invalid session");
+	if (!sess || !model)
 		return VACCEL_EINVAL;
-	}
 
-	vaccel_debug(
-		"session:%" PRId64
-		" Looking for plugin implementing tflite_session_run operation",
-		sess->id);
+	vaccel_op_type_t op_type = VACCEL_OP_TFLITE_MODEL_RUN;
+	op_debug_plugin_lookup(sess, op_type);
 
 	if (model->type != VACCEL_RESOURCE_MODEL) {
 		vaccel_error(
@@ -242,71 +281,20 @@ int vaccel_tflite_session_run(struct vaccel_session *sess,
 		return VACCEL_EPERM;
 	}
 
-	vaccel_prof_region_start(&tflite_session_run_op_stats);
+	vaccel_prof_region_start(&tflite_model_run_op_stats);
 
-	tflite_session_run_fn_t plugin_tflite_session =
-		plugin_get_op_func(VACCEL_OP_TFLITE_SESSION_RUN, sess->hint);
-	if (!plugin_tflite_session) {
+	tflite_model_run_fn_t plugin_tflite_model =
+		plugin_get_op_func(op_type, sess->hint);
+	if (!plugin_tflite_model) {
 		ret = VACCEL_ENOTSUP;
 		goto out;
 	}
 
-	ret = plugin_tflite_session(sess, model, in, nr_inputs, out, nr_outputs,
-				    status);
+	ret = plugin_tflite_model(sess, model, in, nr_inputs, out, nr_outputs,
+				  status);
 
 out:
-	vaccel_prof_region_stop(&tflite_session_run_op_stats);
-
-	return ret;
-}
-
-static struct vaccel_prof_region tflite_session_delete_op_stats =
-	VACCEL_PROF_REGION_INIT("vaccel_tflite_session_delete");
-
-typedef int (*tflite_session_delete_fn_t)(struct vaccel_session *sess,
-					  struct vaccel_resource *model);
-
-int vaccel_tflite_session_delete(struct vaccel_session *sess,
-				 struct vaccel_resource *model)
-{
-	int ret;
-
-	if (!sess) {
-		vaccel_debug("Invalid vAccel session");
-		return VACCEL_EINVAL;
-	}
-
-	vaccel_debug(
-		"session:%" PRId64
-		" Looking for plugin implementing tflite_session_delete operation",
-		sess->id);
-
-	if (model->type != VACCEL_RESOURCE_MODEL) {
-		vaccel_error(
-			"Invalid resource type: expected VACCEL_RESOURCE_MODEL");
-		return VACCEL_EINVAL;
-	}
-
-	if (!vaccel_session_has_resource(sess, model)) {
-		vaccel_error("Resource %" PRId64
-			     " is not registered to session %" PRId64 "",
-			     model->id, sess->id);
-		return VACCEL_EPERM;
-	}
-
-	vaccel_prof_region_start(&tflite_session_delete_op_stats);
-
-	tflite_session_delete_fn_t plugin_tflite_session_delete =
-		plugin_get_op_func(VACCEL_OP_TFLITE_SESSION_DELETE, sess->hint);
-	if (!plugin_tflite_session_delete) {
-		ret = VACCEL_ENOTSUP;
-		goto out;
-	}
-
-	ret = plugin_tflite_session_delete(sess, model);
-
-out:
-	vaccel_prof_region_stop(&tflite_session_delete_op_stats);
+	vaccel_prof_region_stop(&tflite_model_run_op_stats);
 
 	return ret;
 }
@@ -317,12 +305,11 @@ __attribute__((constructor)) static void vaccel_tflite_ops_init(void)
 
 __attribute__((destructor)) static void vaccel_tflite_ops_fini(void)
 {
-	vaccel_prof_region_print(&tflite_session_load_op_stats);
-	vaccel_prof_region_release(&tflite_session_load_op_stats);
+	vaccel_prof_region_print(&tflite_model_load_op_stats);
+	vaccel_prof_region_print(&tflite_model_unload_op_stats);
+	vaccel_prof_region_print(&tflite_model_run_op_stats);
 
-	vaccel_prof_region_print(&tflite_session_run_op_stats);
-	vaccel_prof_region_release(&tflite_session_run_op_stats);
-
-	vaccel_prof_region_print(&tflite_session_delete_op_stats);
-	vaccel_prof_region_release(&tflite_session_delete_op_stats);
+	vaccel_prof_region_release(&tflite_model_load_op_stats);
+	vaccel_prof_region_release(&tflite_model_unload_op_stats);
+	vaccel_prof_region_release(&tflite_model_run_op_stats);
 }

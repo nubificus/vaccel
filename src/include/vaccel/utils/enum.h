@@ -2,6 +2,11 @@
 
 #pragma once
 
+#include "str.h"
+#include <stdlib.h>
+
+enum { VACCEL_ENUM_STR_MAX = 128 };
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -26,23 +31,33 @@ extern "C" {
 	VACCEL_ENUM_ITEM(MAX, prefix)
 
 /* Define enum string mapping functions from a given list */
-#define VACCEL_ENUM_DEF_STR_FUNCS(name, prefix, VACCEL_ENUM_LIST)    \
-	static inline const char *name##_to_str(name##_t value)      \
-	{                                                            \
-		switch (value) {                                     \
-			VACCEL_ENUM_LIST(VACCEL_ENUM_STR_CASE)       \
-		default:                                             \
-			return VACCEL_ENUM_STR(MAX, prefix);         \
-		}                                                    \
-	}                                                            \
-                                                                     \
-	static inline const char *name##_to_base_str(name##_t value) \
-	{                                                            \
-		switch (value) {                                     \
-			VACCEL_ENUM_LIST(VACCEL_ENUM_BASE_STR_CASE)  \
-		default:                                             \
-			return "MAX";                                \
-		}                                                    \
+#define VACCEL_ENUM_DEF_STR_FUNCS(name, prefix, VACCEL_ENUM_LIST)           \
+	static inline const char *name##_to_str(name##_t value)             \
+	{                                                                   \
+		switch (value) {                                            \
+			VACCEL_ENUM_LIST(VACCEL_ENUM_STR_CASE)              \
+		default:                                                    \
+			return VACCEL_ENUM_STR(MAX, prefix);                \
+		}                                                           \
+	}                                                                   \
+                                                                            \
+	static inline const char *name##_to_base_str(name##_t value)        \
+	{                                                                   \
+		switch (value) {                                            \
+			VACCEL_ENUM_LIST(VACCEL_ENUM_BASE_STR_CASE)         \
+		default:                                                    \
+			return "MAX";                                       \
+		}                                                           \
+	}                                                                   \
+                                                                            \
+	static inline char *name##_name(name##_t value, char *lower,        \
+					size_t size)                        \
+	{                                                                   \
+		if (!lower || !size)                                        \
+			return NULL;                                        \
+		vaccel_str_to_lower(name##_to_base_str(value), lower, size, \
+				    NULL);                                  \
+		return lower;                                               \
 	}
 
 /* Define enum item.

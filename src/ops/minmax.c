@@ -27,13 +27,12 @@ int vaccel_minmax(struct vaccel_session *sess, const double *indata, int ndata,
 	if (!sess)
 		return VACCEL_EINVAL;
 
-	vaccel_debug("session:%" PRId64 " Looking for plugin implementing %s",
-		     sess->id, vaccel_op_type_to_str(VACCEL_OP_MINMAX));
+	vaccel_op_type_t op_type = VACCEL_OP_MINMAX;
+	op_debug_plugin_lookup(sess, op_type);
 
 	vaccel_prof_region_start(&minmax_op_stats);
 
-	minmax_fn_t plugin_minmax =
-		plugin_get_op_func(VACCEL_OP_MINMAX, sess->hint);
+	minmax_fn_t plugin_minmax = plugin_get_op_func(op_type, sess->hint);
 	if (!plugin_minmax) {
 		ret = VACCEL_ENOTSUP;
 		goto out;

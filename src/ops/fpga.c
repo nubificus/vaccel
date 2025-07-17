@@ -25,15 +25,13 @@ int vaccel_fpga_arraycopy(struct vaccel_session *sess, int a[], int out_a[],
 	if (!sess)
 		return VACCEL_EINVAL;
 
-	vaccel_debug(
-		"session:%" PRId64
-		" Looking for plugin implementing fpga_arraycopy operation",
-		sess->id);
+	vaccel_op_type_t op_type = VACCEL_OP_FPGA_ARRAYCOPY;
+	op_debug_plugin_lookup(sess, op_type);
 
 	vaccel_prof_region_start(&fpga_arraycopy_op_stats);
 
 	fpga_arraycopy_fn_t plugin_fpga_arraycopy =
-		plugin_get_op_func(VACCEL_OP_FPGA_ARRAYCOPY, sess->hint);
+		plugin_get_op_func(op_type, sess->hint);
 	if (!plugin_fpga_arraycopy) {
 		ret = VACCEL_ENOTSUP;
 		goto out;
@@ -86,14 +84,13 @@ int vaccel_fpga_mmult(struct vaccel_session *sess, float a[], float b[],
 	if (!sess)
 		return VACCEL_EINVAL;
 
-	vaccel_debug("session:%" PRId64
-		     " Looking for plugin implementing fpga_mmult operation",
-		     sess->id);
+	vaccel_op_type_t op_type = VACCEL_OP_FPGA_MMULT;
+	op_debug_plugin_lookup(sess, op_type);
 
 	vaccel_prof_region_start(&fpga_mmult_op_stats);
 
 	fpga_mmult_fn_t plugin_fpga_mmult =
-		plugin_get_op_func(VACCEL_OP_FPGA_MMULT, sess->hint);
+		plugin_get_op_func(op_type, sess->hint);
 	if (!plugin_fpga_mmult) {
 		ret = VACCEL_ENOTSUP;
 		goto out;
@@ -147,14 +144,13 @@ int vaccel_fpga_parallel(struct vaccel_session *sess, float a[], float b[],
 	if (!sess)
 		return VACCEL_EINVAL;
 
-	vaccel_debug("session:%" PRId64
-		     " Looking for plugin implementing fpga_parallel operation",
-		     sess->id);
+	vaccel_op_type_t op_type = VACCEL_OP_FPGA_PARALLEL;
+	op_debug_plugin_lookup(sess, op_type);
 
 	vaccel_prof_region_start(&fpga_parallel_op_stats);
 
 	fpga_parallel_fn_t plugin_fpga_parallel =
-		plugin_get_op_func(VACCEL_OP_FPGA_PARALLEL, sess->hint);
+		plugin_get_op_func(op_type, sess->hint);
 	if (!plugin_fpga_parallel) {
 		ret = VACCEL_ENOTSUP;
 		goto out;
@@ -209,15 +205,12 @@ int vaccel_fpga_vadd(struct vaccel_session *sess, float a[], float b[],
 	if (!sess)
 		return VACCEL_EINVAL;
 
-	vaccel_debug(
-		"session:%" PRId64
-		" Looking for plugin implementing fpga_vector_add operation",
-		sess->id);
+	vaccel_op_type_t op_type = VACCEL_OP_FPGA_VECTORADD;
+	op_debug_plugin_lookup(sess, op_type);
 
 	vaccel_prof_region_start(&fpga_vadd_op_stats);
 
-	fpga_vadd_t plugin_fpga_vadd =
-		plugin_get_op_func(VACCEL_OP_FPGA_VECTORADD, sess->hint);
+	fpga_vadd_t plugin_fpga_vadd = plugin_get_op_func(op_type, sess->hint);
 	if (!plugin_fpga_vadd) {
 		ret = VACCEL_ENOTSUP;
 		goto out;
@@ -265,14 +258,12 @@ __attribute__((constructor)) static void vaccel_ops_init(void)
 __attribute__((destructor)) static void vaccel_ops_fini(void)
 {
 	vaccel_prof_region_print(&fpga_arraycopy_op_stats);
-	vaccel_prof_region_release(&fpga_arraycopy_op_stats);
-
 	vaccel_prof_region_print(&fpga_mmult_op_stats);
-	vaccel_prof_region_release(&fpga_mmult_op_stats);
-
 	vaccel_prof_region_print(&fpga_parallel_op_stats);
-	vaccel_prof_region_release(&fpga_parallel_op_stats);
-
 	vaccel_prof_region_print(&fpga_vadd_op_stats);
+
+	vaccel_prof_region_release(&fpga_arraycopy_op_stats);
+	vaccel_prof_region_release(&fpga_mmult_op_stats);
+	vaccel_prof_region_release(&fpga_parallel_op_stats);
 	vaccel_prof_region_release(&fpga_vadd_op_stats);
 }

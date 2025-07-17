@@ -8,29 +8,32 @@
 #include <stdlib.h>
 #include <string.h>
 
-int vaccel_str_to_lower(char *str, size_t size, char **alloc_lower)
+int vaccel_str_to_lower(const char *str, char *lower, size_t size,
+			char **alloc_lower)
 {
-	if (!str || (!alloc_lower && !size))
+	if (!str || (!alloc_lower && (!lower || !size)))
 		return VACCEL_EINVAL;
 
-	char *lower;
+	char *buf;
+	size_t len = strlen(str);
 	if (alloc_lower == NULL) {
-		lower = str;
+		buf = lower;
+		if (len >= size)
+			len = size - 1;
 	} else {
-		size = strlen(str);
-
 		*alloc_lower = strdup(str);
 		if (*alloc_lower == NULL)
-			return VACCEL_ENOMEM;
+			return VACCEL_EINVAL;
 
-		lower = *alloc_lower;
+		buf = *alloc_lower;
 	}
 
-	for (size_t i = 0; i < size; i++) {
-		if (lower[i] == '\0')
+	for (size_t i = 0; i < len; i++) {
+		if (str[i] == '\0')
 			break;
-		lower[i] = (char)tolower((unsigned char)lower[i]);
+		buf[i] = (char)tolower((unsigned char)str[i]);
 	}
+	buf[len] = '\0';
 
 	return VACCEL_OK;
 }
