@@ -164,7 +164,7 @@ int vaccel_torch_tensor_allocate(struct vaccel_torch_tensor **tensor,
 	if (!total_size)
 		return VACCEL_OK;
 
-	(*tensor)->data = malloc(total_size);
+	(*tensor)->data = calloc(1, total_size);
 	if (!(*tensor)->data) {
 		vaccel_torch_tensor_delete(*tensor);
 		return VACCEL_ENOMEM;

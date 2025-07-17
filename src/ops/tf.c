@@ -222,7 +222,7 @@ int vaccel_tf_tensor_allocate(struct vaccel_tf_tensor **tensor, int nr_dims,
 	if (!total_size)
 		return VACCEL_OK;
 
-	(*tensor)->data = malloc(total_size);
+	(*tensor)->data = calloc(1, total_size);
 	if (!(*tensor)->data) {
 		vaccel_tf_tensor_delete(*tensor);
 		return VACCEL_ENOMEM;
