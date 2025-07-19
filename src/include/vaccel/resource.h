@@ -34,6 +34,17 @@ VACCEL_ENUM_DEF_WITH_STR_FUNCS(vaccel_resource_type, _ENUM_PREFIX,
 			       VACCEL_RESOURCE_TYPE_ENUM_LIST)
 #undef _ENUM_PREFIX
 
+/* Define plugin_priv_state_t  */
+#define _ENUM_PREFIX PLUGIN_PRIV_STATE
+#define PLUGIN_PRIV_STATE_ENUM_LIST(VACCEL_ENUM_ITEM) \
+	VACCEL_ENUM_ITEM(EMPTY, 0, _ENUM_PREFIX)      \
+	VACCEL_ENUM_ITEM(INIT, _ENUM_PREFIX)          \
+	VACCEL_ENUM_ITEM(NEED_FREE, _ENUM_PREFIX)
+
+VACCEL_ENUM_DEF_WITH_STR_FUNCS(plugin_priv_state, _ENUM_PREFIX,
+			       PLUGIN_PRIV_STATE_ENUM_LIST)
+#undef _ENUM_PREFIX
+
 struct vaccel_resource {
 	/* an entry to add this resource in a list */
 	vaccel_list_entry_t entry;
@@ -68,6 +79,11 @@ struct vaccel_resource {
 
 	/* number of blob entities represented by the resource */
 	size_t nr_blobs;
+
+	/* Field to be used by the plugin. Not synced, not
+	 * passed to the agent through rpc */
+	void *plugin_priv;
+	plugin_priv_state_t pstate;
 };
 
 /* Get resource by index from created resources */
