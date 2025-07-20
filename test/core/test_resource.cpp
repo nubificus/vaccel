@@ -111,6 +111,7 @@ TEST_CASE("resource_from_directory_path", "[core][resource]")
 	REQUIRE(res.rundir == nullptr);
 	REQUIRE_FALSE(list_empty(&res.entry));
 	REQUIRE(res.refcount == 0);
+	REQUIRE(res.plugin_priv == nullptr);
 	resources[0] = &res;
 
 	/* Resource new from dir path */
@@ -127,6 +128,7 @@ TEST_CASE("resource_from_directory_path", "[core][resource]")
 	REQUIRE(alloc_res->rundir == nullptr);
 	REQUIRE_FALSE(list_empty(&alloc_res->entry));
 	REQUIRE(alloc_res->refcount == 0);
+	REQUIRE(alloc_res->plugin_priv == nullptr);
 	resources[1] = alloc_res;
 
 	/* Session init */
@@ -279,6 +281,7 @@ TEST_CASE("resource_from_directory_path", "[core][resource]")
 	REQUIRE(res.paths == nullptr);
 	REQUIRE(res.nr_paths == 0);
 	REQUIRE(res.id <= 0);
+	REQUIRE(res.plugin_priv == nullptr);
 
 	free(dir_path);
 }
@@ -318,6 +321,7 @@ TEST_CASE("resource_from_file_paths", "[core][resource]")
 	REQUIRE(res.rundir == nullptr);
 	REQUIRE_FALSE(list_empty(&res.entry));
 	REQUIRE(res.refcount == 0);
+	REQUIRE(res.plugin_priv == nullptr);
 	resources[0] = &res;
 
 	/* Resource new from blob paths */
@@ -341,6 +345,7 @@ TEST_CASE("resource_from_file_paths", "[core][resource]")
 	REQUIRE(alloc_res->rundir == nullptr);
 	REQUIRE_FALSE(list_empty(&alloc_res->entry));
 	REQUIRE(alloc_res->refcount == 0);
+	REQUIRE(alloc_res->plugin_priv == nullptr);
 	resources[1] = alloc_res;
 
 	/* Session init */
@@ -398,6 +403,7 @@ TEST_CASE("resource_from_file_paths", "[core][resource]")
 		REQUIRE(res.refcount == 2);
 		REQUIRE(res.id > 0);
 		REQUIRE(res.remote_id == 1);
+		REQUIRE(res.plugin_priv == nullptr);
 
 		/* Check blobs */
 		for (size_t i = 0; i < res.nr_blobs; i++) {
@@ -465,6 +471,7 @@ TEST_CASE("resource_from_file_paths", "[core][resource]")
 	REQUIRE(res.paths == nullptr);
 	REQUIRE(res.nr_paths == 0);
 	REQUIRE(res.id <= 0);
+	REQUIRE(res.plugin_priv == nullptr);
 
 	free(file1);
 	free(file2);
@@ -500,6 +507,7 @@ TEST_CASE("resource_from_url_path", "[core][resource]")
 	REQUIRE(res.rundir == nullptr);
 	REQUIRE_FALSE(list_empty(&res.entry));
 	REQUIRE(res.refcount == 0);
+	REQUIRE(res.plugin_priv == nullptr);
 	resources[0] = &res;
 
 	/* Resource init from url */
@@ -518,6 +526,7 @@ TEST_CASE("resource_from_url_path", "[core][resource]")
 	REQUIRE(alloc_res->rundir == nullptr);
 	REQUIRE_FALSE(list_empty(&alloc_res->entry));
 	REQUIRE(alloc_res->refcount == 0);
+	REQUIRE(alloc_res->plugin_priv == nullptr);
 	resources[1] = alloc_res;
 
 	/* Session init */
@@ -543,6 +552,7 @@ TEST_CASE("resource_from_url_path", "[core][resource]")
 		REQUIRE(res.refcount == 1);
 		REQUIRE(res.id > 0);
 		REQUIRE(res.remote_id == 1);
+		REQUIRE(res.plugin_priv == nullptr);
 
 		/* Get by id */
 		struct vaccel_resource *found_by_id;
@@ -577,6 +587,7 @@ TEST_CASE("resource_from_url_path", "[core][resource]")
 		REQUIRE(resource->blobs[0]->path_owned);
 		REQUIRE_FALSE(resource->blobs[0]->data_owned);
 		REQUIRE(resource->refcount == 1);
+		REQUIRE(resource->plugin_priv == nullptr);
 	}
 
 	char *file = abs_path(SOURCE_ROOT, DOWNLOAD_FILE);
@@ -633,6 +644,7 @@ TEST_CASE("resource_from_url_path", "[core][resource]")
 	REQUIRE(res.paths == nullptr);
 	REQUIRE(res.nr_paths == 0);
 	REQUIRE(res.id <= 0);
+	REQUIRE(res.plugin_priv == nullptr);
 }
 
 // Test case for resource from buffer operations
@@ -676,6 +688,7 @@ TEST_CASE("resource_from_buffer", "[core][resource]")
 	REQUIRE(res.nr_paths == 0);
 	REQUIRE_FALSE(list_empty(&res.entry));
 	REQUIRE(res.refcount == 0);
+	REQUIRE(res.plugin_priv == nullptr);
 	resources[0] = &res;
 
 	/* Resource new from buffer */
@@ -701,6 +714,7 @@ TEST_CASE("resource_from_buffer", "[core][resource]")
 	REQUIRE(alloc_res->nr_paths == 0);
 	REQUIRE_FALSE(list_empty(&alloc_res->entry));
 	REQUIRE(alloc_res->refcount == 0);
+	REQUIRE(alloc_res->plugin_priv == nullptr);
 	resources[1] = alloc_res;
 
 	for (auto &resource : resources) {
@@ -738,6 +752,7 @@ TEST_CASE("resource_from_buffer", "[core][resource]")
 	REQUIRE(res.paths == nullptr);
 	REQUIRE(res.nr_paths == 0);
 	REQUIRE(res.id <= 0);
+	REQUIRE(res.plugin_priv == nullptr);
 
 	/* Release session */
 	REQUIRE(vaccel_session_release(&sess) == VACCEL_OK);
@@ -806,6 +821,8 @@ TEST_CASE("resource_from_blobs_mem_only", "[core][resource]")
 	REQUIRE(res.nr_blobs == 2);
 	REQUIRE_FALSE(list_empty(&res.entry));
 	REQUIRE(res.refcount == 0);
+	REQUIRE(res.plugin_priv == nullptr);
+
 	for (size_t i = 0; i != res.nr_blobs; ++i) {
 		REQUIRE(res.blobs[i]);
 		REQUIRE(res.blobs[i]->type == VACCEL_BLOB_BUFFER);
@@ -870,6 +887,7 @@ TEST_CASE("resource_from_blobs_mem_only", "[core][resource]")
 	REQUIRE(res.paths == nullptr);
 	REQUIRE(res.nr_paths == 0);
 	REQUIRE(res.id <= 0);
+	REQUIRE(res.plugin_priv == nullptr);
 
 	/* Release session */
 	REQUIRE(vaccel_session_release(&sess) == VACCEL_OK);
@@ -947,6 +965,7 @@ TEST_CASE("resource_from_blobs", "[core][resource]")
 	REQUIRE(res.blobs);
 	REQUIRE(res.nr_blobs == 2);
 	REQUIRE_FALSE(list_empty(&res.entry));
+	REQUIRE(res.plugin_priv == nullptr);
 	REQUIRE(res.refcount == 0);
 	for (size_t i = 0; i != res.nr_blobs; ++i) {
 		REQUIRE(res.blobs[i]);
@@ -974,6 +993,7 @@ TEST_CASE("resource_from_blobs", "[core][resource]")
 	REQUIRE(alloc_res->blobs);
 	REQUIRE(alloc_res->nr_blobs == 2);
 	REQUIRE_FALSE(list_empty(&alloc_res->entry));
+	REQUIRE(alloc_res->plugin_priv == nullptr);
 	REQUIRE(alloc_res->refcount == 0);
 	for (size_t i = 0; i != alloc_res->nr_blobs; ++i) {
 		REQUIRE(alloc_res->blobs[i]);
@@ -1025,6 +1045,7 @@ TEST_CASE("resource_from_blobs", "[core][resource]")
 	REQUIRE(res.paths == nullptr);
 	REQUIRE(res.nr_paths == 0);
 	REQUIRE(res.id <= 0);
+	REQUIRE(res.plugin_priv == nullptr);
 
 	/* Release session */
 	REQUIRE(vaccel_session_release(&sess) == VACCEL_OK);
@@ -1626,6 +1647,7 @@ TEST_CASE("memory_only_resource", "[core][resource]")
 	REQUIRE(res.nr_paths == 0);
 	REQUIRE_FALSE(list_empty(&res.entry));
 	REQUIRE(res.refcount == 0);
+	REQUIRE(res.plugin_priv == nullptr);
 	resources[0] = &res;
 
 	/* Resource new from buffer */
@@ -1652,6 +1674,7 @@ TEST_CASE("memory_only_resource", "[core][resource]")
 	REQUIRE(alloc_res->nr_paths == 0);
 	REQUIRE_FALSE(list_empty(&alloc_res->entry));
 	REQUIRE(alloc_res->refcount == 0);
+	REQUIRE(alloc_res->plugin_priv == nullptr);
 	resources[1] = alloc_res;
 
 	for (auto &resource : resources) {
@@ -1706,6 +1729,7 @@ TEST_CASE("memory_only_resource", "[core][resource]")
 	REQUIRE(res.paths == nullptr);
 	REQUIRE(res.nr_paths == 0);
 	REQUIRE(res.id <= 0);
+	REQUIRE(res.plugin_priv == nullptr);
 
 	/* Release session */
 	REQUIRE(vaccel_session_release(&sess) == VACCEL_OK);
@@ -1755,6 +1779,7 @@ TEST_CASE("memory_only_resource_virtio", "[core][resource]")
 	REQUIRE(res.paths == nullptr);
 	REQUIRE(res.nr_paths == 0);
 	REQUIRE_FALSE(list_empty(&res.entry));
+	REQUIRE(res.plugin_priv == nullptr);
 	REQUIRE(res.refcount == 0);
 
 	/* Register resource */
@@ -1791,6 +1816,7 @@ TEST_CASE("memory_only_resource_virtio", "[core][resource]")
 	REQUIRE(res.paths == nullptr);
 	REQUIRE(res.nr_paths == 0);
 	REQUIRE(res.id <= 0);
+	REQUIRE(res.plugin_priv == nullptr);
 
 	/* Release session */
 	REQUIRE(vaccel_session_release(&vsess) == VACCEL_OK);
