@@ -68,6 +68,9 @@ struct vaccel_resource {
 
 	/* number of blob entities represented by the resource */
 	size_t nr_blobs;
+
+	/* plugin private data */
+	void *plugin_priv;
 };
 
 /* Get resource by index from created resources */
