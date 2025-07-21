@@ -72,20 +72,17 @@ struct vaccel_arg_list *vaccel_args_init(uint32_t size)
 
 	struct vaccel_arg_list *arg_list = (struct vaccel_arg_list *)malloc(
 		sizeof(struct vaccel_arg_list));
-
 	if (!arg_list)
 		return NULL;
 
 	arg_list->list =
 		(struct vaccel_arg *)malloc(size * sizeof(struct vaccel_arg));
-
 	if (!arg_list->list) {
 		free(arg_list);
 		return NULL;
 	}
 
 	arg_list->idcs_allocated_space = (int *)malloc(size * sizeof(int));
-
 	if (!arg_list->idcs_allocated_space) {
 		free(arg_list->list);
 		free(arg_list);
@@ -113,7 +110,7 @@ int vaccel_add_serial_arg(struct vaccel_arg_list *args, void *buf,
 	args->list[curr_idx].buf = buf;
 	args->list[curr_idx].argtype = 0;
 
-	/* The arg buffer is not allocated by malloc() */
+	/* The arg buffer is not allocated by us */
 	args->idcs_allocated_space[curr_idx] = 0;
 
 	args->curr_idx++;
@@ -143,7 +140,7 @@ int vaccel_add_nonserial_arg(struct vaccel_arg_list *args, void *buf,
 	args->list[curr_idx].size = bytes;
 	args->list[curr_idx].argtype = argtype;
 
-	/* The arg buffer is allocated by malloc() */
+	/* The arg buffer is allocated by us */
 	args->idcs_allocated_space[curr_idx] = 1;
 
 	args->curr_idx++;
@@ -166,7 +163,7 @@ int vaccel_expect_serial_arg(struct vaccel_arg_list *args, void *buf,
 	args->list[curr_idx].size = size;
 	args->list[curr_idx].argtype = 0;
 
-	/* The arg buffer is not allocated by malloc() */
+	/* The arg buffer is not allocated by us */
 	args->idcs_allocated_space[curr_idx] = 0;
 
 	args->curr_idx++;
@@ -185,14 +182,14 @@ int vaccel_expect_nonserial_arg(struct vaccel_arg_list *args,
 	if (curr_idx >= (int)args->size)
 		return VACCEL_EINVAL;
 
-	args->list[curr_idx].buf = malloc(expected_size);
+	args->list[curr_idx].buf = calloc(1, expected_size);
 	if (!args->list[curr_idx].buf)
 		return VACCEL_ENOMEM;
 
 	args->list[curr_idx].argtype = 0;
 	args->list[curr_idx].size = expected_size;
 
-	/* The arg buffer is allocated by malloc() */
+	/* The arg buffer is allocated by us */
 	args->idcs_allocated_space[curr_idx] = 1;
 
 	args->curr_idx++;
@@ -261,7 +258,6 @@ int vaccel_delete_args(struct vaccel_arg_list *args)
 	uint32_t i;
 	for (i = 0; i < args->size; i++) {
 		if (args->idcs_allocated_space[i] == 1) {
-			/* memory allocated with malloc */
 			free(args->list[i].buf);
 		}
 	}
