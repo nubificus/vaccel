@@ -34,6 +34,20 @@ struct vaccel_arg_list {
 	int *idcs_allocated_space;
 };
 
+/* Initialize arg */
+int vaccel_arg_init(struct vaccel_arg *arg, void *buf, uint32_t size,
+		    uint32_t argtype);
+
+/* Release arg data */
+int vaccel_arg_release(struct vaccel_arg *arg);
+
+/* Allocate and initialize arg */
+int vaccel_arg_new(struct vaccel_arg **arg, void *buf, uint32_t size,
+		   uint32_t argtype);
+
+/* Release arg data and free arg created with `vaccel_arg_new()` */
+int vaccel_arg_delete(struct vaccel_arg *arg);
+
 /* Initializes the arg-list structure */
 struct vaccel_arg_list *vaccel_args_init(uint32_t size);
 
