@@ -7,6 +7,64 @@
 #include <stdlib.h>
 #include <string.h>
 
+int vaccel_arg_init(struct vaccel_arg *arg, void *buf, uint32_t size,
+		    uint32_t argtype)
+{
+	if (!arg)
+		return VACCEL_EINVAL;
+
+	arg->buf = buf;
+	arg->size = size;
+	arg->argtype = argtype;
+
+	return VACCEL_OK;
+}
+
+int vaccel_arg_release(struct vaccel_arg *arg)
+{
+	if (!arg)
+		return VACCEL_EINVAL;
+
+	arg->buf = NULL;
+	arg->size = 0;
+	arg->argtype = 0;
+
+	return VACCEL_OK;
+}
+
+int vaccel_arg_new(struct vaccel_arg **arg, void *buf, uint32_t size,
+		   uint32_t argtype)
+{
+	if (!arg)
+		return VACCEL_EINVAL;
+
+	struct vaccel_arg *a =
+		(struct vaccel_arg *)malloc(sizeof(struct vaccel_arg));
+	if (!a)
+		return VACCEL_ENOMEM;
+
+	int ret = vaccel_arg_init(a, buf, size, argtype);
+	if (ret) {
+		free(a);
+		return ret;
+	}
+
+	*arg = a;
+
+	return VACCEL_OK;
+}
+
+int vaccel_arg_delete(struct vaccel_arg *arg)
+{
+	int ret = vaccel_arg_release(arg);
+	if (ret)
+		return ret;
+
+	free(arg);
+
+	return VACCEL_OK;
+}
+
 struct vaccel_arg_list *vaccel_args_init(uint32_t size)
 {
 	if (size == 0)
@@ -127,7 +185,7 @@ int vaccel_expect_nonserial_arg(struct vaccel_arg_list *args,
 	if (curr_idx >= (int)args->size)
 		return VACCEL_EINVAL;
 
-	args->list[curr_idx].buf = calloc(1, expected_size);
+	args->list[curr_idx].buf = malloc(expected_size);
 	if (!args->list[curr_idx].buf)
 		return VACCEL_ENOMEM;
 
