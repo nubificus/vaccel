@@ -31,10 +31,11 @@ int main(int argc, char *argv[])
 
 	printf("Initialized session with id: %" PRId64 "\n", sess.id);
 
-	struct vaccel_arg read[] = { { .size = sizeof(input),
-				       .buf = (void *)&input } };
+	struct vaccel_arg read[] = {
+		{ .size = sizeof(input), .buf = (void *)&input, .argtype = 0 }
+	};
 	struct vaccel_arg write[] = {
-		{ .size = sizeof(output), .buf = &output },
+		{ .size = sizeof(output), .buf = &output, .argtype = 0 },
 	};
 
 	const int iter = (argc > 2) ? atoi(argv[2]) : 1;
