@@ -17,6 +17,7 @@ int plugin_unregister(struct vaccel_plugin *plugin);
 void *plugin_get_op_func(vaccel_op_type_t op_type, unsigned int hint);
 size_t plugin_nr_registered();
 struct vaccel_plugin *plugin_virtio();
+struct vaccel_plugin *plugin_first();
 int plugins_bootstrap();
 int plugins_cleanup();
 

@@ -24,6 +24,9 @@ static struct {
 	/* virtio plugin (if available) */
 	struct vaccel_plugin *virtio;
 
+	/* first available */
+	struct vaccel_plugin *first;
+
 	/* array of available implementations for every supported
 	 * function */
 	vaccel_list_t ops[VACCEL_OP_MAX];
@@ -182,6 +185,9 @@ int plugin_register(struct vaccel_plugin *plugin)
 	plugins.nr_registered++;
 
 	vaccel_info("Registered plugin %s %s", info->name, info->version);
+
+	if (plugins.first == NULL)
+		plugins.first = plugin;
 
 	if (is_virtio_plugin(info)) {
 		vaccel_debug("%s is a VirtIO module", info->name);
@@ -388,6 +394,11 @@ size_t plugin_nr_registered()
 struct vaccel_plugin *plugin_virtio()
 {
 	return plugins.virtio;
+}
+
+struct vaccel_plugin *plugin_first()
+{
+	return plugins.first;
 }
 
 int vaccel_plugin_load(const char *lib)
