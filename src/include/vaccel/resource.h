@@ -141,11 +141,6 @@ int vaccel_resource_delete(struct vaccel_resource *res);
 
 struct vaccel_session;
 
-/* Synchronize the content of the resource based on
- * possible remote changes */
-int vaccel_resource_sync(struct vaccel_resource *res,
-			 struct vaccel_session *sess);
-
 /* Register resource with session */
 int vaccel_resource_register(struct vaccel_resource *res,
 			     struct vaccel_session *sess);
@@ -154,8 +149,12 @@ int vaccel_resource_register(struct vaccel_resource *res,
 int vaccel_resource_unregister(struct vaccel_resource *res,
 			       struct vaccel_session *sess);
 
+/* Synchronize resource data to reflect any remote changes */
+int vaccel_resource_sync(struct vaccel_resource *res,
+			 struct vaccel_session *sess);
+
 /* Get directory of a resource created from a directory.
- * If an alloc_path is provided the resulting path string will be allocated and
+ * If an alloc_path is provided, the resulting path string will be allocated and
  * returned there. If not, the path will be copied to out_path.
  * IMPORTANT: If alloc_path == NULL an out_path/out_path_size big enough to
  * hold the resource directory path must be provided */

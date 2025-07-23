@@ -198,7 +198,13 @@ int vaccel_session_init(struct vaccel_session *sess, uint32_t flags)
 	    (plugin_count() == 1 && sess->plugin->info->is_virtio)) {
 		if (!sess->plugin->info->is_virtio) {
 			vaccel_error(
-				"Could not initialize VirtIO session, no VirtIO Plugin loaded yet");
+				"Cannot initialize remote session; no VirtIO plugin loaded yet");
+			ret = VACCEL_ENOTSUP;
+			goto release_id;
+		}
+		if (!sess->plugin->info->session_init) {
+			vaccel_error(
+				"Cannot initialize remote session; invalid plugin `session_init()`");
 			ret = VACCEL_ENOTSUP;
 			goto release_id;
 		}
@@ -206,7 +212,7 @@ int vaccel_session_init(struct vaccel_session *sess, uint32_t flags)
 		ret = sess->plugin->info->session_init(
 			sess, flags & (~VACCEL_PLUGIN_REMOTE));
 		if (ret) {
-			vaccel_error("Could not create host-side session");
+			vaccel_error("Failed to initialize remote session");
 			goto release_id;
 		}
 
@@ -245,15 +251,32 @@ int vaccel_session_init(struct vaccel_session *sess, uint32_t flags)
 
 cleanup_session:
 	if (sess->is_virtio) {
-		if (sess->plugin->info->session_release(sess)) {
-			vaccel_error("Could not cleanup host-side session");
-		}
+		if (sess->plugin->info->session_release(sess))
+			vaccel_error("Could not release remote session");
 	}
 release_id:
 	sess->plugin = NULL;
 	put_session_id(sess);
 
 	return ret;
+}
+
+static bool session_has_resources(struct vaccel_session *sess)
+{
+	if (!sess)
+		return false;
+
+	pthread_mutex_lock(&sess->resources_lock);
+
+	for (size_t type = 0; type < VACCEL_RESOURCE_MAX; type++) {
+		if (sess->resource_counts[type] > 0) {
+			pthread_mutex_unlock(&sess->resources_lock);
+			return true;
+		}
+	}
+
+	pthread_mutex_unlock(&sess->resources_lock);
+	return false;
 }
 
 int vaccel_session_update(struct vaccel_session *sess, uint32_t flags)
@@ -264,31 +287,40 @@ int vaccel_session_update(struct vaccel_session *sess, uint32_t flags)
 	if (!sessions.initialized)
 		return VACCEL_ESESS;
 
-	/* if we're using virtio as a plugin offload the session update to the
-	 * host */
+	/* If the plugin is virtio, forward session updating to the host */
 	if (sess->is_virtio) {
-		if (sess->plugin->info->is_virtio) {
-			int ret = sess->plugin->info->session_update(
-				sess, flags & (~VACCEL_PLUGIN_REMOTE));
-			if (ret) {
-				vaccel_error(
-					"Could not update host-side session");
-				return ret;
-			}
-		} else {
+		if (!sess->plugin->info->is_virtio) {
 			vaccel_error(
-				"Could not update virtio session, no VirtIO Plugin loaded yet");
+				"Cannot update remote session; no VirtIO plugin loaded yet");
 			return VACCEL_ENOTSUP;
 		}
-	} else {
-		sess->plugin = plugin_find(flags);
-		if (!sess->plugin)
+		if (!sess->plugin->info->session_update) {
+			vaccel_error(
+				"Cannot update remote session; invalid plugin `session_update()`");
 			return VACCEL_ENOTSUP;
+		}
 
-		sess->hint = flags;
-		vaccel_debug("session:%" PRId64 " Selected plugin %s", sess->id,
-			     sess->plugin->info->name);
+		int ret = sess->plugin->info->session_update(
+			sess, flags & (~VACCEL_PLUGIN_REMOTE));
+		if (ret)
+			vaccel_error("Failed to update remote session");
+
+		return ret;
 	}
+
+	if (session_has_resources(sess)) {
+		vaccel_error(
+			"Cannot update a session with registered resources");
+		return VACCEL_ENOTSUP;
+	}
+
+	sess->plugin = plugin_find(flags);
+	if (!sess->plugin)
+		return VACCEL_ENOTSUP;
+
+	sess->hint = flags;
+	vaccel_debug("session:%" PRId64 " Selected plugin %s", sess->id,
+		     sess->plugin->info->name);
 
 	return VACCEL_OK;
 }
@@ -321,20 +353,21 @@ int vaccel_session_release(struct vaccel_session *sess)
 	if (ret)
 		return ret;
 
-	/* If we're using virtio as a plugin, offload the session cleanup to the
-	 * host */
 	if (sess->is_virtio) {
-		if (sess->plugin->info->is_virtio) {
-			ret = sess->plugin->info->session_release(sess);
-			if (ret) {
-				vaccel_warn(
-					"Could not release host-side session");
-			}
-		} else {
+		if (!sess->plugin->info->is_virtio) {
 			vaccel_error(
-				"Could not release VirtIO session, no VirtIO Plugin loaded yet");
+				"Cannot release remote session; no VirtIO plugin loaded yet");
 			return VACCEL_ENOTSUP;
 		}
+		if (!sess->plugin->info->session_release) {
+			vaccel_error(
+				"Cannot release remote session; invalid plugin `session_release()`");
+			return VACCEL_ENOTSUP;
+		}
+
+		ret = sess->plugin->info->session_release(sess);
+		if (ret)
+			vaccel_warn("Could not release remote session");
 	}
 
 	sess->priv = NULL;
