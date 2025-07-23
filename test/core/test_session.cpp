@@ -140,6 +140,22 @@ TEST_CASE("vaccel_session_update", "[core][session]")
 		REQUIRE(ret == VACCEL_EINVAL);
 	}
 
+	SECTION("registered resources")
+	{
+		char *lib_path =
+			abs_path(BUILD_ROOT, "examples/libmytestlib.so");
+		struct vaccel_resource res;
+		REQUIRE(vaccel_resource_init(&res, lib_path,
+					     VACCEL_RESOURCE_LIB) == VACCEL_OK);
+		REQUIRE(vaccel_resource_register(&res, &sess) == VACCEL_OK);
+
+		ret = vaccel_session_update(&sess, 1);
+		REQUIRE(ret == VACCEL_ENOTSUP);
+
+		REQUIRE(vaccel_resource_release(&res) == VACCEL_OK);
+		free(lib_path);
+	}
+
 	REQUIRE(vaccel_session_release(&sess) == VACCEL_OK);
 }
 
@@ -222,17 +238,17 @@ TEST_CASE("session_ops", "[core][session]")
 	REQUIRE(vaccel_session_has_resource(&sess, &res));
 	REQUIRE(vaccel_session_has_resource(alloc_sess, &res));
 
-	REQUIRE(vaccel_session_update(&sess, 3) == VACCEL_OK);
-	REQUIRE(sess.hint == 3);
-	REQUIRE(vaccel_session_update(alloc_sess, 3) == VACCEL_OK);
-	REQUIRE(alloc_sess->hint == 3);
-
 	REQUIRE(vaccel_resource_unregister(&res, &sess) == VACCEL_OK);
 	REQUIRE(vaccel_resource_unregister(&res, alloc_sess) == VACCEL_OK);
 	REQUIRE(vaccel_resource_release(&res) == VACCEL_OK);
 
 	REQUIRE_FALSE(vaccel_session_has_resource(&sess, &res));
 	REQUIRE_FALSE(vaccel_session_has_resource(alloc_sess, &res));
+
+	REQUIRE(vaccel_session_update(&sess, 3) == VACCEL_OK);
+	REQUIRE(sess.hint == 3);
+	REQUIRE(vaccel_session_update(alloc_sess, 3) == VACCEL_OK);
+	REQUIRE(alloc_sess->hint == 3);
 
 	REQUIRE(vaccel_session_release(&sess) == VACCEL_OK);
 	REQUIRE(vaccel_session_delete(alloc_sess) == VACCEL_OK);

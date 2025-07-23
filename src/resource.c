@@ -992,17 +992,13 @@ int vaccel_resource_delete(struct vaccel_resource *res)
 	return VACCEL_OK;
 }
 
-int vaccel_resource_register(struct vaccel_resource *res,
-			     struct vaccel_session *sess)
+static int resource_load_data(struct vaccel_resource *res,
+			      struct vaccel_session *sess)
 {
-	int ret;
-
-	if (!resources.initialized)
-		return VACCEL_EPERM;
-
 	if (!res || res->path_type >= VACCEL_PATH_MAX || !sess)
 		return VACCEL_EINVAL;
 
+	int ret;
 	switch (res->path_type) {
 	case VACCEL_PATH_LOCAL_FILE:
 		ret = resource_add_blobs_from_local(res, sess->is_virtio);
@@ -1014,35 +1010,51 @@ int vaccel_resource_register(struct vaccel_resource *res,
 		ret = resource_add_blobs_from_remote(res, !sess->is_virtio);
 		if (ret == VACCEL_ENOTSUP)
 			vaccel_error(
-				"Adding remote resource blobs requires building with libcurl");
+				"Loading remote data requires building with libcurl");
 		break;
 	case VACCEL_PATH_MAX:
 		vaccel_error("Invalid path type");
 		ret = VACCEL_EINVAL;
 		break;
 	}
+
+	return ret;
+}
+
+int vaccel_resource_register(struct vaccel_resource *res,
+			     struct vaccel_session *sess)
+{
+	int ret;
+
+	if (!resources.initialized)
+		return VACCEL_EPERM;
+
+	if (!res || !sess)
+		return VACCEL_EINVAL;
+
+	ret = resource_load_data(res, sess);
 	if (ret) {
-		vaccel_error("Failed to add resource blobs");
+		vaccel_error("Failed to load resource data");
 		return ret;
 	}
 
-	if (sess->is_virtio) {
-		if (sess->plugin->info->is_virtio) {
-			ret = sess->plugin->info->resource_register(res, sess);
-			if (res->remote_id <= 0 || ret) {
-				vaccel_error(
-					"session:%" PRId64
-					" Could not register remote resource",
-					sess->id);
-				return ret;
-			}
-		} else {
-			vaccel_error(
-				"session:%" PRId64
-				" Could not register remote resource: no VirtIO Plugin loaded yet",
-				sess->id);
-			return VACCEL_ENOTSUP;
+	if (sess->plugin->info->resource_register) {
+		ret = sess->plugin->info->resource_register(res, sess);
+		if (ret || (sess->is_virtio && res->remote_id <= 0)) {
+			vaccel_id_t res_id = sess->is_virtio ? res->remote_id :
+							       res->id;
+			const char *rem_str = sess->is_virtio ? "remote " : "";
+			vaccel_error("session:%" PRId64
+				     " Failed to register %sresource %" PRId64,
+				     sess->id, rem_str, res_id);
+			return ret;
 		}
+	} else if (sess->is_virtio) {
+		vaccel_error(
+			"session:%" PRId64
+			" Cannot register remote resource; no VirtIO plugin loaded yet",
+			sess->id);
+		return VACCEL_ENOTSUP;
 	}
 
 	if (resource_registration_find(res, sess)) {
@@ -1101,35 +1113,80 @@ int vaccel_resource_unregister(struct vaccel_resource *res,
 	int ret = resource_registration_delete(reg);
 	if (ret) {
 		vaccel_error("session:%" PRId64
-			     " Could not delete resource %" PRId64
+			     " Failed to delete resource %" PRId64
 			     " registration",
 			     sess->id, res->id);
 		return ret;
 	}
 
-	if (sess->is_virtio) {
-		if (sess->plugin->info->is_virtio) {
-			ret = sess->plugin->info->resource_unregister(res,
-								      sess);
-			if (ret) {
-				vaccel_error(
-					"session:%" PRId64
-					" Could not unregister remote resource %" PRId64,
-					sess->id, res->remote_id);
-				return ret;
-			}
-		} else {
+	if (sess->plugin->info->resource_unregister) {
+		ret = sess->plugin->info->resource_unregister(res, sess);
+		if (ret) {
+			vaccel_id_t res_id = sess->is_virtio ? res->remote_id :
+							       res->id;
+			const char *rem_str = sess->is_virtio ? "remote " : "";
 			vaccel_error(
 				"session:%" PRId64
-				" Could not unregister remote resource %" PRId64
-				": no VirtIO Plugin loaded yet",
-				sess->id, res->remote_id);
-			return VACCEL_ENOTSUP;
+				" Failed to unregister %sresource %" PRId64,
+				sess->id, rem_str, res_id);
+			return ret;
 		}
+	} else if (sess->is_virtio) {
+		vaccel_error("session:%" PRId64
+			     " Cannot unregister remote resource %" PRId64
+			     "; no VirtIO plugin loaded yet",
+			     sess->id, res->remote_id);
+		return VACCEL_ENOTSUP;
 	}
 
 	vaccel_debug("session:%" PRId64 " Unregistered resource %" PRId64,
 		     sess->id, res->id);
+
+	return VACCEL_OK;
+}
+
+int vaccel_resource_sync(struct vaccel_resource *res,
+			 struct vaccel_session *sess)
+{
+	int ret;
+
+	if (!resources.initialized)
+		return VACCEL_EPERM;
+
+	if (!res || !sess)
+		return VACCEL_EINVAL;
+
+	if (!vaccel_session_has_resource(sess, res)) {
+		vaccel_error("session:%" PRId64 " Resource %" PRId64
+			     " not registered",
+			     sess->id, res->id);
+		return VACCEL_EPERM;
+	}
+
+	if (res->blobs[0]->type != VACCEL_BLOB_BUFFER) {
+		vaccel_error("Cannot synchronize non-buffer resources");
+		return VACCEL_EINVAL;
+	}
+
+	if (sess->plugin->info->resource_sync) {
+		ret = sess->plugin->info->resource_sync(res, sess);
+		if (ret) {
+			vaccel_id_t res_id = sess->is_virtio ? res->remote_id :
+							       res->id;
+			const char *rem_str = sess->is_virtio ? "remote " : "";
+			vaccel_error(
+				"session:%" PRId64
+				" Failed to synchronize %sresource %" PRId64,
+				sess->id, rem_str, res_id);
+			return ret;
+		}
+	} else if (sess->is_virtio) {
+		vaccel_error(
+			"session:%" PRId64
+			" Cannot synchronize remote resource; no VirtIO plugin loaded yet",
+			sess->id);
+		return VACCEL_ENOTSUP;
+	}
 
 	return VACCEL_OK;
 }
@@ -1172,53 +1229,6 @@ int vaccel_resource_directory(struct vaccel_resource *res, char *out_path,
 		*alloc_path = strdup(dir);
 		if (!*alloc_path)
 			return VACCEL_ENOMEM;
-	}
-
-	return VACCEL_OK;
-}
-
-int vaccel_resource_sync(struct vaccel_resource *res,
-			 struct vaccel_session *sess)
-{
-	int ret;
-
-	if (!resources.initialized)
-		return VACCEL_EPERM;
-
-	if (!res || !sess)
-		return VACCEL_EINVAL;
-
-	if (!vaccel_session_has_resource(sess, res)) {
-		vaccel_error("Resource %" PRId64
-			     " is not registered to session %" PRId64 "",
-			     res->id, sess->id);
-		return VACCEL_EPERM;
-	}
-
-	if (res->blobs[0]->type != VACCEL_BLOB_BUFFER) {
-		vaccel_error("Only buffer resources can be synced");
-		return VACCEL_EINVAL;
-	}
-
-	if (!sess->is_virtio) {
-		vaccel_warn("Non-VirtIO session, no need to sync");
-		return VACCEL_OK;
-	}
-
-	if (sess->plugin->info->is_virtio) {
-		ret = sess->plugin->info->resource_sync(res, sess);
-		if (ret != VACCEL_OK) {
-			vaccel_error("session:%" PRId64
-				     " Could not synchronize resource %" PRId64,
-				     sess->id, res->id);
-			return ret;
-		}
-	} else {
-		vaccel_error(
-			"session:%" PRId64
-			" Could not synchronize remote resource: no VirtIO Plugin loaded yet",
-			sess->id);
-		return VACCEL_ENOTSUP;
 	}
 
 	return VACCEL_OK;
