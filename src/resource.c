@@ -1003,6 +1003,18 @@ int vaccel_resource_register(struct vaccel_resource *res,
 				sess->id);
 			return VACCEL_ENOTSUP;
 		}
+	} else {
+		struct vaccel_plugin *first = plugin_first();
+		if (first) {
+			if (first->info->resource_register) {
+				vaccel_debug(
+					"Running plugin's resource register..");
+				ret = first->info->resource_register(res, sess);
+				if (ret)
+					vaccel_warn(
+						"Plugin's resource registration failed, continue..");
+			}
+		}
 	}
 
 	ret = session_register_resource(sess, res);
@@ -1065,6 +1077,19 @@ int vaccel_resource_unregister(struct vaccel_resource *res,
 				": no VirtIO Plugin loaded yet",
 				sess->id, res->remote_id);
 			return VACCEL_ENOTSUP;
+		}
+	} else {
+		struct vaccel_plugin *first = plugin_first();
+		if (first) {
+			if (first->info->resource_unregister) {
+				vaccel_debug(
+					"Running plugin's resource unregister..");
+				ret = first->info->resource_unregister(res,
+								       sess);
+				if (ret)
+					vaccel_warn(
+						"Plugin's resource unregistration failed, continue..");
+			}
 		}
 	}
 
@@ -1140,26 +1165,30 @@ int vaccel_resource_sync(struct vaccel_resource *res,
 		return VACCEL_EINVAL;
 	}
 
-	if (!sess->is_virtio) {
-		vaccel_warn("Non-VirtIO session, no need to sync");
-		return VACCEL_OK;
-	}
-
-	struct vaccel_plugin *virtio = plugin_virtio();
-	if (virtio) {
-		ret = virtio->info->resource_sync(res, sess);
-		if (ret != VACCEL_OK) {
-			vaccel_error("session:%" PRId64
-				     " Could not synchronize resource %" PRId64,
-				     sess->id, res->id);
-			return ret;
+	if (sess->is_virtio) {
+		struct vaccel_plugin *virtio = plugin_virtio();
+		if (virtio) {
+			ret = virtio->info->resource_sync(res, sess);
+			if (ret != VACCEL_OK) {
+				vaccel_error(
+					"session:%" PRId64
+					" Could not synchronize resource %" PRId64,
+					sess->id, res->id);
+				return ret;
+			}
 		}
 	} else {
-		vaccel_error(
-			"session:%" PRId64
-			" Could not synchronize remote resource: no VirtIO Plugin loaded yet",
-			sess->id);
-		return VACCEL_ENOTSUP;
+		struct vaccel_plugin *first = plugin_first();
+		if (first) {
+			if (first->info->resource_sync) {
+				vaccel_debug(
+					"Running plugin's resource sync..");
+				ret = first->info->resource_sync(res, sess);
+				if (ret)
+					vaccel_warn(
+						"Plugin's resource sync failed, continue..");
+			}
+		}
 	}
 
 	return VACCEL_OK;
