@@ -310,24 +310,36 @@ TEST_CASE("session_virtio", "[core][session]")
 {
 	RESET_FAKE(plugin_virtio);
 
-	plugin_virtio_fake.custom_fake = mock_virtio_plugin_virtio;
-
 	struct vaccel_session sess;
-	REQUIRE(vaccel_session_init(&sess, 1 | VACCEL_PLUGIN_REMOTE) ==
+
+	SECTION("not_registered")
+	{
+		REQUIRE(vaccel_session_init(&sess, 1 | VACCEL_PLUGIN_REMOTE) ==
+			VACCEL_ENOTSUP);
+	}
+
+	auto *virtio_plugin = mock_virtio_plugin_virtio();
+	REQUIRE(plugin_register(virtio_plugin) == VACCEL_OK);
+	plugin_virtio_fake.return_val = virtio_plugin;
+
+	REQUIRE(vaccel_session_init(&sess,
+				    VACCEL_PLUGIN_CPU | VACCEL_PLUGIN_REMOTE) ==
 		VACCEL_OK);
 
 	struct vaccel_session *alloc_sess;
-	REQUIRE(vaccel_session_new(&alloc_sess, 1 | VACCEL_PLUGIN_REMOTE) ==
+	REQUIRE(vaccel_session_new(&alloc_sess,
+				   VACCEL_PLUGIN_CPU | VACCEL_PLUGIN_REMOTE) ==
 		VACCEL_OK);
 
 	struct vaccel_resource res;
 	res.type = VACCEL_RESOURCE_LIB;
 	res.id = 1;
 
-	REQUIRE(vaccel_session_update(&sess, 2) == VACCEL_OK);
-	REQUIRE(sess.hint == 2);
-	REQUIRE(vaccel_session_update(alloc_sess, 2) == VACCEL_OK);
-	REQUIRE(alloc_sess->hint == 2);
+	REQUIRE(vaccel_session_update(&sess, VACCEL_PLUGIN_GPU) == VACCEL_OK);
+	REQUIRE(sess.hint == VACCEL_PLUGIN_GPU);
+	REQUIRE(vaccel_session_update(alloc_sess, VACCEL_PLUGIN_GPU) ==
+		VACCEL_OK);
+	REQUIRE(alloc_sess->hint == VACCEL_PLUGIN_GPU);
 
 	REQUIRE(session_register_resource(&sess, &res) == VACCEL_OK);
 	REQUIRE(session_register_resource(alloc_sess, &res) == VACCEL_OK);
@@ -335,10 +347,11 @@ TEST_CASE("session_virtio", "[core][session]")
 	REQUIRE(vaccel_session_has_resource(&sess, &res));
 	REQUIRE(vaccel_session_has_resource(alloc_sess, &res));
 
-	REQUIRE(vaccel_session_update(&sess, 3) == VACCEL_OK);
-	REQUIRE(sess.hint == 3);
-	REQUIRE(vaccel_session_update(alloc_sess, 3) == VACCEL_OK);
-	REQUIRE(alloc_sess->hint == 3);
+	REQUIRE(vaccel_session_update(&sess, VACCEL_PLUGIN_FPGA) == VACCEL_OK);
+	REQUIRE(sess.hint == VACCEL_PLUGIN_FPGA);
+	REQUIRE(vaccel_session_update(alloc_sess, VACCEL_PLUGIN_FPGA) ==
+		VACCEL_OK);
+	REQUIRE(alloc_sess->hint == VACCEL_PLUGIN_FPGA);
 
 	REQUIRE(session_unregister_resource(&sess, &res) == VACCEL_OK);
 	REQUIRE(session_unregister_resource(alloc_sess, &res) == VACCEL_OK);
@@ -352,6 +365,8 @@ TEST_CASE("session_virtio", "[core][session]")
 	// Ensure that the VirtIO plugin was called the expected number of times
 	// Note: session_*register_resource() do not call VirtIO functions
 	REQUIRE(plugin_virtio_fake.call_count == 8);
+
+	REQUIRE(plugin_unregister(virtio_plugin) == VACCEL_OK);
 }
 
 TEST_CASE("vaccel_session_resource_by_type", "[core][session]")

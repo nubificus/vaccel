@@ -92,6 +92,8 @@ static auto string_in_list(const char *target, const char **list,
 // Test case for resource from directory path operations
 TEST_CASE("resource_from_directory_path", "[core][resource]")
 {
+	RESET_FAKE(plugin_virtio);
+
 	int ret;
 	char *dir_path = abs_path(SOURCE_ROOT, "examples/models/tf/lstm2");
 	const size_t nr_resources = 2;
@@ -194,11 +196,13 @@ TEST_CASE("resource_from_directory_path", "[core][resource]")
 	{
 		RESET_FAKE(plugin_virtio);
 
-		plugin_virtio_fake.custom_fake = mock_virtio_plugin_virtio;
+		auto *virtio_plugin = mock_virtio_plugin_virtio();
+		REQUIRE(plugin_register(virtio_plugin) == VACCEL_OK);
+		plugin_virtio_fake.return_val = virtio_plugin;
 
 		/* Session init */
 		struct vaccel_session vsess;
-		REQUIRE(vaccel_session_init(&vsess, 0 | VACCEL_PLUGIN_REMOTE) ==
+		REQUIRE(vaccel_session_init(&vsess, VACCEL_PLUGIN_REMOTE) ==
 			VACCEL_OK);
 
 		/* Register resource */
@@ -256,6 +260,7 @@ TEST_CASE("resource_from_directory_path", "[core][resource]")
 		REQUIRE(vaccel_session_release(&vsess) == VACCEL_OK);
 
 		REQUIRE(plugin_virtio_fake.call_count == 4);
+		REQUIRE(plugin_unregister(virtio_plugin) == VACCEL_OK);
 	}
 
 	/* Unregister resources */
@@ -289,6 +294,8 @@ TEST_CASE("resource_from_directory_path", "[core][resource]")
 // Test case for resource from blob paths operations
 TEST_CASE("resource_from_file_paths", "[core][resource]")
 {
+	RESET_FAKE(plugin_virtio);
+
 	int ret;
 	char *file1 = abs_path(
 		SOURCE_ROOT,
@@ -388,7 +395,9 @@ TEST_CASE("resource_from_file_paths", "[core][resource]")
 	{
 		RESET_FAKE(plugin_virtio);
 
-		plugin_virtio_fake.custom_fake = mock_virtio_plugin_virtio;
+		auto *virtio_plugin = mock_virtio_plugin_virtio();
+		REQUIRE(plugin_register(virtio_plugin) == VACCEL_OK);
+		plugin_virtio_fake.return_val = virtio_plugin;
 
 		/* Session init */
 		struct vaccel_session vsess;
@@ -446,6 +455,7 @@ TEST_CASE("resource_from_file_paths", "[core][resource]")
 		REQUIRE(vaccel_session_release(&vsess) == VACCEL_OK);
 
 		REQUIRE(plugin_virtio_fake.call_count == 4);
+		REQUIRE(plugin_unregister(virtio_plugin) == VACCEL_OK);
 	}
 
 	/* Unregister resources */
@@ -480,6 +490,8 @@ TEST_CASE("resource_from_file_paths", "[core][resource]")
 // Test case for resource from url path operations
 TEST_CASE("resource_from_url_path", "[core][resource]")
 {
+	RESET_FAKE(plugin_virtio);
+
 	int ret;
 	char url[PATH_MAX];
 	const size_t nr_resources = 2;
@@ -537,7 +549,9 @@ TEST_CASE("resource_from_url_path", "[core][resource]")
 	{
 		RESET_FAKE(plugin_virtio);
 
-		plugin_virtio_fake.custom_fake = mock_virtio_plugin_virtio;
+		auto *virtio_plugin = mock_virtio_plugin_virtio();
+		REQUIRE(plugin_register(virtio_plugin) == VACCEL_OK);
+		plugin_virtio_fake.return_val = virtio_plugin;
 
 		/* Session init */
 		struct vaccel_session vsess;
@@ -572,6 +586,7 @@ TEST_CASE("resource_from_url_path", "[core][resource]")
 		REQUIRE(vaccel_session_release(&vsess) == VACCEL_OK);
 
 		REQUIRE(plugin_virtio_fake.call_count == 4);
+		REQUIRE(plugin_unregister(virtio_plugin) == VACCEL_OK);
 	}
 
 	/* Register resources */
@@ -650,6 +665,8 @@ TEST_CASE("resource_from_url_path", "[core][resource]")
 // Test case for resource from buffer operations
 TEST_CASE("resource_from_buffer", "[core][resource]")
 {
+	RESET_FAKE(plugin_virtio);
+
 	int ret;
 	char *file = abs_path(BUILD_ROOT, "examples/libmytestlib.so");
 	const size_t nr_resources = 2;
@@ -763,6 +780,8 @@ TEST_CASE("resource_from_buffer", "[core][resource]")
 
 TEST_CASE("resource_from_blobs_mem_only", "[core][resource]")
 {
+	RESET_FAKE(plugin_virtio);
+
 	int ret;
 	struct vaccel_blob b1;
 	struct vaccel_blob b2;
@@ -910,6 +929,8 @@ TEST_CASE("resource_from_blobs_mem_only", "[core][resource]")
 // Test case for resource from vaccel blobs operations
 TEST_CASE("resource_from_blobs", "[core][resource]")
 {
+	RESET_FAKE(plugin_virtio);
+
 	int ret;
 	const size_t nr_resources = 2;
 	struct vaccel_resource *resources[nr_resources];
@@ -1066,6 +1087,8 @@ TEST_CASE("resource_from_blobs", "[core][resource]")
 // Test case for resource init failures
 TEST_CASE("resource_init_fail", "[core][resource]")
 {
+	RESET_FAKE(plugin_virtio);
+
 	int ret;
 	struct vaccel_resource res;
 	struct vaccel_resource *alloc_res;
@@ -1230,6 +1253,8 @@ TEST_CASE("resource_init_fail", "[core][resource]")
 // Test case for resource release failures
 TEST_CASE("resource_release_fail", "[core][resource]")
 {
+	RESET_FAKE(plugin_virtio);
+
 	int ret;
 	struct vaccel_resource res;
 	vaccel_resource_type_t const test_type = VACCEL_RESOURCE_LIB;
@@ -1279,6 +1304,8 @@ TEST_CASE("resource_release_fail", "[core][resource]")
 // Test case for resource register/unregister to/from multiple sessions
 TEST_CASE("resource_multiple_sessions", "[core][resource]")
 {
+	RESET_FAKE(plugin_virtio);
+
 	int ret;
 	struct vaccel_resource res;
 	char *test_path = abs_path(BUILD_ROOT, "examples/libmytestlib.so");
@@ -1323,6 +1350,8 @@ TEST_CASE("resource_multiple_sessions", "[core][resource]")
 // Test case for resource sync
 TEST_CASE("resource_sync", "[core][resource]")
 {
+	RESET_FAKE(plugin_virtio);
+
 	int ret;
 	struct vaccel_resource res;
 	struct vaccel_session sess;
@@ -1376,6 +1405,8 @@ TEST_CASE("resource_sync", "[core][resource]")
 // Test case for resource register failures
 TEST_CASE("resource_register_fail", "[core][resource]")
 {
+	RESET_FAKE(plugin_virtio);
+
 	int ret;
 	struct vaccel_resource res;
 	char *test_path = abs_path(BUILD_ROOT, "examples/libmytestlib.so");
@@ -1413,6 +1444,8 @@ TEST_CASE("resource_register_fail", "[core][resource]")
 // Test case for resource unregister failures
 TEST_CASE("resource_unregister_fail", "[core][resource]")
 {
+	RESET_FAKE(plugin_virtio);
+
 	int ret;
 	struct vaccel_resource res;
 	char *test_path = abs_path(BUILD_ROOT, "examples/libmytestlib.so");
@@ -1456,6 +1489,8 @@ TEST_CASE("resource_unregister_fail", "[core][resource]")
 // Test case for finding a resource by ID failure
 TEST_CASE("resource_find_by_id_fail", "[core][resource]")
 {
+	RESET_FAKE(plugin_virtio);
+
 	struct vaccel_resource *test_res = nullptr;
 	vaccel_id_t const test_id = 0;
 
@@ -1467,6 +1502,8 @@ TEST_CASE("resource_find_by_id_fail", "[core][resource]")
 
 TEST_CASE("vaccel_resource_get_by_type", "[core][resource]")
 {
+	RESET_FAKE(plugin_virtio);
+
 	struct vaccel_resource *res_ptr;
 	int ret;
 
@@ -1517,6 +1554,8 @@ TEST_CASE("vaccel_resource_get_by_type", "[core][resource]")
 
 TEST_CASE("vaccel_resource_get_all_by_type", "[core][resource]")
 {
+	RESET_FAKE(plugin_virtio);
+
 	struct vaccel_resource **res_ptr;
 	size_t nr_found;
 	int ret;
@@ -1608,6 +1647,8 @@ TEST_CASE("vaccel_resource_get_all_by_type", "[core][resource]")
 
 TEST_CASE("memory_only_resource", "[core][resource]")
 {
+	RESET_FAKE(plugin_virtio);
+
 	int ret;
 	char *file = abs_path(BUILD_ROOT, "examples/libmytestlib.so");
 	const size_t nr_resources = 2;
@@ -1740,12 +1781,15 @@ TEST_CASE("memory_only_resource", "[core][resource]")
 
 TEST_CASE("memory_only_resource_virtio", "[core][resource]")
 {
+	RESET_FAKE(plugin_virtio);
+
 	int ret;
 	char *file = abs_path(BUILD_ROOT, "examples/libmytestlib.so");
 	struct vaccel_session vsess;
 
-	RESET_FAKE(plugin_virtio);
-	plugin_virtio_fake.custom_fake = mock_virtio_plugin_virtio;
+	auto *virtio_plugin = mock_virtio_plugin_virtio();
+	REQUIRE(plugin_register(virtio_plugin) == VACCEL_OK);
+	plugin_virtio_fake.return_val = virtio_plugin;
 
 	/* Session init */
 	REQUIRE(vaccel_session_init(&vsess, VACCEL_PLUGIN_REMOTE) == VACCEL_OK);
@@ -1821,6 +1865,8 @@ TEST_CASE("memory_only_resource_virtio", "[core][resource]")
 	/* Release session */
 	REQUIRE(vaccel_session_release(&vsess) == VACCEL_OK);
 
+	REQUIRE(plugin_unregister(virtio_plugin) == VACCEL_OK);
+
 	free(buff);
 	free(file);
 }
@@ -1828,6 +1874,8 @@ TEST_CASE("memory_only_resource_virtio", "[core][resource]")
 // Test case for resource component not bootstrapped
 TEST_CASE("resources_not_bootstrapped", "[core][resource]")
 {
+	RESET_FAKE(plugin_virtio);
+
 	int ret;
 	struct vaccel_resource res;
 	vaccel_resource_type_t const test_type = VACCEL_RESOURCE_LIB;

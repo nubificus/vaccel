@@ -249,6 +249,12 @@ int vaccel_session_init(struct vaccel_session *sess, uint32_t flags)
 	if (sess->id < 0)
 		return -(int)sess->id;
 
+	sess->plugin = plugin_find(flags);
+	if (!sess->plugin) {
+		ret = VACCEL_ENOTSUP;
+		goto release_id;
+	}
+
 	sess->priv = NULL;
 
 	virtio = plugin_virtio();
@@ -282,10 +288,12 @@ int vaccel_session_init(struct vaccel_session *sess, uint32_t flags)
 
 	if (sess->is_virtio)
 		vaccel_debug("Initialized session %" PRId64
-			     " with remote (id: %" PRId64 ")",
-			     sess->id, sess->remote_id);
+			     " with plugin %s (remote id: %" PRId64 ")",
+			     sess->id, sess->plugin->info->name,
+			     sess->remote_id);
 	else
-		vaccel_debug("Initialized session %" PRId64, sess->id);
+		vaccel_debug("Initialized session %" PRId64 " with plugin %s",
+			     sess->id, sess->plugin->info->name);
 
 	return VACCEL_OK;
 
@@ -328,11 +336,14 @@ int vaccel_session_update(struct vaccel_session *sess, uint32_t flags)
 			return VACCEL_ENOTSUP;
 		}
 	} else {
-		sess->hint = flags;
-	}
+		sess->plugin = plugin_find(flags);
+		if (!sess->plugin)
+			return VACCEL_ENOTSUP;
 
-	vaccel_debug("session:%" PRId64 " Updated with flags: %u", sess->id,
-		     flags);
+		sess->hint = flags;
+		vaccel_debug("session:%" PRId64 " Selected plugin %s", sess->id,
+			     sess->plugin->info->name);
+	}
 
 	return VACCEL_OK;
 }
@@ -376,6 +387,7 @@ int vaccel_session_release(struct vaccel_session *sess)
 	}
 
 	sess->priv = NULL;
+	sess->plugin = NULL;
 	sessions.all[sess->id - 1] = NULL;
 
 	vaccel_debug("Released session %" PRId64, sess->id);
