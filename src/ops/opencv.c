@@ -28,7 +28,7 @@ int vaccel_opencv(struct vaccel_session *sess, struct vaccel_arg *read,
 
 	vaccel_prof_region_start(&opencv_op_stats);
 
-	opencv_fn_t plugin_opencv = plugin_get_op_func(op_type, sess->hint);
+	opencv_fn_t plugin_opencv = plugin_get_op_func(sess->plugin, op_type);
 	if (!plugin_opencv) {
 		ret = VACCEL_ENOTSUP;
 		goto out;

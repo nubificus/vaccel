@@ -32,7 +32,7 @@ int vaccel_minmax(struct vaccel_session *sess, const double *indata, int ndata,
 
 	vaccel_prof_region_start(&minmax_op_stats);
 
-	minmax_fn_t plugin_minmax = plugin_get_op_func(op_type, sess->hint);
+	minmax_fn_t plugin_minmax = plugin_get_op_func(sess->plugin, op_type);
 	if (!plugin_minmax) {
 		ret = VACCEL_ENOTSUP;
 		goto out;

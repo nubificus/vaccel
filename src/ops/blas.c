@@ -35,7 +35,7 @@ int vaccel_sgemm(struct vaccel_session *sess, long long int m, long long int n,
 
 	vaccel_prof_region_start(&blas_op_stats);
 
-	sgemm_fn_t plugin_sgemm = plugin_get_op_func(op_type, sess->hint);
+	sgemm_fn_t plugin_sgemm = plugin_get_op_func(sess->plugin, op_type);
 	if (!plugin_sgemm) {
 		ret = VACCEL_ENOTSUP;
 		goto out;

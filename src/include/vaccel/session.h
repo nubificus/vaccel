@@ -12,6 +12,7 @@ extern "C" {
 #endif
 
 struct session_resources;
+struct vaccel_plugin;
 
 struct vaccel_session {
 	/* id of the session */
@@ -31,6 +32,9 @@ struct vaccel_session {
 
 	/* local or virtio option */
 	bool is_virtio;
+
+	/* plugin providing the session operations */
+	struct vaccel_plugin *plugin;
 };
 
 /* Initialize session */
