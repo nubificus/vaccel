@@ -84,7 +84,7 @@ foreach t : tests_core_sources + tests_utils_sources
   endif
 endforeach
 
-foreach t : tests_ops_sources
+foreach t : tests_core_w_plugin_sources + tests_ops_sources
   name = fs.stem(t)
   exe = executable(name,
     sources : t,

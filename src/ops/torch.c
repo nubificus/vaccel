@@ -253,7 +253,7 @@ int vaccel_torch_model_load(struct vaccel_session *sess,
 	vaccel_prof_region_start(&torch_model_load_op_stats);
 
 	torch_model_load_fn_t plugin_torch_model_load =
-		plugin_get_op_func(op_type, sess->hint);
+		plugin_get_op_func(sess->plugin, op_type);
 	if (!plugin_torch_model_load) {
 		ret = VACCEL_ENOTSUP;
 		goto out;
@@ -307,7 +307,7 @@ int vaccel_torch_model_run(struct vaccel_session *sess,
 	vaccel_prof_region_start(&torch_model_run_op_stats);
 
 	torch_model_run_fn_t plugin_torch_model_run =
-		plugin_get_op_func(op_type, sess->hint);
+		plugin_get_op_func(sess->plugin, op_type);
 	if (!plugin_torch_model_run) {
 		ret = VACCEL_ENOTSUP;
 		goto out;
@@ -348,7 +348,7 @@ int vaccel_torch_sgemm(struct vaccel_session *sess,
 	vaccel_prof_region_start(&torch_sgemm_op_stats);
 
 	torch_sgemm_fn_t plugin_torch_sgemm =
-		plugin_get_op_func(op_type, sess->hint);
+		plugin_get_op_func(sess->plugin, op_type);
 	if (!plugin_torch_sgemm) {
 		ret = VACCEL_ENOTSUP;
 		goto out;

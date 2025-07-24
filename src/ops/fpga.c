@@ -31,7 +31,7 @@ int vaccel_fpga_arraycopy(struct vaccel_session *sess, int a[], int out_a[],
 	vaccel_prof_region_start(&fpga_arraycopy_op_stats);
 
 	fpga_arraycopy_fn_t plugin_fpga_arraycopy =
-		plugin_get_op_func(op_type, sess->hint);
+		plugin_get_op_func(sess->plugin, op_type);
 	if (!plugin_fpga_arraycopy) {
 		ret = VACCEL_ENOTSUP;
 		goto out;
@@ -90,7 +90,7 @@ int vaccel_fpga_mmult(struct vaccel_session *sess, float a[], float b[],
 	vaccel_prof_region_start(&fpga_mmult_op_stats);
 
 	fpga_mmult_fn_t plugin_fpga_mmult =
-		plugin_get_op_func(op_type, sess->hint);
+		plugin_get_op_func(sess->plugin, op_type);
 	if (!plugin_fpga_mmult) {
 		ret = VACCEL_ENOTSUP;
 		goto out;
@@ -150,7 +150,7 @@ int vaccel_fpga_parallel(struct vaccel_session *sess, float a[], float b[],
 	vaccel_prof_region_start(&fpga_parallel_op_stats);
 
 	fpga_parallel_fn_t plugin_fpga_parallel =
-		plugin_get_op_func(op_type, sess->hint);
+		plugin_get_op_func(sess->plugin, op_type);
 	if (!plugin_fpga_parallel) {
 		ret = VACCEL_ENOTSUP;
 		goto out;
@@ -210,7 +210,8 @@ int vaccel_fpga_vadd(struct vaccel_session *sess, float a[], float b[],
 
 	vaccel_prof_region_start(&fpga_vadd_op_stats);
 
-	fpga_vadd_t plugin_fpga_vadd = plugin_get_op_func(op_type, sess->hint);
+	fpga_vadd_t plugin_fpga_vadd =
+		plugin_get_op_func(sess->plugin, op_type);
 	if (!plugin_fpga_vadd) {
 		ret = VACCEL_ENOTSUP;
 		goto out;

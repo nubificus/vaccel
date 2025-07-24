@@ -373,7 +373,7 @@ int vaccel_tf_model_load(struct vaccel_session *sess,
 	vaccel_prof_region_start(&tf_model_load_op_stats);
 
 	tf_model_load_fn_t plugin_tf_model_load =
-		plugin_get_op_func(op_type, sess->hint);
+		plugin_get_op_func(sess->plugin, op_type);
 	if (!plugin_tf_model_load) {
 		ret = VACCEL_ENOTSUP;
 		goto out;
@@ -422,7 +422,7 @@ int vaccel_tf_model_unload(struct vaccel_session *sess,
 	vaccel_prof_region_start(&tf_model_unload_op_stats);
 
 	tf_model_unload_fn_t plugin_tf_model_unload =
-		plugin_get_op_func(op_type, sess->hint);
+		plugin_get_op_func(sess->plugin, op_type);
 	if (!plugin_tf_model_unload) {
 		ret = VACCEL_ENOTSUP;
 		goto out;
@@ -482,7 +482,7 @@ int vaccel_tf_model_run(struct vaccel_session *sess,
 	vaccel_prof_region_start(&tf_model_run_op_stats);
 
 	tf_model_run_fn_t plugin_tf_model_run =
-		plugin_get_op_func(op_type, sess->hint);
+		plugin_get_op_func(sess->plugin, op_type);
 	if (!plugin_tf_model_run) {
 		ret = VACCEL_ENOTSUP;
 		goto out;

@@ -61,8 +61,8 @@ struct vaccel_plugin_info {
 	/* in some cases, like in the context of VirtIO we need to offload
 	 * session handling to the plugin itself */
 	int (*session_init)(struct vaccel_session *sess, uint32_t flags);
-	int (*session_update)(struct vaccel_session *sess, uint32_t flags);
 	int (*session_release)(struct vaccel_session *sess);
+	int (*session_update)(struct vaccel_session *sess, uint32_t flags);
 	int (*resource_register)(struct vaccel_resource *res,
 				 struct vaccel_session *sess);
 	int (*resource_unregister)(struct vaccel_resource *res,
@@ -78,29 +78,41 @@ struct vaccel_plugin {
 	/* entry for list of plugin */
 	vaccel_list_entry_t entry;
 
-	/* list of functions supported by this plugin */
-	vaccel_list_t ops;
+	/* array of operations supported by this plugin */
+	struct vaccel_op *ops[VACCEL_OP_MAX];
 
 	/* plugin information */
 	struct vaccel_plugin_info *info;
 };
 
+/* Define plugin/plugin info.
+ * Warning: This only works when used from C. */
 #define VACCEL_PLUGIN(...)                                                      \
 	static struct vaccel_plugin_info _vaccel_plugin_info = { __VA_ARGS__ }; \
 	__attribute__((visibility(                                              \
 		"hidden"))) struct vaccel_plugin vaccel_this_plugin = {         \
 		.dl_handle = NULL,                                              \
 		.entry = LIST_ENTRY_INIT(vaccel_this_plugin.entry),             \
-		.ops = LIST_ENTRY_INIT(vaccel_this_plugin.ops),                 \
+		.ops = { NULL },                                                \
 		.info = &_vaccel_plugin_info                                    \
 	};                                                                      \
 	const struct vaccel_plugin *vaccel_plugin = &vaccel_this_plugin;
 
-int vaccel_plugin_register_op(struct vaccel_op *op);
+/* Register operations from an array of operations */
 int vaccel_plugin_register_ops(struct vaccel_op *ops, size_t nr_ops);
-void vaccel_plugin_print_all_by_op_type(vaccel_op_type_t op_type);
+
+/* Load a plugin from a filename or path.
+ * If a filename is provided, the compiler's library paths will be searched */
 int vaccel_plugin_load(const char *lib);
+
+/* Parse a `:` delimited string of plugins and load each plugin. */
 int vaccel_plugin_parse_and_load(const char *lib_str);
+
+/* Register single operation */
+static inline int vaccel_plugin_register_op(struct vaccel_op *op)
+{
+	return vaccel_plugin_register_ops(op, 1);
+}
 
 /* Deprecated. To be removed. */
 #define VACCEL_MODULE(...)                                                                    \
