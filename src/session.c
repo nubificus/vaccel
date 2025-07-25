@@ -237,7 +237,6 @@ static int session_cleanup_resources(struct vaccel_session *sess)
 int vaccel_session_init(struct vaccel_session *sess, uint32_t flags)
 {
 	int ret;
-	struct vaccel_plugin *virtio = NULL;
 
 	if (!sess)
 		return VACCEL_EINVAL;
@@ -257,17 +256,16 @@ int vaccel_session_init(struct vaccel_session *sess, uint32_t flags)
 
 	sess->priv = NULL;
 
-	virtio = plugin_virtio();
 	if ((flags & VACCEL_PLUGIN_REMOTE) ||
-	    (plugin_nr_registered() == 1 && virtio)) {
-		if (!virtio) {
+	    (plugin_nr_registered() == 1 && sess->plugin->info->is_virtio)) {
+		if (!sess->plugin->info->is_virtio) {
 			vaccel_error(
 				"Could not initialize VirtIO session, no VirtIO Plugin loaded yet");
 			ret = VACCEL_ENOTSUP;
 			goto release_id;
 		}
 
-		ret = virtio->info->session_init(
+		ret = sess->plugin->info->session_init(
 			sess, flags & (~VACCEL_PLUGIN_REMOTE));
 		if (ret) {
 			vaccel_error("Could not create host-side session");
@@ -299,12 +297,12 @@ int vaccel_session_init(struct vaccel_session *sess, uint32_t flags)
 
 cleanup_session:
 	if (sess->is_virtio) {
-		if (virtio->info->session_release(sess)) {
-			vaccel_error(
-				"BUG: Could not cleanup host-side session");
+		if (sess->plugin->info->session_release(sess)) {
+			vaccel_error("Could not cleanup host-side session");
 		}
 	}
 release_id:
+	sess->plugin = NULL;
 	put_session_id(sess);
 
 	return ret;
@@ -321,9 +319,8 @@ int vaccel_session_update(struct vaccel_session *sess, uint32_t flags)
 	/* if we're using virtio as a plugin offload the session update to the
 	 * host */
 	if (sess->is_virtio) {
-		struct vaccel_plugin *virtio = plugin_virtio();
-		if (virtio) {
-			int ret = virtio->info->session_update(
+		if (sess->plugin->info->is_virtio) {
+			int ret = sess->plugin->info->session_update(
 				sess, flags & (~VACCEL_PLUGIN_REMOTE));
 			if (ret) {
 				vaccel_error(
@@ -372,9 +369,8 @@ int vaccel_session_release(struct vaccel_session *sess)
 	/* If we're using virtio as a plugin, offload the session cleanup to the
 	 * host */
 	if (sess->is_virtio) {
-		struct vaccel_plugin *virtio = plugin_virtio();
-		if (virtio) {
-			ret = virtio->info->session_release(sess);
+		if (sess->plugin->info->is_virtio) {
+			ret = sess->plugin->info->session_release(sess);
 			if (ret) {
 				vaccel_warn(
 					"Could not release host-side session");
