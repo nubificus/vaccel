@@ -1,10 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #define _POSIX_C_SOURCE 200809L
+#define _GNU_SOURCE
 
 #include "vaccel.h"
 #include <dlfcn.h>
 #include <inttypes.h>
+#include <sys/mman.h>
+#include <sys/syscall.h>
+#include <unistd.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -130,11 +134,39 @@ static int exec_with_resource(struct vaccel_session *session,
 	if (!dl)
 		return VACCEL_ENOMEM;
 
+	int *fds;
+	if (resource->blobs[0]->type == VACCEL_BLOB_BUFFER) {
+		fds = (int *)malloc(sizeof(int) * resource->nr_blobs);
+		if (!fds) {
+			free(dl);
+			return VACCEL_ENOMEM;
+		}
+		for (size_t i = 0; i < resource->nr_blobs; i++)
+			fds[i] = -1;
+	} else {
+		fds = NULL;
+	}
+
 	/* Load dependency libraries if any */
 	int dlopen_mode = get_dlopen_mode();
 	size_t nr_deps = resource->nr_blobs - 1;
 	for (size_t i = 0; i < nr_deps; i++) {
-		char *dep_library = resource->blobs[i]->path;
+		char path[64] = { 0 };
+		char *dep_library;
+		if (resource->blobs[i]->type == VACCEL_BLOB_BUFFER) {
+			void *buffer = resource->blobs[i]->data;
+			size_t size = resource->blobs[i]->size;
+
+			fds[i] = syscall(SYS_memfd_create, "mylib", 0);
+			syscall(SYS_write, fds[i], buffer, size);
+
+			snprintf(path, sizeof(path), "/proc/self/fd/%d",
+				 fds[i]);
+			dep_library = &path[0];
+		} else {
+			dep_library = resource->blobs[i]->path;
+		}
+
 		dl[i] = dlopen(dep_library, dlopen_mode | RTLD_GLOBAL);
 		if (!dl[i]) {
 			exec_res_error("dlopen %s: %s", dep_library, dlerror());
@@ -144,7 +176,21 @@ static int exec_with_resource(struct vaccel_session *session,
 	}
 
 	/* Load main library */
-	char *library = resource->blobs[nr_deps]->path;
+	char *library;
+	char path[64] = { 0 };
+	if (resource->blobs[nr_deps]->type == VACCEL_BLOB_BUFFER) {
+		void *buffer = resource->blobs[nr_deps]->data;
+		size_t size = resource->blobs[nr_deps]->size;
+
+		fds[nr_deps] = syscall(SYS_memfd_create, "mylib", 0);
+		syscall(SYS_write, fds[nr_deps], buffer, size);
+
+		snprintf(path, sizeof(path), "/proc/self/fd/%d", fds[nr_deps]);
+		library = &path[0];
+	} else {
+		library = resource->blobs[nr_deps]->path;
+	}
+
 	exec_res_debug("Library: %s", library);
 	dl[nr_deps] = dlopen(library, dlopen_mode);
 	void *ldl = dl[nr_deps];
@@ -181,12 +227,22 @@ static int exec_with_resource(struct vaccel_session *session,
 	/* Unload libraries if chosen */
 	if (get_dlclose_enabled()) {
 		for (size_t i = resource->nr_blobs; i > 0; i--) {
-			char *dep_library = resource->blobs[i - 1]->path;
+			char *dep_library;
+			char desc[64] = { 0 };
+			if (resource->blobs[i - 1]->type ==
+			    VACCEL_BLOB_BUFFER) {
+				snprintf(desc, sizeof(desc), "library %d",
+					 (int)i);
+				dep_library = desc;
+			} else {
+				dep_library = resource->blobs[i - 1]->path;
+			}
+
 			if (dlclose(dl[i - 1])) {
 				exec_res_error("dlclose %s: %s", dep_library,
 					       dlerror());
 				ret = VACCEL_EINVAL;
-				goto free;
+				break;
 			}
 		}
 	}
@@ -197,6 +253,14 @@ static int exec_with_resource(struct vaccel_session *session,
 		ret = VACCEL_OK;
 
 free:
+	/* Close file descriptors */
+	if (fds) {
+		for (size_t i = 0; i < resource->nr_blobs; i++)
+			if (fds[i] > 0)
+				close(fds[i]);
+		free(fds);
+	}
+
 	free(dl);
 
 	return ret;
