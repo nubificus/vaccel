@@ -986,9 +986,8 @@ int vaccel_resource_register(struct vaccel_resource *res,
 	}
 
 	if (sess->is_virtio) {
-		struct vaccel_plugin *virtio = plugin_virtio();
-		if (virtio) {
-			ret = virtio->info->resource_register(res, sess);
+		if (sess->plugin->info->is_virtio) {
+			ret = sess->plugin->info->resource_register(res, sess);
 			if (res->remote_id <= 0 || ret) {
 				vaccel_error(
 					"session:%" PRId64
@@ -1048,9 +1047,9 @@ int vaccel_resource_unregister(struct vaccel_resource *res,
 	resource_refcount_dec(res);
 
 	if (sess->is_virtio) {
-		struct vaccel_plugin *virtio = plugin_virtio();
-		if (virtio) {
-			ret = virtio->info->resource_unregister(res, sess);
+		if (sess->plugin->info->is_virtio) {
+			ret = sess->plugin->info->resource_unregister(res,
+								      sess);
 			if (ret) {
 				vaccel_error(
 					"session:%" PRId64
@@ -1145,9 +1144,8 @@ int vaccel_resource_sync(struct vaccel_resource *res,
 		return VACCEL_OK;
 	}
 
-	struct vaccel_plugin *virtio = plugin_virtio();
-	if (virtio) {
-		ret = virtio->info->resource_sync(res, sess);
+	if (sess->plugin->info->is_virtio) {
+		ret = sess->plugin->info->resource_sync(res, sess);
 		if (ret != VACCEL_OK) {
 			vaccel_error("session:%" PRId64
 				     " Could not synchronize resource %" PRId64,

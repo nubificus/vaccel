@@ -38,7 +38,6 @@
 DEFINE_FFF_GLOBALS;
 
 extern "C" {
-FAKE_VALUE_FUNC(struct vaccel_plugin *, plugin_virtio);
 FAKE_VALUE_FUNC(int, net_nocurl_file_download, const char *, const char *);
 }
 
@@ -192,13 +191,12 @@ TEST_CASE("resource_from_directory_path", "[core][resource]")
 
 	SECTION("virtio session")
 	{
-		RESET_FAKE(plugin_virtio);
-
-		plugin_virtio_fake.custom_fake = mock_virtio_plugin_virtio;
+		auto *virtio_plugin = mock_virtio_plugin_virtio();
+		REQUIRE(plugin_register(virtio_plugin) == VACCEL_OK);
 
 		/* Session init */
 		struct vaccel_session vsess;
-		REQUIRE(vaccel_session_init(&vsess, 0 | VACCEL_PLUGIN_REMOTE) ==
+		REQUIRE(vaccel_session_init(&vsess, VACCEL_PLUGIN_REMOTE) ==
 			VACCEL_OK);
 
 		/* Register resource */
@@ -255,7 +253,7 @@ TEST_CASE("resource_from_directory_path", "[core][resource]")
 		/* Release session */
 		REQUIRE(vaccel_session_release(&vsess) == VACCEL_OK);
 
-		REQUIRE(plugin_virtio_fake.call_count == 4);
+		REQUIRE(plugin_unregister(virtio_plugin) == VACCEL_OK);
 	}
 
 	/* Unregister resources */
@@ -386,9 +384,8 @@ TEST_CASE("resource_from_file_paths", "[core][resource]")
 
 	SECTION("virtio session")
 	{
-		RESET_FAKE(plugin_virtio);
-
-		plugin_virtio_fake.custom_fake = mock_virtio_plugin_virtio;
+		auto *virtio_plugin = mock_virtio_plugin_virtio();
+		REQUIRE(plugin_register(virtio_plugin) == VACCEL_OK);
 
 		/* Session init */
 		struct vaccel_session vsess;
@@ -445,7 +442,7 @@ TEST_CASE("resource_from_file_paths", "[core][resource]")
 		/* Release session */
 		REQUIRE(vaccel_session_release(&vsess) == VACCEL_OK);
 
-		REQUIRE(plugin_virtio_fake.call_count == 4);
+		REQUIRE(plugin_unregister(virtio_plugin) == VACCEL_OK);
 	}
 
 	/* Unregister resources */
@@ -535,9 +532,8 @@ TEST_CASE("resource_from_url_path", "[core][resource]")
 
 	SECTION("virtio session")
 	{
-		RESET_FAKE(plugin_virtio);
-
-		plugin_virtio_fake.custom_fake = mock_virtio_plugin_virtio;
+		auto *virtio_plugin = mock_virtio_plugin_virtio();
+		REQUIRE(plugin_register(virtio_plugin) == VACCEL_OK);
 
 		/* Session init */
 		struct vaccel_session vsess;
@@ -571,7 +567,7 @@ TEST_CASE("resource_from_url_path", "[core][resource]")
 		/* Release session */
 		REQUIRE(vaccel_session_release(&vsess) == VACCEL_OK);
 
-		REQUIRE(plugin_virtio_fake.call_count == 4);
+		REQUIRE(plugin_unregister(virtio_plugin) == VACCEL_OK);
 	}
 
 	/* Register resources */
@@ -1744,8 +1740,8 @@ TEST_CASE("memory_only_resource_virtio", "[core][resource]")
 	char *file = abs_path(BUILD_ROOT, "examples/libmytestlib.so");
 	struct vaccel_session vsess;
 
-	RESET_FAKE(plugin_virtio);
-	plugin_virtio_fake.custom_fake = mock_virtio_plugin_virtio;
+	auto *virtio_plugin = mock_virtio_plugin_virtio();
+	REQUIRE(plugin_register(virtio_plugin) == VACCEL_OK);
 
 	/* Session init */
 	REQUIRE(vaccel_session_init(&vsess, VACCEL_PLUGIN_REMOTE) == VACCEL_OK);
@@ -1820,6 +1816,8 @@ TEST_CASE("memory_only_resource_virtio", "[core][resource]")
 
 	/* Release session */
 	REQUIRE(vaccel_session_release(&vsess) == VACCEL_OK);
+
+	REQUIRE(plugin_unregister(virtio_plugin) == VACCEL_OK);
 
 	free(buff);
 	free(file);

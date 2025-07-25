@@ -183,7 +183,7 @@ int vaccel_tflite_model_load(struct vaccel_session *sess,
 	vaccel_prof_region_start(&tflite_model_load_op_stats);
 
 	tflite_model_load_fn_t plugin_tflite_model_load =
-		plugin_get_op_func(op_type, sess->hint);
+		plugin_get_op_func(sess->plugin, op_type);
 	if (!plugin_tflite_model_load) {
 		ret = VACCEL_ENOTSUP;
 		goto out;
@@ -230,7 +230,7 @@ int vaccel_tflite_model_unload(struct vaccel_session *sess,
 	vaccel_prof_region_start(&tflite_model_unload_op_stats);
 
 	tflite_model_unload_fn_t plugin_tflite_model_unload =
-		plugin_get_op_func(op_type, sess->hint);
+		plugin_get_op_func(sess->plugin, op_type);
 	if (!plugin_tflite_model_unload) {
 		ret = VACCEL_ENOTSUP;
 		goto out;
@@ -285,7 +285,7 @@ int vaccel_tflite_model_run(struct vaccel_session *sess,
 	vaccel_prof_region_start(&tflite_model_run_op_stats);
 
 	tflite_model_run_fn_t plugin_tflite_model =
-		plugin_get_op_func(op_type, sess->hint);
+		plugin_get_op_func(sess->plugin, op_type);
 	if (!plugin_tflite_model) {
 		ret = VACCEL_ENOTSUP;
 		goto out;
