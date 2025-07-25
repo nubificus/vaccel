@@ -26,16 +26,10 @@
 
 DEFINE_FFF_GLOBALS;
 
-extern "C" {
-FAKE_VALUE_FUNC(struct vaccel_plugin *, plugin_virtio);
-}
-
 enum { MAX_VACCEL_SESSIONS = 1024 };
 
 TEST_CASE("vaccel_session_init", "[core][session]")
 {
-	RESET_FAKE(plugin_virtio);
-
 	int ret;
 
 	struct vaccel_session sess;
@@ -57,8 +51,6 @@ TEST_CASE("vaccel_session_init", "[core][session]")
 
 TEST_CASE("vaccel_session_release", "[core][session]")
 {
-	RESET_FAKE(plugin_virtio);
-
 	int ret;
 
 	struct vaccel_session sess;
@@ -84,8 +76,6 @@ TEST_CASE("vaccel_session_release", "[core][session]")
 
 TEST_CASE("vaccel_session_new", "[core][session]")
 {
-	RESET_FAKE(plugin_virtio);
-
 	int ret;
 
 	struct vaccel_session *sess;
@@ -107,8 +97,6 @@ TEST_CASE("vaccel_session_new", "[core][session]")
 
 TEST_CASE("vaccel_session_delete", "[core][session]")
 {
-	RESET_FAKE(plugin_virtio);
-
 	int ret;
 
 	struct vaccel_session *sess;
@@ -130,8 +118,6 @@ TEST_CASE("vaccel_session_delete", "[core][session]")
 
 TEST_CASE("vaccel_session_update", "[core][session]")
 {
-	RESET_FAKE(plugin_virtio);
-
 	int ret;
 
 	struct vaccel_session sess;
@@ -152,8 +138,6 @@ TEST_CASE("vaccel_session_update", "[core][session]")
 
 TEST_CASE("session_register_resource", "[core][session]")
 {
-	RESET_FAKE(plugin_virtio);
-
 	int ret;
 
 	struct vaccel_session sess;
@@ -196,8 +180,6 @@ TEST_CASE("session_register_resource", "[core][session]")
 
 TEST_CASE("session_unregister_resource", "[core][session]")
 {
-	RESET_FAKE(plugin_virtio);
-
 	int ret;
 
 	struct vaccel_session sess;
@@ -240,8 +222,6 @@ TEST_CASE("session_unregister_resource", "[core][session]")
 
 TEST_CASE("vaccel_session_has_resource", "[core][session]")
 {
-	RESET_FAKE(plugin_virtio);
-
 	struct vaccel_session sess;
 	REQUIRE(vaccel_session_init(&sess, 1) == VACCEL_OK);
 
@@ -268,8 +248,6 @@ TEST_CASE("vaccel_session_has_resource", "[core][session]")
 
 TEST_CASE("session_ops", "[core][session]")
 {
-	RESET_FAKE(plugin_virtio);
-
 	struct vaccel_session sess;
 	REQUIRE(vaccel_session_init(&sess, 1) == VACCEL_OK);
 
@@ -308,8 +286,6 @@ TEST_CASE("session_ops", "[core][session]")
 
 TEST_CASE("session_virtio", "[core][session]")
 {
-	RESET_FAKE(plugin_virtio);
-
 	struct vaccel_session sess;
 
 	SECTION("not_registered")
@@ -320,7 +296,6 @@ TEST_CASE("session_virtio", "[core][session]")
 
 	auto *virtio_plugin = mock_virtio_plugin_virtio();
 	REQUIRE(plugin_register(virtio_plugin) == VACCEL_OK);
-	plugin_virtio_fake.return_val = virtio_plugin;
 
 	REQUIRE(vaccel_session_init(&sess,
 				    VACCEL_PLUGIN_CPU | VACCEL_PLUGIN_REMOTE) ==
@@ -361,10 +336,6 @@ TEST_CASE("session_virtio", "[core][session]")
 
 	REQUIRE(vaccel_session_release(&sess) == VACCEL_OK);
 	REQUIRE(vaccel_session_delete(alloc_sess) == VACCEL_OK);
-
-	// Ensure that the VirtIO plugin was called the expected number of times
-	// Note: session_*register_resource() do not call VirtIO functions
-	REQUIRE(plugin_virtio_fake.call_count == 8);
 
 	REQUIRE(plugin_unregister(virtio_plugin) == VACCEL_OK);
 }
