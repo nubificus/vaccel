@@ -20,9 +20,6 @@ static struct {
 
 	/* number of registered plugins */
 	size_t nr_registered;
-
-	/* virtio plugin (if available) */
-	struct vaccel_plugin *virtio;
 } plugins = { .initialized = false };
 
 static int plugin_check_info(const struct vaccel_plugin_info *pinfo)
@@ -146,11 +143,6 @@ free_extra:
 	return ret;
 }
 
-static int is_virtio_plugin(const struct vaccel_plugin_info *pinfo)
-{
-	return pinfo->session_init && pinfo->session_release;
-}
-
 int plugin_register(struct vaccel_plugin *plugin)
 {
 	int ret;
@@ -181,15 +173,8 @@ int plugin_register(struct vaccel_plugin *plugin)
 
 	vaccel_info("Registered plugin %s %s", info->name, info->version);
 
-	if (is_virtio_plugin(info)) {
+	if (info->is_virtio)
 		vaccel_debug("%s is a VirtIO module", info->name);
-
-		if (plugins.virtio)
-			vaccel_debug("A VirtIO plugin is already registered");
-		else {
-			plugins.virtio = plugin;
-		}
-	}
 
 	return VACCEL_OK;
 }
@@ -332,11 +317,6 @@ size_t plugin_nr_registered()
 	return plugins.nr_registered;
 }
 
-struct vaccel_plugin *plugin_virtio()
-{
-	return plugins.virtio;
-}
-
 int vaccel_plugin_load(const char *lib)
 {
 	int ret;
@@ -437,9 +417,6 @@ int plugins_cleanup()
 			continue;
 		}
 	}
-
-	if (plugins.virtio)
-		plugins.virtio = NULL;
 
 	plugins.initialized = false;
 
