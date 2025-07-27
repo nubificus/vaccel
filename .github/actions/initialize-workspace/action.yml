@@ -73,10 +73,21 @@ runs:
       run: |
         SCRIPTS_DIR=${{ github.workspace }}/scripts
         echo "SCRIPTS_DIR=${SCRIPTS_DIR}" >> "$GITHUB_ENV"
-        SCRIPTS_CONFIG_VARIABLES=${SCRIPTS_DIR}/config/variables.env
-        [ ! -f "${SCRIPTS_CONFIG_VARIABLES}" ] && exit 0
-        source "${SCRIPTS_CONFIG_VARIABLES}"
-        while IFS= read -r line; do
-          eval "echo $line" >> "$GITHUB_ENV"
-        done < "${SCRIPTS_CONFIG_VARIABLES}"
+        echo "SCRIPTS_DEF_CFG_DIR=${SCRIPTS_DIR}/common/config" >> "$GITHUB_ENV"
+        echo "SCRIPTS_DEF_CFG_ENV=${SCRIPTS_DIR}/common/config/config-env.sh" \
+          >> "$GITHUB_ENV"
+        SCRIPTS_DEF_CONFIG_VARS=${SCRIPTS_DEF_DIR}/config/variables.env
+        if [ -f "${SCRIPTS_DEF_CONFIG_VARS}" ]; then
+          source "${SCRIPTS_DEF_CONFIG_VARS}"
+          while IFS= read -r line; do
+            eval "echo $line" >> "$GITHUB_ENV"
+          done < "${SCRIPTS_DEF_CONFIG_VARS}"
+        fi
+        SCRIPTS_CONFIG_VARS=${SCRIPTS_DIR}/config/variables.env
+        if [ -f "${SCRIPTS_CONFIG_VARS}" ]; then
+          source "${SCRIPTS_CONFIG_VARS}"
+          while IFS= read -r line; do
+            eval "echo $line" >> "$GITHUB_ENV"
+          done < "${SCRIPTS_CONFIG_VARS}"
+        fi
       shell: bash

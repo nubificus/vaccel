@@ -27,11 +27,15 @@ runs:
       working-directory: ${{ inputs.source-path }}
       if: ${{ inputs.valgrind == 'true' }}
       run: |
-          meson test \
-            --wrap="${{ env.SCRIPTS_VALGRIND_CMD }}" \
-            -t 7 \
-            --print-errorlogs \
-            -C "${{ inputs.build-path }}"
+        CONFIG_USE_VALGRIND=1
+        CONFIG_PKG_SCRIPTS_DIR="${{ env.SCRIPTS_DIR }}"
+        CONFIG_DEF_CFG_DIR="${{ env.SCRIPTS_DEF_CFG_DIR }}"
+        source "${{ env.SCRIPTS_DEF_CFG_ENV }}"
+        meson test \
+          --wrap="${CONFIG_WRAPPER_CMD}" \
+          -t 7 \
+          --print-errorlogs \
+          -C "${{ inputs.build-path }}"
       shell: bash
 
     - name: Calculate coverage
