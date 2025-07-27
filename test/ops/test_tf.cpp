@@ -642,6 +642,7 @@ TEST_CASE("tf_model_load", "[ops][tf]")
 	REQUIRE(ret == VACCEL_OK);
 	REQUIRE(status.code == 0);
 	REQUIRE(status.message != nullptr);
+	REQUIRE(vaccel_tf_status_release(&status) == VACCEL_OK);
 
 	REQUIRE(vaccel_resource_unregister(&model, &sess) == VACCEL_OK);
 	REQUIRE(vaccel_session_release(&sess) == VACCEL_OK);
@@ -691,6 +692,7 @@ TEST_CASE("tf_model_unload", "[ops][tf]")
 	REQUIRE(ret == VACCEL_OK);
 	REQUIRE(status.code == 0);
 	REQUIRE(status.message != nullptr);
+	REQUIRE(vaccel_tf_status_release(&status) == VACCEL_OK);
 
 	REQUIRE(vaccel_resource_unregister(&model, &sess) == VACCEL_OK);
 	REQUIRE(vaccel_session_release(&sess) == VACCEL_OK);
