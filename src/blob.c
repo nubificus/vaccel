@@ -459,3 +459,16 @@ const char *vaccel_blob_path(struct vaccel_blob *blob)
 		       blob->path :
 		       NULL;
 }
+
+/* Check if a blob is valid.
+ *
+ * The blob is considered valid if a name and a valid type are set.
+ * Additionally, if:
+ * - type is buffer/mapped and data/size have been set
+ * - type is file and path has been set
+ */
+bool vaccel_blob_valid(const struct vaccel_blob *blob)
+{
+	return ((blob && blob->type < VACCEL_BLOB_MAX && blob->name) &&
+		(blob->path || (blob->size && blob->data)));
+}

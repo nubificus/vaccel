@@ -85,6 +85,9 @@ uint8_t *vaccel_blob_data(struct vaccel_blob *blob, size_t *size);
 /* Get the path of the blob */
 const char *vaccel_blob_path(struct vaccel_blob *blob);
 
+/* Check if a blob is valid */
+bool vaccel_blob_valid(const struct vaccel_blob *blob);
+
 #ifdef __cplusplus
 }
 #endif
