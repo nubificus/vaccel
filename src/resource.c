@@ -733,8 +733,7 @@ int vaccel_resource_init_from_blobs(struct vaccel_resource *res,
 	/* Confirm input blobs are valid */
 	ret = VACCEL_EINVAL;
 	for (size_t i = 0; i != nr_blobs; i++) {
-		if (!blobs[i] || blobs[i]->type >= VACCEL_BLOB_MAX ||
-		    !blobs[i]->size || !blobs[i]->data || !blobs[i]->name)
+		if (!vaccel_blob_valid(blobs[i]))
 			goto empty_attributes;
 	}
 
@@ -773,10 +772,18 @@ int vaccel_resource_init_from_blobs(struct vaccel_resource *res,
 	bool randomize = false;
 	size_t nr_r_blobs = 0;
 	for (size_t i = 0; i < nr_blobs; i++) {
-		ret = vaccel_blob_from_buf(&res->blobs[i], blobs[i]->data,
-					   blobs[i]->size, blobs[i]->data_owned,
-					   blobs[i]->name, res->rundir,
-					   randomize);
+		if (blobs[i]->type == VACCEL_BLOB_FILE) {
+			ret = vaccel_blob_new(&res->blobs[i], blobs[i]->path);
+		} else {
+			const char *dir = blobs[i]->type == VACCEL_BLOB_BUFFER ?
+						  NULL :
+						  res->rundir;
+			ret = vaccel_blob_from_buf(
+				&res->blobs[i], blobs[i]->data, blobs[i]->size,
+				blobs[i]->data_owned, blobs[i]->name, dir,
+				randomize);
+		}
+
 		if (ret) {
 			vaccel_error(
 				"Could not create vaccel_blob from buffer");
