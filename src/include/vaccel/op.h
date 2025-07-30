@@ -63,19 +63,11 @@ struct vaccel_op {
 
 	/* plugin to which this implementation belongs */
 	struct vaccel_plugin *owner;
-
-	/* entry for list of plugin functions */
-	vaccel_list_entry_t plugin_entry;
-
-	/* entry for global list of functions of this type */
-	vaccel_list_entry_t func_entry;
 };
 
 extern struct vaccel_plugin vaccel_this_plugin;
-#define VACCEL_OP_INIT(name, type, func)         \
-	{ (type), (func), (&vaccel_this_plugin), \
-	  LIST_ENTRY_INIT((name).plugin_entry),  \
-	  LIST_ENTRY_INIT((name).func_entry) }
+#define VACCEL_OP_INIT(name, type, func) \
+	{ (type), (func), (&vaccel_this_plugin) }
 
 #ifdef __cplusplus
 }

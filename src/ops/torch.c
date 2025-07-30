@@ -108,6 +108,35 @@ int vaccel_torch_tensor_init(struct vaccel_torch_tensor *tensor,
 		}
 	}
 
+	tensor->res = NULL;
+	tensor->is_res = false;
+
+	return VACCEL_OK;
+}
+
+int vaccel_torch_tensor_init_from_res(struct vaccel_torch_tensor *tensor,
+				      struct vaccel_resource *res,
+				      int64_t nr_dims, const int64_t *dims,
+				      enum vaccel_torch_data_type type)
+{
+	if (!res)
+		return VACCEL_EINVAL;
+
+	if (!res->blobs)
+		return VACCEL_EINVAL;
+
+	if (res->blobs[0]->type != VACCEL_BLOB_BUFFER) {
+		vaccel_error("Only buffer resources are allowed for tensors");
+		return VACCEL_EINVAL;
+	}
+
+	int ret = vaccel_torch_tensor_init(tensor, nr_dims, dims, type);
+	if (ret)
+		return ret;
+
+	tensor->is_res = true;
+	tensor->res = res;
+
 	return VACCEL_OK;
 }
 
@@ -126,6 +155,8 @@ int vaccel_torch_tensor_release(struct vaccel_torch_tensor *tensor)
 	tensor->owned = false;
 	tensor->nr_dims = 0;
 	tensor->dims = NULL;
+	tensor->res = NULL;
+	tensor->is_res = false;
 
 	return VACCEL_OK;
 }
@@ -148,6 +179,32 @@ int vaccel_torch_tensor_new(struct vaccel_torch_tensor **tensor,
 	}
 
 	*tensor = t;
+
+	return VACCEL_OK;
+}
+
+int vaccel_torch_tensor_new_from_res(struct vaccel_torch_tensor **tensor,
+				     struct vaccel_resource *res,
+				     int64_t nr_dims, const int64_t *dims,
+				     enum vaccel_torch_data_type type)
+{
+	if (!tensor || !res)
+		return VACCEL_EINVAL;
+
+	if (!res->blobs)
+		return VACCEL_EINVAL;
+
+	if (res->blobs[0]->type != VACCEL_BLOB_BUFFER) {
+		vaccel_error("Only buffer resources are allowed for tensors");
+		return VACCEL_EINVAL;
+	}
+
+	int ret = vaccel_torch_tensor_new(tensor, nr_dims, dims, type);
+	if (ret)
+		return ret;
+
+	(*tensor)->res = res;
+	(*tensor)->is_res = true;
 
 	return VACCEL_OK;
 }
@@ -193,6 +250,11 @@ int vaccel_torch_tensor_set_data(struct vaccel_torch_tensor *tensor, void *data,
 	if (!tensor)
 		return VACCEL_EINVAL;
 
+	if (tensor->is_res) {
+		vaccel_error("Can't set data to resource tensor");
+		return VACCEL_EINVAL;
+	}
+
 	if (tensor->data && tensor->owned)
 		vaccel_warn(
 			"Previous tensor data will not be freed by release");
@@ -209,6 +271,11 @@ int vaccel_torch_tensor_take_data(struct vaccel_torch_tensor *tensor,
 {
 	if (!tensor || !data || !size)
 		return VACCEL_EINVAL;
+
+	if (tensor->is_res) {
+		vaccel_error("Can't take data from resource tensor");
+		return VACCEL_EINVAL;
+	}
 
 	*data = tensor->data;
 	*size = tensor->size;
@@ -253,7 +320,7 @@ int vaccel_torch_model_load(struct vaccel_session *sess,
 	vaccel_prof_region_start(&torch_model_load_op_stats);
 
 	torch_model_load_fn_t plugin_torch_model_load =
-		plugin_get_op_func(op_type, sess->hint);
+		plugin_get_op_func(sess->plugin, op_type);
 	if (!plugin_torch_model_load) {
 		ret = VACCEL_ENOTSUP;
 		goto out;
@@ -307,7 +374,7 @@ int vaccel_torch_model_run(struct vaccel_session *sess,
 	vaccel_prof_region_start(&torch_model_run_op_stats);
 
 	torch_model_run_fn_t plugin_torch_model_run =
-		plugin_get_op_func(op_type, sess->hint);
+		plugin_get_op_func(sess->plugin, op_type);
 	if (!plugin_torch_model_run) {
 		ret = VACCEL_ENOTSUP;
 		goto out;
@@ -348,7 +415,7 @@ int vaccel_torch_sgemm(struct vaccel_session *sess,
 	vaccel_prof_region_start(&torch_sgemm_op_stats);
 
 	torch_sgemm_fn_t plugin_torch_sgemm =
-		plugin_get_op_func(op_type, sess->hint);
+		plugin_get_op_func(sess->plugin, op_type);
 	if (!plugin_torch_sgemm) {
 		ret = VACCEL_ENOTSUP;
 		goto out;
