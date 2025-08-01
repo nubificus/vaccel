@@ -85,8 +85,8 @@ the project should build and install correctly. Additionally, code
 [tests](docs/meson_build.md#running-the-tests) and
 [examples](docs/meson_build.md#running-the-examples) should be implemented
 (or modified) to include the new functionality. The process of formatting and
-running static analysis on the code is described
-[here](docs/meson_build.md#formatting-code-and-running-static-analysis).
+running static analysis on the code is described in the
+[relevant section](docs/meson_build.md#formatting-code-and-running-static-analysis).
 
 ### Preparing for a Pull Request
 
