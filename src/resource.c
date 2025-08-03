@@ -11,6 +11,7 @@
 #include "list.h"
 #include "log.h"
 #include "plugin.h"
+#include "resource_registration.h"
 #include "session.h"
 #include "utils/fs.h"
 #include "utils/net.h"
@@ -20,6 +21,7 @@
 #include <inttypes.h>
 #include <limits.h>
 #include <linux/limits.h>
+#include <pthread.h>
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -176,7 +178,7 @@ static void put_resource_id(struct vaccel_resource *res)
 void resource_refcount_inc(struct vaccel_resource *res)
 {
 	if (!res) {
-		vaccel_error("BUG! Refcounting invalid resource");
+		vaccel_error("Refcounting invalid resource");
 		return;
 	}
 
@@ -186,7 +188,7 @@ void resource_refcount_inc(struct vaccel_resource *res)
 void resource_refcount_dec(struct vaccel_resource *res)
 {
 	if (!res) {
-		vaccel_error("BUG! Refcounting invalid resource");
+		vaccel_error("Refcounting invalid resource");
 		return;
 	}
 
@@ -196,7 +198,7 @@ void resource_refcount_dec(struct vaccel_resource *res)
 long int vaccel_resource_refcount(const struct vaccel_resource *res)
 {
 	if (!res) {
-		vaccel_error("BUG! Refcounting invalid resource");
+		vaccel_error("Refcounting invalid resource");
 		return -VACCEL_EINVAL;
 	}
 
@@ -528,6 +530,9 @@ static int resource_init_with_paths(struct vaccel_resource *res,
 	res->blobs = NULL;
 	res->nr_blobs = 0;
 	res->rundir = NULL;
+
+	list_init(&res->sessions);
+	pthread_mutex_init(&res->sessions_lock, NULL);
 	atomic_init(&res->refcount, 0);
 
 	list_init_entry(&res->entry);
@@ -550,6 +555,9 @@ static int resource_init_with_blobs(struct vaccel_resource *res,
 	res->path_type = VACCEL_PATH_LOCAL_FILE;
 	res->paths = NULL;
 	res->nr_paths = 0;
+
+	list_init(&res->sessions);
+	pthread_mutex_init(&res->sessions_lock, NULL);
 	atomic_init(&res->refcount, 0);
 
 	list_init_entry(&res->entry);
@@ -831,12 +839,12 @@ int vaccel_resource_release(struct vaccel_resource *res)
 		return VACCEL_EINVAL;
 	}
 
-	/* Check if this resource is currently registered to a session.
-	 * We do not destroy currently-used resources */
-	if (vaccel_resource_refcount(res)) {
-		vaccel_error("Cannot release used resource %" PRId64, res->id);
-		return VACCEL_EBUSY;
-	}
+	int ret = resource_registration_foreach_session(
+		res, vaccel_resource_unregister);
+	if (ret)
+		return ret;
+
+	pthread_mutex_destroy(&res->sessions_lock);
 
 	if (res->blobs) {
 		delete_blobs(res->blobs, res->nr_blobs);
@@ -1011,11 +1019,23 @@ int vaccel_resource_register(struct vaccel_resource *res,
 		}
 	}
 
-	ret = session_register_resource(sess, res);
+	if (resource_registration_find(res, sess)) {
+		vaccel_warn("session:%" PRId64 " Resource %" PRId64
+			    " already registered",
+			    sess->id, res->id);
+		return VACCEL_OK;
+	}
+
+	struct resource_registration *reg;
+	ret = resource_registration_new(&reg, res, sess);
 	if (ret)
 		return ret;
 
-	resource_refcount_inc(res);
+	ret = resource_registration_link(reg);
+	if (ret) {
+		resource_registration_delete(reg);
+		return ret;
+	}
 
 	if (sess->is_virtio) {
 		vaccel_debug("session:%" PRId64 " Registered resource %" PRId64
@@ -1043,15 +1063,23 @@ int vaccel_resource_unregister(struct vaccel_resource *res,
 		return VACCEL_EINVAL;
 	}
 
-	int ret = session_unregister_resource(sess, res);
+	struct resource_registration *reg =
+		resource_registration_find_and_unlink(res, sess);
+	if (!reg) {
+		vaccel_error("session:%" PRId64 " Resource %" PRId64
+			     " not registered",
+			     sess->id, res->id);
+		return VACCEL_EINVAL;
+	}
+
+	int ret = resource_registration_delete(reg);
 	if (ret) {
 		vaccel_error("session:%" PRId64
-			     " Could not unregister resource %" PRId64,
+			     " Could not delete resource %" PRId64
+			     " registration",
 			     sess->id, res->id);
 		return ret;
 	}
-
-	resource_refcount_dec(res);
 
 	if (sess->is_virtio) {
 		if (sess->plugin->info->is_virtio) {

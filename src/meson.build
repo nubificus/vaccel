@@ -18,6 +18,7 @@ vaccel_headers = files([
   'prof.h',
   'op.h',
   'resource.h',
+  'resource_registration.h',
   'session.h',
 ])
 
@@ -30,6 +31,7 @@ vaccel_sources = files([
   'plugin.c',
   'prof.c',
   'resource.c',
+  'resource_registration.c',
   'session.c',
   'vaccel.c',
 ])

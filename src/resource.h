@@ -10,14 +10,15 @@
 extern "C" {
 #endif
 
+struct resource_registration;
+
 int resources_bootstrap(void);
 int resources_cleanup(void);
-int resource_new(struct vaccel_resource *res, vaccel_resource_type_t type,
-		 void *data, int (*cleanup_resource)(void *));
 void resource_refcount_inc(struct vaccel_resource *res);
 void resource_refcount_dec(struct vaccel_resource *res);
 int resource_create_rundir(struct vaccel_resource *res);
 void resource_destroy_rundir(struct vaccel_resource *res);
+int resource_unregister_from_registration(struct resource_registration *reg);
 
 /* Helper macros for iterating lists of containers */
 #define resource_for_each(iter, list) \

@@ -3,15 +3,17 @@
 #pragma once
 
 #include "id.h"
+#include "list.h"
 #include "resource.h"
+#include <limits.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <sys/types.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-struct session_resources;
 struct vaccel_plugin;
 
 struct vaccel_session {
@@ -21,20 +23,29 @@ struct vaccel_session {
 	/* id of the remote session */
 	vaccel_id_t remote_id;
 
-	/* session-specific resources */
-	struct session_resources *resources;
-
 	/* plugin preference */
 	unsigned int hint;
-
-	/* backend private data */
-	void *priv;
 
 	/* local or virtio option */
 	bool is_virtio;
 
+	/* fs run directory */
+	char rundir[PATH_MAX];
+
+	/* an array of per-type lists of resources registered to this session */
+	vaccel_list_t resources[VACCEL_RESOURCE_MAX];
+
+	/* an array of per-type counters for resource list elements */
+	size_t resource_counts[VACCEL_RESOURCE_MAX];
+
+	/* lock for resource list */
+	pthread_mutex_t resources_lock;
+
 	/* plugin providing the session operations */
 	struct vaccel_plugin *plugin;
+
+	/* backend private data */
+	void *priv;
 };
 
 /* Initialize session */
@@ -53,8 +64,8 @@ int vaccel_session_new(struct vaccel_session **sess, uint32_t flags);
 int vaccel_session_delete(struct vaccel_session *sess);
 
 /* Check if a resource is registered with a session */
-bool vaccel_session_has_resource(const struct vaccel_session *sess,
-				 const struct vaccel_resource *res);
+bool vaccel_session_has_resource(struct vaccel_session *sess,
+				 struct vaccel_resource *res);
 
 /* Get resource by id, from registered live resources */
 int vaccel_session_resource_by_id(struct vaccel_session *sess,

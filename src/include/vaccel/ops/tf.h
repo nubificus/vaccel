@@ -170,7 +170,7 @@ int vaccel_tf_model_load(struct vaccel_session *sess,
 
 /* Run inference on loaded TF model */
 int vaccel_tf_model_run(struct vaccel_session *sess,
-			const struct vaccel_resource *model,
+			struct vaccel_resource *model,
 			const struct vaccel_tf_buffer *run_options,
 			const struct vaccel_tf_node *in_nodes,
 			struct vaccel_tf_tensor *const *in_tensors,

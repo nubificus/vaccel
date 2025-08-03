@@ -91,7 +91,7 @@ int vaccel_tflite_model_load(struct vaccel_session *sess,
 
 /* Run inference on loaded TFLite model */
 int vaccel_tflite_model_run(struct vaccel_session *sess,
-			    const struct vaccel_resource *model,
+			    struct vaccel_resource *model,
 			    struct vaccel_tflite_tensor *const *inputs,
 			    int nr_inputs,
 			    struct vaccel_tflite_tensor **outputs,

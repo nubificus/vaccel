@@ -108,11 +108,11 @@ int vaccel_torch_tensor_take_data(struct vaccel_torch_tensor *tensor,
 
 /* Load Torch model from resource */
 int vaccel_torch_model_load(struct vaccel_session *sess,
-			    const struct vaccel_resource *model);
+			    struct vaccel_resource *model);
 
 /* Run inference on loaded Torch model */
 int vaccel_torch_model_run(struct vaccel_session *sess,
-			   const struct vaccel_resource *model,
+			   struct vaccel_resource *model,
 			   const struct vaccel_torch_buffer *run_options,
 			   struct vaccel_torch_tensor *const *inputs,
 			   int nr_inputs, struct vaccel_torch_tensor **outputs,
