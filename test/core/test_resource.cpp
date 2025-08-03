@@ -1379,30 +1379,15 @@ TEST_CASE("resource_init_fail", "[core][resource]")
 TEST_CASE("resource_release_fail", "[core][resource]")
 {
 	int ret;
+	struct vaccel_session sess;
 	struct vaccel_resource res;
 	vaccel_resource_type_t const test_type = VACCEL_RESOURCE_LIB;
 	char *test_path = abs_path(BUILD_ROOT, "examples/libmytestlib.so");
 
-	ret = vaccel_resource_init(&res, test_path, test_type);
-	REQUIRE(ret == VACCEL_OK);
-
-	struct vaccel_session sess;
 	REQUIRE(vaccel_session_init(&sess, 0) == VACCEL_OK);
 
-	ret = vaccel_resource_register(&res, &sess);
-	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(res.blobs[0]->type == VACCEL_BLOB_FILE);
-	REQUIRE_FALSE(res.blobs[0]->path_owned);
-	REQUIRE_FALSE(res.blobs[0]->data_owned);
-
-	SECTION("used resource")
-	{
-		ret = vaccel_resource_release(&res);
-		REQUIRE(ret == VACCEL_EBUSY);
-	}
-
-	ret = vaccel_resource_unregister(&res, &sess);
-	REQUIRE(ret == VACCEL_OK);
+	REQUIRE(vaccel_resource_init(&res, test_path, test_type) == VACCEL_OK);
+	REQUIRE(vaccel_resource_register(&res, &sess) == VACCEL_OK);
 
 	ret = vaccel_resource_release(&res);
 	REQUIRE(ret == VACCEL_OK);

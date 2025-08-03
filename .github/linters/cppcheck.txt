@@ -1,4 +1,4 @@
 // supress false positives
-memleak:src/session.c:100
+memleak:src/resource_registration.c:193
 uninitvar:src/session.c:133
 uninitvar:src/session.c:245

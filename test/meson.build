@@ -38,6 +38,7 @@ tests_env.set('VACCEL_EXEC_DLCLOSE_ENABLED', '1')
 tests_env_core = tests_env
 tests_env_core.set('VACCEL_BOOTSTRAP_ENABLED', '0')
 tests_env_core.set('VACCEL_CLEANUP_ENABLED', '0')
+tests_env_core.set('VACCEL_PLUGINS', libvaccel_noop.full_path())
 
 tests_env_noop = tests_env
 tests_env_noop.set('VACCEL_PLUGINS', libvaccel_noop.full_path())
@@ -64,13 +65,6 @@ foreach t : tests_core_sources + tests_utils_sources
     link_with : libtests_main,
     install : false)
 
-  if name == 'test_core'
-    test(name, exe,
-      args : tests_args,
-      env : tests_env_core,
-      is_parallel : false)
-    continue
-  endif
   test(name, exe, args : tests_args, env : tests_env, is_parallel : false)
   if name == 'test_log'
     foreach l : range(1, 4)
@@ -93,6 +87,14 @@ foreach t : tests_core_w_plugin_sources + tests_ops_sources
     dependencies : libvaccel_internal_dep,
     link_with : libtests_main,
     install : false)
+
+  if name == 'test_core'
+    test(name + '+noop', exe,
+      args : tests_args,
+      env : tests_env_core,
+      is_parallel : false)
+    continue
+  endif
 
   test(name + '+noop', exe,
     args : tests_args,
