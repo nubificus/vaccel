@@ -440,7 +440,7 @@ static struct vaccel_prof_region tf_model_run_op_stats =
 	VACCEL_PROF_REGION_INIT("vaccel_tf_model_run");
 
 typedef int (*tf_model_run_fn_t)(struct vaccel_session *sess,
-				 const struct vaccel_resource *model,
+				 struct vaccel_resource *model,
 				 const struct vaccel_tf_buffer *run_options,
 				 const struct vaccel_tf_node *in_nodes,
 				 struct vaccel_tf_tensor *const *in_tensors,
@@ -451,7 +451,7 @@ typedef int (*tf_model_run_fn_t)(struct vaccel_session *sess,
 				 struct vaccel_tf_status *status);
 
 int vaccel_tf_model_run(struct vaccel_session *sess,
-			const struct vaccel_resource *model,
+			struct vaccel_resource *model,
 			const struct vaccel_tf_buffer *run_options,
 			const struct vaccel_tf_node *in_nodes,
 			struct vaccel_tf_tensor *const *in_tensors,
