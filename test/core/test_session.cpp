@@ -21,9 +21,13 @@
 #include "vaccel.h"
 #include <catch.hpp>
 #include <cerrno>
+#include <cinttypes>
+#include <cstdio>
 #include <cstdlib>
 #include <fff.h>
 #include <mock_virtio.hpp>
+#include <pthread.h>
+#include <unistd.h>
 
 DEFINE_FFF_GLOBALS;
 
@@ -503,5 +507,148 @@ TEST_CASE("vaccel_session_resources_by_type", "[core][session]")
 	REQUIRE(vaccel_resource_release(&res) == VACCEL_OK);
 
 	REQUIRE(vaccel_session_release(&sess) == VACCEL_OK);
+	free(lib_path);
+}
+
+enum {
+	TEST_THREADS_NUM = 50,
+	TEST_THREAD_SESSIONS_NUM = 30,
+	TEST_SESSIONS_NUM = 20,
+	TEST_RESOURCES_NUM = 10
+};
+
+struct thread_data {
+	size_t id;
+	struct vaccel_session *sessions;
+	struct vaccel_resource *resources;
+};
+
+static auto init_and_release_session(void *arg) -> void *
+{
+	auto *data = (struct thread_data *)arg;
+	struct vaccel_session *sess = data->sessions;
+
+	for (int i = 0; i < TEST_THREAD_SESSIONS_NUM; i++) {
+		REQUIRE(vaccel_session_init(sess, 0) == VACCEL_OK);
+		printf("Thread %zu: Created session %" PRId64 "\n", data->id,
+		       sess->id);
+
+		// Add random delay to simulate work
+		usleep(rand() % 1000);
+
+		vaccel_id_t const sess_id = sess->id;
+		REQUIRE(vaccel_session_release(sess) == VACCEL_OK);
+		printf("Thread %zu: Deleted session %" PRId64 "\n", data->id,
+		       sess_id);
+	}
+	return nullptr;
+}
+
+TEST_CASE("session_init_and_release_concurrent", "[core][session]")
+{
+	pthread_t threads[TEST_THREADS_NUM];
+	struct thread_data thread_data[TEST_THREADS_NUM];
+	struct vaccel_session sess[TEST_THREADS_NUM];
+
+	for (size_t i = 0; i < TEST_THREADS_NUM; i++) {
+		thread_data[i].id = i;
+		thread_data[i].sessions = &sess[i];
+		thread_data[i].resources = nullptr;
+		pthread_create(&threads[i], nullptr, init_and_release_session,
+			       &thread_data[i]);
+	}
+
+	for (unsigned long const thread : threads)
+		pthread_join(thread, nullptr);
+}
+
+static auto register_and_find_resources(void *arg) -> void *
+{
+	auto *data = (struct thread_data *)arg;
+	struct vaccel_session *sess = data->sessions;
+	struct vaccel_resource *res = data->resources;
+
+	size_t sess_iter = 0;
+	size_t sess_iter_next = 1;
+	for (size_t i = 0; i < TEST_RESOURCES_NUM; i++) {
+		if (sess_iter >= TEST_SESSIONS_NUM) {
+			sess_iter = 0;
+			sess_iter_next = 1;
+		}
+
+		REQUIRE(vaccel_resource_register(&res[i], &sess[sess_iter]) ==
+			VACCEL_OK);
+		printf("Thread %zu: Registered resource %" PRId64
+		       " with session %" PRId64 "\n",
+		       data->id, res[i].id, sess[sess_iter].id);
+
+		// Add random delay to simulate work
+		usleep(rand() % 1000);
+
+		struct vaccel_resource *found_res;
+		auto const res_id = (rand() % (res[TEST_RESOURCES_NUM - 1].id -
+					       res[0].id + 1) +
+				     res[0].id);
+		int ret = vaccel_session_resource_by_id(&sess[sess_iter_next],
+							&found_res, res_id);
+		REQUIRE((ret == VACCEL_OK || ret == VACCEL_ENOENT));
+
+		ret = vaccel_session_resource_by_type(
+			&sess[sess_iter_next], &found_res, VACCEL_RESOURCE_LIB);
+		REQUIRE((ret == VACCEL_OK || ret == VACCEL_ENOENT));
+
+		struct vaccel_resource **found = nullptr;
+		size_t nr_found = 0;
+		ret = vaccel_session_resources_by_type(&sess[sess_iter_next],
+						       &found, &nr_found,
+						       VACCEL_RESOURCE_LIB);
+		REQUIRE((ret == VACCEL_OK || ret == VACCEL_ENOENT));
+		if ((found != nullptr) && nr_found > 0)
+			free(found);
+
+		REQUIRE(vaccel_resource_unregister(
+				&res[i], &sess[sess_iter++]) == VACCEL_OK);
+		printf("Thread %zu: Unregistered resource %" PRId64
+		       " from session %" PRId64 "\n",
+		       data->id, res[i].id, sess[sess_iter].id);
+	}
+	return nullptr;
+}
+
+TEST_CASE("session_resource_find_concurrent", "[core][session]")
+{
+	char *lib_path = abs_path(BUILD_ROOT, "examples/libmytestlib.so");
+	const auto nr_res =
+		(size_t)TEST_THREADS_NUM * (size_t)TEST_RESOURCES_NUM;
+	struct vaccel_resource resources[nr_res];
+	struct vaccel_session sessions[TEST_SESSIONS_NUM];
+
+	for (auto &res : resources)
+		REQUIRE(vaccel_resource_init(&res, lib_path,
+					     VACCEL_RESOURCE_LIB) == VACCEL_OK);
+
+	for (auto &sess : sessions)
+		REQUIRE(vaccel_session_init(&sess, 0) == VACCEL_OK);
+
+	pthread_t threads[TEST_THREADS_NUM];
+	struct thread_data thread_data[TEST_THREADS_NUM];
+
+	for (size_t i = 0; i < TEST_THREADS_NUM; i++) {
+		thread_data[i].id = i;
+		thread_data[i].sessions = sessions;
+		thread_data[i].resources = &resources[i * TEST_RESOURCES_NUM];
+		pthread_create(&threads[i], nullptr,
+			       register_and_find_resources, &thread_data[i]);
+	}
+
+	for (unsigned long const thread : threads)
+		pthread_join(thread, nullptr);
+
+	for (auto &sess : sessions)
+		REQUIRE(vaccel_session_release(&sess) == VACCEL_OK);
+
+	for (auto &res : resources)
+		REQUIRE(vaccel_resource_release(&res) == VACCEL_OK);
+
 	free(lib_path);
 }
