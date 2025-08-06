@@ -29,6 +29,7 @@
 #include "plugin.h"
 #include "prof.h"
 #include "resource.h"
+#include "resource_registration.h"
 #include "session.h"
 #include "utils/enum.h"
 #include "utils/fs.h"

@@ -20,10 +20,6 @@ TEST_CASE("fpga_add", "[ops][fpga]")
 {
 	int ret;
 	struct vaccel_session sess;
-	sess.id = 0;
-	sess.priv = nullptr;
-	sess.resources = nullptr;
-	sess.hint = 1;
 
 	float A[] = { 1, 2, 3, 4, 5 };
 	float B[] = { 1, 2, 6, 4, 5 };
@@ -75,10 +71,6 @@ TEST_CASE("fpga_copy", "[ops][fpga]")
 {
 	int ret;
 	struct vaccel_session sess;
-	sess.id = 0;
-	sess.priv = nullptr;
-	sess.resources = nullptr;
-	sess.hint = 1;
 
 	int A[] = { 1, 2, 3, 4, 5 };
 	int B[] = { 1, 1, 1, 1, 1 };
@@ -114,10 +106,6 @@ TEST_CASE("fpga_mmult", "[ops][fpga]")
 {
 	int ret;
 	struct vaccel_session sess;
-	sess.id = 0;
-	sess.priv = nullptr;
-	sess.resources = nullptr;
-	sess.hint = 1;
 
 	float a[] = { 1.2, 3.2, 3.0, 4.1, 5.7 };
 	float b[] = { 1.1, 0.2, 6.1, 4.6, 5.2 };

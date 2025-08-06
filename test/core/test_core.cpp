@@ -160,6 +160,35 @@ TEST_CASE("sessions_bootstrap_and_cleanup", "[core]")
 	REQUIRE(ret == VACCEL_OK);
 }
 
+TEST_CASE("sessions_cleanup_existing", "[core]")
+{
+	char *lib_path = abs_path(BUILD_ROOT, "examples/libmytestlib.so");
+	const size_t nr_res = 30;
+	const size_t nr_sess = 10;
+	struct vaccel_resource res[nr_res];
+	struct vaccel_session sess[nr_sess];
+
+	REQUIRE(vaccel_bootstrap() == VACCEL_OK);
+
+	for (auto &ses : sess)
+		REQUIRE(vaccel_session_init(&ses, 0) == VACCEL_OK);
+
+	size_t cnt = 0;
+	for (auto &re : res) {
+		if (cnt >= nr_sess)
+			cnt = 0;
+		REQUIRE(vaccel_resource_init(&re, lib_path,
+					     VACCEL_RESOURCE_LIB) == VACCEL_OK);
+		REQUIRE(vaccel_resource_register(&re, &sess[cnt++]) ==
+			VACCEL_OK);
+	}
+
+	REQUIRE(sessions_cleanup() == VACCEL_OK);
+
+	REQUIRE(vaccel_cleanup() == VACCEL_OK);
+	free(lib_path);
+}
+
 TEST_CASE("resources_bootstrap_and_cleanup", "[core]")
 {
 	int ret;
@@ -168,6 +197,35 @@ TEST_CASE("resources_bootstrap_and_cleanup", "[core]")
 
 	ret = resources_cleanup();
 	REQUIRE(ret == VACCEL_OK);
+}
+
+TEST_CASE("resources_cleanup_existing", "[core]")
+{
+	char *lib_path = abs_path(BUILD_ROOT, "examples/libmytestlib.so");
+	const size_t nr_res = 10;
+	const size_t nr_sess = 30;
+	struct vaccel_resource res[nr_res];
+	struct vaccel_session sess[nr_sess];
+
+	REQUIRE(vaccel_bootstrap() == VACCEL_OK);
+
+	for (auto &re : res)
+		REQUIRE(vaccel_resource_init(&re, lib_path,
+					     VACCEL_RESOURCE_LIB) == VACCEL_OK);
+
+	size_t cnt = 0;
+	for (auto &ses : sess) {
+		if (cnt >= nr_res)
+			cnt = 0;
+		REQUIRE(vaccel_session_init(&ses, 0) == VACCEL_OK);
+		REQUIRE(vaccel_resource_register(&res[cnt++], &ses) ==
+			VACCEL_OK);
+	}
+
+	REQUIRE(resources_cleanup() == VACCEL_OK);
+
+	REQUIRE(vaccel_cleanup() == VACCEL_OK);
+	free(lib_path);
 }
 
 TEST_CASE("plugins_bootstrap_and_cleanup", "[core]")

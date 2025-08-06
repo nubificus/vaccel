@@ -224,10 +224,10 @@ static struct vaccel_prof_region torch_model_load_op_stats =
 	VACCEL_PROF_REGION_INIT("vaccel_torch_model_load_op");
 
 typedef int (*torch_model_load_fn_t)(struct vaccel_session *sess,
-				     const struct vaccel_resource *model);
+				     struct vaccel_resource *model);
 
 int vaccel_torch_model_load(struct vaccel_session *sess,
-			    const struct vaccel_resource *model)
+			    struct vaccel_resource *model)
 {
 	int ret;
 
@@ -271,13 +271,13 @@ static struct vaccel_prof_region torch_model_run_op_stats =
 	VACCEL_PROF_REGION_INIT("vaccel_torch_model_run_op");
 
 typedef int (*torch_model_run_fn_t)(
-	struct vaccel_session *sess, const struct vaccel_resource *model,
+	struct vaccel_session *sess, struct vaccel_resource *model,
 	const struct vaccel_torch_buffer *run_options,
 	struct vaccel_torch_tensor *const *inputs, int nr_inputs,
 	struct vaccel_torch_tensor **outputs, int nr_outputs);
 
 int vaccel_torch_model_run(struct vaccel_session *sess,
-			   const struct vaccel_resource *model,
+			   struct vaccel_resource *model,
 			   const struct vaccel_torch_buffer *run_options,
 			   struct vaccel_torch_tensor *const *inputs,
 			   int nr_inputs, struct vaccel_torch_tensor **outputs,

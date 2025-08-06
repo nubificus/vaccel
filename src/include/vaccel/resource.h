@@ -8,6 +8,7 @@
 #include "utils/enum.h"
 #include "utils/path.h"
 #include <stddef.h>
+#include <sys/types.h>
 
 #ifdef __cplusplus
 #include <atomic>
@@ -35,9 +36,6 @@ VACCEL_ENUM_DEF_WITH_STR_FUNCS(vaccel_resource_type, _ENUM_PREFIX,
 #undef _ENUM_PREFIX
 
 struct vaccel_resource {
-	/* an entry to add this resource in a list */
-	vaccel_list_entry_t entry;
-
 	/* resource id */
 	vaccel_id_t id;
 
@@ -50,17 +48,13 @@ struct vaccel_resource {
 	/* type of the given path */
 	vaccel_path_type_t path_type;
 
-	/* reference counter representing the number of sessions
-	 * to which this resource is registered to */
-	atomic_uint refcount;
-
 	/* path of the resource. can be an array */
 	char **paths;
 
 	/* number of path entities represented by the resource */
 	size_t nr_paths;
 
-	/* rundir for this resource if it needs it. can be empty (NULL) */
+	/* fs run directory. can be empty (NULL) */
 	char *rundir;
 
 	/* resource representation of the blob. can be an array */
@@ -68,6 +62,19 @@ struct vaccel_resource {
 
 	/* number of blob entities represented by the resource */
 	size_t nr_blobs;
+
+	/* entry for global resources list */
+	vaccel_list_entry_t entry;
+
+	/* list of sessions the resource is registered with */
+	vaccel_list_t sessions;
+
+	/* lock for session list */
+	pthread_mutex_t sessions_lock;
+
+	/* reference counter representing the number of sessions
+	 * the resource is registered with */
+	atomic_uint refcount;
 
 	/* plugin private data */
 	void *plugin_priv;

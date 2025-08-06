@@ -248,14 +248,14 @@ static struct vaccel_prof_region tflite_model_run_op_stats =
 	VACCEL_PROF_REGION_INIT("vaccel_tflite_model_run");
 
 typedef int (*tflite_model_run_fn_t)(struct vaccel_session *sess,
-				     const struct vaccel_resource *model,
+				     struct vaccel_resource *model,
 				     struct vaccel_tflite_tensor *const *inputs,
 				     int nr_inputs,
 				     struct vaccel_tflite_tensor **outputs,
 				     int nr_outputs, uint8_t *status);
 
 int vaccel_tflite_model_run(struct vaccel_session *sess,
-			    const struct vaccel_resource *model,
+			    struct vaccel_resource *model,
 			    struct vaccel_tflite_tensor *const *inputs,
 			    int nr_inputs,
 			    struct vaccel_tflite_tensor **outputs,
