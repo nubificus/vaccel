@@ -37,11 +37,14 @@ static struct {
 	/* available resource ids */
 	id_pool_t id_pool;
 
-	/* all the created vAccel resources
-	 * At the moment, this is an array where each element is a list of all
-	 * resources of the same time. We should think the data structure again.
-	 */
+	/* array of per-type lists of all the created resources */
 	vaccel_list_t all[VACCEL_RESOURCE_MAX];
+
+	/* array of per-type counters for all the created resources */
+	size_t count[VACCEL_RESOURCE_MAX];
+
+	/* lock for lists/counters */
+	pthread_mutex_t lock;
 } resources = { .initialized = false };
 
 int resources_bootstrap(void)
@@ -50,11 +53,13 @@ int resources_bootstrap(void)
 	if (ret)
 		return ret;
 
-	for (int i = 0; i < VACCEL_RESOURCE_MAX; ++i)
+	for (int i = 0; i < VACCEL_RESOURCE_MAX; ++i) {
 		list_init(&resources.all[i]);
+		resources.count[i] = 0;
+	}
+	pthread_mutex_init(&resources.lock, NULL);
 
 	resources.initialized = true;
-
 	return VACCEL_OK;
 }
 
@@ -65,13 +70,22 @@ int resources_cleanup(void)
 
 	vaccel_debug("Cleaning up resources");
 
+	pthread_mutex_lock(&resources.lock);
+
 	for (int i = 0; i < VACCEL_RESOURCE_MAX; ++i) {
 		struct vaccel_resource *res;
 		struct vaccel_resource *tmp;
 		resource_for_each_safe(res, tmp, &resources.all[i])
+		{
+			pthread_mutex_unlock(&resources.lock);
 			vaccel_resource_release(res);
+			pthread_mutex_lock(&resources.lock);
+		}
 	}
 
+	pthread_mutex_unlock(&resources.lock);
+
+	pthread_mutex_destroy(&resources.lock);
 	resources.initialized = false;
 
 	return id_pool_release(&resources.id_pool);
@@ -85,18 +99,21 @@ int vaccel_resource_get_by_id(struct vaccel_resource **res, vaccel_id_t id)
 	if (!res)
 		return VACCEL_EINVAL;
 
+	pthread_mutex_lock(&resources.lock);
+
 	for (int i = 0; i < VACCEL_RESOURCE_MAX; ++i) {
 		struct vaccel_resource *r;
-		struct vaccel_resource *tmp;
-		resource_for_each_safe(r, tmp, &resources.all[i])
+		resource_for_each(r, &resources.all[i])
 		{
 			if (id == r->id) {
 				*res = r;
+				pthread_mutex_unlock(&resources.lock);
 				return VACCEL_OK;
 			}
 		}
 	}
 
+	pthread_mutex_unlock(&resources.lock);
 	return VACCEL_ENOENT;
 }
 
@@ -109,15 +126,19 @@ int vaccel_resource_get_by_type(struct vaccel_resource **res,
 	if (!res || type >= VACCEL_RESOURCE_MAX)
 		return VACCEL_EINVAL;
 
-	struct vaccel_resource *r;
-	struct vaccel_resource *tmp;
-	resource_for_each_safe(r, tmp, &resources.all[type])
-	{
-		*res = r;
-		return VACCEL_OK;
+	pthread_mutex_lock(&resources.lock);
+
+	if (list_empty(&resources.all[type])) {
+		pthread_mutex_unlock(&resources.lock);
+		return VACCEL_ENOENT;
 	}
 
-	return VACCEL_ENOENT;
+	struct vaccel_resource *r = list_get_container(
+		resources.all[type].next, struct vaccel_resource, entry);
+	*res = r;
+
+	pthread_mutex_unlock(&resources.lock);
+	return VACCEL_OK;
 }
 
 int vaccel_resource_get_all_by_type(struct vaccel_resource ***res,
@@ -130,36 +151,34 @@ int vaccel_resource_get_all_by_type(struct vaccel_resource ***res,
 	if (!res || type >= VACCEL_RESOURCE_MAX || !nr_found)
 		return VACCEL_EINVAL;
 
-	struct vaccel_resource *r = NULL;
-	struct vaccel_resource *tmp = NULL;
-	size_t found = 0;
+	pthread_mutex_lock(&resources.lock);
+	size_t nr_res = resources.count[type];
+	pthread_mutex_unlock(&resources.lock);
 
-	/* Count the matching created resources */
-	resource_for_each_safe(r, tmp, &resources.all[type])
-	{
-		++found;
-	}
-
-	if (found == 0) {
+	if (nr_res == 0) {
 		*nr_found = 0;
 		return VACCEL_ENOENT;
 	}
 
-	/* Allocate space */
 	*res = (struct vaccel_resource **)malloc(
-		found * sizeof(struct vaccel_resource *));
-	if (*res == NULL)
+		nr_res * sizeof(struct vaccel_resource *));
+	if (!*res)
 		return VACCEL_ENOMEM;
 
-	size_t i = 0;
-	r = NULL;
-	tmp = NULL;
-	resource_for_each_safe(r, tmp, &resources.all[type])
-	{
-		(*res)[i++] = r;
-	}
+	pthread_mutex_lock(&resources.lock);
 
-	*nr_found = found;
+	size_t cnt = 0;
+	struct vaccel_resource *r;
+	resource_for_each(r, &resources.all[type])
+	{
+		if (cnt < nr_res)
+			(*res)[cnt++] = r;
+		else
+			break;
+	}
+	*nr_found = cnt;
+
+	pthread_mutex_unlock(&resources.lock);
 	return VACCEL_OK;
 }
 
@@ -535,8 +554,10 @@ static int resource_init_with_paths(struct vaccel_resource *res,
 	pthread_mutex_init(&res->sessions_lock, NULL);
 	atomic_init(&res->refcount, 0);
 
-	list_init_entry(&res->entry);
+	pthread_mutex_lock(&resources.lock);
 	list_add_tail(&resources.all[res->type], &res->entry);
+	resources.count[res->type]++;
+	pthread_mutex_unlock(&resources.lock);
 
 	vaccel_debug("Initialized resource %" PRId64, res->id);
 
@@ -560,8 +581,10 @@ static int resource_init_with_blobs(struct vaccel_resource *res,
 	pthread_mutex_init(&res->sessions_lock, NULL);
 	atomic_init(&res->refcount, 0);
 
-	list_init_entry(&res->entry);
+	pthread_mutex_lock(&resources.lock);
 	list_add_tail(&resources.all[res->type], &res->entry);
+	resources.count[res->type]++;
+	pthread_mutex_unlock(&resources.lock);
 
 	vaccel_debug("Initialized resource %" PRId64, res->id);
 
@@ -871,7 +894,10 @@ int vaccel_resource_release(struct vaccel_resource *res)
 	res->nr_paths = 0;
 	res->plugin_priv = NULL;
 
+	pthread_mutex_lock(&resources.lock);
 	list_unlink_entry(&res->entry);
+	resources.count[res->type]--;
+	pthread_mutex_unlock(&resources.lock);
 
 	vaccel_debug("Released resource %" PRId64, res->id);
 

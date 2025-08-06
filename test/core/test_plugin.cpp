@@ -10,7 +10,7 @@
  * 5) vaccel_plugin_register_op()
  * 6) plugin_find()
  * 7) plugin_get_op_func()
- * 8) plugin_nr_registered()
+ * 8) plugin_count()
  * 9) vaccel_plugin_load()
  * 10) vaccel_plugin_parse_and_load()
  *
@@ -23,6 +23,8 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <pthread.h>
+#include <unistd.h>
 
 static const char *pname = "mock_plugin_test";
 static const char *pversion = "0.0.0";
@@ -189,7 +191,7 @@ TEST_CASE("plugin_register", "[core][plugin]")
 	ret = plugin_register(plugin);
 	REQUIRE(ret == VACCEL_OK);
 
-	REQUIRE(plugin_nr_registered() == 1);
+	REQUIRE(plugin_count() == 1);
 
 	SECTION("already_registered")
 	{
@@ -388,7 +390,7 @@ TEST_CASE("plugin_unregister", "[core][plugin]")
 	ret = plugin_unregister(plugin);
 	REQUIRE(ret == VACCEL_OK);
 
-	REQUIRE(plugin_nr_registered() == 0);
+	REQUIRE(plugin_count() == 0);
 
 	REQUIRE(plugins_cleanup() == VACCEL_OK);
 	mock_plugin_delete(plugin);
@@ -464,7 +466,7 @@ TEST_CASE("plugin_find", "[core][plugin]")
 	}
 
 	REQUIRE(plugin_register(accel_plugin) == VACCEL_OK);
-	REQUIRE(plugin_nr_registered() == 1);
+	REQUIRE(plugin_count() == 1);
 
 	plugin = plugin_find(0);
 	REQUIRE(plugin == accel_plugin);
@@ -476,7 +478,7 @@ TEST_CASE("plugin_find", "[core][plugin]")
 	}
 
 	REQUIRE(plugin_register(virtio_plugin) == VACCEL_OK);
-	REQUIRE(plugin_nr_registered() == 2);
+	REQUIRE(plugin_count() == 2);
 
 	plugin = plugin_find(0 | VACCEL_PLUGIN_REMOTE);
 	REQUIRE(plugin == virtio_plugin);
@@ -587,7 +589,7 @@ TEST_CASE("vaccel_plugin_load", "[core][plugin]")
 		ret = vaccel_plugin_load(plugin_noop_path);
 		REQUIRE(ret == VACCEL_OK);
 
-		REQUIRE(plugin_nr_registered() == 1);
+		REQUIRE(plugin_count() == 1);
 
 		struct vaccel_plugin *plugin = plugin_find(0);
 		REQUIRE(plugin != nullptr);
@@ -704,7 +706,7 @@ TEST_CASE("vaccel_plugin_parse_and_load", "[core][plugin]")
 
 		ret = vaccel_plugin_parse_and_load(plugin_paths);
 		REQUIRE(ret == VACCEL_OK);
-		REQUIRE(plugin_nr_registered() == 2);
+		REQUIRE(plugin_count() == 2);
 
 		free(plugin_paths);
 	}
@@ -713,4 +715,66 @@ TEST_CASE("vaccel_plugin_parse_and_load", "[core][plugin]")
 
 	free(plugin_exec_path);
 	free(plugin_noop_path);
+}
+
+enum {
+	TEST_THREADS_NUM = 50,
+	TEST_THREAD_REG_NUM = 30,
+};
+
+struct thread_data {
+	size_t id;
+	struct vaccel_plugin *plugin;
+};
+
+static auto register_and_unregister_plugin(void *arg) -> void *
+{
+	auto *data = (struct thread_data *)arg;
+	struct vaccel_plugin *plugin = data->plugin;
+
+	for (size_t i = 0; i < TEST_THREAD_REG_NUM; i++) {
+		REQUIRE(plugin_register(plugin) == VACCEL_OK);
+		printf("Thread %zu: Registered plugin %s\n", data->id,
+		       plugin->info->name);
+
+		// Add random delay to simulate work
+		usleep(rand() % 1000);
+
+		REQUIRE(plugin_count() >= 1);
+		REQUIRE(plugin_find(0) != nullptr);
+
+		REQUIRE(plugin_unregister(plugin) == VACCEL_OK);
+		printf("Thread %zu: Unregistered plugin %s\n", data->id,
+		       plugin->info->name);
+	}
+	return nullptr;
+}
+
+TEST_CASE("resource_init_find_and_release_concurrent", "[core][resource]")
+{
+	pthread_t threads[TEST_THREADS_NUM];
+	struct thread_data thread_data[TEST_THREADS_NUM];
+	struct vaccel_plugin *plugins[TEST_THREADS_NUM];
+
+	for (auto &plugin : plugins) {
+		plugin = mock_plugin_new();
+		REQUIRE(plugin != nullptr);
+	}
+
+	REQUIRE(plugins_bootstrap() == VACCEL_OK);
+
+	for (size_t i = 0; i < TEST_THREADS_NUM; i++) {
+		thread_data[i].id = i;
+		thread_data[i].plugin = plugins[i];
+		pthread_create(&threads[i], nullptr,
+			       register_and_unregister_plugin, &thread_data[i]);
+	}
+
+	for (unsigned long const thread : threads)
+		pthread_join(thread, nullptr);
+
+	REQUIRE(plugins_cleanup() == VACCEL_OK);
+
+	for (auto &plugin : plugins)
+		mock_plugin_delete(plugin);
 }

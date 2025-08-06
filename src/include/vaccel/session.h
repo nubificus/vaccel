@@ -32,10 +32,13 @@ struct vaccel_session {
 	/* fs run directory */
 	char rundir[PATH_MAX];
 
-	/* an array of per-type lists of resources registered to this session */
+	/* entry for global sessions list */
+	vaccel_list_entry_t entry;
+
+	/* array of per-type lists of resources registered to this session */
 	vaccel_list_t resources[VACCEL_RESOURCE_MAX];
 
-	/* an array of per-type counters for resource list elements */
+	/* array of per-type counters for resource list elements */
 	size_t resource_counts[VACCEL_RESOURCE_MAX];
 
 	/* lock for resource list */

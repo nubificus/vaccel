@@ -16,6 +16,13 @@ int sessions_bootstrap(void);
 int sessions_cleanup(void);
 
 /* Helper macros for iterating lists of containers */
+#define session_for_each(iter, list) \
+	list_for_each_container((iter), (list), struct vaccel_session, entry)
+
+#define session_for_each_safe(iter, tmp, list)              \
+	list_for_each_container_safe((iter), (tmp), (list), \
+				     struct vaccel_session, entry)
+
 #define session_for_each_resource(iter, list)                                 \
 	list_for_each_container((iter), (list), struct resource_registration, \
 				session_entry)

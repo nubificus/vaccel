@@ -54,7 +54,7 @@ struct vaccel_resource {
 	/* number of path entities represented by the resource */
 	size_t nr_paths;
 
-	/* rundir for this resource if it needs it. can be empty (NULL) */
+	/* fs run directory. can be empty (NULL) */
 	char *rundir;
 
 	/* resource representation of the blob. can be an array */
@@ -63,10 +63,10 @@ struct vaccel_resource {
 	/* number of blob entities represented by the resource */
 	size_t nr_blobs;
 
-	/* an entry to add this resource to a list */
+	/* entry for global resources list */
 	vaccel_list_entry_t entry;
 
-	/* a list of sessions the resource is registered with */
+	/* list of sessions the resource is registered with */
 	vaccel_list_t sessions;
 
 	/* lock for session list */
