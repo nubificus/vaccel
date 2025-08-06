@@ -30,9 +30,15 @@ static struct {
 	/* available session ids */
 	id_pool_t ids;
 
-	/* all the created vAccel sessions */
-	struct vaccel_session *all[VACCEL_SESSIONS_MAX];
-} sessions;
+	/* list of all the created sessions */
+	vaccel_list_t all;
+
+	/* counter for all created sessions */
+	size_t count;
+
+	/* lock for list/counter */
+	pthread_mutex_t lock;
+} sessions = { .initialized = false };
 
 static void get_session_id(struct vaccel_session *sess)
 {
@@ -52,11 +58,11 @@ int sessions_bootstrap(void)
 	if (ret)
 		return ret;
 
-	for (size_t i = 0; i < VACCEL_SESSIONS_MAX; ++i)
-		sessions.all[i] = NULL;
+	list_init(&sessions.all);
+	sessions.count = 0;
+	pthread_mutex_init(&sessions.lock, NULL);
 
 	sessions.initialized = true;
-
 	return VACCEL_OK;
 }
 
@@ -67,9 +73,20 @@ int sessions_cleanup(void)
 
 	vaccel_debug("Cleaning up sessions");
 
-	for (int i = 0; i < VACCEL_SESSIONS_MAX; ++i)
-		vaccel_session_release(sessions.all[i]);
+	pthread_mutex_lock(&sessions.lock);
 
+	struct vaccel_session *sess;
+	struct vaccel_session *tmp;
+	session_for_each_safe(sess, tmp, &sessions.all)
+	{
+		pthread_mutex_unlock(&sessions.lock);
+		vaccel_session_release(sess);
+		pthread_mutex_lock(&sessions.lock);
+	}
+
+	pthread_mutex_unlock(&sessions.lock);
+
+	pthread_mutex_destroy(&sessions.lock);
 	sessions.initialized = false;
 
 	return id_pool_release(&sessions.ids);
@@ -154,7 +171,7 @@ int vaccel_session_init(struct vaccel_session *sess, uint32_t flags)
 	sess->priv = NULL;
 
 	if ((flags & VACCEL_PLUGIN_REMOTE) ||
-	    (plugin_nr_registered() == 1 && sess->plugin->info->is_virtio)) {
+	    (plugin_count() == 1 && sess->plugin->info->is_virtio)) {
 		if (!sess->plugin->info->is_virtio) {
 			vaccel_error(
 				"Could not initialize VirtIO session, no VirtIO Plugin loaded yet");
@@ -185,7 +202,11 @@ int vaccel_session_init(struct vaccel_session *sess, uint32_t flags)
 	pthread_mutex_init(&sess->resources_lock, NULL);
 
 	sess->hint = flags;
-	sessions.all[sess->id - 1] = sess;
+
+	pthread_mutex_lock(&sessions.lock);
+	list_add_tail(&sessions.all, &sess->entry);
+	sessions.count++;
+	pthread_mutex_unlock(&sessions.lock);
 
 	if (sess->is_virtio)
 		vaccel_debug("Initialized session %" PRId64
@@ -294,7 +315,11 @@ int vaccel_session_release(struct vaccel_session *sess)
 
 	sess->priv = NULL;
 	sess->plugin = NULL;
-	sessions.all[sess->id - 1] = NULL;
+
+	pthread_mutex_lock(&sessions.lock);
+	list_unlink_entry(&sess->entry);
+	sessions.count--;
+	pthread_mutex_unlock(&sessions.lock);
 
 	vaccel_debug("Released session %" PRId64, sess->id);
 

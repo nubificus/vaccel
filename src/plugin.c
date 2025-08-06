@@ -6,6 +6,7 @@
 #include "vaccel.h"
 #include <assert.h>
 #include <dlfcn.h>
+#include <pthread.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -15,12 +16,53 @@ static struct {
 	/* true if the plugins component is initialized */
 	bool initialized;
 
-	/* list of registered plugins */
-	vaccel_list_t registered;
+	/* list of all the registered plugins */
+	vaccel_list_t all;
 
-	/* number of registered plugins */
-	size_t nr_registered;
+	/* counter for all registered plugins */
+	size_t count;
+
+	/* lock for list/counter */
+	pthread_mutex_t lock;
 } plugins = { .initialized = false };
+
+int plugins_bootstrap()
+{
+	list_init(&plugins.all);
+	plugins.count = 0;
+	pthread_mutex_init(&plugins.lock, NULL);
+
+	plugins.initialized = true;
+	return VACCEL_OK;
+}
+
+int plugins_cleanup()
+{
+	if (!plugins.initialized)
+		return VACCEL_OK;
+
+	vaccel_debug("Cleaning up plugins");
+
+	pthread_mutex_lock(&plugins.lock);
+
+	struct vaccel_plugin *plugin;
+	struct vaccel_plugin *tmp;
+	plugin_for_each_safe(plugin, tmp, &plugins.all)
+	{
+		pthread_mutex_unlock(&plugins.lock);
+		int ret = plugin_unregister(plugin);
+		if (ret != VACCEL_OK)
+			vaccel_warn("Failed to remove plugin, ret: %d", ret);
+		pthread_mutex_lock(&plugins.lock);
+	}
+
+	pthread_mutex_unlock(&plugins.lock);
+
+	pthread_mutex_destroy(&plugins.lock);
+	plugins.initialized = false;
+
+	return VACCEL_OK;
+}
 
 static int plugin_check_info(const struct vaccel_plugin_info *pinfo)
 {
@@ -168,8 +210,10 @@ int plugin_register(struct vaccel_plugin *plugin)
 
 	const struct vaccel_plugin_info *info = plugin->info;
 
-	list_add_tail(&plugins.registered, &plugin->entry);
-	plugins.nr_registered++;
+	pthread_mutex_lock(&plugins.lock);
+	list_add_tail(&plugins.all, &plugin->entry);
+	plugins.count++;
+	pthread_mutex_unlock(&plugins.lock);
 
 	vaccel_info("Registered plugin %s %s", info->name, info->version);
 
@@ -197,8 +241,10 @@ int plugin_unregister(struct vaccel_plugin *plugin)
 		return VACCEL_EINVAL;
 	}
 
+	pthread_mutex_lock(&plugins.lock);
 	list_unlink_entry(&plugin->entry);
-	plugins.nr_registered--;
+	plugins.count--;
+	pthread_mutex_unlock(&plugins.lock);
 
 	/* Clean-up plugin's resources */
 	plugin->info->fini();
@@ -241,9 +287,11 @@ struct vaccel_plugin *plugin_find(unsigned int hint)
 {
 	unsigned int env_priority = hint & (~VACCEL_PLUGIN_REMOTE);
 	struct vaccel_plugin *plugin = NULL;
-	struct vaccel_plugin *tmp;
 
-	if (list_empty(&plugins.registered)) {
+	pthread_mutex_lock(&plugins.lock);
+
+	if (list_empty(&plugins.all)) {
+		pthread_mutex_unlock(&plugins.lock);
 		vaccel_error("No plugins registered");
 		return NULL;
 	}
@@ -253,36 +301,43 @@ struct vaccel_plugin *plugin_find(unsigned int hint)
 	 * layers. If we get a match, return this plugin operation
 	 */
 	if (VACCEL_PLUGIN_REMOTE & hint) {
-		list_for_each_container_safe(plugin, tmp, &plugins.registered,
-					     struct vaccel_plugin, entry)
+		plugin_for_each(plugin, &plugins.all)
 		{
-			if (plugin->info->is_virtio)
+			if (plugin->info->is_virtio) {
+				pthread_mutex_unlock(&plugins.lock);
 				return plugin;
+			}
 		}
+
+		pthread_mutex_unlock(&plugins.lock);
 		vaccel_error(
 			"Could not select plugin, no VirtIO plugin registered");
 		return NULL;
 	}
 
 	if (env_priority) {
-		list_for_each_container_safe(plugin, tmp, &plugins.registered,
-					     struct vaccel_plugin, entry)
+		plugin_for_each(plugin, &plugins.all)
 		{
-			if ((env_priority & plugin->info->type) != 0)
+			if ((env_priority & plugin->info->type) != 0) {
+				pthread_mutex_unlock(&plugins.lock);
 				return plugin;
+			}
 		}
 	}
 
 	// If priority check fails, just return the first (local) implementation we find
 	// or any implementation if it's a single one
-	list_for_each_container_safe(plugin, tmp, &plugins.registered,
-				     struct vaccel_plugin, entry)
+	plugin_for_each(plugin, &plugins.all)
 	{
-		if (!plugin->info->is_virtio || plugins.nr_registered == 1)
+		if (!plugin->info->is_virtio || plugins.count == 1) {
+			pthread_mutex_unlock(&plugins.lock);
 			return plugin;
+		}
 	}
 
+	pthread_mutex_unlock(&plugins.lock);
 	vaccel_error("Could not select plugin, no local plugin registered");
+
 	return NULL;
 }
 
@@ -312,9 +367,12 @@ void *plugin_get_op_func(struct vaccel_plugin *plugin, vaccel_op_type_t op_type)
 	return plugin->ops[op_type]->func;
 }
 
-size_t plugin_nr_registered()
+size_t plugin_count()
 {
-	return plugins.nr_registered;
+	pthread_mutex_lock(&plugins.lock);
+	size_t count = plugins.count;
+	pthread_mutex_unlock(&plugins.lock);
+	return count;
 }
 
 int vaccel_plugin_load(const char *lib)
@@ -388,37 +446,4 @@ int vaccel_plugin_parse_and_load(const char *lib_str)
 
 	free(lib_str_temp);
 	return ret;
-}
-
-int plugins_bootstrap()
-{
-	list_init(&plugins.registered);
-	plugins.initialized = true;
-
-	return VACCEL_OK;
-}
-
-int plugins_cleanup()
-{
-	if (!plugins.initialized)
-		return VACCEL_OK;
-
-	vaccel_debug("Cleaning up plugins");
-
-	struct vaccel_plugin *plugin;
-	struct vaccel_plugin *tmp;
-	list_for_each_container_safe(plugin, tmp, &plugins.registered,
-				     struct vaccel_plugin, entry)
-	{
-		/* Unregister plugin from runtime */
-		int ret = plugin_unregister(plugin);
-		if (ret != VACCEL_OK) {
-			vaccel_warn("Failed to remove plugin, ret: %d", ret);
-			continue;
-		}
-	}
-
-	plugins.initialized = false;
-
-	return VACCEL_OK;
 }
