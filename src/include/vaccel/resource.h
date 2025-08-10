@@ -64,10 +64,10 @@ struct vaccel_resource {
 	size_t nr_blobs;
 
 	/* entry for global resources list */
-	vaccel_list_entry_t entry;
+	struct vaccel_list_entry entry;
 
 	/* list of sessions the resource is registered with */
-	vaccel_list_t sessions;
+	struct vaccel_list_entry sessions;
 
 	/* lock for session list */
 	pthread_mutex_t sessions_lock;

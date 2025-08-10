@@ -19,10 +19,10 @@ struct resource_registration {
 	struct vaccel_session *session;
 
 	/* entry for registered resource's sessionsk list */
-	vaccel_list_t resource_entry;
+	struct vaccel_list_entry resource_entry;
 
 	/* entry for session's registered resources list */
-	vaccel_list_t session_entry;
+	struct vaccel_list_entry session_entry;
 };
 
 /* Allocate and initialize resource registration */

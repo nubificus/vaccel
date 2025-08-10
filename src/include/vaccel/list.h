@@ -11,13 +11,13 @@ extern "C" {
 
 #define LIST_ENTRY_INIT(name) { &(name), &(name) }
 
-typedef struct list_entry {
-	struct list_entry *next;
-	struct list_entry *prev;
-} vaccel_list_entry_t;
+struct vaccel_list_entry {
+	/* pointer to the next list entry */
+	struct vaccel_list_entry *next;
 
-/* Our list type is actually just a normal entry type */
-typedef vaccel_list_entry_t vaccel_list_t;
+	/* pointer to the previous list entry */
+	struct vaccel_list_entry *prev;
+};
 
 #ifdef __cplusplus
 }

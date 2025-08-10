@@ -33,10 +33,10 @@ struct vaccel_session {
 	char rundir[PATH_MAX];
 
 	/* entry for global sessions list */
-	vaccel_list_entry_t entry;
+	struct vaccel_list_entry entry;
 
 	/* array of per-type lists of resources registered to this session */
-	vaccel_list_t resources[VACCEL_RESOURCE_MAX];
+	struct vaccel_list_entry resources[VACCEL_RESOURCE_MAX];
 
 	/* array of per-type counters for resource list elements */
 	size_t resource_counts[VACCEL_RESOURCE_MAX];

@@ -38,7 +38,7 @@ static struct {
 	id_pool_t id_pool;
 
 	/* array of per-type lists of all the created resources */
-	vaccel_list_t all[VACCEL_RESOURCE_MAX];
+	struct vaccel_list_entry all[VACCEL_RESOURCE_MAX];
 
 	/* array of per-type counters for all the created resources */
 	size_t count[VACCEL_RESOURCE_MAX];
