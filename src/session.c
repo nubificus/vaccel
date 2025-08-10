@@ -31,7 +31,7 @@ static struct {
 	id_pool_t ids;
 
 	/* list of all the created sessions */
-	vaccel_list_t all;
+	struct vaccel_list_entry all;
 
 	/* counter for all created sessions */
 	size_t count;

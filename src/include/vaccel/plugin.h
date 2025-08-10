@@ -76,7 +76,7 @@ struct vaccel_plugin {
 	void *dl_handle;
 
 	/* entry for list of plugin */
-	vaccel_list_entry_t entry;
+	struct vaccel_list_entry entry;
 
 	/* array of operations supported by this plugin */
 	struct vaccel_op *ops[VACCEL_OP_MAX];

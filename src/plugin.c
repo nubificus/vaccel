@@ -17,7 +17,7 @@ static struct {
 	bool initialized;
 
 	/* list of all the registered plugins */
-	vaccel_list_t all;
+	struct vaccel_list_entry all;
 
 	/* counter for all registered plugins */
 	size_t count;
