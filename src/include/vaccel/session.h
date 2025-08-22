@@ -6,6 +6,7 @@
 #include "list.h"
 #include "resource.h"
 #include <limits.h>
+#include <linux/limits.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <sys/types.h>
