@@ -52,6 +52,9 @@ struct vaccel_session {
 	void *priv;
 };
 
+/* Get session by index from created sessions */
+int vaccel_session_get_by_id(struct vaccel_session **sess, vaccel_id_t id);
+
 /* Initialize session */
 int vaccel_session_init(struct vaccel_session *sess, uint32_t flags);
 

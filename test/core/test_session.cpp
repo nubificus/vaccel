@@ -8,12 +8,11 @@
  * 3) vaccel_session_new()
  * 4) vaccel_session_delete()
  * 5) vaccel_session_update()
- * 6) session_register_resource()
- * 7) session_unregister_resource()
- * 8) vaccel_session_has_resource()
- * 9) vaccel_session_resource_by_type()
- * 10) vaccel_session_resource_by_id()
- * 11) vaccel_session_resources_by_type()
+ * 6) vaccel_session_get_by_id()
+ * 7) vaccel_session_has_resource()
+ * 8) vaccel_session_resource_by_type()
+ * 9) vaccel_session_resource_by_id()
+ * 10) vaccel_session_resources_by_type()
  *
  */
 
@@ -138,6 +137,32 @@ TEST_CASE("vaccel_session_update", "[core][session]")
 	SECTION("invalid arguments")
 	{
 		ret = vaccel_session_update(nullptr, 1);
+		REQUIRE(ret == VACCEL_EINVAL);
+	}
+
+	REQUIRE(vaccel_session_release(&sess) == VACCEL_OK);
+}
+
+TEST_CASE("vaccel_session_get_by_id", "[core][session]")
+{
+	struct vaccel_session sess;
+	REQUIRE(vaccel_session_init(&sess, 0) == VACCEL_OK);
+
+	struct vaccel_session *req_sess;
+	int ret = vaccel_session_get_by_id(&req_sess, sess.id);
+	REQUIRE(ret == VACCEL_OK);
+	REQUIRE(req_sess != nullptr);
+	REQUIRE(req_sess->id == sess.id);
+
+	SECTION("not found")
+	{
+		ret = vaccel_session_get_by_id(&req_sess, sess.id + 1);
+		REQUIRE(ret == VACCEL_ENOENT);
+	}
+
+	SECTION("invalid arguments")
+	{
+		ret = vaccel_session_get_by_id(nullptr, 1);
 		REQUIRE(ret == VACCEL_EINVAL);
 	}
 
@@ -535,6 +560,15 @@ static auto init_and_release_session(void *arg) -> void *
 
 		// Add random delay to simulate work
 		usleep(rand() % 1000);
+
+		// Try to get random session
+		struct vaccel_session *s;
+		const vaccel_id_t s_id = rand() % TEST_THREAD_SESSIONS_NUM + 1;
+		const int ret = vaccel_session_get_by_id(&s, s_id);
+		if (ret == VACCEL_OK)
+			printf("Thread %zu: Found session %" PRId64 "\n",
+			       data->id, s->id);
+		REQUIRE((ret == VACCEL_OK || ret == VACCEL_ENOENT));
 
 		vaccel_id_t const sess_id = sess->id;
 		REQUIRE(vaccel_session_release(sess) == VACCEL_OK);
