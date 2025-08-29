@@ -92,6 +92,30 @@ int sessions_cleanup(void)
 	return id_pool_release(&sessions.ids);
 }
 
+int vaccel_session_get_by_id(struct vaccel_session **sess, vaccel_id_t id)
+{
+	if (!sessions.initialized)
+		return VACCEL_EPERM;
+
+	if (!sess)
+		return VACCEL_EINVAL;
+
+	pthread_mutex_lock(&sessions.lock);
+
+	struct vaccel_session *s;
+	session_for_each(s, &sessions.all)
+	{
+		if (id == s->id) {
+			*sess = s;
+			pthread_mutex_unlock(&sessions.lock);
+			return VACCEL_OK;
+		}
+	}
+
+	pthread_mutex_unlock(&sessions.lock);
+	return VACCEL_ENOENT;
+}
+
 static int session_create_rundir(struct vaccel_session *sess)
 {
 	if (!sess || sess->id <= 0) {
