@@ -167,6 +167,7 @@ jobs:
         id: cpp_linter
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          UV_DISABLE_UPDATE: 1
         with:
           style: 'file'  # Use .clang-format config file
           tidy-checks: '' # Use .clang-tidy config file
