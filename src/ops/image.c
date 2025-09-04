@@ -8,6 +8,7 @@
 #include "plugin.h"
 #include "prof.h"
 #include "session.h"
+#include "utils/enum.h"
 #include <inttypes.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -71,38 +72,66 @@ int vaccel_image_op_unpack(vaccel_op_type_t op_type,
 			   struct vaccel_arg *write, int nr_write,
 			   int nr_write_req)
 {
+	char op_name[VACCEL_ENUM_STR_MAX];
+	vaccel_op_type_name(op_type, op_name, VACCEL_ENUM_STR_MAX);
+
 	if (nr_read != nr_read_req) {
 		vaccel_error(
-			"Wrong number of read arguments in %s: %d (expected %d)",
-			vaccel_op_type_to_str(op_type), nr_read, nr_read_req);
+			"Wrong number of read arguments for %s: %d (expected %d)",
+			op_name, nr_read, nr_read_req);
 		return VACCEL_EINVAL;
 	}
 
 	if (nr_write != nr_write_req) {
 		vaccel_error(
-			"Wrong number of write arguments in %s: %d (expected %d)",
-			vaccel_op_type_to_str(op_type), nr_write, nr_write_req);
+			"Wrong number of write arguments for %s: %d (expected %d)",
+			op_name, nr_write, nr_write_req);
 		return VACCEL_EINVAL;
 	}
 
-	void *img = read[0].buf;
-	size_t len_img = (size_t)read[0].size;
-
-	if (nr_write_req == 2) {
-		unsigned char *out_text = (unsigned char *)write[0].buf;
-		size_t len_out_text = (size_t)write[0].size;
-		unsigned char *out_imgname = (unsigned char *)write[1].buf;
-		size_t len_out_imgname = (size_t)write[1].size;
-
-		return vaccel_image_op(op_type, sess, img, out_text,
-				       out_imgname, len_img, len_out_text,
-				       len_out_imgname);
+	struct vaccel_arg_array read_args;
+	int ret = vaccel_arg_array_wrap(&read_args, read, nr_read);
+	if (ret) {
+		vaccel_error("Failed to parse %s read args", op_name);
+		return VACCEL_EINVAL;
 	}
-	unsigned char *out_imgname = (unsigned char *)write[0].buf;
-	size_t len_out_imgname = (size_t)write[0].size;
 
-	return vaccel_image_op_no_text(op_type, sess, img, out_imgname, len_img,
-				       len_out_imgname);
+	struct vaccel_arg_array write_args;
+	ret = vaccel_arg_array_wrap(&write_args, write, nr_write);
+	if (ret) {
+		vaccel_error("Failed to parse %s write args", op_name);
+		return VACCEL_EINVAL;
+	}
+
+	void *img;
+	size_t len_img;
+	ret = vaccel_arg_array_get_buffer(&read_args, &img, &len_img);
+	if (ret) {
+		vaccel_error("Failed to unpack img arg for %s", op_name);
+		return VACCEL_EINVAL;
+	}
+
+	unsigned char *out_imgname = NULL;
+	size_t len_out_imgname = 0;
+	ret = vaccel_arg_array_get_uchar_array(&write_args, &out_imgname,
+					       &len_out_imgname);
+	if (ret) {
+		vaccel_error("Failed to unpack out_imgname arg for %s",
+			     op_name);
+		return VACCEL_EINVAL;
+	}
+
+	unsigned char *out_text = NULL;
+	size_t len_out_text = 0;
+	ret = vaccel_arg_array_get_uchar_array(&write_args, &out_text,
+					       &len_out_text);
+	if (ret && ret != VACCEL_ERANGE) {
+		vaccel_error("Failed to unpack out_text arg for %s", op_name);
+		return VACCEL_EINVAL;
+	}
+
+	return vaccel_image_op(op_type, sess, img, out_text, out_imgname,
+			       len_img, len_out_text, len_out_imgname);
 }
 
 int vaccel_image_classification(struct vaccel_session *sess, const void *img,

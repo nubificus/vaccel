@@ -118,7 +118,7 @@ TEST_CASE("exec_helpers", "[ops][arg_helpers]")
 	REQUIRE(ret == VACCEL_OK);
 	REQUIRE(read->size == 1);
 	REQUIRE(read->list[0].size == sizeof(int));
-	REQUIRE(read->list[0].argtype == 0);
+	REQUIRE(read->list[0].type == 0);
 	REQUIRE(read->list[0].buf == &input_int);
 
 	int output_int;
@@ -126,7 +126,7 @@ TEST_CASE("exec_helpers", "[ops][arg_helpers]")
 	REQUIRE(ret == VACCEL_OK);
 	REQUIRE(write->size == 1);
 	REQUIRE(write->list[0].size == sizeof(int));
-	REQUIRE(write->list[0].argtype == 0);
+	REQUIRE(write->list[0].type == 0);
 	REQUIRE(write->list[0].buf == &output_int);
 
 	ret = vaccel_delete_args(write);

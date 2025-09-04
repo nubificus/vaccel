@@ -35,3 +35,5 @@ enum {
 #define VACCEL_EBADF EBADF /* Bad file number */
 #define VACCEL_EREMOTEIO EREMOTEIO /* Remote I/O error */
 #define VACCEL_EFAULT EFAULT /* Bad address */
+#define VACCEL_ERANGE ERANGE /* Out of range */
+#define VACCEL_EAGAIN EAGAIN /* Resource temporarily unavailable */

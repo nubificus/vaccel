@@ -6,10 +6,9 @@ examples_sources = files([
   'detect.c',
   'detect_generic.c',
   'exec.c',
-  'exec_with_res.c',
   'exec_generic.c',
-  'exec_helpers.c',
-  'exec_helpers_nonser.c',
+  'exec_serialized.c',
+  'exec_with_resource.c',
   'local_and_virtio.c',
   'mbench.c',
   'noop.c',
@@ -26,17 +25,22 @@ examples_sources = files([
 
 subdir('common')
 
+examples_includes = include_directories('.')
+
 examples = []
 foreach e : examples_sources
   name = fs.stem(e)
   if name.contains('inference')
-    sources = [e, examples_common_sources, examples_common_headers]
+    sources = [e, examples_common_inference_sources,
+      examples_common_inference_headers]
+  elif name.contains('serialized')
+    sources = [e, examples_common_mydata_sources,
+      examples_common_mydata_headers]
   else
     sources = e
   endif
   examples += executable(name,
     sources,
-    include_directories : include_directories('common'),
     c_args : vaccel_c_args,
     cpp_args : vaccel_cpp_args,
     dependencies : [libvaccel_internal_dep, libm_dep],
@@ -44,9 +48,10 @@ foreach e : examples_sources
 endforeach
 
 mytestlib = library('mytestlib',
-  files('mytestlib.c'),
+  [files('mytestlib.c'),
+    examples_common_mydata_sources, examples_common_mydata_headers],
   c_args : vaccel_c_args,
-  dependencies : [libvaccel_internal_dep],
+  dependencies : [libvaccel_internal_dep, libm_dep],
   install : true)
 
 foreach d : ['models', 'images', 'input', 'labels']

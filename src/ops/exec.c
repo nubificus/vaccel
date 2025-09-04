@@ -59,12 +59,39 @@ int vaccel_exec_unpack(struct vaccel_session *sess, struct vaccel_arg *read,
 		return VACCEL_EINVAL;
 	}
 
+	struct vaccel_arg_array read_args;
+	int ret = vaccel_arg_array_wrap(&read_args, read, nr_read);
+	if (ret) {
+		vaccel_error("Failed to parse exec read args");
+		return VACCEL_EINVAL;
+	}
+
 	/* Pop the first two arguments */
-	char *library = (char *)read[0].buf;
-	char *fn_symbol = (char *)read[1].buf;
+	char *library;
+	ret = vaccel_arg_array_get_string(&read_args, &library);
+	if (ret) {
+		vaccel_error("Failed to unpack library string for exec");
+		return VACCEL_EINVAL;
+	}
+
+	char *fn_symbol;
+	ret = vaccel_arg_array_get_string(&read_args, &fn_symbol);
+	if (ret) {
+		vaccel_error("Failed to unpack function symbol for exec");
+		return VACCEL_EINVAL;
+	}
 
 	/* Pass on the rest of the read and all write arguments */
-	return vaccel_exec(sess, library, fn_symbol, &read[2], nr_read - 2,
+	struct vaccel_arg *exec_read;
+	size_t exec_nr_read;
+	ret = vaccel_arg_array_get_remaining(&read_args, &exec_read,
+					     &exec_nr_read);
+	if (ret) {
+		vaccel_error("Failed to get exec read args");
+		return VACCEL_EINVAL;
+	}
+
+	return vaccel_exec(sess, library, fn_symbol, exec_read, exec_nr_read,
 			   write, nr_write);
 }
 
@@ -127,27 +154,58 @@ int vaccel_exec_with_res_unpack(struct vaccel_session *sess,
 				struct vaccel_arg *read, int nr_read,
 				struct vaccel_arg *write, int nr_write)
 {
-	int ret = VACCEL_EINVAL;
 	if (nr_read < 2) {
-		vaccel_error("Wrong number of read arguments in exec: %d",
-			     nr_read);
+		vaccel_error(
+			"Wrong number of read arguments in exec_with_resource: %d",
+			nr_read);
+		return VACCEL_EINVAL;
+	}
+
+	struct vaccel_arg_array read_args;
+	int ret = vaccel_arg_array_wrap(&read_args, read, nr_read);
+	if (ret) {
+		vaccel_error("Failed to parse exec_with_resource read args");
 		return VACCEL_EINVAL;
 	}
 
 	/* Pop the first two arguments */
-	struct vaccel_resource *resource;
-
-	ret = vaccel_resource_get_by_id(&resource, *(vaccel_id_t *)read[0].buf);
+	vaccel_id_t res_id;
+	ret = vaccel_arg_array_get_int64(&read_args, &res_id);
 	if (ret) {
-		vaccel_error("cannot find resource: %d", ret);
+		vaccel_error(
+			"Failed to unpack library resource id for exec_with_resource");
+		return VACCEL_EINVAL;
+	}
+
+	char *fn_symbol;
+	ret = vaccel_arg_array_get_string(&read_args, &fn_symbol);
+	if (ret) {
+		vaccel_error(
+			"Failed to unpack function symbol for exec_with_resource");
+		return VACCEL_EINVAL;
+	}
+
+	/* Get library resource */
+	struct vaccel_resource *resource;
+	ret = vaccel_resource_get_by_id(&resource, res_id);
+	if (ret) {
+		vaccel_error(
+			"Could not find exec_with_resource library resource");
 		return ret;
 	}
 
-	char *fn_symbol = (char *)read[1].buf;
-
 	/* Pass on the rest of the read and all write arguments */
-	return vaccel_exec_with_resource(sess, resource, fn_symbol, &read[2],
-					 nr_read - 2, write, nr_write);
+	struct vaccel_arg *exec_read;
+	size_t exec_nr_read;
+	ret = vaccel_arg_array_get_remaining(&read_args, &exec_read,
+					     &exec_nr_read);
+	if (ret) {
+		vaccel_error("Failed to get exec_with_resource read args");
+		return VACCEL_EINVAL;
+	}
+
+	return vaccel_exec_with_resource(sess, resource, fn_symbol, exec_read,
+					 exec_nr_read, write, nr_write);
 }
 
 __attribute__((constructor)) static void vaccel_ops_init(void)

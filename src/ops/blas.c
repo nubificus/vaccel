@@ -9,21 +9,20 @@
 #include "prof.h"
 #include "session.h"
 #include <inttypes.h>
+#include <stddef.h>
 #include <stdint.h>
 
 static struct vaccel_prof_region blas_op_stats =
 	VACCEL_PROF_REGION_INIT("vaccel_blas_op");
 
-typedef int (*sgemm_fn_t)(struct vaccel_session *sess, long long int m,
-			  long long int n, long long int k, float alpha,
-			  float *a, long long int lda, float *b,
-			  long long int ldb, float beta, float *c,
-			  long long int ldc);
+typedef int (*sgemm_fn_t)(struct vaccel_session *sess, int64_t m, int64_t n,
+			  int64_t k, float alpha, float *a, int64_t lda,
+			  float *b, int64_t ldb, float beta, float *c,
+			  int64_t ldc);
 
-int vaccel_sgemm(struct vaccel_session *sess, long long int m, long long int n,
-		 long long int k, float alpha, float *a, long long int lda,
-		 float *b, long long int ldb, float beta, float *c,
-		 long long int ldc)
+int vaccel_sgemm(struct vaccel_session *sess, int64_t m, int64_t n, int64_t k,
+		 float alpha, float *a, int64_t lda, float *b, int64_t ldb,
+		 float beta, float *c, int64_t ldc)
 {
 	int ret;
 
@@ -53,29 +52,107 @@ int vaccel_sgemm_unpack(struct vaccel_session *sess, struct vaccel_arg *read,
 			int nr_read, struct vaccel_arg *write, int nr_write)
 {
 	if (nr_read != 10) {
-		vaccel_error("Wrong number of read arguments in SGEMM: %d",
+		vaccel_error("Wrong number of read arguments in sgemm: %d",
 			     nr_read);
 		return VACCEL_EINVAL;
 	}
 
 	if (nr_write != 1) {
-		vaccel_error("Wrong number of write arguments in SGEMM: %d",
+		vaccel_error("Wrong number of write arguments in sgemm: %d",
 			     nr_write);
 		return VACCEL_EINVAL;
 	}
 
-	long long int m = *(long long int *)read[0].buf;
-	long long int n = *(long long int *)read[1].buf;
-	long long int k = *(long long int *)read[2].buf;
-	float alpha = *(float *)read[3].buf;
-	float *a = (float *)read[4].buf;
-	long long int lda = *(long long int *)read[5].buf;
-	float *b = (float *)read[6].buf;
-	long long int ldb = *(long long int *)read[7].buf;
-	float beta = *(float *)read[8].buf;
-	long long int ldc = *(long long int *)read[9].buf;
+	struct vaccel_arg_array read_args;
+	int ret = vaccel_arg_array_wrap(&read_args, read, nr_read);
+	if (ret) {
+		vaccel_error("Failed to parse sgemm read args");
+		return VACCEL_EINVAL;
+	}
 
-	float *c = (float *)write[0].buf;
+	struct vaccel_arg_array write_args;
+	ret = vaccel_arg_array_wrap(&write_args, write, nr_write);
+	if (ret) {
+		vaccel_error("Failed to parse sgemm write args");
+		return VACCEL_EINVAL;
+	}
+
+	int64_t m;
+	ret = vaccel_arg_array_get_int64(&read_args, &m);
+	if (ret) {
+		vaccel_error("Failed to unpack m arg for sgemm");
+		return VACCEL_EINVAL;
+	}
+
+	int64_t n;
+	ret = vaccel_arg_array_get_int64(&read_args, &n);
+	if (ret) {
+		vaccel_error("Failed to unpack n arg for sgemm");
+		return VACCEL_EINVAL;
+	}
+
+	int64_t k;
+	ret = vaccel_arg_array_get_int64(&read_args, &k);
+	if (ret) {
+		vaccel_error("Failed to unpack k arg for sgemm");
+		return VACCEL_EINVAL;
+	}
+
+	float alpha;
+	ret = vaccel_arg_array_get_float(&read_args, &alpha);
+	if (ret) {
+		vaccel_error("Failed to unpack alpha arg for sgemm");
+		return VACCEL_EINVAL;
+	}
+
+	float *a;
+	ret = vaccel_arg_array_get_float_array(&read_args, &a, NULL);
+	if (ret) {
+		vaccel_error("Failed to unpack a arg for sgemm");
+		return VACCEL_EINVAL;
+	}
+
+	int64_t lda;
+	ret = vaccel_arg_array_get_int64(&read_args, &lda);
+	if (ret) {
+		vaccel_error("Failed to unpack lda arg for sgemm");
+		return VACCEL_EINVAL;
+	}
+
+	float *b;
+	ret = vaccel_arg_array_get_float_array(&read_args, &b, NULL);
+	if (ret) {
+		vaccel_error("Failed to unpack b arg for sgemm");
+		return VACCEL_EINVAL;
+	}
+
+	int64_t ldb;
+	ret = vaccel_arg_array_get_int64(&read_args, &ldb);
+	if (ret) {
+		vaccel_error("Failed to unpack ldb arg for sgemm");
+		return VACCEL_EINVAL;
+	}
+
+	float beta;
+	ret = vaccel_arg_array_get_float(&read_args, &beta);
+	if (ret) {
+		vaccel_error("Failed to unpack beta arg for sgemm");
+		return VACCEL_EINVAL;
+	}
+
+	int64_t ldc;
+	ret = vaccel_arg_array_get_int64(&read_args, &ldc);
+	if (ret) {
+		vaccel_error("Failed to unpack ldc arg for sgemm");
+		return VACCEL_EINVAL;
+	}
+
+	float *c;
+	ret = vaccel_arg_array_get_float_array(&write_args, &c, NULL);
+	if (ret) {
+		vaccel_error("Failed to unpack c arg for sgemm");
+		return VACCEL_EINVAL;
+	}
 
 	return vaccel_sgemm(sess, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc);
 }
