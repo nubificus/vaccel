@@ -83,16 +83,6 @@ eval "${CONFIG_WRAPPER_CMD}" "${EXAMPLES_DIR}/segment_generic" \
 	"${SHARE_DIR}/models/torch/cnn_trace.pt"
 eval "${CONFIG_WRAPPER_CMD}" "${EXAMPLES_DIR}/sgemm"
 eval "${CONFIG_WRAPPER_CMD}" "${EXAMPLES_DIR}/sgemm_generic"
-eval "${CONFIG_WRAPPER_CMD}" "${EXAMPLES_DIR}/minmax" 2048 \
-	"${SHARE_DIR}/input/input_2048.csv" 5 100
-eval "${CONFIG_WRAPPER_CMD}" "${EXAMPLES_DIR}/minmax_generic" 2048 \
-	"${SHARE_DIR}/input/input_2048.csv" 5 100
-eval "${CONFIG_WRAPPER_CMD}" "${EXAMPLES_DIR}/pynq_array_copy"
-eval "${CONFIG_WRAPPER_CMD}" "${EXAMPLES_DIR}/pynq_array_copy_generic"
-eval "${CONFIG_WRAPPER_CMD}" "${EXAMPLES_DIR}/pynq_parallel"
-eval "${CONFIG_WRAPPER_CMD}" "${EXAMPLES_DIR}/pynq_parallel_generic"
-eval "${CONFIG_WRAPPER_CMD}" "${EXAMPLES_DIR}/pynq_vector_add"
-eval "${CONFIG_WRAPPER_CMD}" "${EXAMPLES_DIR}/pynq_vector_add_generic"
 eval "${CONFIG_WRAPPER_CMD}" "${EXAMPLES_DIR}/tf_inference" \
 	"${SHARE_DIR}/images/example.jpg" \
 	'https://s3.nbfc.io/models/tf/resnet18-v2-7_saved_model.tar.xz' \

@@ -119,11 +119,13 @@ int vaccel_torch_model_run(struct vaccel_session *sess,
 			   int nr_outputs);
 
 /* Perform Torch SGEMM */
-int vaccel_torch_sgemm(struct vaccel_session *sess,
-		       struct vaccel_torch_tensor **in_A,
-		       struct vaccel_torch_tensor **in_B,
-		       struct vaccel_torch_tensor **in_C, int M, int N, int K,
-		       struct vaccel_torch_tensor **out);
+__attribute__((
+	deprecated("The function will be removed in a future release"))) int
+vaccel_torch_sgemm(struct vaccel_session *sess,
+		   struct vaccel_torch_tensor **in_A,
+		   struct vaccel_torch_tensor **in_B,
+		   struct vaccel_torch_tensor **in_C, int M, int N, int K,
+		   struct vaccel_torch_tensor **out);
 
 #ifdef __cplusplus
 }

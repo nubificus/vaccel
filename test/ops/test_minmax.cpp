@@ -11,6 +11,8 @@
  *
  */
 
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+
 #include "utils.hpp"
 #include "vaccel.h"
 #include <catch.hpp>
