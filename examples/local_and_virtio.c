@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-enum { INPUT_VAL = 10, ARGTYPE = 42 };
+enum { INPUT_VAL = 10 };
 
 int main(int argc, char *argv[])
 {
@@ -62,10 +62,12 @@ int main(int argc, char *argv[])
 	}
 
 	struct vaccel_arg read[] = {
-		{ .size = sizeof(input), .buf = &input, .argtype = ARGTYPE }
+		{ .size = sizeof(input), .buf = &input, .type = VACCEL_ARG_RAW }
 	};
 	struct vaccel_arg write[] = {
-		{ .size = sizeof(output), .buf = &output, .argtype = ARGTYPE },
+		{ .size = sizeof(output),
+		  .buf = &output,
+		  .type = VACCEL_ARG_RAW },
 	};
 
 	const int iter = (argc > 2) ? atoi(argv[2]) : 1;

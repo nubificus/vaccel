@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
+#include "common/mydata.h"
 #include "vaccel.h"
 #include <inttypes.h>
 #include <stdint.h>
@@ -9,47 +10,6 @@
 
 enum { ARR_LEN = 5 };
 
-struct mydata {
-	uint32_t size;
-	int *array;
-};
-
-/* Serializer function for `struct mydata` */
-void *ser(void *buf, uint32_t *bytes)
-{
-	struct mydata *non_ser = (struct mydata *)buf;
-
-	uint32_t size = (non_ser->size + 1) * sizeof(int);
-	int *ser_buf = malloc(size);
-
-	*ser_buf = (int)non_ser->size;
-
-	for (uint32_t i = 0; i < non_ser->size; i++)
-		ser_buf[i + 1] = non_ser->array[i];
-
-	*bytes = size;
-	return ser_buf;
-}
-
-/* Deserializer function for `struct mydata` */
-void *deser(void *buf, uint32_t __attribute__((unused)) bytes)
-{
-	int *ser_buf = (int *)buf;
-	int size = ser_buf[0];
-
-	if (!size)
-		return NULL;
-
-	struct mydata *new_buf = (struct mydata *)malloc(sizeof(struct mydata));
-
-	new_buf->size = (uint32_t)size;
-	new_buf->array = malloc(new_buf->size * sizeof(int));
-	for (int i = 0; i < size; i++)
-		new_buf->array[i] = ser_buf[i + 1];
-
-	return new_buf;
-}
-
 int main(int argc, char *argv[])
 {
 	int ret;
@@ -57,9 +17,6 @@ int main(int argc, char *argv[])
 	struct vaccel_resource object;
 	struct vaccel_prof_region mytestfunc_stats =
 		VACCEL_PROF_REGION_INIT("mytestfunc");
-
-	struct mydata input_data;
-	struct mydata *output_data = NULL;
 
 	if (argc < 2 || argc > 3) {
 		fprintf(stderr, "Usage: %s <lib_file> [iterations]\n", argv[0]);
@@ -87,50 +44,59 @@ int main(int argc, char *argv[])
 		goto release_session;
 	}
 
-	struct vaccel_arg_list *read = vaccel_args_init(1);
-	struct vaccel_arg_list *write = vaccel_args_init(1);
-
-	if (!read || !write) {
-		fprintf(stderr, "Problem with creating arg-list\n");
-		ret = VACCEL_ENOMEM;
+	struct vaccel_arg_array read_args;
+	ret = vaccel_arg_array_init(&read_args, 1);
+	if (ret) {
+		fprintf(stderr, "Cound not initialize read args array\n");
 		goto unregister_resource;
 	}
 
+	struct vaccel_arg_array write_args;
+	ret = vaccel_arg_array_init(&write_args, 1);
+	if (ret) {
+		fprintf(stderr, "Cound not initialize write args array\n");
+		goto release_read_args_array;
+	}
+
+	struct mydata input_data;
 	input_data.size = ARR_LEN;
 	input_data.array = malloc(ARR_LEN * sizeof(int));
 	if (!input_data.array) {
 		ret = VACCEL_ENOMEM;
-		goto delete_args;
+		goto release_write_args_array;
 	}
 
 	printf("Input: ");
 	for (int i = 0; i < ARR_LEN; i++) {
 		input_data.array[i] = 2 * i;
-		printf("%d ", input_data.array[i]);
+		printf("%" PRId32 " ", input_data.array[i]);
 	}
 	printf("\n");
 
-	ret = vaccel_add_nonserial_arg(read, &input_data, 0, ser);
+	ret = vaccel_arg_array_add_serialized(
+		&read_args, &input_data, sizeof(input_data), mydata_serialize,
+		VACCEL_ARG_CUSTOM, MYDATA_TYPE_ID);
 	if (ret) {
-		printf("Could not add non-serialized arg\n");
+		fprintf(stderr, "Failed to pack input arg\n");
 		goto free_input_data;
 	}
 
-	uint32_t expected_size = (input_data.size + 1) * sizeof(int);
-	ret = vaccel_expect_nonserial_arg(write, expected_size);
+	ret = vaccel_arg_array_add_serialized(
+		&write_args, &input_data, sizeof(input_data), mydata_serialize,
+		VACCEL_ARG_CUSTOM, MYDATA_TYPE_ID);
 	if (ret) {
-		printf("Could not define expected non-serialized arg\n");
+		fprintf(stderr, "Failed to pack output arg\n");
 		goto free_input_data;
 	}
 
+	struct mydata output_data;
 	const int iter = (argc > 2) ? atoi(argv[2]) : 1;
 	for (int i = 0; i < iter; i++) {
 		vaccel_prof_region_start(&mytestfunc_stats);
 
-		ret = vaccel_exec_with_resource(&sess, &object,
-						"mytestfunc_nonser", read->list,
-						read->size, write->list,
-						write->size);
+		ret = vaccel_exec_with_resource(
+			&sess, &object, "mytestfunc_nonser", read_args.args,
+			read_args.count, write_args.args, write_args.count);
 
 		vaccel_prof_region_stop(&mytestfunc_stats);
 
@@ -139,31 +105,32 @@ int main(int argc, char *argv[])
 			goto free_input_data;
 		}
 
-		output_data =
-			vaccel_extract_nonserial_arg(write->list, 0, deser);
-		if (!output_data) {
-			printf("Could not extract non-serialized arg\n");
+		ret = vaccel_arg_array_get_serialized(
+			&write_args, VACCEL_ARG_CUSTOM, MYDATA_TYPE_ID,
+			sizeof(output_data), &output_data, mydata_deserialize);
+		if (ret) {
+			fprintf(stderr, "Failed to unpack output arg\n");
 			goto free_input_data;
 		}
 
 		printf("Output: ");
 		uint32_t i;
-		for (i = 0; i < output_data->size; i++) {
-			printf("%d ", output_data->array[i]);
+		for (i = 0; i < output_data.size; i++) {
+			printf("%" PRId32 " ", output_data.array[i]);
 		}
 		printf("\n");
 
-		free(output_data->array);
-		free(output_data);
+		free(output_data.array);
 	}
 
 free_input_data:
 	free(input_data.array);
-delete_args:
-	if (vaccel_delete_args(read))
-		fprintf(stderr, "Could not delete arg list\n");
-	if (vaccel_delete_args(write))
-		fprintf(stderr, "Could not delete arg list\n");
+release_write_args_array:
+	if (vaccel_arg_array_release(&write_args))
+		fprintf(stderr, "Could not release write args array\n");
+release_read_args_array:
+	if (vaccel_arg_array_release(&read_args))
+		fprintf(stderr, "Could not release read args array\n");
 unregister_resource:
 	if (vaccel_resource_unregister(&object, &sess))
 		fprintf(stderr, "Could not unregister lib from session\n");

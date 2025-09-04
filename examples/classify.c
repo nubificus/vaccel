@@ -14,8 +14,8 @@ int main(int argc, char *argv[])
 	int ret;
 	char *image = NULL;
 	size_t image_size;
-	char out_text[STR_SIZE_MAX] = { '\0' };
-	char out_imagename[STR_SIZE_MAX] = { '\0' };
+	unsigned char out_text[STR_SIZE_MAX] = { '\0' };
+	unsigned char out_imagename[STR_SIZE_MAX] = { '\0' };
 	struct vaccel_session sess;
 	struct vaccel_resource model = { .id = 0 };
 	struct vaccel_prof_region classify_stats =
@@ -60,10 +60,10 @@ int main(int argc, char *argv[])
 	for (int i = 0; i < iter; i++) {
 		vaccel_prof_region_start(&classify_stats);
 
-		ret = vaccel_image_classification(
-			&sess, image, (unsigned char *)out_text,
-			(unsigned char *)out_imagename, image_size,
-			sizeof(out_text), sizeof(out_imagename));
+		ret = vaccel_image_classification(&sess, image, out_text,
+						  out_imagename, image_size,
+						  sizeof(out_text),
+						  sizeof(out_imagename));
 
 		vaccel_prof_region_stop(&classify_stats);
 

@@ -94,22 +94,20 @@ TEST_CASE("min_max_generic", "[ops][minmax]")
 
 	vaccel_op_type_t op_type = VACCEL_OP_MINMAX;
 	struct vaccel_arg read[5] = {
-		{ .argtype = 0,
-		  .size = sizeof(vaccel_op_type_t),
-		  .buf = &op_type },
-		{ .argtype = 0,
+		{ .type = 0, .size = sizeof(vaccel_op_type_t), .buf = &op_type },
+		{ .type = 0,
 		  .size = static_cast<uint32_t>(ndata * sizeof(double)),
 		  .buf = indata },
-		{ .argtype = 0, .size = sizeof(int), .buf = &ndata },
-		{ .argtype = 0, .size = sizeof(int), .buf = &low_threshold },
-		{ .argtype = 0, .size = sizeof(int), .buf = &high_threshold },
+		{ .type = 0, .size = sizeof(int), .buf = &ndata },
+		{ .type = 0, .size = sizeof(int), .buf = &low_threshold },
+		{ .type = 0, .size = sizeof(int), .buf = &high_threshold },
 	};
 	struct vaccel_arg write[3] = {
-		{ .argtype = 0,
+		{ .type = 0,
 		  .size = static_cast<uint32_t>(ndata * sizeof(double)),
 		  .buf = outdata },
-		{ .argtype = 0, .size = sizeof(double), .buf = &min },
-		{ .argtype = 0, .size = sizeof(double), .buf = &max },
+		{ .type = 0, .size = sizeof(double), .buf = &min },
+		{ .type = 0, .size = sizeof(double), .buf = &max },
 	};
 
 	ret = vaccel_genop(&session, &read[0], 5, &write[0], 3);

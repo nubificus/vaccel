@@ -24,6 +24,7 @@ vaccel_headers = files([
 
 vaccel_sources = files([
   'arg.c',
+  'arg_deprecated.c',
   'config.c',
   'blob.c',
   'id_pool.c',
