@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+
 #include "fpga.h"
 #include "arg.h"
 #include "error.h"

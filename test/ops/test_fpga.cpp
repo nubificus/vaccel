@@ -9,6 +9,8 @@
  *
  */
 
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+
 #include "vaccel.h"
 #include <algorithm>
 #include <catch.hpp>
