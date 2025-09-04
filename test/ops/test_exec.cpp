@@ -21,23 +21,25 @@
 TEST_CASE("exec", "[ops][exec]")
 {
 	int ret;
-	int input = 10;
-	int output = 0;
+	int32_t input = 10;
+	int32_t output = 0;
 	struct vaccel_session sess;
 
 	REQUIRE(vaccel_session_init(&sess, 0) == VACCEL_OK);
 
-	struct vaccel_arg read[1] = {
-		{ .argtype = 0, .size = sizeof(input), .buf = &input }
-	};
-	struct vaccel_arg write[1] = {
-		{ .argtype = 0, .size = sizeof(output), .buf = &output }
-	};
+	struct vaccel_arg_array read_args;
+	struct vaccel_arg_array write_args;
+	REQUIRE(vaccel_arg_array_init(&read_args, 1) == VACCEL_OK);
+	REQUIRE(vaccel_arg_array_init(&write_args, 1) == VACCEL_OK);
+
+	REQUIRE(vaccel_arg_array_add_int32(&read_args, &input) == VACCEL_OK);
+	REQUIRE(vaccel_arg_array_add_int32(&write_args, &output) == VACCEL_OK);
 
 	char *lib_path = abs_path(BUILD_ROOT, "examples/libmytestlib.so");
 	const char function_name[] = "mytestfunc";
 
-	ret = vaccel_exec(&sess, lib_path, function_name, read, 1, write, 1);
+	ret = vaccel_exec(&sess, lib_path, function_name, read_args.args,
+			  read_args.count, write_args.args, write_args.count);
 	REQUIRE(ret == VACCEL_OK);
 	if (strcmp(sess.plugin->info->name, "noop") == 0)
 		REQUIRE(output == input);
@@ -45,40 +47,39 @@ TEST_CASE("exec", "[ops][exec]")
 		REQUIRE(output == 2 * input);
 
 	REQUIRE(vaccel_session_release(&sess) == VACCEL_OK);
-
+	REQUIRE(vaccel_arg_array_release(&read_args) == VACCEL_OK);
+	REQUIRE(vaccel_arg_array_release(&write_args) == VACCEL_OK);
 	free(lib_path);
 }
 
 TEST_CASE("exec_generic", "[ops][exec]")
 {
 	int ret;
-	int input = 10;
-	int output = 0;
+	int32_t input = 10;
+	int32_t output = 0;
 	struct vaccel_session sess;
 
 	REQUIRE(vaccel_session_init(&sess, 0) == VACCEL_OK);
 
-	vaccel_op_type_t op_type = VACCEL_OP_EXEC;
-
 	char *lib_path = abs_path(BUILD_ROOT, "examples/libmytestlib.so");
 	const char function_name[] = "mytestfunc";
 
-	struct vaccel_arg read[4] = {
-		{ .argtype = 0, .size = sizeof(uint8_t), .buf = &op_type },
-		{ .argtype = 0,
-		  .size = sizeof(lib_path),
-		  .buf = (void *)lib_path },
-		{ .argtype = 0,
-		  .size = sizeof(function_name),
-		  .buf = (void *)function_name },
-		{ .argtype = 0, .size = sizeof(input), .buf = &input }
-	};
+	struct vaccel_arg_array read_args;
+	struct vaccel_arg_array write_args;
+	REQUIRE(vaccel_arg_array_init(&read_args, 4) == VACCEL_OK);
+	REQUIRE(vaccel_arg_array_init(&write_args, 1) == VACCEL_OK);
 
-	struct vaccel_arg write[1] = {
-		{ .argtype = 0, .size = sizeof(output), .buf = &output },
-	};
+	const auto op_type = (uint8_t)VACCEL_OP_EXEC;
+	REQUIRE(vaccel_arg_array_add_uint8(&read_args, (uint8_t *)&op_type) ==
+		VACCEL_OK);
+	REQUIRE(vaccel_arg_array_add_string(&read_args, lib_path) == VACCEL_OK);
+	REQUIRE(vaccel_arg_array_add_string(
+			&read_args, (char *)function_name) == VACCEL_OK);
+	REQUIRE(vaccel_arg_array_add_int32(&read_args, &input) == VACCEL_OK);
+	REQUIRE(vaccel_arg_array_add_int32(&write_args, &output) == VACCEL_OK);
 
-	ret = vaccel_genop(&sess, read, 4, write, 1);
+	ret = vaccel_genop(&sess, read_args.args, read_args.count,
+			   write_args.args, write_args.count);
 	REQUIRE(ret == VACCEL_OK);
 	if (strcmp(sess.plugin->info->name, "noop") == 0)
 		REQUIRE(output == input);
@@ -86,15 +87,16 @@ TEST_CASE("exec_generic", "[ops][exec]")
 		REQUIRE(output == 2 * input);
 
 	REQUIRE(vaccel_session_release(&sess) == VACCEL_OK);
-
+	REQUIRE(vaccel_arg_array_release(&read_args) == VACCEL_OK);
+	REQUIRE(vaccel_arg_array_release(&write_args) == VACCEL_OK);
 	free(lib_path);
 }
 
 TEST_CASE("exec_with_resource", "[ops][exec]")
 {
-	int input = 10;
-	int output1 = 0;
-	int output2 = 0;
+	int32_t input = 10;
+	int32_t output1 = 0;
+	int32_t output2 = 0;
 	int ret;
 	char *lib_path = abs_path(BUILD_ROOT, "examples/libmytestlib.so");
 
@@ -122,31 +124,29 @@ TEST_CASE("exec_with_resource", "[ops][exec]")
 	REQUIRE(vaccel_resource_register(&object1, &sess1) == VACCEL_OK);
 	REQUIRE(vaccel_resource_register(&object2, &sess2) == VACCEL_OK);
 
-	input = 10;
-	struct vaccel_arg read[1] = {
-		{ .argtype = 0, .size = sizeof(input), .buf = &input }
-	};
-	struct vaccel_arg write[1] = {
-		{ .argtype = 0, .size = sizeof(output1), .buf = &output1 },
-	};
+	struct vaccel_arg_array read_args;
+	struct vaccel_arg_array write_args;
+	REQUIRE(vaccel_arg_array_init(&read_args, 1) == VACCEL_OK);
+	REQUIRE(vaccel_arg_array_init(&write_args, 1) == VACCEL_OK);
 
-	struct vaccel_arg read_2[1] = {
-		{ .argtype = 0, .size = sizeof(input), .buf = &input }
-	};
-	struct vaccel_arg write_2[1] = {
-		{ .argtype = 0, .size = sizeof(output2), .buf = &output2 },
-	};
+	REQUIRE(vaccel_arg_array_add_int32(&read_args, &input) == VACCEL_OK);
+	REQUIRE(vaccel_arg_array_add_int32(&write_args, &output1) == VACCEL_OK);
 
-	ret = vaccel_exec_with_resource(&sess1, &object1, "mytestfunc", read, 1,
-					write, 1);
+	ret = vaccel_exec_with_resource(&sess1, &object1, "mytestfunc",
+					read_args.args, read_args.count,
+					write_args.args, write_args.count);
 	REQUIRE(ret == VACCEL_OK);
 	if (strcmp(sess1.plugin->info->name, "noop") == 0)
 		REQUIRE(output1 == input);
 	else
 		REQUIRE(output1 == 2 * input);
 
-	ret = vaccel_exec_with_resource(&sess2, &object2, "mytestfunc", read_2,
-					1, write_2, 1);
+	vaccel_arg_array_clear(&write_args);
+	REQUIRE(vaccel_arg_array_add_int32(&write_args, &output2) == VACCEL_OK);
+
+	ret = vaccel_exec_with_resource(&sess2, &object2, "mytestfunc",
+					read_args.args, read_args.count,
+					write_args.args, write_args.count);
 	REQUIRE(ret == VACCEL_OK);
 	if (strcmp(sess2.plugin->info->name, "noop") == 0)
 		REQUIRE(output2 == input);
@@ -158,6 +158,8 @@ TEST_CASE("exec_with_resource", "[ops][exec]")
 	REQUIRE(vaccel_resource_release(&object1) == VACCEL_OK);
 	REQUIRE(vaccel_resource_release(&object2) == VACCEL_OK);
 
+	REQUIRE(vaccel_arg_array_release(&read_args) == VACCEL_OK);
+	REQUIRE(vaccel_arg_array_release(&write_args) == VACCEL_OK);
 	REQUIRE(vaccel_session_release(&sess1) == VACCEL_OK);
 	REQUIRE(vaccel_session_release(&sess2) == VACCEL_OK);
 

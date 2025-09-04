@@ -101,11 +101,9 @@ eval "${CONFIG_WRAPPER_CMD}" "${EXAMPLES_DIR}/exec" \
 	"${TESTLIB_DIR}/libmytestlib.so" 1
 eval "${CONFIG_WRAPPER_CMD}" "${EXAMPLES_DIR}/exec_generic" \
 	"${TESTLIB_DIR}/libmytestlib.so" 1
-eval "${CONFIG_WRAPPER_CMD}" "${EXAMPLES_DIR}/exec_helpers" \
+eval "${CONFIG_WRAPPER_CMD}" "${EXAMPLES_DIR}/exec_serialized" \
 	"${TESTLIB_DIR}/libmytestlib.so" 1
-eval "${CONFIG_WRAPPER_CMD}" "${EXAMPLES_DIR}/exec_helpers_nonser" \
-	"${TESTLIB_DIR}/libmytestlib.so" 1
-eval "${CONFIG_WRAPPER_CMD}" "${EXAMPLES_DIR}/exec_with_res" \
+eval "${CONFIG_WRAPPER_CMD}" "${EXAMPLES_DIR}/exec_with_resource" \
 	"${TESTLIB_DIR}/libmytestlib.so" 1
 set +x
 
@@ -126,9 +124,7 @@ eval "${CONFIG_WRAPPER_CMD}" "${EXAMPLES_DIR}/exec" \
 	"${TESTLIB_DIR}/libmytestlib.so" 1
 eval "${CONFIG_WRAPPER_CMD}" "${EXAMPLES_DIR}/exec_generic" \
 	"${TESTLIB_DIR}/libmytestlib.so" 1
-eval "${CONFIG_WRAPPER_CMD}" "${EXAMPLES_DIR}/exec_helpers" \
+eval "${CONFIG_WRAPPER_CMD}" "${EXAMPLES_DIR}/exec_serialized" \
 	"${TESTLIB_DIR}/libmytestlib.so" 1
-eval "${CONFIG_WRAPPER_CMD}" "${EXAMPLES_DIR}/exec_helpers_nonser" \
-	"${TESTLIB_DIR}/libmytestlib.so" 1
-eval "${CONFIG_WRAPPER_CMD}" "${EXAMPLES_DIR}/exec_with_res" \
+eval "${CONFIG_WRAPPER_CMD}" "${EXAMPLES_DIR}/exec_with_resource" \
 	"${TESTLIB_DIR}/libmytestlib.so" 1

@@ -92,24 +92,54 @@ TEST_CASE("min_max_generic", "[ops][minmax]")
 	struct vaccel_session session;
 	REQUIRE(vaccel_session_init(&session, 0) == VACCEL_OK);
 
-	vaccel_op_type_t op_type = VACCEL_OP_MINMAX;
+	const auto op_type = (uint8_t)VACCEL_OP_MINMAX;
 	struct vaccel_arg read[5] = {
-		{ .argtype = 0,
-		  .size = sizeof(vaccel_op_type_t),
-		  .buf = &op_type },
-		{ .argtype = 0,
-		  .size = static_cast<uint32_t>(ndata * sizeof(double)),
-		  .buf = indata },
-		{ .argtype = 0, .size = sizeof(int), .buf = &ndata },
-		{ .argtype = 0, .size = sizeof(int), .buf = &low_threshold },
-		{ .argtype = 0, .size = sizeof(int), .buf = &high_threshold },
+		{ .buf = (uint8_t *)&op_type,
+		  .size = sizeof(op_type),
+		  .type = VACCEL_ARG_UINT8,
+		  .custom_type_id = 0,
+		  .owned = false },
+		{
+			.buf = indata,
+			.size = static_cast<uint32_t>(ndata * sizeof(double)),
+			.type = VACCEL_ARG_RAW,
+			.custom_type_id = 0,
+			.owned = false,
+		},
+		{ .buf = &ndata,
+		  .size = sizeof(int),
+		  .type = VACCEL_ARG_RAW,
+		  .custom_type_id = 0,
+		  .owned = false },
+		{ .buf = &low_threshold,
+		  .size = sizeof(int),
+		  .type = VACCEL_ARG_RAW,
+		  .custom_type_id = 0,
+		  .owned = false },
+		{ .buf = &high_threshold,
+		  .size = sizeof(int),
+		  .type = VACCEL_ARG_RAW,
+		  .custom_type_id = 0,
+		  .owned = false },
 	};
 	struct vaccel_arg write[3] = {
-		{ .argtype = 0,
-		  .size = static_cast<uint32_t>(ndata * sizeof(double)),
-		  .buf = outdata },
-		{ .argtype = 0, .size = sizeof(double), .buf = &min },
-		{ .argtype = 0, .size = sizeof(double), .buf = &max },
+		{
+			.buf = outdata,
+			.size = static_cast<uint32_t>(ndata * sizeof(double)),
+			.type = VACCEL_ARG_RAW,
+			.custom_type_id = 0,
+			.owned = false,
+		},
+		{ .buf = &min,
+		  .size = sizeof(double),
+		  .type = VACCEL_ARG_RAW,
+		  .custom_type_id = 0,
+		  .owned = false },
+		{ .buf = &max,
+		  .size = sizeof(double),
+		  .type = VACCEL_ARG_RAW,
+		  .custom_type_id = 0,
+		  .owned = false },
 	};
 
 	ret = vaccel_genop(&session, &read[0], 5, &write[0], 3);

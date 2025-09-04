@@ -4,6 +4,10 @@
 
 #include <stddef.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum {
 	INFERENCE_IMAGE_WIDTH = 224,
 	INFERENCE_IMAGE_HEIGHT = 224,
@@ -14,10 +18,6 @@ typedef enum {
 	INFERENCE_IMAGE_FORMAT_TORCH,
 	INFERENCE_IMAGE_FORMAT_TF
 } inference_image_format_t;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 int inference_load_labels(const char *filename, char ***labels,
 			  size_t *nr_labels);

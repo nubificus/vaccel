@@ -43,13 +43,13 @@ int vaccel_noop_unpack(struct vaccel_session *sess, struct vaccel_arg *read,
 		       int nr_read, struct vaccel_arg *write, int nr_write)
 {
 	if (nr_read || read) {
-		vaccel_error("Wrong number of read arguments in noop: %d",
+		vaccel_error("Wrong number of read arguments for noop: %d",
 			     nr_read);
 		return VACCEL_EINVAL;
 	}
 
 	if (nr_write || write) {
-		vaccel_error("Wrong number of write arguments in noop: %d",
+		vaccel_error("Wrong number of write arguments for noop: %d",
 			     nr_write);
 		return VACCEL_EINVAL;
 	}

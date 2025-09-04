@@ -57,10 +57,16 @@ libtests_main = library('tests-main',
 
 foreach t : tests_core_sources + tests_utils_sources
   name = fs.stem(t)
+  if name == 'test_arg'
+    sources = [t, examples_common_mydata_sources]
+  else
+    sources = t
+  endif
+
   exe = executable(name,
-    sources : t,
+    sources : sources,
     cpp_args : tests_cpp_args,
-    include_directories : tests_includes,
+    include_directories : [tests_includes, examples_includes],
     dependencies : libvaccel_internal_dep,
     link_with : libtests_main,
     install : false)

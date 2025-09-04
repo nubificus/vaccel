@@ -73,17 +73,6 @@ static int exec(struct vaccel_session *session, const char *library,
 		return VACCEL_EINVAL;
 	}
 
-	struct vaccel_arg *args = (struct vaccel_arg *)read;
-	for (size_t i = 0; i < nr_read; i++) {
-		exec_debug("read[%d].size: %u", i, args[i].size);
-		exec_debug("read[%d].argtype: %u", i, args[i].argtype);
-	}
-	args = (struct vaccel_arg *)write;
-	for (size_t i = 0; i < nr_write; i++) {
-		exec_debug("write[%d].size: %u", i, args[i].size);
-		exec_debug("write[%d].argtype: %u", i, args[i].argtype);
-	}
-
 	/* Get the function pointer based on the relevant symbol */
 	exec_debug("Symbol: %s", fn_symbol);
 	int (*fptr)(void *, size_t, void *, size_t) =
@@ -91,6 +80,22 @@ static int exec(struct vaccel_session *session, const char *library,
 	if (!fptr) {
 		exec_error("dlsym: %s", dlerror());
 		return VACCEL_EINVAL;
+	}
+
+	char type_name[VACCEL_ENUM_STR_MAX];
+	struct vaccel_arg *args = (struct vaccel_arg *)read;
+	for (size_t i = 0; i < nr_read; i++) {
+		exec_debug("read[%zu].size: %zu", i, args[i].size);
+		vaccel_arg_type_name(args[i].type, type_name,
+				     VACCEL_ENUM_STR_MAX);
+		exec_debug("read[%zu].type: %s", i, type_name);
+	}
+	args = (struct vaccel_arg *)write;
+	for (size_t i = 0; i < nr_write; i++) {
+		exec_debug("write[%zu].size: %zu", i, args[i].size);
+		vaccel_arg_type_name(args[i].type, type_name,
+				     VACCEL_ENUM_STR_MAX);
+		exec_debug("write[%zu].type: %s", i, type_name);
 	}
 
 	/* Execute the operation */
@@ -164,15 +169,20 @@ static int exec_with_resource(struct vaccel_session *session,
 		goto free;
 	}
 
+	char type_name[VACCEL_ENUM_STR_MAX];
 	struct vaccel_arg *args = (struct vaccel_arg *)read;
 	for (size_t i = 0; i < nr_read; i++) {
-		exec_res_debug("read[%d].size: %u", i, args[i].size);
-		exec_res_debug("read[%d].argtype: %u", i, args[i].argtype);
+		exec_res_debug("read[%zu].size: %zu", i, args[i].size);
+		vaccel_arg_type_name(args[i].type, type_name,
+				     VACCEL_ENUM_STR_MAX);
+		exec_res_debug("read[%zu].type: %s", i, type_name);
 	}
 	args = (struct vaccel_arg *)write;
 	for (size_t i = 0; i < nr_write; i++) {
-		exec_res_debug("write[%d].size: %u", i, args[i].size);
-		exec_res_debug("write[%d].argtype: %u", i, args[i].argtype);
+		exec_res_debug("write[%zu].size: %zu", i, args[i].size);
+		vaccel_arg_type_name(args[i].type, type_name,
+				     VACCEL_ENUM_STR_MAX);
+		exec_res_debug("write[%zu].type: %s", i, type_name);
 	}
 
 	/* Execute the operation */

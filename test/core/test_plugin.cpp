@@ -20,6 +20,7 @@
 #include "vaccel.h"
 #include <catch.hpp>
 #include <cerrno>
+#include <cstdint>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -618,15 +619,15 @@ TEST_CASE("vaccel_plugin_load_and_exec_func", "[core][plugin]")
 
 	REQUIRE(plugins_bootstrap() == VACCEL_OK);
 
-	int input = 20;
-	int output = 0;
+	struct vaccel_arg_array read_args;
+	struct vaccel_arg_array write_args;
+	REQUIRE(vaccel_arg_array_init(&read_args, 1) == VACCEL_OK);
+	REQUIRE(vaccel_arg_array_init(&write_args, 1) == VACCEL_OK);
 
-	struct vaccel_arg read[1] = {
-		{ .argtype = 42, .size = sizeof(input), .buf = &input }
-	};
-	struct vaccel_arg write[1] = {
-		{ .argtype = 42, .size = sizeof(output), .buf = &output }
-	};
+	int32_t input = 20;
+	int32_t output = 0;
+	REQUIRE(vaccel_arg_array_add_int32(&read_args, &input) == VACCEL_OK);
+	REQUIRE(vaccel_arg_array_add_int32(&write_args, &output) == VACCEL_OK);
 
 	/* Load noop plugin */
 	ret = vaccel_plugin_load(plugin_noop_path);
@@ -635,8 +636,9 @@ TEST_CASE("vaccel_plugin_load_and_exec_func", "[core][plugin]")
 	REQUIRE(vaccel_session_init(&session, 0) == VACCEL_OK);
 
 	/* noop implementation - output should be equal to input */
-	REQUIRE(vaccel_exec(&session, lib_path, "mytestfunc", read, 1, write,
-			    1) == VACCEL_OK);
+	REQUIRE(vaccel_exec(&session, lib_path, "mytestfunc", read_args.args,
+			    read_args.count, write_args.args,
+			    write_args.count) == VACCEL_OK);
 	REQUIRE(output == input);
 
 	output = 0;
@@ -650,13 +652,16 @@ TEST_CASE("vaccel_plugin_load_and_exec_func", "[core][plugin]")
 		VACCEL_OK);
 
 	/* exec implementation -  the output should be 2 * input */
-	REQUIRE(vaccel_exec(&session, lib_path, "mytestfunc", read, 1, write,
-			    1) == VACCEL_OK);
+	REQUIRE(vaccel_exec(&session, lib_path, "mytestfunc", read_args.args,
+			    read_args.count, write_args.args,
+			    write_args.count) == VACCEL_OK);
 	REQUIRE(output == (2 * input));
 
 	REQUIRE(vaccel_session_release(&session) == VACCEL_OK);
 	REQUIRE(plugins_cleanup() == VACCEL_OK);
 
+	REQUIRE(vaccel_arg_array_release(&read_args) == VACCEL_OK);
+	REQUIRE(vaccel_arg_array_release(&write_args) == VACCEL_OK);
 	free(plugin_exec_path);
 	free(plugin_noop_path);
 	free(lib_path);

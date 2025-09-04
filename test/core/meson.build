@@ -1,4 +1,5 @@
 tests_core_sources = files([
+  'test_arg.cpp',
   'test_config.cpp',
   'test_blob.cpp',
   'test_id_pool.cpp',

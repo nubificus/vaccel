@@ -65,7 +65,7 @@ int vaccel_fpga_arraycopy_unpack(struct vaccel_session *sess,
 		return VACCEL_EINVAL;
 	}
 	int *a = (int *)read[0].buf;
-	size_t len_a = (size_t)read[0].size / sizeof(a[0]);
+	size_t len_a = read[0].size / sizeof(a[0]);
 
 	int *out_a = (int *)write[0].buf;
 
@@ -124,7 +124,7 @@ int vaccel_fpga_mmult_unpack(struct vaccel_session *sess,
 	}
 	float *a = (float *)read[0].buf;
 	float *b = (float *)read[1].buf;
-	size_t len_a = (size_t)read[0].buf;
+	size_t len_a = read[0].size / sizeof(a[0]);
 
 	float *c = (float *)write[0].buf;
 
@@ -185,7 +185,7 @@ int vaccel_fpga_parallel_unpack(struct vaccel_session *sess,
 	}
 	float *a = (float *)read[0].buf;
 	float *b = (float *)read[1].buf;
-	size_t len_a = (size_t)read[0].size / sizeof(a[0]);
+	size_t len_a = read[0].size / sizeof(a[0]);
 
 	float *add_output = (float *)write[0].buf;
 	float *mult_output = (float *)write[1].buf;
@@ -246,8 +246,8 @@ int vaccel_fpga_vadd_unpack(struct vaccel_session *sess,
 	}
 	float *a = (float *)read[0].buf;
 	float *b = (float *)read[1].buf;
-	size_t len_a = (size_t)read[0].size / sizeof(a[0]);
-	size_t len_b = (size_t)read[1].size / sizeof(b[0]);
+	size_t len_a = read[0].size / sizeof(a[0]);
+	size_t len_b = read[1].size / sizeof(b[0]);
 
 	float *c = (float *)write[0].buf;
 

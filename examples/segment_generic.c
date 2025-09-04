@@ -14,7 +14,7 @@ int main(int argc, char *argv[])
 	int ret;
 	char *image = NULL;
 	size_t image_size;
-	char out_imagename[STR_SIZE_MAX] = { '\0' };
+	unsigned char out_imagename[STR_SIZE_MAX] = { '\0' };
 	struct vaccel_session sess;
 	struct vaccel_resource model = { .id = 0 };
 	struct vaccel_prof_region segment_stats =
@@ -55,25 +55,46 @@ int main(int argc, char *argv[])
 	if (ret)
 		goto unregister_resource;
 
-	vaccel_op_type_t op_type = VACCEL_OP_IMAGE_SEGMENT;
-	struct vaccel_arg read[] = {
-		{ .size = sizeof(vaccel_op_type_t),
-		  .buf = &op_type,
-		  .argtype = 0 },
-		{ .size = image_size, .buf = image, .argtype = 0 }
-	};
-	struct vaccel_arg write[] = {
-		{ .size = sizeof(out_imagename),
-		  .buf = out_imagename,
-		  .argtype = 0 },
-	};
+	struct vaccel_arg_array read_args;
+	ret = vaccel_arg_array_init(&read_args, 2);
+	if (ret) {
+		fprintf(stderr, "Could not initialize read args array\n");
+		goto unregister_resource;
+	}
+
+	struct vaccel_arg_array write_args;
+	ret = vaccel_arg_array_init(&write_args, 1);
+	if (ret) {
+		fprintf(stderr, "Could not initialize write args array\n");
+		goto release_read_args_array;
+	}
+
+	const uint8_t op_type = (uint8_t)VACCEL_OP_IMAGE_SEGMENT;
+	ret = vaccel_arg_array_add_uint8(&read_args, (uint8_t *)&op_type);
+	if (ret) {
+		fprintf(stderr, "Failed to pack op_type arg\n");
+		goto release_write_args_array;
+	}
+	ret = vaccel_arg_array_add_buffer(&read_args, image, image_size);
+	if (ret) {
+		fprintf(stderr, "Failed to pack image arg\n");
+		goto release_write_args_array;
+	}
+
+	ret = vaccel_arg_array_add_uchar_array(
+		&write_args, out_imagename,
+		sizeof(out_imagename) / sizeof(out_imagename[0]));
+	if (ret) {
+		fprintf(stderr, "Failed to pack out_imagename arg\n");
+		goto release_write_args_array;
+	}
 
 	const int iter = (argc > 2) ? atoi(argv[2]) : 1;
 	for (int i = 0; i < iter; i++) {
 		vaccel_prof_region_start(&segment_stats);
 
-		ret = vaccel_genop(&sess, read, sizeof(read) / sizeof(read[0]),
-				   write, sizeof(write) / sizeof(write[0]));
+		ret = vaccel_genop(&sess, read_args.args, read_args.count,
+				   write_args.args, write_args.count);
 
 		vaccel_prof_region_stop(&segment_stats);
 
@@ -85,6 +106,12 @@ int main(int argc, char *argv[])
 		printf("segmentation imagename: %s\n", out_imagename);
 	}
 
+release_write_args_array:
+	if (vaccel_arg_array_release(&write_args))
+		fprintf(stderr, "Could not release write args array\n");
+release_read_args_array:
+	if (vaccel_arg_array_release(&read_args))
+		fprintf(stderr, "Could not release read args array\n");
 unregister_resource:
 	if (model.id > 0 && vaccel_resource_unregister(&model, &sess))
 		fprintf(stderr, "Could not unregister model from session\n");

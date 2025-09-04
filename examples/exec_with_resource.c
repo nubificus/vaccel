@@ -8,25 +8,25 @@
 #include <stdlib.h>
 #include <string.h>
 
-enum { INPUT_VAL = 10, ARGTYPE = 42 };
+enum { INPUT_VAL = 10 };
 
 int main(int argc, char *argv[])
 {
 	int ret;
-	struct vaccel_resource resource;
 	struct vaccel_prof_region mytestfunc_stats =
 		VACCEL_PROF_REGION_INIT("mytestfunc");
 
 	int input = INPUT_VAL;
-	int output1 = 0;
-	int output2 = 0;
+	int32_t output1 = 0;
+	int32_t output2 = 0;
 
 	if (argc < 2 || argc > 3) {
 		fprintf(stderr, "Usage: %s <lib_file> [iterations]\n", argv[0]);
 		return VACCEL_EINVAL;
 	}
 
-	ret = vaccel_resource_init(&resource, argv[1], VACCEL_RESOURCE_LIB);
+	struct vaccel_resource res1;
+	ret = vaccel_resource_init(&res1, argv[1], VACCEL_RESOURCE_LIB);
 	if (ret) {
 		fprintf(stderr, "Could not initialize lib resource: %s\n",
 			strerror(ret));
@@ -37,27 +37,27 @@ int main(int argc, char *argv[])
 	ret = vaccel_session_init(&sess, 0);
 	if (ret) {
 		fprintf(stderr, "Could not initialize session\n");
-		goto release_resource;
+		goto release_resource1;
 	}
 	printf("Initialized session with id: %" PRId64 "\n", sess.id);
 
-	ret = vaccel_resource_register(&resource, &sess);
+	ret = vaccel_resource_register(&res1, &sess);
 	if (ret) {
 		fprintf(stderr, "Could not register lib with session\n");
 		goto release_session;
 	}
 
-	struct vaccel_resource resource2;
+	struct vaccel_resource res2;
 	size_t len;
 	unsigned char *buff;
 	ret = fs_file_read(argv[1], (void **)&buff, &len);
 	if (ret) {
 		fprintf(stderr, "Could not read lib file\n");
-		goto unregister_resource;
+		goto unregister_resource1;
 	}
 
 	ret = vaccel_resource_init_from_buf(
-		&resource2, buff, len, VACCEL_RESOURCE_LIB, "lib.so", false);
+		&res2, buff, len, VACCEL_RESOURCE_LIB, "lib.so", false);
 	if (ret) {
 		fprintf(stderr,
 			"Could not initialize lib resource 2 from buffer: %s\n",
@@ -65,77 +65,105 @@ int main(int argc, char *argv[])
 		goto free_buff;
 	}
 
-	ret = vaccel_resource_register(&resource2, &sess);
+	ret = vaccel_resource_register(&res2, &sess);
 	if (ret) {
 		fprintf(stderr, "Could not register lib 2 with session\n");
 		goto release_resource2;
 	}
 
-	struct vaccel_arg read[] = {
-		{ .size = sizeof(input), .buf = &input, .argtype = ARGTYPE }
-	};
-	struct vaccel_arg write[] = {
-		{ .size = sizeof(output1), .buf = &output1, .argtype = ARGTYPE },
-	};
+	struct vaccel_arg_array read_args;
+	ret = vaccel_arg_array_init(&read_args, 1);
+	if (ret) {
+		fprintf(stderr, "Could not initialize read args array\n");
+		goto unregister_resource2;
+	}
+
+	struct vaccel_arg_array write_args;
+	ret = vaccel_arg_array_init(&write_args, 1);
+	if (ret) {
+		fprintf(stderr, "Could not initialize write args array\n");
+		goto release_read_args_array;
+	}
+
+	ret = vaccel_arg_array_add_int32(&read_args, &input);
+	if (ret) {
+		fprintf(stderr, "Failed to pack input arg\n");
+		goto release_write_args_array;
+	}
+
+	ret = vaccel_arg_array_add_int32(&write_args, &output1);
+	if (ret) {
+		fprintf(stderr, "Failed to pack output1 arg\n");
+		goto release_write_args_array;
+	}
 
 	const int iter = (argc > 2) ? atoi(argv[2]) : 1;
 	for (int i = 0; i < iter; i++) {
 		vaccel_prof_region_start(&mytestfunc_stats);
 
-		ret = vaccel_exec_with_resource(
-			&sess, &resource, "mytestfunc", read,
-			sizeof(read) / sizeof(read[0]), write,
-			sizeof(write) / sizeof(write[0]));
+		ret = vaccel_exec_with_resource(&sess, &res1, "mytestfunc",
+						read_args.args, read_args.count,
+						write_args.args,
+						write_args.count);
 
 		vaccel_prof_region_stop(&mytestfunc_stats);
 
 		if (ret) {
 			fprintf(stderr, "Could not run op: %d\n", ret);
-			goto unregister_resource2;
+			goto release_write_args_array;
 		}
 
-		printf("output1: %d\n", output1);
+		printf("output1: %" PRId32 "\n", output1);
 	}
 
-	struct vaccel_arg read_2[] = {
-		{ .size = sizeof(input), .buf = &input, .argtype = ARGTYPE }
-	};
-	struct vaccel_arg write_2[] = {
-		{ .size = sizeof(output2), .buf = &output2, .argtype = ARGTYPE },
-	};
+	vaccel_arg_array_clear(&write_args);
+
+	ret = vaccel_arg_array_add_int32(&write_args, &output2);
+	if (ret) {
+		fprintf(stderr, "Failed to pack output2 arg\n");
+		goto release_write_args_array;
+	}
 
 	for (int i = 0; i < iter; i++) {
 		vaccel_prof_region_start(&mytestfunc_stats);
 
-		ret = vaccel_exec_with_resource(&sess, &resource2, "mytestfunc",
-						read_2, 1, write_2, 1);
+		ret = vaccel_exec_with_resource(&sess, &res2, "mytestfunc",
+						read_args.args, read_args.count,
+						write_args.args,
+						write_args.count);
 
 		vaccel_prof_region_stop(&mytestfunc_stats);
 
 		if (ret) {
 			fprintf(stderr, "Could not run op: %d\n", ret);
-			goto unregister_resource2;
+			goto release_write_args_array;
 		}
 
-		printf("output2: %d\n", output2);
+		printf("output2: %" PRId32 "\n", output2);
 	}
 
+release_write_args_array:
+	if (vaccel_arg_array_release(&write_args))
+		fprintf(stderr, "Could not release write args array\n");
+release_read_args_array:
+	if (vaccel_arg_array_release(&read_args))
+		fprintf(stderr, "Could not release read args array\n");
 unregister_resource2:
-	if (vaccel_resource_unregister(&resource2, &sess))
+	if (vaccel_resource_unregister(&res2, &sess))
 		fprintf(stderr, "Could not unregister lib 2 from session\n");
 release_resource2:
-	if (vaccel_resource_release(&resource2))
+	if (vaccel_resource_release(&res2))
 		fprintf(stderr, "Could not release lib resource 2\n");
 free_buff:
 	free(buff);
-unregister_resource:
-	if (vaccel_resource_unregister(&resource, &sess))
+unregister_resource1:
+	if (vaccel_resource_unregister(&res1, &sess))
 		fprintf(stderr, "Could not unregister lib from session\n");
 release_session:
 	if (vaccel_session_release(&sess))
 		fprintf(stderr, "Could not release session\n");
-release_resource:
-	if (vaccel_resource_release(&resource))
+release_resource1:
+	if (vaccel_resource_release(&res1))
 		fprintf(stderr, "Could not release lib resource\n");
 
 	vaccel_prof_region_print(&mytestfunc_stats);

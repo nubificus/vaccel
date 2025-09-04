@@ -11,10 +11,9 @@ extern "C" {
 #endif
 
 /* Matrix-Matrix multiplication for single-precision */
-int vaccel_sgemm(struct vaccel_session *sess, long long int m, long long int n,
-		 long long int k, float alpha, float *a, long long int lda,
-		 float *b, long long int ldb, float beta, float *c,
-		 long long int ldc);
+int vaccel_sgemm(struct vaccel_session *sess, int64_t m, int64_t n, int64_t k,
+		 float alpha, float *a, int64_t lda, float *b, int64_t ldb,
+		 float beta, float *c, int64_t ldc);
 
 #ifdef __cplusplus
 }

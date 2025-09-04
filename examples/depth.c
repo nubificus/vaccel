@@ -14,7 +14,7 @@ int main(int argc, char *argv[])
 	int ret;
 	char *image = NULL;
 	size_t image_size;
-	char out_imagename[STR_SIZE_MAX] = { '\0' };
+	unsigned char out_imagename[STR_SIZE_MAX] = { '\0' };
 	struct vaccel_session sess;
 	struct vaccel_resource model = { .id = 0 };
 	struct vaccel_prof_region depth_stats =
@@ -59,8 +59,7 @@ int main(int argc, char *argv[])
 	for (int i = 0; i < iter; i++) {
 		vaccel_prof_region_start(&depth_stats);
 
-		ret = vaccel_image_depth(&sess, image,
-					 (unsigned char *)out_imagename,
+		ret = vaccel_image_depth(&sess, image, out_imagename,
 					 image_size, sizeof(out_imagename));
 
 		vaccel_prof_region_stop(&depth_stats);

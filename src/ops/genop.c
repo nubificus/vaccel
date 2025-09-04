@@ -3,16 +3,17 @@
 #include "genop.h"
 #include "arg.h"
 #include "blas.h"
+#include "error.h"
 #include "exec.h"
 #include "fpga.h"
 #include "image.h"
+#include "log.h"
 #include "minmax.h"
 #include "noop.h"
 #include "op.h"
 #include "opencv.h"
-#include <error.h>
-#include <log.h>
-#include <session.h>
+#include "session.h"
+#include <stdint.h>
 
 typedef int (*unpack_func_t)(struct vaccel_session *sess,
 			     struct vaccel_arg *read, int nr_read,
@@ -44,17 +45,31 @@ int vaccel_genop(struct vaccel_session *sess, struct vaccel_arg *read,
 		return VACCEL_EINVAL;
 	}
 
-	vaccel_op_type_t *op = (vaccel_op_type_t *)read[0].buf;
-	if (!op || *op >= VACCEL_OP_MAX) {
+	struct vaccel_arg_array read_args;
+	int ret = vaccel_arg_array_wrap(&read_args, read, nr_read);
+	if (ret) {
+		vaccel_error("Failed to parse genop read args");
+		return VACCEL_EINVAL;
+	}
+
+	uint8_t u_op_type;
+	ret = vaccel_arg_array_get_uint8(&read_args, &u_op_type);
+	if (ret) {
+		vaccel_error("Failed to unpack operation type for genop");
+		return VACCEL_EINVAL;
+	}
+
+	vaccel_op_type_t op_type = (vaccel_op_type_t)u_op_type;
+	if (!op_type || op_type >= VACCEL_OP_MAX) {
 		vaccel_error("Invalid operation type");
 		return VACCEL_EINVAL;
 	}
 
-	if (!callbacks[*op]) {
+	if (!callbacks[op_type]) {
 		vaccel_error("Operation not implemented for %s",
-			     vaccel_op_type_to_str(*op));
+			     vaccel_op_type_to_str(op_type));
 		return VACCEL_ENOTSUP;
 	}
 
-	return callbacks[*op](sess, &read[1], nr_read - 1, write, nr_write);
+	return callbacks[op_type](sess, &read[1], nr_read - 1, write, nr_write);
 }

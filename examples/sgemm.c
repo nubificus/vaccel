@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "vaccel.h"
+#include <inttypes.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -10,19 +12,18 @@
 
 enum { M = 512, N = 512, K = 512 };
 
-void init(long long int m, long long int n, long long int k, float *A, float *B,
-	  float *C)
+void init(int64_t m, int64_t n, int64_t k, float *A, float *B, float *C)
 {
-	for (long long int i = 0; i < m; ++i)
-		for (long long int j = 0; j < k; ++j)
+	for (int64_t i = 0; i < m; ++i)
+		for (int64_t j = 0; j < k; ++j)
 			ELEM_2D(A, i, j, k) = ((float)i * (float)j) / (float)m;
 
-	for (long long int i = 0; i < k; ++i)
-		for (long long int j = 0; j < n; ++j)
+	for (int64_t i = 0; i < k; ++i)
+		for (int64_t j = 0; j < n; ++j)
 			ELEM_2D(B, i, j, n) = ((float)i * (float)j) / (float)m;
 
-	for (long long int i = 0; i < m; ++i)
-		for (long long int j = 0; j < n; ++j)
+	for (int64_t i = 0; i < m; ++i)
+		for (int64_t j = 0; j < n; ++j)
 			ELEM_2D(C, i, j, n) = ((float)i * (float)j) / (float)m;
 }
 
@@ -39,7 +40,7 @@ int main(int argc, char *argv[])
 
 	init(M, N, K, a, b, c);
 
-	struct vaccel_session session;
+	struct vaccel_session sess;
 	struct vaccel_prof_region sgemm_stats =
 		VACCEL_PROF_REGION_INIT("sgemm");
 
@@ -48,18 +49,20 @@ int main(int argc, char *argv[])
 		return VACCEL_EINVAL;
 	}
 
-	ret = vaccel_session_init(&session, 0);
+	ret = vaccel_session_init(&sess, 0);
 	if (ret) {
 		fprintf(stderr, "Could not initialize session\n");
 		goto out_close;
 	}
 
+	printf("Initialized session with id: %" PRId64 "\n", sess.id);
+
 	const int iter = (argc > 1) ? atoi(argv[1]) : 1;
 	for (int i = 0; i < iter; i++) {
 		vaccel_prof_region_start(&sgemm_stats);
 
-		ret = vaccel_sgemm(&session, M, N, K, alpha, a, K, b, N, beta,
-				   c, N);
+		ret = vaccel_sgemm(&sess, M, N, K, alpha, a, K, b, N, beta, c,
+				   N);
 
 		vaccel_prof_region_stop(&sgemm_stats);
 
@@ -81,7 +84,7 @@ int main(int argc, char *argv[])
 	}
 
 release_session:
-	if (vaccel_session_release(&session))
+	if (vaccel_session_release(&sess))
 		fprintf(stderr, "Could not release session\n");
 out_close:
 	if (data_fp)
