@@ -22,7 +22,7 @@ jobs:
     runs-on: [base-dind-2204-amd64]
     steps:
       - name: Checkout .github directory
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           sparse-checkout: .github
           repository: ${{ inputs.actions-repo }}
@@ -45,7 +45,7 @@ jobs:
     runs-on: [base-dind-2204-amd64]
     steps:
       - name: Checkout .github directory
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           sparse-checkout: .github
           repository: ${{ inputs.actions-repo }}
@@ -68,7 +68,7 @@ jobs:
     runs-on: [base-dind-2204-amd64]
     steps:
       - name: Checkout .github directory
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           sparse-checkout: .github
           repository: ${{ inputs.actions-repo }}

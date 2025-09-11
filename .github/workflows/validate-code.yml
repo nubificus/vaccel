@@ -56,7 +56,7 @@ jobs:
       DOWNLOAD_PATH: ${{github.workspace}}/artifacts/downloads/${{fromJson(inputs.runner-arch-map)[0][matrix.arch]}}/${{matrix.build-type}}
     steps:
       - name: Checkout .github directory
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           sparse-checkout: .github
           repository: ${{ inputs.actions-repo }}
@@ -125,7 +125,7 @@ jobs:
       DOWNLOAD_PATH: ${{github.workspace}}/artifacts/downloads/${{fromJson(inputs.runner-arch-map)[0][matrix.arch]}}/${{matrix.build-type}}
     steps:
       - name: Checkout .github directory
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           sparse-checkout: .github
           repository: ${{ inputs.actions-repo }}
@@ -202,7 +202,7 @@ jobs:
       statuses: write
     steps:
       - name: Checkout .github directory
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           sparse-checkout: .github
           repository: ${{ inputs.actions-repo }}
