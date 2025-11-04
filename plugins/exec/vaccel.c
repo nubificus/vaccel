@@ -32,7 +32,7 @@ static int get_dlopen_mode(void)
 	return RTLD_NOW;
 }
 
-static bool get_dlclose_enabled(void)
+static bool get_dlclose_enabled(bool default_value)
 {
 	const char *close_env = getenv(DLCLOSE_ENABLED_ENV);
 	const char *close_old_env = getenv(DLCLOSE_ENABLED_OLD_ENV);
@@ -44,11 +44,21 @@ static bool get_dlclose_enabled(void)
 		dlclose_enabled_env = close_old_env;
 	}
 
-	if (dlclose_enabled_env &&
-	    (strcmp(dlclose_enabled_env, "1") == 0 ||
-	     strcasecmp(dlclose_enabled_env, "true") == 0))
+	if (!dlclose_enabled_env)
+		return default_value;
+
+	if (strcmp(dlclose_enabled_env, "0") == 0 ||
+	    strcasecmp(dlclose_enabled_env, "false") == 0)
+		return false;
+
+	if (strcmp(dlclose_enabled_env, "1") == 0 ||
+	    strcasecmp(dlclose_enabled_env, "true") == 0)
 		return true;
-	return false;
+
+	vaccel_warn("Invalid value '%s' for %s. Using default: %s",
+		    dlclose_enabled_env, DLCLOSE_ENABLED_ENV,
+		    default_value ? "true" : "false");
+	return default_value;
 }
 
 static int noop(struct vaccel_session *session)
@@ -103,8 +113,8 @@ static int exec(struct vaccel_session *session, const char *library,
 	if (ret)
 		return VACCEL_ENOEXEC;
 
-	/* Unload libraries if chosen */
-	if (get_dlclose_enabled()) {
+	/* Unload libraries if enabled (disabled by default) */
+	if (get_dlclose_enabled(false)) {
 		if (dlclose(dl)) {
 			exec_error("dlclose: %s", dlerror());
 			return VACCEL_EINVAL;
@@ -130,33 +140,47 @@ static int exec_with_resource(struct vaccel_session *session,
 	}
 	exec_res_debug("Number of libraries: %zu", resource->nr_blobs);
 
-	/* Allocate array for dl handles */
-	void **dl = (void **)malloc(sizeof(*dl) * resource->nr_blobs);
-	if (!dl)
-		return VACCEL_ENOMEM;
-
-	/* Load dependency libraries if any */
-	int dlopen_mode = get_dlopen_mode();
+	void **dl = NULL;
+	void *ldl = NULL;
 	size_t nr_deps = resource->nr_blobs - 1;
-	for (size_t i = 0; i < nr_deps; i++) {
-		char *dep_library = resource->blobs[i]->path;
-		dl[i] = dlopen(dep_library, dlopen_mode | RTLD_GLOBAL);
-		if (!dl[i]) {
-			exec_res_error("dlopen %s: %s", dep_library, dlerror());
-			ret = VACCEL_EINVAL;
-			goto free;
-		}
-	}
-
-	/* Load main library */
 	char *library = resource->blobs[nr_deps]->path;
-	exec_res_debug("Library: %s", library);
-	dl[nr_deps] = dlopen(library, dlopen_mode);
-	void *ldl = dl[nr_deps];
-	if (!ldl) {
-		exec_res_error("dlopen %s: %s", library, dlerror());
-		ret = VACCEL_EINVAL;
-		goto free;
+	if (!resource->plugin_priv) {
+		/* Allocate array for dl handles */
+		dl = (void **)malloc(sizeof(*dl) * resource->nr_blobs);
+		if (!dl)
+			return VACCEL_ENOMEM;
+
+		/* Load dependency libraries if any */
+		int dlopen_mode = get_dlopen_mode();
+		for (size_t i = 0; i < nr_deps; i++) {
+			char *dep_library = resource->blobs[i]->path;
+			dl[i] = dlopen(dep_library, dlopen_mode | RTLD_GLOBAL);
+			if (!dl[i]) {
+				exec_res_error("dlopen %s: %s", dep_library,
+					       dlerror());
+				free(dl);
+				return VACCEL_EINVAL;
+			}
+		}
+
+		/* Load main library */
+		exec_res_debug("Library: %s", library);
+		dl[nr_deps] = dlopen(library, dlopen_mode);
+		ldl = dl[nr_deps];
+		if (!ldl) {
+			exec_res_error("dlopen %s: %s", library, dlerror());
+			free(dl);
+			return VACCEL_EINVAL;
+		}
+
+		resource->plugin_priv = (void *)dl;
+	} else {
+		dl = (void **)resource->plugin_priv;
+		ldl = dl[nr_deps];
+		if (!ldl) {
+			exec_res_error("Invalid dlopen handle for %s", library);
+			return VACCEL_EINVAL;
+		}
 	}
 
 	/* Get the function pointer based on the relevant symbol */
@@ -165,8 +189,7 @@ static int exec_with_resource(struct vaccel_session *session,
 		(int (*)(void *, size_t, void *, size_t))dlsym(ldl, fn_symbol);
 	if (!fptr) {
 		exec_res_error("dlsym: %s", dlerror());
-		ret = VACCEL_EINVAL;
-		goto free;
+		return VACCEL_EINVAL;
 	}
 
 	char type_name[VACCEL_ENUM_STR_MAX];
@@ -187,28 +210,34 @@ static int exec_with_resource(struct vaccel_session *session,
 
 	/* Execute the operation */
 	ret = (*fptr)(read, nr_read, write, nr_write);
+	return !ret ? VACCEL_OK : VACCEL_ENOEXEC;
+}
 
-	/* Unload libraries if chosen */
-	if (get_dlclose_enabled()) {
-		for (size_t i = resource->nr_blobs; i > 0; i--) {
-			char *dep_library = resource->blobs[i - 1]->path;
-			if (dlclose(dl[i - 1])) {
-				exec_res_error("dlclose %s: %s", dep_library,
-					       dlerror());
-				ret = VACCEL_EINVAL;
-				goto free;
-			}
+static int resource_unregister(struct vaccel_resource *res,
+			       struct vaccel_session *sess)
+{
+	(void)sess;
+
+	if (res->type != VACCEL_RESOURCE_LIB || !res->plugin_priv ||
+	    !get_dlclose_enabled(true))
+		return VACCEL_OK;
+
+	/* Unload libraries if enabled (enabled by default) */
+	int ret = VACCEL_OK;
+	void **dl = (void **)res->plugin_priv;
+	for (size_t i = res->nr_blobs; i > 0; i--) {
+		char *dep_library = res->blobs[i - 1]->path;
+		if (dlclose(dl[i - 1])) {
+			exec_res_error("dlclose %s: %s", dep_library,
+				       dlerror());
+			ret = VACCEL_EINVAL;
+			goto free;
 		}
 	}
 
-	if (ret)
-		ret = VACCEL_ENOEXEC;
-	else
-		ret = VACCEL_OK;
-
 free:
 	free(dl);
-
+	res->plugin_priv = NULL;
 	return ret;
 }
 
@@ -233,4 +262,5 @@ VACCEL_PLUGIN(.name = "exec", .version = VACCEL_VERSION,
 	      .vaccel_version = VACCEL_VERSION,
 	      .type = VACCEL_PLUGIN_SOFTWARE | VACCEL_PLUGIN_GENERIC |
 		      VACCEL_PLUGIN_CPU,
-	      .init = init, .fini = fini)
+	      .init = init, .fini = fini,
+	      .resource_unregister = resource_unregister)
