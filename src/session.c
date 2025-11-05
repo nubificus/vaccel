@@ -518,9 +518,12 @@ int vaccel_sess_init(struct vaccel_session *sess, uint32_t flags)
 
 int vaccel_sess_update(struct vaccel_session *sess, uint32_t flags)
 {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 	vaccel_warn("%s%s", "vaccel_sess_update() is deprecated. ",
 		    "Please use vaccel_session_update() instead.");
 	return vaccel_session_update(sess, flags);
+#pragma GCC diagnostic pop
 }
 
 int vaccel_sess_free(struct vaccel_session *sess)
