@@ -58,9 +58,6 @@ int vaccel_session_get_by_id(struct vaccel_session **sess, vaccel_id_t id);
 /* Initialize session */
 int vaccel_session_init(struct vaccel_session *sess, uint32_t flags);
 
-/* Update session with new flags */
-int vaccel_session_update(struct vaccel_session *sess, uint32_t flags);
-
 /* Release session data */
 int vaccel_session_release(struct vaccel_session *sess);
 
@@ -91,7 +88,15 @@ int vaccel_session_resources_by_type(struct vaccel_session *sess,
 				     size_t *nr_found,
 				     vaccel_resource_type_t type);
 
-/* Deprecated. To be removed. */
+/*
+ * Deprecated. To be removed.
+ */
+
+/* Update session with new flags */
+__attribute__((
+	deprecated("The function will be removed in a future release"))) int
+vaccel_session_update(struct vaccel_session *sess, uint32_t flags);
+
 int vaccel_sess_init(struct vaccel_session *sess, uint32_t flags);
 int vaccel_sess_update(struct vaccel_session *sess, uint32_t flags);
 int vaccel_sess_free(struct vaccel_session *sess);
