@@ -69,6 +69,9 @@ static int noop(struct vaccel_session *session)
 	return VACCEL_OK;
 }
 
+typedef int (*unpack_fn_t)(struct vaccel_arg *read, size_t nr_read,
+			   struct vaccel_arg *write, size_t nr_write);
+
 static int exec(struct vaccel_session *session, const char *library,
 		const char *fn_symbol, void *read, size_t nr_read, void *write,
 		size_t nr_write)
@@ -83,13 +86,12 @@ static int exec(struct vaccel_session *session, const char *library,
 		return VACCEL_EINVAL;
 	}
 
-	/* Get the function pointer based on the relevant symbol */
+	/* Get the function pointer for the specified symbol */
 	exec_debug("Symbol: %s", fn_symbol);
-	int (*fptr)(void *, size_t, void *, size_t) =
-		(int (*)(void *, size_t, void *, size_t))dlsym(dl, fn_symbol);
-	if (!fptr) {
+	unpack_fn_t unpack = dlsym(dl, fn_symbol);
+	if (!unpack) {
 		exec_error("dlsym: %s", dlerror());
-		return VACCEL_EINVAL;
+		return VACCEL_ENOSYS;
 	}
 
 	char type_name[VACCEL_ENUM_STR_MAX];
@@ -109,9 +111,9 @@ static int exec(struct vaccel_session *session, const char *library,
 	}
 
 	/* Execute the operation */
-	int ret = (*fptr)(read, nr_read, write, nr_write);
+	int ret = unpack(read, nr_read, write, nr_write);
 	if (ret)
-		return VACCEL_ENOEXEC;
+		return VACCEL_EBACKEND;
 
 	/* Unload libraries if enabled (disabled by default) */
 	if (get_dlclose_enabled(false)) {
@@ -183,13 +185,12 @@ static int exec_with_resource(struct vaccel_session *session,
 		}
 	}
 
-	/* Get the function pointer based on the relevant symbol */
+	/* Get the function pointer for the specified symbol */
 	exec_res_debug("Symbol: %s", fn_symbol);
-	int (*fptr)(void *, size_t, void *, size_t) =
-		(int (*)(void *, size_t, void *, size_t))dlsym(ldl, fn_symbol);
-	if (!fptr) {
+	unpack_fn_t unpack = dlsym(ldl, fn_symbol);
+	if (!unpack) {
 		exec_res_error("dlsym: %s", dlerror());
-		return VACCEL_EINVAL;
+		return VACCEL_ENOSYS;
 	}
 
 	char type_name[VACCEL_ENUM_STR_MAX];
@@ -209,8 +210,8 @@ static int exec_with_resource(struct vaccel_session *session,
 	}
 
 	/* Execute the operation */
-	ret = (*fptr)(read, nr_read, write, nr_write);
-	return !ret ? VACCEL_OK : VACCEL_ENOEXEC;
+	ret = unpack(read, nr_read, write, nr_write);
+	return !ret ? VACCEL_OK : VACCEL_EBACKEND;
 }
 
 static int resource_unregister(struct vaccel_resource *res,
