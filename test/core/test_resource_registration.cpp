@@ -17,7 +17,7 @@
 #include "utils.hpp"
 #include "vaccel.h"
 #include <atomic>
-#include <catch.hpp>
+#include <catch2/catch_test_macros.hpp>
 #include <cerrno>
 #include <cinttypes>
 #include <cstdio>

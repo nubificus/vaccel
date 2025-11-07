@@ -20,17 +20,14 @@
 
 #include "utils.hpp"
 #include "vaccel.h"
-#include <catch.hpp>
+#include <catch2/catch_test_macros.hpp>
 #include <cerrno>
 #include <cinttypes>
 #include <cstdio>
 #include <cstdlib>
-#include <fff.h>
 #include <mock_virtio.hpp>
 #include <pthread.h>
 #include <unistd.h>
-
-DEFINE_FFF_GLOBALS;
 
 TEST_CASE("vaccel_session_init", "[core][session]")
 {

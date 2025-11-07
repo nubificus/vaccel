@@ -1,0 +1,7 @@
+[wrap-git]
+url = https://github.com/meekrosoft/fff
+revision = v1.1
+patch_directory = fff
+
+[provide]
+fff = fff_dep

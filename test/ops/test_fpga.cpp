@@ -13,7 +13,7 @@
 
 #include "vaccel.h"
 #include <algorithm>
-#include <catch.hpp>
+#include <catch2/catch_test_macros.hpp>
 #include <cstddef>
 #include <cstdlib>
 #include <iostream>
@@ -47,12 +47,7 @@ TEST_CASE("fpga_add", "[ops][fpga]")
 
 	SECTION("valid session and inputs")
 	{
-		ret = vaccel_session_init(&sess, 0);
-		REQUIRE(ret == VACCEL_OK);
-		REQUIRE(sess.id);
-		REQUIRE(sess.hint == 0);
-		REQUIRE(sess.resources);
-		REQUIRE(sess.priv == nullptr);
+		REQUIRE(vaccel_session_init(&sess, 0) == VACCEL_OK);
 
 		ret = vaccel_fpga_vadd(&sess, A, B, C, len_A, len_B);
 		float C_expected[] = { 2, 4, 9, 8, 10 };
@@ -88,12 +83,8 @@ TEST_CASE("fpga_copy", "[ops][fpga]")
 
 	SECTION("valid session and inputs")
 	{
-		ret = vaccel_session_init(&sess, 0);
-		REQUIRE(ret == VACCEL_OK);
-		REQUIRE(sess.id);
-		REQUIRE(sess.hint == 0);
-		REQUIRE(sess.resources);
-		REQUIRE(sess.priv == nullptr);
+		REQUIRE(vaccel_session_init(&sess, 0) == VACCEL_OK);
+
 		ret = vaccel_fpga_arraycopy(&sess, A, B, len_A);
 		float B_expected[] = { 1, 2, 3, 4, 5 };
 
@@ -123,12 +114,7 @@ TEST_CASE("fpga_mmult", "[ops][fpga]")
 
 	SECTION("valid session and inputs")
 	{
-		ret = vaccel_session_init(&sess, 0);
-		REQUIRE(ret == VACCEL_OK);
-		REQUIRE(sess.id);
-		REQUIRE(sess.hint == 0);
-		REQUIRE(sess.resources);
-		REQUIRE(sess.priv == nullptr);
+		REQUIRE(vaccel_session_init(&sess, 0) == VACCEL_OK);
 
 		ret = vaccel_fpga_mmult(&sess, a, b, c, len_c);
 		float C_expected[] = { 9.1, 9.1, 9.1, 9.1, 9.1 };

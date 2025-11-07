@@ -20,7 +20,7 @@
 
 #include "utils.hpp"
 #include "vaccel.h"
-#include <catch.hpp>
+#include <catch2/catch_test_macros.hpp>
 #include <cerrno>
 #include <cstdint>
 #include <cstdio>
@@ -177,6 +177,8 @@ TEST_CASE("plugin_register", "[core][plugin]")
 	struct vaccel_plugin *plugin = mock_plugin_new();
 	REQUIRE(plugin != nullptr);
 
+	REQUIRE(plugins_cleanup() == VACCEL_OK);
+
 	SECTION("not_bootstrapped_yet")
 	{
 		ret = plugin_register(plugin);
@@ -239,7 +241,6 @@ TEST_CASE("plugin_register", "[core][plugin]")
 		REQUIRE(ret == VACCEL_EINVAL);
 	}
 
-	REQUIRE(plugins_cleanup() == VACCEL_OK);
 	mock_plugin_delete(plugin);
 }
 
@@ -262,12 +263,12 @@ TEST_CASE("plugin_register_vaccel_versions", "[core][plugin]")
 	vaccel_version = (char *)calloc(1, vaccel_version_size);
 	REQUIRE(vaccel_version);
 
-	REQUIRE(plugins_bootstrap() == VACCEL_OK);
-
 	SECTION("same_version")
 	{
 		ret = plugin_register(plugin);
 		REQUIRE(ret == VACCEL_OK);
+
+		REQUIRE(plugin_unregister(plugin) == VACCEL_OK);
 	}
 
 	plugin->info->vaccel_version = vaccel_version;
@@ -278,6 +279,8 @@ TEST_CASE("plugin_register_vaccel_versions", "[core][plugin]")
 			 major, minor1, minor2, extra);
 		ret = plugin_register(plugin);
 		REQUIRE(ret == VACCEL_OK);
+
+		REQUIRE(plugin_unregister(plugin) == VACCEL_OK);
 	}
 
 	SECTION("no_extra_version")
@@ -286,6 +289,8 @@ TEST_CASE("plugin_register_vaccel_versions", "[core][plugin]")
 			 major, minor1, minor2);
 		ret = plugin_register(plugin);
 		REQUIRE(ret == VACCEL_OK);
+
+		REQUIRE(plugin_unregister(plugin) == VACCEL_OK);
 	}
 
 	SECTION("different_major_version")
@@ -302,6 +307,8 @@ TEST_CASE("plugin_register_vaccel_versions", "[core][plugin]")
 			 major, minor1 + 1, minor2, extra);
 		ret = plugin_register(plugin);
 		REQUIRE(ret == VACCEL_OK);
+
+		REQUIRE(plugin_unregister(plugin) == VACCEL_OK);
 	}
 
 	SECTION("different_minor2_version")
@@ -310,6 +317,8 @@ TEST_CASE("plugin_register_vaccel_versions", "[core][plugin]")
 			 major, minor1, minor2 + 1, extra);
 		ret = plugin_register(plugin);
 		REQUIRE(ret == VACCEL_OK);
+
+		REQUIRE(plugin_unregister(plugin) == VACCEL_OK);
 	}
 
 	SECTION("different_extra_version")
@@ -318,6 +327,8 @@ TEST_CASE("plugin_register_vaccel_versions", "[core][plugin]")
 			 major, minor1, minor2 + 1, "-extra");
 		ret = plugin_register(plugin);
 		REQUIRE(ret == VACCEL_OK);
+
+		REQUIRE(plugin_unregister(plugin) == VACCEL_OK);
 	}
 
 	SECTION("wrong_format_version")
@@ -342,9 +353,8 @@ TEST_CASE("plugin_register_vaccel_versions", "[core][plugin]")
 		REQUIRE(ret == VACCEL_OK);
 
 		config->version_ignore = false;
+		REQUIRE(plugin_unregister(plugin) == VACCEL_OK);
 	}
-
-	REQUIRE(plugins_cleanup() == VACCEL_OK);
 
 	mock_plugin_delete(plugin);
 	free(vaccel_version);
@@ -356,6 +366,8 @@ TEST_CASE("plugin_unregister", "[core][plugin]")
 	int ret;
 	struct vaccel_plugin *plugin = mock_plugin_new();
 	REQUIRE(plugin != nullptr);
+
+	REQUIRE(plugins_cleanup() == VACCEL_OK);
 
 	SECTION("not_bootstrapped_yet")
 	{
@@ -395,7 +407,6 @@ TEST_CASE("plugin_unregister", "[core][plugin]")
 
 	REQUIRE(plugin_count() == 0);
 
-	REQUIRE(plugins_cleanup() == VACCEL_OK);
 	mock_plugin_delete(plugin);
 }
 
@@ -405,7 +416,6 @@ TEST_CASE("vaccel_plugin_register_ops", "[core][plugin]")
 	struct vaccel_plugin *plugin = mock_plugin_new();
 	REQUIRE(plugin != nullptr);
 
-	REQUIRE(plugins_bootstrap() == VACCEL_OK);
 	REQUIRE(plugin_register(plugin) == VACCEL_OK);
 
 	vaccel_op op1 = { .type = VACCEL_OP_NOOP,
@@ -445,7 +455,6 @@ TEST_CASE("vaccel_plugin_register_ops", "[core][plugin]")
 	REQUIRE(ret == VACCEL_OK);
 
 	REQUIRE(plugin_unregister(plugin) == VACCEL_OK);
-	REQUIRE(plugins_cleanup() == VACCEL_OK);
 	mock_plugin_delete(plugin);
 }
 
@@ -459,8 +468,6 @@ TEST_CASE("plugin_find", "[core][plugin]")
 	struct vaccel_plugin *virtio_plugin = mock_plugin_new();
 	REQUIRE(virtio_plugin != nullptr);
 	virtio_plugin->info->is_virtio = true;
-
-	REQUIRE(plugins_bootstrap() == VACCEL_OK);
 
 	SECTION("not_registered")
 	{
@@ -494,7 +501,6 @@ TEST_CASE("plugin_find", "[core][plugin]")
 
 	REQUIRE(plugin_unregister(accel_plugin) == VACCEL_OK);
 	REQUIRE(plugin_unregister(virtio_plugin) == VACCEL_OK);
-	REQUIRE(plugins_cleanup() == VACCEL_OK);
 
 	mock_plugin_delete(accel_plugin);
 	mock_plugin_delete(virtio_plugin);
@@ -507,7 +513,6 @@ TEST_CASE("plugin_get_op_func", "[core][plugin]")
 	struct vaccel_plugin *plugin = mock_plugin_new();
 	REQUIRE(plugin != nullptr);
 
-	REQUIRE(plugins_bootstrap() == VACCEL_OK);
 	REQUIRE(plugin_register(plugin) == VACCEL_OK);
 
 	SECTION("operation_not_registered")
@@ -548,7 +553,6 @@ TEST_CASE("plugin_get_op_func", "[core][plugin]")
 	REQUIRE(ret == 2);
 
 	REQUIRE(plugin_unregister(plugin) == VACCEL_OK);
-	REQUIRE(plugins_cleanup() == VACCEL_OK);
 	mock_plugin_delete(plugin);
 }
 
@@ -560,6 +564,8 @@ TEST_CASE("vaccel_plugin_load", "[core][plugin]")
 	char *lib_path = abs_path(BUILD_ROOT, "examples/libmytestlib.so");
 
 	REQUIRE(fs_path_is_file(plugin_noop_path));
+
+	REQUIRE(plugins_cleanup() == VACCEL_OK);
 
 	SECTION("plugins_not_initialized")
 	{
@@ -600,7 +606,9 @@ TEST_CASE("vaccel_plugin_load", "[core][plugin]")
 		REQUIRE(strcmp(plugin->info->name, "noop") == 0);
 	}
 
+	/* Clean up loaded plugins for other tests */
 	REQUIRE(plugins_cleanup() == VACCEL_OK);
+	REQUIRE(plugins_bootstrap() == VACCEL_OK);
 
 	free(plugin_noop_path);
 	free(lib_path);
@@ -618,8 +626,6 @@ TEST_CASE("vaccel_plugin_load_and_exec_func", "[core][plugin]")
 
 	REQUIRE(fs_path_is_file(plugin_noop_path));
 	REQUIRE(fs_path_is_file(plugin_exec_path));
-
-	REQUIRE(plugins_bootstrap() == VACCEL_OK);
 
 	struct vaccel_arg_array read_args;
 	struct vaccel_arg_array write_args;
@@ -660,10 +666,14 @@ TEST_CASE("vaccel_plugin_load_and_exec_func", "[core][plugin]")
 	REQUIRE(output == (2 * input));
 
 	REQUIRE(vaccel_session_release(&session) == VACCEL_OK);
-	REQUIRE(plugins_cleanup() == VACCEL_OK);
 
 	REQUIRE(vaccel_arg_array_release(&read_args) == VACCEL_OK);
 	REQUIRE(vaccel_arg_array_release(&write_args) == VACCEL_OK);
+
+	/* Clean up loaded plugins for other tests */
+	REQUIRE(plugins_cleanup() == VACCEL_OK);
+	REQUIRE(plugins_bootstrap() == VACCEL_OK);
+
 	free(plugin_exec_path);
 	free(plugin_noop_path);
 	free(lib_path);
@@ -718,7 +728,9 @@ TEST_CASE("vaccel_plugin_parse_and_load", "[core][plugin]")
 		free(plugin_paths);
 	}
 
+	/* Clean up loaded plugins for other tests */
 	REQUIRE(plugins_cleanup() == VACCEL_OK);
+	REQUIRE(plugins_bootstrap() == VACCEL_OK);
 
 	free(plugin_exec_path);
 	free(plugin_noop_path);
@@ -768,8 +780,6 @@ TEST_CASE("resource_init_find_and_release_concurrent", "[core][resource]")
 		REQUIRE(plugin != nullptr);
 	}
 
-	REQUIRE(plugins_bootstrap() == VACCEL_OK);
-
 	for (size_t i = 0; i < TEST_THREADS_NUM; i++) {
 		thread_data[i].id = i;
 		thread_data[i].plugin = plugins[i];
@@ -779,8 +789,6 @@ TEST_CASE("resource_init_find_and_release_concurrent", "[core][resource]")
 
 	for (unsigned long const thread : threads)
 		pthread_join(thread, nullptr);
-
-	REQUIRE(plugins_cleanup() == VACCEL_OK);
 
 	for (auto &plugin : plugins)
 		mock_plugin_delete(plugin);

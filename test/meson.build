@@ -14,11 +14,13 @@ utils_hpp = configure_file(input : 'utils.hpp.in',
   output : 'utils.hpp',
   configuration : conf)
 
-tests_includes = include_directories('.', 'fff', 'catch2')
+tests_includes = include_directories('.')
 
 subdir('core')
 subdir('ops')
 subdir('utils')
+
+tests_deps = [libvaccel_internal_dep, catch2_dep, fff_dep]
 
 tests_cpp_args = vaccel_cpp_args + [
   '-DCATCH_CONFIG_FAST_COMPILE',
@@ -52,7 +54,7 @@ libtests_main = library('tests-main',
   ['main.cpp', 'utils.cpp', utils_hpp, 'mock_virtio.cpp', 'mock_virtio.hpp'],
   cpp_args : tests_cpp_args,
   include_directories : tests_includes,
-  dependencies : libvaccel_internal_dep,
+  dependencies : tests_deps,
   install : false)
 
 foreach t : tests_core_sources + tests_utils_sources
@@ -67,7 +69,7 @@ foreach t : tests_core_sources + tests_utils_sources
     sources : sources,
     cpp_args : tests_cpp_args,
     include_directories : [tests_includes, examples_includes],
-    dependencies : libvaccel_internal_dep,
+    dependencies : tests_deps,
     link_with : libtests_main,
     install : false)
 
@@ -90,7 +92,7 @@ foreach t : tests_core_w_plugin_sources + tests_ops_sources
     sources : t,
     cpp_args : tests_cpp_args,
     include_directories : tests_includes,
-    dependencies : libvaccel_internal_dep,
+    dependencies : tests_deps,
     link_with : libtests_main,
     install : false)
 
