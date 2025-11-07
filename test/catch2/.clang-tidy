@@ -1,3 +1,0 @@
----
-Checks:         '-*,clang-diagnostic-*,clang-analyzer-*,-clang-diagnostic-pragma-system-header-outside-header'
-InheritParentConfig: true

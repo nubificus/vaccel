@@ -17,9 +17,10 @@
 
 #include "utils.hpp"
 #include "vaccel.h"
-#include <catch.hpp>
+#include <catch2/catch_test_macros.hpp>
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
 
 TEST_CASE("classify", "[ops][image]")
 {
@@ -40,11 +41,10 @@ TEST_CASE("classify", "[ops][image]")
 		(unsigned char *)out_imagename, image_size, sizeof(out_text),
 		sizeof(out_imagename));
 	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(out_text);
-	REQUIRE(out_imagename);
-
-	printf("classification imagename: %s\n", out_imagename);
-	printf("classification tags: %s\n", out_text);
+	REQUIRE(strcmp((const char *)out_text,
+		       "This is a dummy classification tag!") == 0);
+	REQUIRE(strcmp((const char *)out_imagename,
+		       "This is a dummy imgname!") == 0);
 
 	REQUIRE(vaccel_session_release(&sess) == VACCEL_OK);
 
@@ -69,9 +69,8 @@ TEST_CASE("depth", "[ops][image]")
 					   (unsigned char *)out_imagename,
 					   image_size, sizeof(out_imagename));
 	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(out_imagename);
-
-	printf("depth estimation imagename: %s\n", out_imagename);
+	REQUIRE(strcmp((const char *)out_imagename,
+		       "This is a dummy imgname!") == 0);
 
 	REQUIRE(vaccel_session_release(&sess) == VACCEL_OK);
 
@@ -97,9 +96,8 @@ TEST_CASE("detect", "[ops][image]")
 					       image_size,
 					       sizeof(out_imagename));
 	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(out_imagename);
-
-	printf("detection imagename: %s\n", out_imagename);
+	REQUIRE(strcmp((const char *)out_imagename,
+		       "This is a dummy imgname!") == 0);
 
 	REQUIRE(vaccel_session_release(&sess) == VACCEL_OK);
 
@@ -124,9 +122,8 @@ TEST_CASE("pose", "[ops][image]")
 					  (unsigned char *)out_imagename,
 					  image_size, sizeof(out_imagename));
 	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(out_imagename);
-
-	printf("pose estimation imagename: %s\n", out_imagename);
+	REQUIRE(strcmp((const char *)out_imagename,
+		       "This is a dummy imgname!") == 0);
 
 	REQUIRE(vaccel_session_release(&sess) == VACCEL_OK);
 
@@ -151,9 +148,8 @@ TEST_CASE("segmentation", "[ops][image]")
 		&sess, image, (unsigned char *)out_imagename, image_size,
 		sizeof(out_imagename));
 	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(out_imagename);
-
-	printf("segmentation output: %s\n", out_imagename);
+	REQUIRE(strcmp((const char *)out_imagename,
+		       "This is a dummy imgname!") == 0);
 
 	REQUIRE(vaccel_session_release(&sess) == VACCEL_OK);
 

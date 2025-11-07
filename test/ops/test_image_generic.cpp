@@ -17,10 +17,11 @@
 
 #include "utils.hpp"
 #include "vaccel.h"
-#include <catch.hpp>
+#include <catch2/catch_test_macros.hpp>
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
 
 TEST_CASE("classify_generic", "[ops][image][generic]")
 {
@@ -57,11 +58,10 @@ TEST_CASE("classify_generic", "[ops][image][generic]")
 	int const ret = vaccel_genop(&sess, read_args.args, read_args.count,
 				     write_args.args, write_args.count);
 	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(out_text);
-	REQUIRE(out_imagename);
-
-	printf("classification imagename: %s\n", out_imagename);
-	printf("classification tags: %s\n", out_text);
+	REQUIRE(strcmp((const char *)out_text,
+		       "This is a dummy classification tag!") == 0);
+	REQUIRE(strcmp((const char *)out_imagename,
+		       "This is a dummy imgname!") == 0);
 
 	REQUIRE(vaccel_session_release(&sess) == VACCEL_OK);
 	REQUIRE(vaccel_arg_array_release(&read_args) == VACCEL_OK);
@@ -101,7 +101,8 @@ TEST_CASE("depth_generic", "[ops][image][generic]")
 	int const ret = vaccel_genop(&sess, read_args.args, read_args.count,
 				     write_args.args, write_args.count);
 	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(out_imagename);
+	REQUIRE(strcmp((const char *)out_imagename,
+		       "This is a dummy imgname!") == 0);
 
 	REQUIRE(vaccel_session_release(&sess) == VACCEL_OK);
 	REQUIRE(vaccel_arg_array_release(&read_args) == VACCEL_OK);
@@ -141,7 +142,8 @@ TEST_CASE("detect_generic", "[ops][image][generic]")
 	int const ret = vaccel_genop(&sess, read_args.args, read_args.count,
 				     write_args.args, write_args.count);
 	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(out_imagename);
+	REQUIRE(strcmp((const char *)out_imagename,
+		       "This is a dummy imgname!") == 0);
 
 	REQUIRE(vaccel_session_release(&sess) == VACCEL_OK);
 	REQUIRE(vaccel_arg_array_release(&read_args) == VACCEL_OK);
@@ -181,7 +183,8 @@ TEST_CASE("pose_generic", "[ops][image][generic]")
 	int const ret = vaccel_genop(&sess, read_args.args, read_args.count,
 				     write_args.args, write_args.count);
 	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(out_imagename);
+	REQUIRE(strcmp((const char *)out_imagename,
+		       "This is a dummy imgname!") == 0);
 
 	REQUIRE(vaccel_session_release(&sess) == VACCEL_OK);
 	REQUIRE(vaccel_arg_array_release(&read_args) == VACCEL_OK);
@@ -221,7 +224,8 @@ TEST_CASE("segmentation_generic", "[ops][image][generic]")
 	int const ret = vaccel_genop(&sess, read_args.args, read_args.count,
 				     write_args.args, write_args.count);
 	REQUIRE(ret == VACCEL_OK);
-	REQUIRE(out_imagename);
+	REQUIRE(strcmp((const char *)out_imagename,
+		       "This is a dummy imgname!") == 0);
 
 	REQUIRE(vaccel_session_release(&sess) == VACCEL_OK);
 	REQUIRE(vaccel_arg_array_release(&read_args) == VACCEL_OK);

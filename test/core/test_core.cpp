@@ -21,7 +21,7 @@
 
 #include "utils.hpp"
 #include "vaccel.h"
-#include <catch.hpp>
+#include <catch2/catch_test_macros.hpp>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -158,6 +158,12 @@ TEST_CASE("sessions_bootstrap_and_cleanup", "[core]")
 
 	ret = sessions_cleanup();
 	REQUIRE(ret == VACCEL_OK);
+
+	SECTION("not initialized")
+	{
+		ret = sessions_cleanup();
+		REQUIRE(ret == VACCEL_OK);
+	}
 }
 
 TEST_CASE("sessions_cleanup_existing", "[core]")
@@ -197,6 +203,12 @@ TEST_CASE("resources_bootstrap_and_cleanup", "[core]")
 
 	ret = resources_cleanup();
 	REQUIRE(ret == VACCEL_OK);
+
+	SECTION("not initialized")
+	{
+		ret = resources_cleanup();
+		REQUIRE(ret == VACCEL_OK);
+	}
 }
 
 TEST_CASE("resources_cleanup_existing", "[core]")
@@ -236,4 +248,10 @@ TEST_CASE("plugins_bootstrap_and_cleanup", "[core]")
 
 	ret = plugins_cleanup();
 	REQUIRE(ret == VACCEL_OK);
+
+	SECTION("not initialized")
+	{
+		ret = plugins_cleanup();
+		REQUIRE(ret == VACCEL_OK);
+	}
 }

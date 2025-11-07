@@ -35,6 +35,7 @@ runs:
           --wrap="${CONFIG_WRAPPER_CMD}" \
           -t 7 \
           --print-errorlogs \
+          -v \
           -C "${{ inputs.build-path }}"
       shell: bash
 

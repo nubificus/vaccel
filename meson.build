@@ -1,5 +1,5 @@
 project('vaccel', 'c', 'cpp',
-  meson_version : '>=1.1',
+  meson_version : '>=1.2',
   default_options : ['c_std=c11'],
   license : 'Apache-2.0',
   license_files : 'LICENSE',
@@ -48,6 +48,13 @@ if opt_examples.enabled()
 endif
 
 if opt_tests.enabled()
+  catch2_subproj = subproject('catch2',
+    default_options : {'tests': false, 'install': false})
+  catch2_dep = dependency('catch2-with-main')
+
+  fff_subproj = subproject('fff')
+  fff_dep = dependency('fff')
+
   subdir('test')
 endif
 

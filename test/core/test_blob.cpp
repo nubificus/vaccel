@@ -19,7 +19,7 @@
 
 #include "utils.hpp"
 #include "vaccel.h"
-#include <catch.hpp>
+#include <catch2/catch_test_macros.hpp>
 #include <cstddef>
 #include <cstdlib>
 #include <cstring>

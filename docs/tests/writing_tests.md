@@ -7,7 +7,7 @@ the component they refer to, ie. ```test_session.c``` includes unit tests for
 
 To implement a new test first include the Catch2 and vaccel headers:
 ```cpp
-#include <catch.hpp>
+#include <catch2/catch_test_macros.hpp>
 #include <vaccel.h>
 ```
 
@@ -32,7 +32,7 @@ section and not in other sections. In other words, code outside of
 ```SECTION```s is common between them, but code inside a ```SECTION``` is only
 applicable to the section itself:
 ```cpp
-#include <catch.hpp>
+#include <catch2/catch_test_macros.hpp>
 #include <vaccel.h>
 #include <utils.hpp>
 

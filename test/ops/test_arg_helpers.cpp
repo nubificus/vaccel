@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "vaccel.h"
-#include <catch.hpp>
+#include <catch2/catch_test_macros.hpp>
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
