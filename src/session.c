@@ -511,8 +511,6 @@ int vaccel_session_resources_by_type(struct vaccel_session *sess,
 
 int vaccel_sess_init(struct vaccel_session *sess, uint32_t flags)
 {
-	vaccel_warn("%s%s", "vaccel_sess_init() is deprecated. ",
-		    "Please use vaccel_session_init() instead.");
 	return vaccel_session_init(sess, flags);
 }
 
@@ -520,23 +518,17 @@ int vaccel_sess_update(struct vaccel_session *sess, uint32_t flags)
 {
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-	vaccel_warn("%s%s", "vaccel_sess_update() is deprecated. ",
-		    "Please use vaccel_session_update() instead.");
 	return vaccel_session_update(sess, flags);
 #pragma GCC diagnostic pop
 }
 
 int vaccel_sess_free(struct vaccel_session *sess)
 {
-	vaccel_warn("%s%s", "vaccel_sess_free() is deprecated. ",
-		    "Please use vaccel_session_release() instead.");
 	return vaccel_session_release(sess);
 }
 
 bool vaccel_sess_has_resource(struct vaccel_session *sess,
 			      struct vaccel_resource *res)
 {
-	vaccel_warn("%s%s", "vaccel_sess_has_resource() is deprecated. ",
-		    "Please use vaccel_session_has_resource() instead.");
 	return vaccel_session_has_resource(sess, res);
 }

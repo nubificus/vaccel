@@ -97,11 +97,19 @@ __attribute__((
 	deprecated("The function will be removed in a future release"))) int
 vaccel_session_update(struct vaccel_session *sess, uint32_t flags);
 
-int vaccel_sess_init(struct vaccel_session *sess, uint32_t flags);
-int vaccel_sess_update(struct vaccel_session *sess, uint32_t flags);
-int vaccel_sess_free(struct vaccel_session *sess);
-bool vaccel_sess_has_resource(struct vaccel_session *sess,
-			      struct vaccel_resource *res);
+__attribute__((deprecated("Use vaccel_session_init() instead"))) int
+vaccel_sess_init(struct vaccel_session *sess, uint32_t flags);
+
+__attribute__((
+	deprecated("The function will be removed in a future release"))) int
+vaccel_sess_update(struct vaccel_session *sess, uint32_t flags);
+
+__attribute__((deprecated("Use vaccel_session_release() instead"))) int
+vaccel_sess_free(struct vaccel_session *sess);
+
+__attribute__((deprecated("Use vaccel_session_has_resource() instead"))) bool
+vaccel_sess_has_resource(struct vaccel_session *sess,
+			 struct vaccel_resource *res);
 
 #ifdef __cplusplus
 }

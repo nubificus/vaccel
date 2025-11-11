@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+
 #include "vaccel.h"
 #include <catch2/catch_test_macros.hpp>
 #include <cstdint>
