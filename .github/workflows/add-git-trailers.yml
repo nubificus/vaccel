@@ -30,7 +30,7 @@ jobs:
         run: exit 1
 
       - name: Checkout .github directory
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           sparse-checkout: .github
           repository: ${{ inputs.actions-repo }}
