@@ -69,7 +69,7 @@ jobs:
       INSTALL_PREFIX: ${{github.workspace}}/artifacts/${{fromJson(inputs.runner-arch-map)[0][matrix.arch]}}/${{matrix.build-type}}
     steps:
       - name: Checkout .github directory
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           sparse-checkout: .github
           repository: ${{ inputs.actions-repo }}
