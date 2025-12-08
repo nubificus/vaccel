@@ -1,6 +1,7 @@
 tests_core_sources = files([
   'test_arg.cpp',
   'test_config.cpp',
+  'test_core.cpp',
   'test_blob.cpp',
   'test_id_pool.cpp',
   'test_log.cpp',
@@ -8,7 +9,6 @@ tests_core_sources = files([
 ])
 
 tests_core_w_plugin_sources = files([
-  'test_core.cpp',
   'test_resource.cpp',
   'test_resource_registration.cpp',
   'test_session.cpp',
