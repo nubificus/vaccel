@@ -1,0 +1,61 @@
+name: Add or Remove PR Label
+description: Add, remove or readd PR label
+
+inputs:
+  issue-number:
+    required: true
+  label:
+    required: true
+  repo:
+    default: ${{ github.repository }}
+  token:
+    default: ${{ github.token }}
+  add:
+    default: 'true'
+  remove:
+    default: 'true'
+
+runs:
+  using: composite
+  steps:
+    - run: sleep 3
+      shell: bash
+
+    - name: Check if label exists
+      id: check-label-exists
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+        GH_REPO: ${{ inputs.repo }}
+      run: |
+        labels=$(gh pr view ${{ inputs.issue-number }} \
+          --json labels \
+          --jq '.labels[].name')
+
+        if echo "$labels" | grep -qx "${{ inputs.label }}"; then
+          echo "exists=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "exists=false" >> "$GITHUB_OUTPUT"
+        fi
+      shell: bash
+
+    - name: Remove label
+      if: >-
+        ${{ inputs.remove == 'true' &&
+          steps.check-label-exists.outputs.exists == 'true' }}
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+        GH_REPO: ${{ inputs.repo }}
+      run: |
+        gh pr edit ${{ inputs.issue-number }} \
+          --remove-label "${{ inputs.label }}"
+      shell: bash
+
+    - name: Add label
+      if: ${{ inputs.add == 'true' }}
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+        GH_REPO: ${{ inputs.repo }}
+      run: |
+        gh pr edit ${{ inputs.issue-number }} \
+          --add-label "${{ inputs.label }}"
+      shell: bash
