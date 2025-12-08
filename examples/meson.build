@@ -47,7 +47,7 @@ foreach e : examples_sources
     install : true)
 endforeach
 
-mytestlib = library('mytestlib',
+libmytestlib = library('mytestlib',
   [files('mytestlib.c'),
     examples_common_mydata_sources, examples_common_mydata_headers],
   c_args : vaccel_c_args,
