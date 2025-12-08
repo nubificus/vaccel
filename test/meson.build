@@ -32,6 +32,8 @@ tests_args = [
   '--warn NoAssertions',
 ]
 
+tests_tgt_depends = [libvaccel_noop, libvaccel_exec, libmytestlib]
+
 tests_env = environment()
 tests_env.set('VACCEL_LOG_LEVEL', '4')
 tests_env.set('VACCEL_EXEC_DLCLOSE_ENABLED', '1')
@@ -75,6 +77,7 @@ foreach t : tests_core_sources + tests_utils_sources
     test(name, exe,
       args : tests_args,
       env : tests_env_core,
+      depends : tests_tgt_depends,
       is_parallel : false)
     continue
   endif
@@ -83,6 +86,7 @@ foreach t : tests_core_sources + tests_utils_sources
     name, exe,
     args : tests_args,
     env : tests_env,
+    depends : tests_tgt_depends,
     is_parallel : false)
 
   if name == 'test_log'
@@ -92,6 +96,7 @@ foreach t : tests_core_sources + tests_utils_sources
       test('@0@+@1@@2@'.format(name, 'level', l), exe,
         args : tests_args,
         env : tests_env_log,
+        depends : tests_tgt_depends,
         is_parallel : false)
     endforeach
   endif
@@ -110,17 +115,20 @@ foreach t : tests_core_w_plugin_sources + tests_ops_sources
   test(name + '+noop', exe,
     args : tests_args,
     env : tests_env_noop,
+    depends : tests_tgt_depends,
     is_parallel : false)
 
   if name.contains('exec')
     test(name + '+exec', exe,
       args : tests_args,
       env : tests_env_exec,
+      depends : tests_tgt_depends,
       is_parallel : false)
 
     test(name + '+exec+lazy', exe,
       args : tests_args,
       env : tests_env_exec_lazy,
+      depends : tests_tgt_depends,
       is_parallel : false)
   endif
 endforeach
