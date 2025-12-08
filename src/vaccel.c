@@ -118,13 +118,12 @@ static int do_bootstrap(void)
 		return ret;
 	}
 
-	if (!vaccel.config.plugins)
-		return VACCEL_OK;
-
-	ret = vaccel_plugin_parse_and_load(vaccel.config.plugins);
-	if (ret) {
-		vaccel_error("Could not load plugins");
-		return ret;
+	if (vaccel.config.plugins) {
+		ret = vaccel_plugin_parse_and_load(vaccel.config.plugins);
+		if (ret) {
+			vaccel_error("Could not load plugins");
+			return ret;
+		}
 	}
 
 	vaccel.initialized = true;

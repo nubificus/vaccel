@@ -28,35 +28,73 @@
 
 TEST_CASE("bootstrap_and_cleanup", "[core]")
 {
-	int ret = vaccel_bootstrap();
-	REQUIRE(ret == VACCEL_OK);
+	SECTION("no plugins")
+	{
+		int ret = vaccel_bootstrap();
+		REQUIRE(ret == VACCEL_OK);
 
-	/* Verify is initialized */
-	REQUIRE(vaccel_is_initialized());
+		/* Verify is initialized */
+		REQUIRE(vaccel_is_initialized());
 
-	/* Verify config has been set */
-	struct vaccel_config config_env;
-	REQUIRE(vaccel_config_init_from_env(&config_env) == VACCEL_OK);
+		/* Verify config has been set */
+		struct vaccel_config config_env;
+		REQUIRE(vaccel_config_init_from_env(&config_env) == VACCEL_OK);
 
-	const struct vaccel_config *config = vaccel_config();
-	REQUIRE(config != nullptr);
-	REQUIRE((config->plugins == nullptr ||
-		 strcmp(config->plugins, config_env.plugins) == 0));
-	REQUIRE(config->log_level == config_env.log_level);
-	REQUIRE((config->log_file == nullptr ||
-		 strcmp(config->log_file, config_env.log_file) == 0));
-	REQUIRE(config->profiling_enabled == config_env.profiling_enabled);
-	REQUIRE(config->version_ignore == config_env.version_ignore);
+		const struct vaccel_config *config = vaccel_config();
+		REQUIRE(config != nullptr);
+		REQUIRE(config->plugins == nullptr);
+		REQUIRE(config->log_level == config_env.log_level);
+		REQUIRE(config->log_file == nullptr);
+		REQUIRE(config->profiling_enabled ==
+			config_env.profiling_enabled);
+		REQUIRE(config->version_ignore == config_env.version_ignore);
 
-	/* Verify rundir has been set */
-	const char *rundir = vaccel_rundir();
-	REQUIRE(rundir != nullptr);
-	REQUIRE(strstr(rundir, "vaccel") != nullptr);
+		/* Verify rundir has been set */
+		const char *rundir = vaccel_rundir();
+		REQUIRE(rundir != nullptr);
+		REQUIRE(strstr(rundir, "vaccel") != nullptr);
 
-	REQUIRE(vaccel_config_release(&config_env) == VACCEL_OK);
+		REQUIRE(vaccel_config_release(&config_env) == VACCEL_OK);
 
-	ret = vaccel_cleanup();
-	REQUIRE(ret == VACCEL_OK);
+		ret = vaccel_cleanup();
+		REQUIRE(ret == VACCEL_OK);
+	}
+
+	SECTION("with plugins")
+	{
+		REQUIRE(setenv("VACCEL_PLUGINS", "libvaccel-noop.so", 1) == 0);
+
+		int ret = vaccel_bootstrap();
+		REQUIRE(ret == VACCEL_OK);
+
+		/* Verify is initialized */
+		REQUIRE(vaccel_is_initialized());
+
+		/* Verify config has been set */
+		struct vaccel_config config_env;
+		REQUIRE(vaccel_config_init_from_env(&config_env) == VACCEL_OK);
+
+		const struct vaccel_config *config = vaccel_config();
+		REQUIRE(config != nullptr);
+		REQUIRE(strcmp(config->plugins, config_env.plugins) == 0);
+		REQUIRE(config->log_level == config_env.log_level);
+		REQUIRE(config->log_file == nullptr);
+		REQUIRE(config->profiling_enabled ==
+			config_env.profiling_enabled);
+		REQUIRE(config->version_ignore == config_env.version_ignore);
+
+		/* Verify rundir has been set */
+		const char *rundir = vaccel_rundir();
+		REQUIRE(rundir != nullptr);
+		REQUIRE(strstr(rundir, "vaccel") != nullptr);
+
+		REQUIRE(vaccel_config_release(&config_env) == VACCEL_OK);
+
+		ret = vaccel_cleanup();
+		REQUIRE(ret == VACCEL_OK);
+
+		REQUIRE(unsetenv("VACCEL_PLUGINS") == 0);
+	}
 }
 
 TEST_CASE("bootstrap_with_config_and_cleanup", "[core]")
@@ -169,12 +207,16 @@ TEST_CASE("sessions_bootstrap_and_cleanup", "[core]")
 TEST_CASE("sessions_cleanup_existing", "[core]")
 {
 	char *lib_path = abs_path(BUILD_ROOT, "examples/libmytestlib.so");
+	char *plugins = abs_path(BUILD_ROOT, "plugins/noop/libvaccel-noop.so");
 	const size_t nr_res = 30;
 	const size_t nr_sess = 10;
 	struct vaccel_resource res[nr_res];
 	struct vaccel_session sess[nr_sess];
+	struct vaccel_config config_test;
 
-	REQUIRE(vaccel_bootstrap() == VACCEL_OK);
+	REQUIRE(vaccel_config_init(&config_test, plugins, VACCEL_LOG_DEBUG,
+				   nullptr, false, false) == VACCEL_OK);
+	REQUIRE(vaccel_bootstrap_with_config(&config_test) == VACCEL_OK);
 
 	for (auto &ses : sess)
 		REQUIRE(vaccel_session_init(&ses, 0) == VACCEL_OK);
@@ -193,6 +235,8 @@ TEST_CASE("sessions_cleanup_existing", "[core]")
 
 	REQUIRE(vaccel_cleanup() == VACCEL_OK);
 	free(lib_path);
+	REQUIRE(vaccel_config_release(&config_test) == VACCEL_OK);
+	free(plugins);
 }
 
 TEST_CASE("resources_bootstrap_and_cleanup", "[core]")
@@ -213,13 +257,17 @@ TEST_CASE("resources_bootstrap_and_cleanup", "[core]")
 
 TEST_CASE("resources_cleanup_existing", "[core]")
 {
+	char *plugins = abs_path(BUILD_ROOT, "plugins/noop/libvaccel-noop.so");
 	char *lib_path = abs_path(BUILD_ROOT, "examples/libmytestlib.so");
 	const size_t nr_res = 10;
 	const size_t nr_sess = 30;
 	struct vaccel_resource res[nr_res];
 	struct vaccel_session sess[nr_sess];
+	struct vaccel_config config_test;
 
-	REQUIRE(vaccel_bootstrap() == VACCEL_OK);
+	REQUIRE(vaccel_config_init(&config_test, plugins, VACCEL_LOG_DEBUG,
+				   nullptr, false, false) == VACCEL_OK);
+	REQUIRE(vaccel_bootstrap_with_config(&config_test) == VACCEL_OK);
 
 	for (auto &re : res)
 		REQUIRE(vaccel_resource_init(&re, lib_path,
@@ -238,6 +286,8 @@ TEST_CASE("resources_cleanup_existing", "[core]")
 
 	REQUIRE(vaccel_cleanup() == VACCEL_OK);
 	free(lib_path);
+	REQUIRE(vaccel_config_release(&config_test) == VACCEL_OK);
+	free(plugins);
 }
 
 TEST_CASE("plugins_bootstrap_and_cleanup", "[core]")
