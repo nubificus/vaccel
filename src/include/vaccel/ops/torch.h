@@ -73,12 +73,22 @@ struct vaccel_torch_tensor {
 
 	/* data type */
 	enum vaccel_torch_data_type data_type;
+
+	/* the tensor may be backed by a resource */
+	struct vaccel_resource *res;
+	bool is_res;
 };
 
 /* Initialize Torch tensor */
 int vaccel_torch_tensor_init(struct vaccel_torch_tensor *tensor,
 			     int64_t nr_dims, const int64_t *dims,
 			     enum vaccel_torch_data_type type);
+
+/* Initialize Torch tensor with a resource */
+int vaccel_torch_tensor_init_from_res(struct vaccel_torch_tensor *tensor,
+				      struct vaccel_resource *res,
+				      int64_t nr_dims, const int64_t *dims,
+				      enum vaccel_torch_data_type type);
 
 /* Release Torch tensor */
 int vaccel_torch_tensor_release(struct vaccel_torch_tensor *tensor);
@@ -87,6 +97,12 @@ int vaccel_torch_tensor_release(struct vaccel_torch_tensor *tensor);
 int vaccel_torch_tensor_new(struct vaccel_torch_tensor **tensor,
 			    int64_t nr_dims, const int64_t *dims,
 			    enum vaccel_torch_data_type type);
+
+/* Allocate and initialize Torch tensor with a resource */
+int vaccel_torch_tensor_new_from_res(struct vaccel_torch_tensor **tensor,
+				     struct vaccel_resource *res,
+				     int64_t nr_dims, const int64_t *dims,
+				     enum vaccel_torch_data_type type);
 
 /* Allocate and initialize Torch tensor with tensor.data of size=total_size */
 int vaccel_torch_tensor_allocate(struct vaccel_torch_tensor **tensor,

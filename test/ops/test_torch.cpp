@@ -178,6 +178,8 @@ TEST_CASE("torch_tensor_init", "[ops][torch]")
 		REQUIRE(tensor.data == nullptr);
 		REQUIRE(tensor.size == 0);
 		REQUIRE_FALSE(tensor.owned);
+		REQUIRE_FALSE(tensor.is_res);
+		REQUIRE(tensor.res == nullptr);
 
 		REQUIRE(vaccel_torch_tensor_release(&tensor) == VACCEL_OK);
 	}
@@ -191,6 +193,90 @@ TEST_CASE("torch_tensor_init", "[ops][torch]")
 		ret = vaccel_torch_tensor_init(&tensor, 0, dims,
 					       VACCEL_TORCH_FLOAT);
 		REQUIRE(ret == VACCEL_EINVAL);
+	}
+
+	SECTION("from resource")
+	{
+		struct vaccel_resource res;
+		struct vaccel_session sess;
+		REQUIRE(vaccel_session_init(&sess, 0) == VACCEL_OK);
+		SECTION("Invalid arguments")
+		{
+			char *path =
+				abs_path(SOURCE_ROOT,
+					 "examples/models/torch/cnn_trace.pt");
+
+			ret = vaccel_torch_tensor_init_from_res(
+				&tensor, nullptr, 2, dims, VACCEL_TORCH_FLOAT);
+			REQUIRE(ret == VACCEL_EINVAL);
+
+			ret = vaccel_resource_init(&res, path,
+						   VACCEL_RESOURCE_DATA);
+			REQUIRE(ret == VACCEL_OK);
+
+			/* Null blobs */
+			ret = vaccel_torch_tensor_init_from_res(
+				&tensor, &res, 2, dims, VACCEL_TORCH_FLOAT);
+			REQUIRE(ret == VACCEL_EINVAL);
+
+			REQUIRE(vaccel_resource_register(&res, &sess) ==
+				VACCEL_OK);
+
+			/* Wrong data type (file) */
+			ret = vaccel_torch_tensor_init_from_res(
+				&tensor, &res, 2, dims, VACCEL_TORCH_FLOAT);
+			REQUIRE(ret == VACCEL_EINVAL);
+
+			ret = vaccel_resource_unregister(&res, &sess);
+			REQUIRE(ret == VACCEL_OK);
+
+			ret = vaccel_resource_release(&res);
+			REQUIRE(ret == VACCEL_OK);
+
+			free(path);
+		}
+
+		SECTION("Success")
+		{
+			size_t size;
+			int test_data[] = { 1, 2, 3, 4, 5 };
+
+			ret = vaccel_resource_init_from_buf(
+				&res, test_data, sizeof(test_data),
+				VACCEL_RESOURCE_DATA, nullptr, true);
+			REQUIRE(ret == VACCEL_OK);
+
+			REQUIRE(vaccel_resource_register(&res, &sess) ==
+				VACCEL_OK);
+
+			ret = vaccel_torch_tensor_init_from_res(
+				&tensor, &res, 2, dims, VACCEL_TORCH_FLOAT);
+			REQUIRE(ret == VACCEL_OK);
+			REQUIRE(tensor.is_res);
+			REQUIRE(tensor.res == &res);
+
+			ret = vaccel_torch_tensor_set_data(&tensor, test_data,
+							   sizeof(test_data));
+			REQUIRE(ret == VACCEL_EINVAL);
+
+			ret = vaccel_torch_tensor_take_data(
+				&tensor, (void **)&test_data, &size);
+			REQUIRE(ret == VACCEL_EINVAL);
+
+			ret = vaccel_torch_tensor_release(&tensor);
+			REQUIRE(ret == VACCEL_OK);
+			REQUIRE_FALSE(tensor.is_res);
+			REQUIRE(tensor.res == nullptr);
+
+			ret = vaccel_resource_unregister(&res, &sess);
+			REQUIRE(ret == VACCEL_OK);
+
+			ret = vaccel_resource_release(&res);
+			REQUIRE(ret == VACCEL_OK);
+		}
+
+		ret = vaccel_session_release(&sess);
+		REQUIRE(ret == VACCEL_OK);
 	}
 }
 
@@ -216,6 +302,8 @@ TEST_CASE("torch_tensor_release", "[ops][torch]")
 		REQUIRE(tensor.data == nullptr);
 		REQUIRE(tensor.size == 0);
 		REQUIRE_FALSE(tensor.owned);
+		REQUIRE_FALSE(tensor.is_res);
+		REQUIRE(tensor.res == nullptr);
 	}
 
 	SECTION("invalid arguments")
@@ -251,6 +339,88 @@ TEST_CASE("torch_tensor_new", "[ops][torch]")
 					      VACCEL_TORCH_FLOAT);
 		REQUIRE(ret == VACCEL_EINVAL);
 	}
+
+	SECTION("from resource")
+	{
+		struct vaccel_resource res;
+		struct vaccel_session sess;
+		REQUIRE(vaccel_session_init(&sess, 0) == VACCEL_OK);
+		SECTION("Invalid arguments")
+		{
+			char *path =
+				abs_path(SOURCE_ROOT,
+					 "examples/models/torch/cnn_trace.pt");
+
+			ret = vaccel_torch_tensor_new_from_res(
+				&tensor, nullptr, 2, dims, VACCEL_TORCH_FLOAT);
+			REQUIRE(ret == VACCEL_EINVAL);
+
+			ret = vaccel_resource_init(&res, path,
+						   VACCEL_RESOURCE_DATA);
+			REQUIRE(ret == VACCEL_OK);
+
+			/* Null blobs */
+			ret = vaccel_torch_tensor_new_from_res(
+				&tensor, &res, 2, dims, VACCEL_TORCH_FLOAT);
+			REQUIRE(ret == VACCEL_EINVAL);
+
+			REQUIRE(vaccel_resource_register(&res, &sess) ==
+				VACCEL_OK);
+
+			/* Wrong data type (file) */
+			ret = vaccel_torch_tensor_new_from_res(
+				&tensor, &res, 2, dims, VACCEL_TORCH_FLOAT);
+			REQUIRE(ret == VACCEL_EINVAL);
+
+			ret = vaccel_resource_unregister(&res, &sess);
+			REQUIRE(ret == VACCEL_OK);
+
+			ret = vaccel_resource_release(&res);
+			REQUIRE(ret == VACCEL_OK);
+
+			free(path);
+		}
+
+		SECTION("Success")
+		{
+			size_t size;
+			int test_data[] = { 1, 2, 3, 4, 5 };
+
+			ret = vaccel_resource_init_from_buf(
+				&res, test_data, sizeof(test_data),
+				VACCEL_RESOURCE_DATA, nullptr, true);
+			REQUIRE(ret == VACCEL_OK);
+
+			REQUIRE(vaccel_resource_register(&res, &sess) ==
+				VACCEL_OK);
+
+			ret = vaccel_torch_tensor_new_from_res(
+				&tensor, &res, 2, dims, VACCEL_TORCH_FLOAT);
+			REQUIRE(ret == VACCEL_OK);
+			REQUIRE(tensor->is_res);
+			REQUIRE(tensor->res == &res);
+
+			ret = vaccel_torch_tensor_set_data(tensor, test_data,
+							   sizeof(test_data));
+			REQUIRE(ret == VACCEL_EINVAL);
+
+			ret = vaccel_torch_tensor_take_data(
+				tensor, (void **)&test_data, &size);
+			REQUIRE(ret == VACCEL_EINVAL);
+
+			ret = vaccel_torch_tensor_delete(tensor);
+			REQUIRE(ret == VACCEL_OK);
+
+			ret = vaccel_resource_unregister(&res, &sess);
+			REQUIRE(ret == VACCEL_OK);
+
+			ret = vaccel_resource_release(&res);
+			REQUIRE(ret == VACCEL_OK);
+		}
+
+		ret = vaccel_session_release(&sess);
+		REQUIRE(ret == VACCEL_OK);
+	}
 }
 
 TEST_CASE("torch_tensor_allocate", "[ops][torch]")
@@ -268,6 +438,8 @@ TEST_CASE("torch_tensor_allocate", "[ops][torch]")
 		REQUIRE(tensor->data);
 		REQUIRE(tensor->size == 1);
 		REQUIRE(tensor->owned);
+		REQUIRE_FALSE(tensor->is_res);
+		REQUIRE(tensor->res == nullptr);
 
 		REQUIRE(vaccel_torch_tensor_delete(tensor) == VACCEL_OK);
 	}
@@ -281,6 +453,8 @@ TEST_CASE("torch_tensor_allocate", "[ops][torch]")
 		REQUIRE(tensor->data == nullptr);
 		REQUIRE(tensor->size == 0);
 		REQUIRE_FALSE(tensor->owned);
+		REQUIRE_FALSE(tensor->is_res);
+		REQUIRE(tensor->res == nullptr);
 
 		REQUIRE(vaccel_torch_tensor_delete(tensor) == VACCEL_OK);
 	}
@@ -336,6 +510,8 @@ TEST_CASE("torch_tensor_set_data", "[ops][torch]")
 		REQUIRE(tensor.data == dims);
 		REQUIRE(tensor.size == sizeof(dims));
 		REQUIRE_FALSE(tensor.owned);
+		REQUIRE_FALSE(tensor.is_res);
+		REQUIRE(tensor.res == nullptr);
 
 		// ensure data is not freed on release
 		REQUIRE(vaccel_torch_tensor_release(&tensor) == VACCEL_OK);
@@ -368,6 +544,8 @@ TEST_CASE("torch_tensor_take_data", "[ops][torch]")
 		REQUIRE(tensor->data == nullptr);
 		REQUIRE(tensor->size == 0);
 		REQUIRE_FALSE(tensor->owned);
+		REQUIRE_FALSE(tensor->is_res);
+		REQUIRE(tensor->res == nullptr);
 
 		REQUIRE(data);
 		REQUIRE(size == 1);
