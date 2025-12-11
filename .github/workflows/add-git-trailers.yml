@@ -43,11 +43,6 @@ jobs:
           remote-actions-repo: ${{ inputs.actions-repo }}
           token: ${{ secrets.GIT_CLONE_PAT || github.token }}
 
-      - name: Append git trailers
-        uses: nubificus/git-trailers@feat_use_rebase
-        with:
-          user_info: .github/contributors.yaml
-
       - name: Generate vaccel-bot token
         id: generate-token
         uses: actions/create-github-app-token@v2
@@ -55,9 +50,23 @@ jobs:
           app-id: ${{ vars.VACCEL_BOT_APP_ID }}
           private-key: ${{ secrets.VACCEL_BOT_PRIVATE_KEY }}
 
-      - name: Trigger required tests re-run
-        uses: ./.github/actions/readd-issue-label
+      - name: Remove tests label
+        uses: ./.github/actions/add-or-remove-pr-label
         with:
           issue-number: ${{ github.event.pull_request.number }}
           label: 'ok-to-test'
           token: ${{ steps.generate-token.outputs.token }}
+          add: 'false'
+          remove: 'true'
+
+      - name: Append git trailers
+        uses: nubificus/git-trailers@feat_use_rebase
+        with:
+          user_info: .github/contributors.yaml
+
+      - name: Merge PR
+        env:
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
+        run: |
+          PR_URL=${{ github.event.pull_request.html_url }}
+          gh pr merge "$PR_URL" --rebase --admin
