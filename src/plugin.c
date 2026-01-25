@@ -285,7 +285,6 @@ int vaccel_plugin_register_ops(struct vaccel_op *ops, size_t nr_ops)
 
 struct vaccel_plugin *plugin_find(unsigned int hint)
 {
-	unsigned int env_priority = hint & (~VACCEL_PLUGIN_REMOTE);
 	struct vaccel_plugin *plugin = NULL;
 
 	pthread_mutex_lock(&plugins.lock);
@@ -296,10 +295,8 @@ struct vaccel_plugin *plugin_find(unsigned int hint)
 		return NULL;
 	}
 
-	/* Check the list of plugins implementing our function type
-	 * and compare with the bitmap hint we got from the upper
-	 * layers. If we get a match, return this plugin operation
-	 */
+	/* If a transport plugin is requested, a plugin of this type must be
+	 * registered */
 	if (VACCEL_PLUGIN_REMOTE & hint) {
 		plugin_for_each(plugin, &plugins.all)
 		{
@@ -310,11 +307,13 @@ struct vaccel_plugin *plugin_find(unsigned int hint)
 		}
 
 		pthread_mutex_unlock(&plugins.lock);
-		vaccel_error(
-			"Could not select plugin, no VirtIO plugin registered");
+		vaccel_error("No VirtIO plugin registered");
 		return NULL;
 	}
 
+	/* If an acceleration plugin is requested, try to find a plugin matching
+	 * the specified hint */
+	unsigned int env_priority = hint & (~VACCEL_PLUGIN_REMOTE);
 	if (env_priority) {
 		plugin_for_each(plugin, &plugins.all)
 		{
@@ -325,8 +324,8 @@ struct vaccel_plugin *plugin_find(unsigned int hint)
 		}
 	}
 
-	// If priority check fails, just return the first (local) implementation we find
-	// or any implementation if it's a single one
+	/* If priority check fails, just return the first (local) implementation
+	 * we find or any implementation if it's a single one */
 	plugin_for_each(plugin, &plugins.all)
 	{
 		if (!plugin->info->is_virtio || plugins.count == 1) {
@@ -336,7 +335,35 @@ struct vaccel_plugin *plugin_find(unsigned int hint)
 	}
 
 	pthread_mutex_unlock(&plugins.lock);
-	vaccel_error("Could not select plugin, no local plugin registered");
+	vaccel_error("No local plugin registered");
+
+	return NULL;
+}
+
+struct vaccel_plugin *plugin_find_by_name(const char *name)
+{
+	if (!name)
+		return NULL;
+
+	pthread_mutex_lock(&plugins.lock);
+
+	if (list_empty(&plugins.all)) {
+		pthread_mutex_unlock(&plugins.lock);
+		vaccel_error("No plugins registered");
+		return NULL;
+	}
+
+	struct vaccel_plugin *plugin = NULL;
+	plugin_for_each(plugin, &plugins.all)
+	{
+		if (strcmp(plugin->info->name, name) == 0) {
+			pthread_mutex_unlock(&plugins.lock);
+			return plugin;
+		}
+	}
+
+	pthread_mutex_unlock(&plugins.lock);
+	vaccel_error("Plugin '%s' is not registered", name);
 
 	return NULL;
 }

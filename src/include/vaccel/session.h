@@ -55,14 +55,26 @@ struct vaccel_session {
 /* Get session by index from created sessions */
 int vaccel_session_get_by_id(struct vaccel_session **sess, vaccel_id_t id);
 
-/* Initialize session */
+/* Initialize session (plugin is auto-selected based on flags) */
 int vaccel_session_init(struct vaccel_session *sess, uint32_t flags);
+
+/* Initialize session with plugin identified by name.
+ * For transport plugins, the remote plugin can be specified by using the
+ * "local_plugin:remote_plugin" form, ie.: "rpc:noop". */
+int vaccel_session_init_with_plugin(struct vaccel_session *sess,
+				    const char *plugin_spec);
 
 /* Release session data */
 int vaccel_session_release(struct vaccel_session *sess);
 
-/* Allocate and initialize session */
+/* Allocate and initialize session (plugin is auto-selected based on flags) */
 int vaccel_session_new(struct vaccel_session **sess, uint32_t flags);
+
+/* Allocate and initialize session with plugin identified by name.
+ * For transport plugins, the remote plugin can be specified by using the
+ * "local_plugin:remote_plugin" form, ie.: "rpc:noop". */
+int vaccel_session_new_with_plugin(struct vaccel_session **sess,
+				   const char *plugin_spec);
 
 /* Release session data and free session created with `vaccel_session_new()` */
 int vaccel_session_delete(struct vaccel_session *sess);
