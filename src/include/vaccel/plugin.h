@@ -69,6 +69,8 @@ struct vaccel_plugin_info {
 				   struct vaccel_session *sess);
 	int (*resource_sync)(struct vaccel_resource *res,
 			     struct vaccel_session *sess);
+	int (*session_init_with_plugin)(struct vaccel_session *sess,
+					const char *name);
 };
 
 struct vaccel_plugin {
