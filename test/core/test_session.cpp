@@ -4,15 +4,17 @@
  * The code below performs unit testing to sessions.
  *
  * 1) vaccel_session_init()
- * 2) vaccel_session_release()
- * 3) vaccel_session_new()
- * 4) vaccel_session_delete()
- * 5) vaccel_session_update()
- * 6) vaccel_session_get_by_id()
- * 7) vaccel_session_has_resource()
- * 8) vaccel_session_resource_by_type()
- * 9) vaccel_session_resource_by_id()
- * 10) vaccel_session_resources_by_type()
+ * 2) vaccel_session_init_with_plugin()
+ * 3) vaccel_session_release()
+ * 4) vaccel_session_new()
+ * 5) vaccel_session_new_with_plugin()
+ * 6) vaccel_session_delete()
+ * 7) vaccel_session_update()
+ * 8) vaccel_session_get_by_id()
+ * 9) vaccel_session_has_resource()
+ * 10) vaccel_session_resource_by_type()
+ * 11) vaccel_session_resource_by_id()
+ * 13) vaccel_session_resources_by_type()
  *
  */
 
@@ -25,6 +27,7 @@
 #include <cinttypes>
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
 #include <mock_virtio.hpp>
 #include <pthread.h>
 #include <unistd.h>
@@ -32,23 +35,125 @@
 TEST_CASE("vaccel_session_init", "[core][session]")
 {
 	int ret;
-
 	struct vaccel_session sess;
-	ret = vaccel_session_init(&sess, 1);
+
+	SECTION("not registered")
+	{
+		ret = vaccel_session_init(&sess, VACCEL_PLUGIN_REMOTE);
+		REQUIRE(ret == VACCEL_ENOTSUP);
+	}
+
+	ret = vaccel_session_init(&sess, VACCEL_PLUGIN_DEBUG);
 	REQUIRE(ret == VACCEL_OK);
 	REQUIRE(sess.id > 0);
-	REQUIRE(sess.hint == 1);
+	REQUIRE(sess.hint == VACCEL_PLUGIN_DEBUG);
+	REQUIRE(sess.plugin->info->type & VACCEL_PLUGIN_DEBUG);
 	for (auto &resource : sess.resources)
 		REQUIRE(list_empty(&resource));
 	REQUIRE(sess.priv == nullptr);
 
 	SECTION("invalid arguments")
 	{
-		ret = vaccel_session_init(nullptr, 1);
+		ret = vaccel_session_init(nullptr, VACCEL_PLUGIN_DEBUG);
 		REQUIRE(ret == VACCEL_EINVAL);
 	}
 
 	REQUIRE(vaccel_session_release(&sess) == VACCEL_OK);
+
+	auto *virtio_plugin = mock_virtio_plugin_virtio();
+	REQUIRE(plugin_register(virtio_plugin) == VACCEL_OK);
+
+	SECTION("transport")
+	{
+		ret = vaccel_session_init(&sess, VACCEL_PLUGIN_REMOTE);
+		REQUIRE(ret == VACCEL_OK);
+		REQUIRE(sess.id > 0);
+		REQUIRE(sess.remote_id == 1);
+		for (auto &resource : sess.resources)
+			REQUIRE(list_empty(&resource));
+		REQUIRE(sess.priv == nullptr);
+
+		REQUIRE(vaccel_session_release(&sess) == VACCEL_OK);
+	}
+
+	SECTION("transport missing hooks")
+	{
+		virtio_plugin->info->session_init = nullptr;
+
+		ret = vaccel_session_init(&sess, VACCEL_PLUGIN_REMOTE);
+		REQUIRE(ret == VACCEL_ENOTSUP);
+	}
+
+	REQUIRE(plugin_unregister(virtio_plugin) == VACCEL_OK);
+}
+
+TEST_CASE("vaccel_session_init_with_plugin", "[core][session]")
+{
+	int ret;
+	struct vaccel_session sess;
+
+	SECTION("not registered")
+	{
+		ret = vaccel_session_init_with_plugin(&sess, "my_plugin");
+		REQUIRE(ret == VACCEL_ENOTSUP);
+	}
+
+	ret = vaccel_session_init_with_plugin(&sess, "noop");
+	REQUIRE(ret == VACCEL_OK);
+	REQUIRE(sess.id > 0);
+	REQUIRE(sess.hint == 0);
+	for (auto &resource : sess.resources)
+		REQUIRE(list_empty(&resource));
+	REQUIRE(sess.priv == nullptr);
+
+	SECTION("invalid arguments")
+	{
+		ret = vaccel_session_init_with_plugin(nullptr, "noop");
+		REQUIRE(ret == VACCEL_EINVAL);
+
+		ret = vaccel_session_init_with_plugin(&sess, nullptr);
+		REQUIRE(ret == VACCEL_EINVAL);
+	}
+
+	REQUIRE(vaccel_session_release(&sess) == VACCEL_OK);
+
+	auto *virtio_plugin = mock_virtio_plugin_virtio();
+	REQUIRE(plugin_register(virtio_plugin) == VACCEL_OK);
+
+	SECTION("transport")
+	{
+		ret = vaccel_session_init_with_plugin(&sess, "fake_virtio");
+		REQUIRE(ret == VACCEL_OK);
+		REQUIRE(sess.id > 0);
+		REQUIRE(sess.remote_id == 1);
+		for (auto &resource : sess.resources)
+			REQUIRE(list_empty(&resource));
+		REQUIRE(sess.priv == nullptr);
+
+		REQUIRE(vaccel_session_release(&sess) == VACCEL_OK);
+
+		ret = vaccel_session_init_with_plugin(&sess,
+						      "fake_virtio:noop");
+		REQUIRE(ret == VACCEL_OK);
+		REQUIRE(sess.id > 0);
+		REQUIRE(sess.remote_id == 1);
+		for (auto &resource : sess.resources)
+			REQUIRE(list_empty(&resource));
+		REQUIRE(sess.priv == nullptr);
+		REQUIRE(strcmp(mock_virtio_plugin_remote_name(), "noop") == 0);
+
+		REQUIRE(vaccel_session_release(&sess) == VACCEL_OK);
+	}
+
+	SECTION("transport missing hooks")
+	{
+		virtio_plugin->info->session_init_with_plugin = nullptr;
+
+		ret = vaccel_session_init_with_plugin(&sess, "fake_plugin");
+		REQUIRE(ret == VACCEL_ENOTSUP);
+	}
+
+	REQUIRE(plugin_unregister(virtio_plugin) == VACCEL_OK);
 }
 
 TEST_CASE("vaccel_session_release", "[core][session]")
@@ -56,14 +161,14 @@ TEST_CASE("vaccel_session_release", "[core][session]")
 	int ret;
 
 	struct vaccel_session sess;
-	REQUIRE(vaccel_session_init(&sess, 1) == VACCEL_OK);
+	REQUIRE(vaccel_session_init(&sess, VACCEL_PLUGIN_DEBUG) == VACCEL_OK);
 
 	SECTION("invalid arguments")
 	{
 		ret = vaccel_session_release(nullptr);
 		REQUIRE(ret == VACCEL_EINVAL);
 		REQUIRE(sess.id > 0);
-		REQUIRE(sess.hint == 1);
+		REQUIRE(sess.hint == VACCEL_PLUGIN_DEBUG);
 		for (auto &resource : sess.resources)
 			REQUIRE(list_empty(&resource));
 		REQUIRE(sess.priv == nullptr);
@@ -72,7 +177,7 @@ TEST_CASE("vaccel_session_release", "[core][session]")
 	ret = vaccel_session_release(&sess);
 	REQUIRE(ret == VACCEL_OK);
 	REQUIRE(sess.id == 0);
-	REQUIRE(sess.hint == 1);
+	REQUIRE(sess.hint == VACCEL_PLUGIN_DEBUG);
 	for (auto &resource : sess.resources)
 		REQUIRE(list_empty(&resource));
 	REQUIRE(sess.priv == nullptr);
@@ -83,17 +188,54 @@ TEST_CASE("vaccel_session_new", "[core][session]")
 	int ret;
 
 	struct vaccel_session *sess;
-	ret = vaccel_session_new(&sess, 1);
+	ret = vaccel_session_new(&sess, VACCEL_PLUGIN_DEBUG);
 	REQUIRE(ret == VACCEL_OK);
 	REQUIRE(sess->id);
-	REQUIRE(sess->hint == 1);
+	REQUIRE(sess->hint == VACCEL_PLUGIN_DEBUG);
 	for (auto &resource : sess->resources)
 		REQUIRE(list_empty(&resource));
 	REQUIRE(sess->priv == nullptr);
 
+	SECTION("not registered")
+	{
+		ret = vaccel_session_new(&sess, VACCEL_PLUGIN_REMOTE);
+		REQUIRE(ret == VACCEL_ENOTSUP);
+	}
+
 	SECTION("invalid arguments")
 	{
-		ret = vaccel_session_new(nullptr, 1);
+		ret = vaccel_session_new(nullptr, VACCEL_PLUGIN_DEBUG);
+		REQUIRE(ret == VACCEL_EINVAL);
+	}
+
+	REQUIRE(vaccel_session_delete(sess) == VACCEL_OK);
+}
+
+TEST_CASE("vaccel_session_new_with_plugin", "[core][session]")
+{
+	int ret;
+
+	struct vaccel_session *sess;
+	ret = vaccel_session_new_with_plugin(&sess, "noop");
+	REQUIRE(ret == VACCEL_OK);
+	REQUIRE(sess->id > 0);
+	REQUIRE(sess->hint == 0);
+	for (auto &resource : sess->resources)
+		REQUIRE(list_empty(&resource));
+	REQUIRE(sess->priv == nullptr);
+
+	SECTION("not registered")
+	{
+		ret = vaccel_session_new_with_plugin(&sess, "my_plugin");
+		REQUIRE(ret == VACCEL_ENOTSUP);
+	}
+
+	SECTION("invalid arguments")
+	{
+		ret = vaccel_session_new_with_plugin(nullptr, "noop");
+		REQUIRE(ret == VACCEL_EINVAL);
+
+		ret = vaccel_session_new_with_plugin(&sess, nullptr);
 		REQUIRE(ret == VACCEL_EINVAL);
 	}
 
@@ -105,14 +247,14 @@ TEST_CASE("vaccel_session_delete", "[core][session]")
 	int ret;
 
 	struct vaccel_session *sess;
-	REQUIRE(vaccel_session_new(&sess, 1) == VACCEL_OK);
+	REQUIRE(vaccel_session_new(&sess, VACCEL_PLUGIN_DEBUG) == VACCEL_OK);
 
 	SECTION("invalid arguments")
 	{
 		ret = vaccel_session_delete(nullptr);
 		REQUIRE(ret == VACCEL_EINVAL);
 		REQUIRE(sess->id);
-		REQUIRE(sess->hint == 1);
+		REQUIRE(sess->hint == VACCEL_PLUGIN_DEBUG);
 		for (auto &resource : sess->resources)
 			REQUIRE(list_empty(&resource));
 		REQUIRE(sess->priv == nullptr);
@@ -127,7 +269,7 @@ TEST_CASE("vaccel_session_update", "[core][session]")
 	int ret;
 
 	struct vaccel_session sess;
-	REQUIRE(vaccel_session_init(&sess, 1) == VACCEL_OK);
+	REQUIRE(vaccel_session_init(&sess, VACCEL_PLUGIN_DEBUG) == VACCEL_OK);
 
 	ret = vaccel_session_update(&sess, 2);
 	REQUIRE(ret == VACCEL_OK);
@@ -135,7 +277,7 @@ TEST_CASE("vaccel_session_update", "[core][session]")
 
 	SECTION("invalid arguments")
 	{
-		ret = vaccel_session_update(nullptr, 1);
+		ret = vaccel_session_update(nullptr, VACCEL_PLUGIN_DEBUG);
 		REQUIRE(ret == VACCEL_EINVAL);
 	}
 
@@ -148,7 +290,7 @@ TEST_CASE("vaccel_session_update", "[core][session]")
 					     VACCEL_RESOURCE_LIB) == VACCEL_OK);
 		REQUIRE(vaccel_resource_register(&res, &sess) == VACCEL_OK);
 
-		ret = vaccel_session_update(&sess, 1);
+		ret = vaccel_session_update(&sess, VACCEL_PLUGIN_DEBUG);
 		REQUIRE(ret == VACCEL_ENOTSUP);
 
 		REQUIRE(vaccel_resource_release(&res) == VACCEL_OK);
@@ -187,7 +329,7 @@ TEST_CASE("vaccel_session_get_by_id", "[core][session]")
 TEST_CASE("vaccel_session_has_resource", "[core][session]")
 {
 	struct vaccel_session sess;
-	REQUIRE(vaccel_session_init(&sess, 1) == VACCEL_OK);
+	REQUIRE(vaccel_session_init(&sess, VACCEL_PLUGIN_DEBUG) == VACCEL_OK);
 
 	char *lib_path = abs_path(BUILD_ROOT, "examples/libmytestlib.so");
 	struct vaccel_resource res;
@@ -216,10 +358,11 @@ TEST_CASE("vaccel_session_has_resource", "[core][session]")
 TEST_CASE("session_ops", "[core][session]")
 {
 	struct vaccel_session sess;
-	REQUIRE(vaccel_session_init(&sess, 1) == VACCEL_OK);
+	REQUIRE(vaccel_session_init(&sess, VACCEL_PLUGIN_DEBUG) == VACCEL_OK);
 
 	struct vaccel_session *alloc_sess;
-	REQUIRE(vaccel_session_new(&alloc_sess, 1) == VACCEL_OK);
+	REQUIRE(vaccel_session_new(&alloc_sess, VACCEL_PLUGIN_DEBUG) ==
+		VACCEL_OK);
 
 	char *lib_path = abs_path(BUILD_ROOT, "examples/libmytestlib.so");
 	struct vaccel_resource res;
@@ -260,20 +403,22 @@ TEST_CASE("session_virtio", "[core][session]")
 
 	SECTION("not_registered")
 	{
-		REQUIRE(vaccel_session_init(&sess, 1 | VACCEL_PLUGIN_REMOTE) ==
+		REQUIRE(vaccel_session_init(&sess,
+					    VACCEL_PLUGIN_DEBUG |
+						    VACCEL_PLUGIN_REMOTE) ==
 			VACCEL_ENOTSUP);
 	}
 
 	auto *virtio_plugin = mock_virtio_plugin_virtio();
 	REQUIRE(plugin_register(virtio_plugin) == VACCEL_OK);
 
-	REQUIRE(vaccel_session_init(&sess,
-				    VACCEL_PLUGIN_CPU | VACCEL_PLUGIN_REMOTE) ==
+	REQUIRE(vaccel_session_init(&sess, VACCEL_PLUGIN_DEBUG |
+						   VACCEL_PLUGIN_REMOTE) ==
 		VACCEL_OK);
 
 	struct vaccel_session *alloc_sess;
-	REQUIRE(vaccel_session_new(&alloc_sess,
-				   VACCEL_PLUGIN_CPU | VACCEL_PLUGIN_REMOTE) ==
+	REQUIRE(vaccel_session_new(&alloc_sess, VACCEL_PLUGIN_DEBUG |
+							VACCEL_PLUGIN_REMOTE) ==
 		VACCEL_OK);
 
 	char *lib_path = abs_path(BUILD_ROOT, "examples/libmytestlib.so");

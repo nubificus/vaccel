@@ -9,10 +9,11 @@
  * 4) vaccel_plugin_register_ops()
  * 5) vaccel_plugin_register_op()
  * 6) plugin_find()
- * 7) plugin_get_op_func()
- * 8) plugin_count()
- * 9) vaccel_plugin_load()
- * 10) vaccel_plugin_parse_and_load()
+ * 7) plugin_find_by_name()
+ * 8) plugin_get_op_func()
+ * 9) plugin_count()
+ * 10) vaccel_plugin_load()
+ * 11) vaccel_plugin_parse_and_load()
  *
  */
 
@@ -504,6 +505,35 @@ TEST_CASE("plugin_find", "[core][plugin]")
 
 	mock_plugin_delete(accel_plugin);
 	mock_plugin_delete(virtio_plugin);
+}
+
+TEST_CASE("plugin_find_by_name", "[core][plugin]")
+{
+	struct vaccel_plugin *plugin = nullptr;
+
+	struct vaccel_plugin *accel_plugin = mock_plugin_new();
+	REQUIRE(accel_plugin != nullptr);
+
+	SECTION("not_registered")
+	{
+		plugin = plugin_find_by_name("mock_plugin_test");
+		REQUIRE(plugin == nullptr);
+	}
+
+	REQUIRE(plugin_register(accel_plugin) == VACCEL_OK);
+	REQUIRE(plugin_count() == 1);
+
+	plugin = plugin_find_by_name("mock_plugin_test");
+	REQUIRE(plugin == accel_plugin);
+
+	SECTION("invalid_arguments")
+	{
+		plugin = plugin_find_by_name(nullptr);
+		REQUIRE(plugin == nullptr);
+	}
+
+	REQUIRE(plugin_unregister(accel_plugin) == VACCEL_OK);
+	mock_plugin_delete(accel_plugin);
 }
 
 TEST_CASE("plugin_get_op_func", "[core][plugin]")

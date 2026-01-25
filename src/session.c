@@ -1,5 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
+#define _POSIX_C_SOURCE 200809L
+#define _DEFAULT_SOURCE
+
 #include "session.h"
 #include "core.h"
 #include "error.h"
@@ -172,11 +175,39 @@ static int session_destroy_rundir(struct vaccel_session *sess)
 	return VACCEL_OK;
 }
 
-int vaccel_session_init(struct vaccel_session *sess, uint32_t flags)
+static int session_init_remote(struct vaccel_session *sess, uint32_t flags,
+			       const char *remote_name)
+{
+	if (!sess || !sess->plugin)
+		return VACCEL_EINVAL;
+
+	if (!remote_name) {
+		if (!sess->plugin->info->session_init) {
+			vaccel_error(
+				"No `session_init()` registered by the plugin");
+			return VACCEL_ENOTSUP;
+		}
+
+		return sess->plugin->info->session_init(
+			sess, flags & (~VACCEL_PLUGIN_REMOTE));
+	}
+
+	if (!sess->plugin->info->session_init_with_plugin) {
+		vaccel_error(
+			"No `session_init_with_plugin()` registered by the plugin");
+		return VACCEL_ENOTSUP;
+	}
+
+	return sess->plugin->info->session_init_with_plugin(sess, remote_name);
+}
+
+static int session_init(struct vaccel_session *sess,
+			struct vaccel_plugin *plugin, uint32_t flags,
+			const char *remote_name)
 {
 	int ret;
 
-	if (!sess)
+	if (!sess || !plugin)
 		return VACCEL_EINVAL;
 
 	if (!sessions.initialized)
@@ -186,31 +217,11 @@ int vaccel_session_init(struct vaccel_session *sess, uint32_t flags)
 	if (sess->id < 0)
 		return -(int)sess->id;
 
-	sess->plugin = plugin_find(flags);
-	if (!sess->plugin) {
-		ret = VACCEL_ENOTSUP;
-		goto release_id;
-	}
-
+	sess->plugin = plugin;
 	sess->priv = NULL;
 
-	if ((flags & VACCEL_PLUGIN_REMOTE) ||
-	    (plugin_count() == 1 && sess->plugin->info->is_virtio)) {
-		if (!sess->plugin->info->is_virtio) {
-			vaccel_error(
-				"Cannot initialize remote session; no VirtIO plugin loaded yet");
-			ret = VACCEL_ENOTSUP;
-			goto release_id;
-		}
-		if (!sess->plugin->info->session_init) {
-			vaccel_error(
-				"Cannot initialize remote session; invalid plugin `session_init()`");
-			ret = VACCEL_ENOTSUP;
-			goto release_id;
-		}
-
-		ret = sess->plugin->info->session_init(
-			sess, flags & (~VACCEL_PLUGIN_REMOTE));
+	if (sess->plugin->info->is_virtio) {
+		ret = session_init_remote(sess, flags, remote_name);
 		if (ret) {
 			vaccel_error("Failed to initialize remote session");
 			goto release_id;
@@ -258,6 +269,78 @@ release_id:
 	sess->plugin = NULL;
 	put_session_id(sess);
 
+	return ret;
+}
+
+int vaccel_session_init(struct vaccel_session *sess, uint32_t flags)
+{
+	if (!sess)
+		return VACCEL_EINVAL;
+
+	if (!sessions.initialized)
+		return VACCEL_ESESS;
+
+	struct vaccel_plugin *plugin = plugin_find(flags);
+	if (!plugin) {
+		vaccel_error("Failed to select plugin");
+		return VACCEL_ENOTSUP;
+	}
+
+	return session_init(sess, plugin, flags, NULL);
+}
+
+static char *parse_plugin_spec(const char *spec, char **remote_name)
+{
+	if (!spec || spec[0] == '\0' || !remote_name)
+		return NULL;
+
+	char *local_name = NULL;
+	const char *colon = strchr(spec, ':');
+	if (colon) {
+		size_t local_len = colon - spec;
+		local_name = strndup(spec, local_len);
+		if (!local_name)
+			return NULL;
+
+		*remote_name = strdup(colon + 1);
+	} else {
+		local_name = strdup(spec);
+		*remote_name = NULL;
+	}
+
+	return local_name;
+}
+
+int vaccel_session_init_with_plugin(struct vaccel_session *sess,
+				    const char *plugin_spec)
+{
+	int ret;
+
+	if (!sess || !plugin_spec)
+		return VACCEL_EINVAL;
+
+	if (!sessions.initialized)
+		return VACCEL_ESESS;
+
+	char *remote_name = NULL;
+	char *plugin_name = parse_plugin_spec(plugin_spec, &remote_name);
+	if (!plugin_name) {
+		vaccel_error("Invalid plugin spec");
+		return VACCEL_EINVAL;
+	}
+
+	struct vaccel_plugin *plugin = plugin_find_by_name(plugin_name);
+	if (!plugin) {
+		vaccel_error("Failed to select plugin");
+		ret = VACCEL_ENOTSUP;
+		goto out;
+	}
+
+	ret = session_init(sess, plugin, 0, remote_name);
+
+out:
+	free(plugin_name);
+	free(remote_name);
 	return ret;
 }
 
@@ -396,6 +479,28 @@ int vaccel_session_new(struct vaccel_session **sess, uint32_t flags)
 		return VACCEL_ENOMEM;
 
 	int ret = vaccel_session_init(s, flags);
+	if (ret) {
+		free(s);
+		return ret;
+	}
+
+	*sess = s;
+
+	return VACCEL_OK;
+}
+
+int vaccel_session_new_with_plugin(struct vaccel_session **sess,
+				   const char *plugin_spec)
+{
+	if (!sess)
+		return VACCEL_EINVAL;
+
+	struct vaccel_session *s =
+		(struct vaccel_session *)malloc(sizeof(struct vaccel_session));
+	if (!s)
+		return VACCEL_ENOMEM;
+
+	int ret = vaccel_session_init_with_plugin(s, plugin_spec);
 	if (ret) {
 		free(s);
 		return ret;
