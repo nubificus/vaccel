@@ -1,0 +1,62 @@
+name: 'Render Template'
+description: 'Render a Jinja2 template with JSON data'
+
+inputs:
+  template:
+    description: 'Path to template file (.j2)'
+    required: true
+  data:
+    description: 'JSON string or path to JSON file'
+    required: true
+  is-file:
+    description: 'Whether data input is a file path or JSON string'
+    default: 'false'
+
+outputs:
+  result:
+    description: 'Rendered template output'
+    value: ${{ steps.render.outputs.result }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Render template
+      id: render
+      run: |
+        import json
+        import os
+        import sys
+        from pathlib import Path
+        from jinja2 import Environment, Template
+
+        # Read template
+        template_str = Path("${{ inputs.template }}").read_text()
+
+        # Read or parse data
+        data_input = """${{ inputs.data }}"""
+        is_file = "${{ inputs.is-file }}" == "true"
+
+        if is_file:
+            with Path(data_input.strip()).open() as f:
+                data = json.load(f)
+        else:
+            data = json.loads(data_input)
+
+        # Render template
+        env = Environment(trim_blocks=True, lstrip_blocks=True)
+        template = env.from_string(template_str)
+        result = template.render(**data)
+
+        # Write to output file
+        output_file = os.environ.get("GITHUB_OUTPUT")
+        if output_file:
+            # Escape for GitHub Actions multi-line output
+            delimiter = "EOF"
+            with Path(output_file).open("a") as f:
+                f.write(f"result<<{delimiter}\n")
+                f.write(result)
+                f.write(f"\n{delimiter}\n")
+
+        print("Result:")
+        print(result)
+      shell: python3 {0}

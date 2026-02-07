@@ -1,0 +1,70 @@
+version: "0.7.1"
+
+config:
+  release_name: "vAccel"
+  core_component: "vaccel"
+
+components:
+  vaccel:
+    artifacts: ["*_*.tar.gz", "*.deb"]
+
+  vaccel-rust:
+    component_version: "0.4.1"
+    artifacts: ["*agent*_*.tar.gz", "*agent*.deb"]
+
+  vaccel-plugin-rpc:
+    depends_on: ["vaccel-rust"]
+    component_version: "0.2.1"
+    artifacts: ["*_*.tar.gz", "*.deb"]
+
+  virtio-accel:
+    component_version: "0.2.0"
+
+  vaccel-virtio-common:
+    component_version: "0.0.1"
+
+  qemu-vaccel:
+    depends_on: ["vaccel-virtio-common"]
+    component_version: "10.0.0"
+    branch: "main+vaccel"
+
+  vaccel-plugin-virtio:
+    depends_on:
+      - "virtio-accel"
+      - "vaccel-virtio-common"
+      - "qemu-vaccel"
+    version: "0.2.0"
+    artifacts: ["*_vm.tar.xz", "*.deb"]
+
+  vaccel-plugin-torch:
+    component_version: "0.2.1"
+    artifacts: ["*_*.tar.gz"]
+
+  vaccel-plugin-tf:
+    component_version: "0.2.0"
+    artifacts: ["*_*.tar.gz"]
+
+  vaccel-plugin-tvm:
+    component_version: "0.1.0"
+    artifacts: ["*_*.tar.gz"]
+
+  vaccel-python:
+    component_version: "0.2.0"
+    artifacts: ["*.whl"]
+
+  vaccel-go:
+    component_version: "0.1.0"
+
+  vaccel-docs:
+    depends_on:
+      - "vaccel-rust"
+      - "vaccel-plugin-rpc"
+      - "virtio-accel"
+      - "vaccel-virtio-common"
+      - "qemu-vaccel"
+      - "vaccel-plugin-virtio"
+      - "vaccel-plugin-torch"
+      - "vaccel-plugin-tf"
+      - "vaccel-plugin-tvm"
+      - "vaccel-python"
+      - "vaccel-go"

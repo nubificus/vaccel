@@ -1,0 +1,60 @@
+name: Prepare Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 0.3.2+core-0.7.0)'
+        type: string
+        required: true
+      component:
+        description: >
+          Component to release. Defaults to the current repository name.
+        type: string
+        required: false
+      branch:
+        description: 'Branch to release'
+        type: string
+        required: false
+      core-component:
+        description: 'Core component name'
+        type: string
+        required: true
+      core-version:
+        description: 'Core component version'
+        type: string
+        required: true
+      tracking-issue:
+        description: 'Tracking issue number in core repo'
+        type: string
+        required: true
+      tracking-repo:
+        description: 'Core repository (e.g., owner/repo)'
+        type: string
+        required: true
+      dependencies:
+        description: >
+          JSON array of dependencies to update, e.g.,
+          [{"name": "dep1", "version": "0.2.0"}]
+        type: string
+        required: true
+
+concurrency:
+  group: >-
+    ${{ format('{0}-{1}_{2}',
+      github.workflow, inputs.component || github.repository, inputs.version) }}
+
+jobs:
+  prepare-release:
+    name: Prepare Release
+    uses: ./.github/workflows/prepare-release.yml
+    with:
+      version: ${{ inputs.version }}
+      component: ${{ inputs.component }}
+      branch: ${{ inputs.branch }}
+      core-component: ${{ inputs.core-component }}
+      core-version: ${{ inputs.core-version }}
+      tracking-issue: ${{ inputs.tracking-issue }}
+      tracking-repo: ${{ inputs.tracking-repo }}
+      dependencies: ${{ inputs.dependencies }}
+    secrets: inherit

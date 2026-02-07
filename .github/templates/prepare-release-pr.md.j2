@@ -1,0 +1,15 @@
+## Release v{{ version }}
+
+Update components for release v{{ version }}.
+
+{% if subprojects | length > 0 %}
+### Subprojects Updated
+
+{% for subproject in subprojects %}
+- {{ subproject.name }}: {{ subproject.revision }}
+{% endfor %}
+
+{% endif %}
+### Tracking
+
+- Issue: {{ tracking_repo }}#{{ tracking_issue }}

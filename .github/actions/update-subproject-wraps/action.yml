@@ -1,0 +1,137 @@
+name: 'Update Meson Subproject Wraps'
+description: 'Update meson subproject wrap revisions'
+
+inputs:
+  subprojects:
+    description: >
+      JSON array of subproject updates, e.g.,
+      [{"name":"slog","revision":"0.1.0"},{"name":"catch2"}]
+    required: true
+  recursive:
+    description: 'Whether to search for custom wraps recursively'
+    default: 'false'
+  fail-on-missing:
+    description: 'Whether to fail if a subproject wrap is not found'
+    default: 'false'
+
+outputs:
+  has-changes:
+    description: 'Whether there are any changes to subprojects'
+    value: ${{ steps.update.outputs.has-changes }}
+  updated:
+    description: 'JSON array of updated subprojects and revisions'
+    value: ${{ steps.update.outputs.updated }}
+
+runs:
+  using: composite
+  steps:
+    - name: Update wrap files
+      id: update
+      env:
+        SUBPROJECTS: ${{ inputs.subprojects }}
+        REVISIONS: ${{ inputs.revisions }}
+        FAIL_ON_MISSING: ${{ inputs.fail-on-missing }}
+        RECURSIVE: ${{ inputs.recursive }}
+      run: |
+        if [[ -f 'subprojects/wrapdb.json' ]]; then
+          delete_wrapdb='false'
+        else
+          delete_wrapdb='true'
+        fi
+
+        meson wrap update-db
+
+        updated='[]'
+        while read -r subproj; do
+          subproject=$(jq -r '.name' <<< "$subproj")
+          revision=$(jq -r '.revision // empty' <<< "$subproj")
+
+          wrap_filename="${subproject}.wrap"
+          if [[ "$RECURSIVE" == 'true' ]]; then
+            wrap_files="$(find subprojects -name "$wrap_filename")"
+          else
+            wrap_files="$(find subprojects -maxdepth 1 -name "$wrap_filename")"
+          fi
+
+          if [[ -z "$wrap_files" ]]; then
+            case "$FAIL_ON_MISSING" in
+              true)
+                echo "::error::Wrap file not found: ${wrap_filename}"
+                exit 1 ;;
+              false)
+                echo "::warning::Wrap file not found: ${wrap_filename}"
+                continue ;;
+              *)
+                echo "::error::Invalid 'fail-on-missing' input (expected 'true'/'false')"
+                exit 1 ;;
+            esac
+          fi
+
+          # Determine if this is a custom wrap (not in WrapDB)
+          is_custom=false
+          if ! meson wrap info "$subproject" &>/dev/null; then
+            is_custom=true
+            echo "Detected custom wrap for ${subproject} (not in WrapDB)"
+          fi
+
+          if [[ -n "$revision" ]] && [[ "$is_custom" == 'true' ]]; then
+            # Update directly with the specified revision
+            echo "Updating ${subproject} to revision ${revision}..."
+
+            success=0
+            for wrap_file in $wrap_files; do
+              if grep -q "^\s*revision\s*=" "$wrap_file"; then
+                sed -i "s/^\(\s*revision\s*=\s*\).*/\1${revision}/" "$wrap_file"
+                success=1
+                echo "Updated wrap ${subproject} to revision ${revision}"
+              else
+                echo "::warning::No 'revision' field found in ${wrap_file}"
+              fi
+            done
+
+            if [[ "$success" -eq 1 ]]; then
+              updated=$(jq -c \
+                --argjson subproj "$subproj" \
+                '. + [$subproj]' \
+                <<< "$updated")
+            fi
+          else
+            # Update to latest from WrapDB (only works for WrapDB projects)
+            if [[ "$is_custom" == 'true' ]]; then
+              echo "Skipping ${subproject}: custom wrap requires explicit revision"
+              continue
+            fi
+
+            if [[ -n "$revision" ]]; then
+              echo "::warning::Ignoring specified revision for ${subproject} (using meson wrap)"
+            fi
+
+            echo "Updating ${subproject} to latest..."
+            if meson wrap update "$subproject" --force 2>/dev/null; then
+              updated=$(jq -c \
+                --argjson subproj "$subproj" \
+                '. + [($subproj + {revision: "latest"})]' \
+                <<< "$updated")
+            else
+              echo "::warning::Failed to update ${subproject}"
+            fi
+          fi
+        done < <(jq -c '.[]' <<< "$SUBPROJECTS")
+
+        if [[ "$updated" == '[]' ]]; then
+          echo "has-changes=false" >> "$GITHUB_OUTPUT"
+          echo "No updates made"
+        else
+          echo "has-changes=true" >> "$GITHUB_OUTPUT"
+          echo "Updates: ${updated}"
+        fi
+        {
+          echo "updated=${updated}"
+          echo "delete-wrapdb=${delete_wrapdb}"
+        } >> "$GITHUB_OUTPUT"
+      shell: bash
+
+    - name: Cleanup
+      if: steps.update.outputs.delete-wrapdb == 'true'
+      run: rm -f subprojects/wrapdb.json
+      shell: bash
