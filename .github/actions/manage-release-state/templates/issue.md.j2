@@ -1,0 +1,56 @@
+## Release v{{ version }}
+
+Current release status and component progress.
+
+### Components
+
+{% for component in components.values() %}
+  {% set tick = "x" if component.status == "complete" else " " -%}
+  {% if component.status == "complete" %}
+    {% set status = "" -%}
+  {% else %}
+    {% set status = " `" ~ component.status ~ "`" -%}
+  {% endif %}
+- [{{ tick }}] **{{ component.name }}** {{ component.version }}{{ status }}
+{% endfor %}
+
+{% set all_complete = components.values() | rejectattr("status", "eq", "complete") | list | length == 0 %}
+{% set tag = "" if all_complete else " open" %}
+<details{{ tag }}>
+
+<summary>Pull requests</summary>
+
+#### Pull requests
+
+{% set ns = namespace(found=false) %}
+{% for component in components.values() %}
+  {% if component.pr | default("") %}
+    {% set tick = "x" if component.status in ["pr-merged", "tagged", "complete"] else " " %}
+    {% set ns.found = true %}
+- [{{ tick }}] {{ component.pr }}
+  {% endif %}
+{% endfor %}
+{% if not ns.found %}
+None
+{% endif %}
+
+</details>
+
+### Draft
+
+{% if release_name | default("") %}
+  {% set tick = "x" if action == "finalize" else " " %}
+- [{{ tick }}] [{{ release_name }}]({{ release_url }})
+{% endif %}
+
+</br>
+
+> [!NOTE]
+>
+> - This issue is managed by automation
+> - User comments do not affect the workflow
+> - Component status updates automatically
+
+Triggered by **@{{ triggered_by }}**
+Created **{{ created_at }}**
+Updated **{{ updated_at }}**

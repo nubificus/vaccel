@@ -1,0 +1,717 @@
+name: Release Orchestrator
+
+on:
+  push:
+    branches: [main]
+    paths: ['.github/release-manifest.yml']
+
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Action to perform: "start" or "resume"'
+        type: choice
+        options: [start, resume]
+        default: 'start'
+      component:
+        description: 'Component with updated status (for "resume" action)'
+        type: string
+        required: false
+      status:
+        description: >
+          Component status: "pr-created", "pr-merged" or "complete"
+          (for "resume" action)
+        type: choice
+        options: [pr-created, pr-merged, complete]
+        default: 'complete'
+      pr-number:
+        description: >
+          Number of created PR (for "resume" action with status "pr-created")
+        type: string
+        required: false
+      artifacts-path:
+        description: >
+          Relative S3 path for component artifacts
+          (for "resume" action with status "complete")
+        type: string
+        required: false
+      release-version:
+        description: 'Version to release (e.g., 0.3.2, for "resume" action)'
+        type: string
+        required: false
+      force:
+        description: >
+          Force start an existing, in progress release (for "start" action)
+        type: boolean
+        default: false
+      overwrite-tags:
+        description: 'Overwrite existing tags (for "start" action)'
+        type: boolean
+        default: false
+
+jobs:
+  check-run:
+    name: Check if Orchestrator Should Run
+    runs-on: base-dind-2204-amd64
+    outputs:
+      action: ${{ steps.determine-action.outputs.action }}
+      should-run: >-
+        ${{ steps.check-version.outputs.should-run ||
+          steps.handle-manual.outputs.should-run }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Setup yq
+        uses: dcarbone/install-yq-action@v1
+        with:
+          version: 'v4.52.2'
+
+      - name: Determine action
+        id: determine-action
+        run: |
+          if [[ "${{ github.event_name }}" == "push" ]]; then
+            echo 'action=start' >> "$GITHUB_OUTPUT"
+          else
+            echo "action=${{ inputs.action }}" >> "$GITHUB_OUTPUT"
+          fi
+        shell: bash
+
+      - name: Handle manual trigger
+        id: handle-manual
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          if [[ "${{ steps.determine-action.outputs.action }}" == 'resume' ]]
+          then
+            echo 'should-run=true' >> "$GITHUB_OUTPUT"
+            echo 'Manual resume - will run'
+            exit 0
+          fi
+
+          if [[ "${{ inputs.force }}" == "true" ]]; then
+            echo 'should-run=true' >> "$GITHUB_OUTPUT"
+            echo 'Manual start (forced) - will run'
+            exit 0
+          fi
+
+          version=$(yq eval '.version' .github/release-manifest.yml)
+          existing_issue=$(gh issue list \
+            --label "release-v${version}" \
+            --state open \
+            --json number --jq '.[0].number' || echo '')
+
+          if [[ -n "$existing_issue" ]]; then
+            echo 'should-run=false' >> "$GITHUB_OUTPUT"
+            echo "Release v${version} already in progress (issue #${existing_issue})"
+            echo 'Use force=true to start anyway'
+            exit 0
+          fi
+
+          echo 'should-run=true' >> "$GITHUB_OUTPUT"
+          echo "Manual start - will run (no existing release found)"
+        shell: bash
+
+      - name: Check if version changed in push
+        id: check-version
+        if: github.event_name == 'push'
+        run: |
+          before_version=$(git show \
+            "${{ github.event.before }}:.github/release-manifest.yml" \
+            2>/dev/null | \
+            yq eval '.version' - 2>/dev/null || echo '')
+          after_version=$(yq eval '.version' .github/release-manifest.yml)
+
+          echo "Before: ${before_version}"
+          echo "After: ${after_version}"
+
+          if [[ -z "$before_version" ]] || [[ "$before_version" == "null" ]]
+          then
+            echo "First push or manifest didn't exist before - will skip"
+            echo 'should-run=false' >> "$GITHUB_OUTPUT"
+            echo "version=${after_version}" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [[ "$before_version" != "$after_version" ]]; then
+            echo 'should-run=true' >> "$GITHUB_OUTPUT"
+            echo "version=${after_version}" >> "$GITHUB_OUTPUT"
+            echo "Version changed: ${before_version} → ${after_version} - will run"
+          else
+            echo 'should-run=false' >> "$GITHUB_OUTPUT"
+            echo "Version unchanged: ${after_version} - will skip"
+            echo 'To force a release, use workflow_dispatch with force=true'
+          fi
+        shell: bash
+
+  orchestrate:
+    needs: check-run
+    name: Release Orchestrator
+    if: needs.check-run.outputs.should-run == 'true'
+    runs-on: base-dind-2204-amd64
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup yq
+        uses: dcarbone/install-yq-action@v1
+        with:
+          version: 'v4.52.2'
+
+      - name: Parse and cache manifest
+        id: parse-manifest
+        run: |
+          MANIFEST_JSON="${RUNNER_TEMP}/manifest.json"
+          COMPONENTS_JSON="${RUNNER_TEMP}/components.json"
+
+          echo "Parsing manifest to JSON..."
+          yq eval -o=json '.' .github/release-manifest.yml > "$MANIFEST_JSON"
+
+          core_component=$(jq -r '.config.core_component // null' \
+            "$MANIFEST_JSON")
+          if ! jq -e ".components.\"${core_component}\"" "$MANIFEST_JSON" \
+            > /dev/null; then
+            echo "::error::Core component '${core_component}' not found in components"
+            exit 1
+          fi
+          safe_core_name="${core_component//_/}"
+
+          release_name=$(jq -r '.config.release_name // null' "$MANIFEST_JSON")
+          if [[ "$release_name" == 'null' ]]; then
+            echo '::error::No release name specified'
+            exit 1
+          fi
+
+          core_version=$(jq -r '.version' "$MANIFEST_JSON")
+          if [[ "$core_version" == 'null' ]]; then
+            echo '::error::No release version specified'
+            exit 1
+          fi
+
+          echo "Building canonical component data..."
+          components=$(jq \
+            --arg core_component "$core_component" \
+            --arg safe_core_name "$safe_core_name" \
+            --arg core_version "$core_version" '
+            .components
+            | with_entries(
+                .value as $comp
+                | .key as $name
+                | .value =
+                  (if $name == $core_component then
+                     $comp + {
+                       name: $name,
+                       version: $core_version,
+                       full_version: $core_version,
+                       branch: "",
+                       is_core: true,
+                       all_dependencies: []
+                     }
+                   else
+                     ($comp.component_version // $core_version) as $version
+                     | (
+                         if ($comp | has("depends_on") | not) then
+                           [$core_component]
+                         elif ($comp.depends_on | length == 0) then
+                           []
+                         else
+                           ($comp.depends_on + [$core_component]) | unique
+                         end
+                       ) as $deps
+                     | $comp + {
+                         name: $name,
+                         version: $version,
+                         full_version:
+                           (if $comp.component_version == null
+                            then $core_version
+                            else
+                              "\($version)+\($safe_core_name).\($core_version)"
+                            end),
+                         branch: ($comp.branch // ""),
+                         is_core: false,
+                         all_dependencies: $deps
+                       }
+                   end)
+              )
+          ' "$MANIFEST_JSON")
+          echo "$components" > "$COMPONENTS_JSON"
+
+          component_repos=$(jq -r '. | keys | join(",")' \
+            <<< "$components")
+
+          {
+            echo "manifest-path=${MANIFEST_JSON}"
+            echo "components-path=${COMPONENTS_JSON}"
+            echo "release-name=${release_name}"
+            echo "version=${core_version}"
+            echo "core-component=${core_component}"
+            echo "component-repos=${component_repos}"
+          } >> "$GITHUB_OUTPUT"
+
+          echo "Manifest parsed:"
+          echo "  Core version: ${core_version}"
+          echo "  Core component: ${core_component}"
+          echo "  Components: $(jq -rc '. | keys' <<< "$components")"
+        shell: bash
+
+      # Workaround for native concurrency cancelling more than one queued jobs.
+      # See: https://github.com/orgs/community/discussions/12835
+      - name: Wait for pending runs
+        uses: softprops/turnstyle@v3
+
+      - name: Generate vaccel-bot token
+        id: generate-token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.VACCEL_BOT_CLIENT_ID }}
+          private-key: ${{ secrets.VACCEL_BOT_PRIVATE_KEY }}
+          repositories: ${{ steps.parse-manifest.outputs.component-repos }}
+          permission-actions: write
+          permission-contents: write
+          permission-issues: write
+          permission-pull-requests: write
+
+      - name: Get vaccel-bot info
+        id: get-bot-info
+        uses: ./.github/actions/get-github-app-info
+        with:
+          app-slug: ${{ steps.generate-token.outputs.app-slug }}
+
+      # --- START: Create issue, draft release, tag core component ---
+
+      - name: Create tracking issue
+        id: create-issue
+        if: needs.check-run.outputs.action == 'start'
+        uses: ./.github/actions/manage-release-state
+        with:
+          action: 'create'
+          version: ${{ steps.parse-manifest.outputs.version }}
+          components-path: ${{ steps.parse-manifest.outputs.components-path }}
+          metadata-overwrite-tags: ${{ inputs.overwrite-tags || 'false' }}
+          user-login: ${{ steps.get-bot-info.outputs.user-login }}
+          token: ${{ steps.generate-token.outputs.token }}
+
+      - name: Generate draft release note data
+        id: generate-draft
+        if: needs.check-run.outputs.action == 'start'
+        env:
+          VERSION: ${{ steps.parse-manifest.outputs.version }}
+          ISSUE_NUMBER: ${{ steps.create-issue.outputs.issue-number }}
+          COMPONENTS_PATH: ${{ steps.create-issue.outputs.components-path }}
+        run: |
+          NOTES_PATH="${RUNNER_TEMP}/draft_notes.json"
+          jq \
+            --arg version "$VERSION" \
+            --arg issue_number "$ISSUE_NUMBER" \
+            '{
+              version: $version,
+              tracking_issue: $issue_number,
+              is_draft: false,
+              components: .
+            }' "$COMPONENTS_PATH" > "$NOTES_PATH"
+            echo "notes-path=${NOTES_PATH}" >> "$GITHUB_OUTPUT"
+        shell: bash
+
+      - name: Render draft release notes
+        id: render-draft
+        if: needs.check-run.outputs.action == 'start'
+        uses: ./.github/actions/render-template
+        with:
+          template: .github/templates/release.md.j2
+          data: ${{ steps.generate-draft.outputs.notes-path }}
+          is-file: true
+
+      - name: Create draft release
+        if: needs.check-run.outputs.action == 'start'
+        env:
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
+          VERSION: ${{ steps.parse-manifest.outputs.version }}
+          RELEASE_NAME: ${{ steps.parse-manifest.outputs.release-name }}
+          NOTES: ${{ steps.render-draft.outputs.result }}
+        run: |
+          TAG="v${VERSION}"
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            echo "Draft release exists"
+          else
+            gh release create "$TAG" \
+              --title "${RELEASE_NAME} v${VERSION}" \
+              --notes "$NOTES" \
+              --draft
+            echo "Draft release created"
+          fi
+        shell: bash
+
+      - name: Tag core component
+        id: tag-core
+        if: needs.check-run.outputs.action == 'start'
+        env:
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
+          VERSION: ${{ steps.parse-manifest.outputs.version }}
+          ISSUE_NUMBER: ${{ steps.create-issue.outputs.issue-number }}
+          STATE: ${{ steps.create-issue.outputs.state }}
+          CORE_COMPONENT: ${{ steps.parse-manifest.outputs.core-component }}
+          OVERWRITE_TAGS: >-
+            ${{ steps.create-issue.outputs.metadata-overwrite-tags }}
+        run: |
+          component=$(jq -nc --arg name "$CORE_COMPONENT" '[$name]')
+          tagged='false'
+
+          if git tag --points-at HEAD | grep -qx "$tag"; then
+            echo "HEAD already tagged with ${tag}, skipping"
+
+            if jq -e --argjson comp "$component" \
+              '.pending | contains($comp)' <<< "$STATE" > /dev/null
+            then
+              tagged='true'
+            fi
+          else
+            tag="v${VERSION}"
+            sha=$(git rev-parse HEAD)
+
+            if [[ "$OVERWRITE_TAGS" == 'true' ]]; then
+              git tag -fd "$tag" 2>/dev/null || true
+              git push origin ":refs/tags/${tag}" 2>/dev/null || true
+            fi
+
+            gh api "repos/${GITHUB_REPOSITORY}/git/refs" \
+              --silent \
+              -f ref="refs/tags/${tag}" \
+              -f sha="$sha"
+
+            tagged='true'
+            echo "Tagged ${CORE_COMPONENT} with ${tag}"
+          fi
+
+          {
+            echo "tagged=${tagged}"
+            echo "component=${component}"
+          } >> "$GITHUB_OUTPUT"
+        shell: bash
+
+      - name: Update core state
+        id: update-core
+        if: needs.check-run.outputs.action == 'start'
+        env:
+          ACTION: >-
+            ${{ steps.tag-core.outputs.tagged == 'true' && 'update' || 'get' }}
+          RESET: >-
+            ${{ steps.tag-core.outputs.tagged == 'true' && 'true' || 'false' }}
+        uses: ./.github/actions/manage-release-state
+        with:
+          action: ${{ env.ACTION }}
+          issue-number: ${{ steps.create-issue.outputs.issue-number }}
+          components-path: ${{ steps.parse-manifest.outputs.components-path }}
+          target-components: ${{ steps.tag-core.outputs.component }}
+          target-status: 'tagged'
+          reset: ${{ env.RESET }}
+          user-login: ${{ steps.get-bot-info.outputs.user-login }}
+          token: ${{ steps.generate-token.outputs.token }}
+
+      # --- RESUME: Process next components ---
+
+      - name: Generate target component
+        id: generate-component
+        if: needs.check-run.outputs.action == 'resume'
+        run: |
+          component=$(jq -nc --arg name "${{ inputs.component }}" '[$name]')
+          echo "component=${component}" >> "$GITHUB_OUTPUT"
+        shell: bash
+
+      - name: Update component status
+        id: update-component
+        if: needs.check-run.outputs.action == 'resume'
+        uses: ./.github/actions/manage-release-state
+        with:
+          action: 'update'
+          version: ${{ inputs.release-version }}
+          components-path: ${{ steps.parse-manifest.outputs.components-path }}
+          target-components: ${{ steps.generate-component.outputs.component }}
+          target-status: ${{ inputs.status }}
+          target-pr-number: ${{ inputs.pr-number }}
+          user-login: ${{ steps.get-bot-info.outputs.user-login }}
+          token: ${{ steps.generate-token.outputs.token }}
+
+      - name: Fetch and upload release artifacts
+        if: >-
+          needs.check-run.outputs.action == 'resume' &&
+          inputs.status == 'complete'
+        uses: ./.github/actions/upload-release-artifacts
+        env:
+          COMPONENTS_PATH: ${{ steps.update-component.outputs.components-path }}
+          RELEASE_TAG: ${{ format('v{0}', inputs.release-version) }}
+        with:
+          component: ${{ inputs.component }}
+          components-path: ${{ env.COMPONENTS_PATH }}
+          release-tag: ${{ env.RELEASE_TAG }}
+          s3-subpath: ${{ inputs.artifacts-path }}
+          s3-access-key: ${{ secrets.AWS_ACCESS_KEY }}
+          s3-secret-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          token: ${{ steps.generate-token.outputs.token }}
+
+      - name: Trigger next components
+        id: trigger-next
+        env:
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
+          COMPONENTS_PATH: >-
+            ${{ steps.update-component.outputs.components-path ||
+              steps.update-core.outputs.components-path }}
+          ISSUE_NUMBER: >-
+            ${{ steps.update-component.outputs.issue-number ||
+              steps.update-core.outputs.issue-number }}
+          VERSION: >-
+            ${{ inputs.release-version ||
+              steps.parse-manifest.outputs.version }}
+          CORE_COMPONENT: ${{ steps.parse-manifest.outputs.core-component }}
+          OVERWRITE_TAGS: >-
+            ${{ steps.update-component.outputs.metadata-overwrite-tags ||
+              steps.update-core.outputs.metadata-overwrite-tags }}
+        run: |
+          echo "Checking which components are ready..."
+
+          actions=$(jq -c \
+            --arg repo_owner "$GITHUB_REPOSITORY_OWNER" \
+            --arg core_component "$CORE_COMPONENT" '
+            . as $all
+            | to_entries
+            | map(
+                .key as $name
+                | .value as $comp
+                | ($comp.depends_on // []) as $explicit_deps
+                | ($comp.all_dependencies // []) as $deps
+                | (
+                    if $comp.status == "pr-merged" then
+                      "tag"
+                    elif $comp.status == "pending" then
+                      if ($deps | length == 0) or ($deps | all(
+                        . as $d | ($all[$d].status == "complete")
+                      )) then
+                          "trigger"
+                      else
+                        empty
+                      end
+                    else
+                      empty
+                    end
+                  ) as $action
+                | select($action)
+                | {
+                    name: $name,
+                    repo: "\($repo_owner)/\($comp.name)",
+                    branch: $comp.branch,
+                    full_version: $comp.full_version,
+                    action: $action,
+                    workflow_deps: (
+                      $explicit_deps
+                      | map({name: ., version: $all[.].full_version})
+                    )
+                  }
+              )
+          ' "$COMPONENTS_PATH")
+
+          jq -c '.[]' <<< "$actions" | while read -r comp; do
+            name=$(jq -r '.name' <<< "$comp")
+            repo=$(jq -r '.repo' <<< "$comp")
+            branch=$(jq -r '.branch' <<< "$comp")
+            full_version=$(jq -r '.full_version' <<< "$comp")
+            action=$(jq -r '.action' <<< "$comp")
+            workflow_deps=$(jq -c '.workflow_deps' <<< "$comp")
+
+            if [[ "$action" == "tag" ]]; then
+              tag="v${full_version}"
+              tag_branch="${branch:-main}"
+              sha=$(gh api "repos/${repo}/git/refs/heads/${tag_branch}" \
+                --jq '.object.sha')
+
+              echo "Tagging ${name} with ${tag}"
+              if [[ "$OVERWRITE_TAGS" == 'true' ]]; then
+                gh api "repos/${repo}/git/refs/tags/${tag}" \
+                  --silent \
+                  -X DELETE \
+                  2>/dev/null || true
+              fi
+              gh api "repos/${repo}/git/refs" \
+                  --silent \
+                -f ref="refs/tags/${tag}" \
+                -f sha="$sha"
+            elif [[ "$action" == "trigger" ]]; then
+              echo "Triggering prepare-release for ${name} (${full_version})"
+              status=$(gh api \
+                "repos/${repo}/contents/.github/workflows/dispatch-prepare-release.yml" \
+                --silent -i 2>&1 | head -1 | awk '{print $2}' || true)
+
+              if [[ "$status" == "200" ]]; then
+                target_repo="$repo"
+              else
+                target_repo="$GITHUB_REPOSITORY"
+              fi
+
+              gh workflow run dispatch-prepare-release.yml \
+                --repo "$target_repo" \
+                -f version="$full_version" \
+                -f component="$name" \
+                -f branch="$branch" \
+                -f core-component="$CORE_COMPONENT" \
+                -f core-version="$VERSION" \
+                -f tracking-issue="$ISSUE_NUMBER" \
+                -f tracking-repo="$GITHUB_REPOSITORY" \
+                -f dependencies="$workflow_deps"
+            fi
+          done
+
+          triggered=$(jq -rc '[.[] | select(.action == "trigger") | .name]' \
+            <<< "$actions")
+          tagged=$(jq -rc '[.[] | select(.action == "tag") | .name]' \
+            <<< "$actions")
+
+          {
+            echo "triggered=${triggered}"
+            echo "tagged=${tagged}"
+          } >> "$GITHUB_OUTPUT"
+
+          echo "Trigger step complete:"
+          echo "  Triggered: ${triggered}"
+          echo "  Tagged: ${tagged}"
+        shell: bash
+
+      - name: Update tracking issue with triggered
+        id: update-triggered
+        if: steps.trigger-next.outputs.triggered != '[]'
+        uses: ./.github/actions/manage-release-state
+        with:
+          action: 'update'
+          issue-number: >-
+            ${{ steps.update-component.outputs.issue-number ||
+              steps.update-core.outputs.issue-number }}
+          components-path: >-
+            ${{ steps.update-component.outputs.components-path ||
+              steps.update-core.outputs.components-path }}
+          target-components: ${{ steps.trigger-next.outputs.triggered }}
+          target-status: 'triggered'
+          user-login: ${{ steps.get-bot-info.outputs.user-login }}
+          token: ${{ steps.generate-token.outputs.token }}
+
+      - name: Update tracking issue with tagged
+        id: update-tagged
+        if: steps.trigger-next.outputs.tagged != '[]'
+        uses: ./.github/actions/manage-release-state
+        with:
+          action: 'update'
+          issue-number: >-
+            ${{ steps.update-component.outputs.issue-number ||
+              steps.update-core.outputs.issue-number }}
+          components-path: >-
+            ${{ steps.update-component.outputs.components-path ||
+              steps.update-core.outputs.components-path }}
+          target-components: ${{ steps.trigger-next.outputs.tagged }}
+          target-status: 'tagged'
+          user-login: ${{ steps.get-bot-info.outputs.user-login }}
+          token: ${{ steps.generate-token.outputs.token }}
+
+      - name: Check if release complete
+        id: check-complete
+        env:
+          COMPONENTS_PATH: >-
+            ${{ steps.update-tagged.outputs.components-path ||
+              steps.update-triggered.outputs.components-path ||
+              steps.update-component.outputs.components-path ||
+              steps.update-core.outputs.components-path }}
+          VERSION: >-
+            ${{ inputs.release-version ||
+              steps.parse-manifest.outputs.version }}
+          ISSUE_NUMBER: >-
+            ${{ steps.update-component.outputs.issue-number ||
+              steps.update-core.outputs.issue-number }}
+        run: |
+          incomplete=$(jq -rc '
+            to_entries
+            | map(select(.value.status != "complete") | .key)
+          ' "$COMPONENTS_PATH")
+
+          if [[ "$(jq 'length' <<< "$incomplete")" -ne 0 ]]; then
+            echo 'is-complete=false' >> "$GITHUB_OUTPUT"
+            echo "Some components are not complete:"
+            echo "$incomplete"
+            exit 0
+          fi
+
+          previous_release=$(git describe --tags --abbrev=0 v"$VERSION"^)
+
+          {
+            echo 'is-complete=true'
+            echo "version=${VERSION}"
+            echo "components-path=${COMPONENTS_PATH}"
+            echo "previous-release=${previous_release}"
+            echo "issue-number=${ISSUE_NUMBER}"
+          } >> "$GITHUB_OUTPUT"
+          echo "All components complete"
+        shell: bash
+
+      - name: Generate release changelog
+        id: generate-changelog
+        if: steps.check-complete.outputs.is-complete == 'true'
+        uses: orhun/git-cliff-action@v4
+        env:
+          VERSION: ${{ steps.check-complete.outputs.version }}
+          PREVIOUS_RELEASE: ${{ steps.check-complete.outputs.previous-release }}
+          OUTPUT: ${{ format('{0}/{1}', runner.temp, 'CHANGELOG.md') }}
+        with:
+          config: .github/cliff.toml
+          args: ${{ format('{0}..v{1} -v', env.PREVIOUS_RELEASE, env.VERSION) }}
+
+      - name: Generate final release note data
+        id: generate-final
+        if: steps.check-complete.outputs.is-complete == 'true'
+        env:
+          VERSION: ${{ steps.check-complete.outputs.version }}
+          ISSUE_NUMBER: ${{ steps.check-complete.outputs.issue-number }}
+          CHANGELOG: ${{ steps.generate-changelog.outputs.content }}
+          COMPONENTS_PATH: ${{ steps.check-complete.outputs.components-path }}
+        run: |
+          NOTES_PATH="${RUNNER_TEMP}/final_notes.json"
+          jq \
+            --arg version "$VERSION" \
+            --arg tracking_issue "$ISSUE_NUMBER" \
+            --arg changelog "$CHANGELOG" \
+            '{
+              version: $version,
+              tracking_issue: $tracking_issue,
+              changelog: $changelog,
+              is_draft: true,
+              components: .
+            }' "$COMPONENTS_PATH" > "$NOTES_PATH"
+            echo "notes-path=${NOTES_PATH}" >> "$GITHUB_OUTPUT"
+        shell: bash
+
+      - name: Render final release notes
+        id: render-final
+        if: steps.check-complete.outputs.is-complete == 'true'
+        uses: ./.github/actions/render-template
+        with:
+          template: .github/templates/release.md.j2
+          data: ${{ steps.generate-final.outputs.notes-path }}
+          is-file: true
+
+      - name: Finalize release
+        id: finalize-release
+        if: steps.check-complete.outputs.is-complete == 'true'
+        env:
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
+          VERSION: ${{ steps.check-complete.outputs.version }}
+          NOTES: ${{ steps.render-final.outputs.result }}
+        run: |
+          gh release edit "v${VERSION}" --notes "$NOTES"
+          echo "Release finalized"
+        shell: bash
+
+      - name: Report completion and close tracking issue
+        if: steps.check-complete.outputs.is-complete == 'true'
+        uses: ./.github/actions/manage-release-state
+        with:
+          action: 'finalize'
+          issue-number: ${{ steps.check-complete.outputs.issue-number }}
+          components-path: ${{ steps.check-complete.outputs.components-path }}
+          user-login: ${{ steps.get-bot-info.outputs.user-login }}
+          token: ${{ steps.generate-token.outputs.token }}

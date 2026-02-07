@@ -1,0 +1,201 @@
+name: Prepare Release
+
+on:
+  workflow_call:
+    inputs:
+      actions-repo:
+        description: 'Repository with remote actions'
+        type: string
+        default: 'nubificus/vaccel'
+      actions-rev:
+        description: 'Revision of remote actions repository'
+        type: string
+        default: 'main'
+      version:
+        description: 'Version to release (e.g., 0.3.2+core-0.7.0)'
+        type: string
+        required: true
+      component:
+        description: >
+          Component to release. Defaults to the current repository name.
+        type: string
+        required: false
+      branch:
+        description: 'Branch to release'
+        type: string
+        required: false
+      core-component:
+        description: 'Core component name'
+        type: string
+        required: true
+      core-version:
+        description: 'Core component version'
+        type: string
+        required: true
+      tracking-issue:
+        description: 'Tracking issue number in core repo'
+        type: string
+        required: true
+      tracking-repo:
+        description: 'Core repository (e.g., owner/repo)'
+        type: string
+        required: true
+      dependencies:
+        description: >
+          JSON array of dependencies to update, e.g.,
+          [{"name": "dep1", "version": "0.2.0"}]
+        type: string
+        required: true
+      recurse-subprojects:
+        description: 'Whether to search for custom subproject wraps recursively'
+        type: boolean
+        default: false
+    secrets:
+      VACCEL_BOT_PRIVATE_KEY:
+        required: true
+    outputs:
+      pr-number:
+        description: 'Number of the created pull request'
+        value: ${{ jobs.prepare.outputs.pr-number }}
+      pr-url:
+        description: 'URL of the created pull request'
+        value: ${{ jobs.prepare.outputs.pr-url }}
+
+env:
+  ACTIONS_REV: >-
+    ${{ github.repository != inputs.actions-repo && inputs.actions-rev || '' }}
+
+jobs:
+  prepare:
+    name: Prepare Release
+    runs-on: base-2204-amd64
+    outputs:
+      pr-number: ${{ steps.create-release-pr.outputs.pr-number }}
+      pr-url: ${{ steps.create-release-pr.outputs.pr-url }}
+    steps:
+      - name: Parse repository names
+        id: parse-repos
+        env:
+          ACTIONS_REPO: ${{ inputs.actions-repo }}
+          COMPONENT_REPO: >-
+            ${{ inputs.component &&
+              format('{0}/{1}', github.repository_owner, inputs.component) ||
+              github.repository }}
+          TRACKING_REPO: ${{ inputs.tracking-repo }}
+        run: |
+          {
+            echo "repo-name=$(basename "$GITHUB_REPOSITORY")"
+            echo "actions-repo-name=$(basename "$ACTIONS_REPO")"
+            echo "component-repo=${COMPONENT_REPO}"
+            echo "component-repo-name=$(basename "$COMPONENT_REPO")"
+            echo "tracking-repo-name=$(basename "$TRACKING_REPO")"
+          } >> "$GITHUB_OUTPUT"
+        shell: bash
+
+      - name: Generate initialization vaccel-bot token
+        id: generate-initial-token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.VACCEL_BOT_CLIENT_ID }}
+          private-key: ${{ secrets.VACCEL_BOT_PRIVATE_KEY }}
+          repositories: |
+            ${{ steps.parse-repos.outputs.actions-repo-name }}
+            ${{ steps.parse-repos.outputs.component-repo-name }}
+          permission-contents: read
+
+      - name: Checkout .github directory
+        uses: actions/checkout@v6
+        with:
+          sparse-checkout: .github
+          repository: ${{ inputs.actions-repo }}
+          ref: ${{ env.ACTIONS_REV }}
+          token: ${{ steps.generate-initial-token.outputs.token }}
+
+      - name: Initialize workspace
+        uses: ./.github/actions/initialize-workspace
+        with:
+          repository: ${{ steps.parse-repos.outputs.component-repo }}
+          remote-actions-repo: ${{ inputs.actions-repo }}
+          ref: ${{ inputs.branch || '' }}
+          fetch-depth: 0
+          submodules: 'false'
+          token: ${{ steps.generate-initial-token.outputs.token }}
+
+      - name: Update core build dependency version
+        env:
+          CORE_COMPONENT: ${{ inputs.core-component }}
+          CORE_VERSION: ${{ inputs.core-version }}
+        run: |
+          if [[ "$CORE_VERSION" =~ ^[0-9]+\.[0-9]+\.0$ ]]; then
+            dep_regex="dependency('${CORE_COMPONENT}', version : '>=[0-9]*\.[0-9]*\.[0-9]*')"
+            dep_new="dependency('${CORE_COMPONENT}', version : '>=${CORE_VERSION}')"
+            sed -i "s/${dep_regex}/${dep_new}/" meson.build
+
+            if ! git diff --quiet meson.build; then
+              echo "Updated ${CORE_COMPONENT} min version to: ${CORE_VERSION}"
+            else
+              echo "Nothing to update"
+            fi
+          else
+            echo "${CORE_COMPONENT} version '${CORE_VERSION}' is a patch update - skipping"
+          fi
+        shell: bash
+
+      - name: Parse component dependencies
+        id: parse-dependencies
+        env:
+          DEPENDENCIES: ${{ inputs.dependencies }}
+        run: |
+          subprojects=$(jq -c '
+            map(
+              .revision = ("v" + .version)
+              | del(.version)
+            )
+          ' <<< "$DEPENDENCIES")
+          echo "subprojects=${subprojects}" >> "$GITHUB_OUTPUT"
+        shell: bash
+
+      - name: Update subproject wraps
+        id: update-subprojects
+        uses: ./.github/actions/update-subproject-wraps
+        with:
+          subprojects: ${{ steps.parse-dependencies.outputs.subprojects }}
+          recursive: ${{ inputs.recurse-subprojects }}
+
+      - name: Render pull request
+        id: render-pr
+        uses: ./.github/actions/render-template
+        with:
+          template: .github/templates/prepare-release-pr.md.j2
+          data: |
+            {
+              "version": "${{ inputs.version }}",
+              "tracking_repo": "${{ inputs.tracking-repo }}",
+              "tracking_issue": "${{ inputs.tracking-issue }}",
+              "subprojects": ${{ steps.update-subprojects.outputs.updated }}
+            }
+
+      - name: Generate PR vaccel-bot token
+        id: generate-pr-token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.VACCEL_BOT_CLIENT_ID }}
+          private-key: ${{ secrets.VACCEL_BOT_PRIVATE_KEY }}
+          repositories: |
+            ${{ steps.parse-repos.outputs.component-repo-name }}
+            ${{ steps.parse-repos.outputs.tracking-repo-name }}
+          permission-contents: write
+          permission-pull-requests: write
+          permission-actions: write
+
+      - name: Create release PR
+        id: create-release-pr
+        uses: ./.github/actions/create-release-pr
+        with:
+          component: ${{ steps.parse-repos.outputs.component-repo-name }}
+          version: ${{ inputs.version }}
+          body: ${{ steps.render-pr.outputs.result }}
+          tracking-repo: ${{ inputs.tracking-repo }}
+          core-version: ${{ inputs.core-version }}
+          committer-slug: ${{ steps.generate-pr-token.outputs.app-slug }}
+          token: ${{ steps.generate-pr-token.outputs.token }}

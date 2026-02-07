@@ -1,0 +1,133 @@
+name: 'Create Release Pull Request'
+description: >
+  Create a pull request preparing a release and trigger orchestrator workflow
+
+inputs:
+  component:
+    description: 'Name of the component to release'
+    required: true
+  version:
+    description: 'Version of the component to release (e.g., 0.3.2+core-0.7.0)'
+    required: true
+  branch:
+    description: 'Pull request branch name'
+    required: false
+  title:
+    description: 'Title of the pull request'
+    required: false
+  body:
+    description: 'Body of the pull request'
+    required: false
+  committer-slug:
+    description: 'App slug of the committer GitHub App'
+    default: 'github-actions'
+  tracking-repo:
+    description: >
+      Core repository (e.g., owner/repo - required to trigger orchestrator)
+    required: false
+  core-version:
+    description: 'Core component version (required to trigger orchestrator)'
+    required: false
+  token:
+    description: >
+      Access token used for creating the PR and updating the release tracking
+      issue
+    default: ${{ github.token }}
+
+outputs:
+  pr-number:
+    description: 'Number of the created pull request'
+    value: ${{ steps.create-pr.outputs.pull-request-number }}
+  pr-url:
+    description: 'URL of the created pull request'
+    value: ${{ steps.create-pr.outputs.pull-request-url }}
+  pr-operation:
+    description: >
+      The pull request operation performed by the action
+      ("created", "updated" or "closed")
+    value: ${{ steps.create-pr.outputs.pull-request-operation }}
+  pr-head-sha:
+    description: 'Commit SHA of the pull request branch'
+    value: ${{ steps.create-pr.outputs.pull-request-head-sha }}
+  pr-branch:
+    description: 'Pull request branch name'
+    value: ${{ steps.create-pr.outputs.pull-request-branch-name }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Get committer app info
+      id: get-app-info
+      uses: ./.github/actions/get-github-app-info
+      with:
+        app-slug: ${{ inputs.committer-slug }}
+
+    - name: Get paths to commit
+      id: get-paths
+      run: |
+        # Exclude '.github' since previous steps modify it
+        paths=$({ git diff --name-only; \
+            git ls-files --others --exclude-standard; } |
+            grep -Ev '^\.github|^\*$' || true)
+        {
+          echo 'paths<<EOF'
+          echo "$paths"
+          echo 'EOF'
+        } >> "$GITHUB_OUTPUT"
+        printf 'Commit paths:\n%s\n' "$paths"
+      shell: bash
+
+    - name: Create pull request
+      id: create-pr
+      if: steps.get-paths.outputs.paths
+      uses: peter-evans/create-pull-request@v8
+      env:
+        VERSION: ${{ inputs.version }}
+        COMMITTER: >-
+          ${{ format('{0} <{1}>',
+            steps.get-app-info.outputs.user-login,
+            steps.get-app-info.outputs.user-email) }}
+        BRANCH_DEFAULT: "chore_prepare_release_${{ inputs.version }}"
+        TITLE_DEFAULT: "chore: Release v${{ inputs.version }}"
+        BODY_DEFAULT: "Prepare release v${{ inputs.version }}"
+      with:
+        token: ${{ inputs.token }}
+        commit-message: |
+          chore: Prepare release v${{ env.VERSION }}
+
+          Update components for release v${{ env.VERSION }}
+        committer: ${{ env.COMMITTER }}
+        sign-commits: true
+        signoff: true
+        branch: ${{ inputs.branch || env.BRANCH_DEFAULT }}
+        delete-branch: true
+        title: ${{ inputs.title || env.TITLE_DEFAULT }}
+        body: ${{ inputs.body || env.BODY_DEFAULT }}
+        labels: |
+          release
+          release-v${{ env.VERSION }}
+          ok-to-test
+        add-paths: ${{ steps.get-paths.outputs.paths }}
+
+    - name: Trigger orchestrator
+      if: inputs.tracking-repo && inputs.core-version
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+        TRACKING_REPO: ${{ inputs.tracking-repo }}
+        COMPONENT: ${{ inputs.component }}
+        STATUS: >-
+          ${{ steps.create-pr.outputs.pull-request-number &&
+            'pr-created' || 'pr-merged' }}
+        PR_NUMBER: ${{ steps.create-pr.outputs.pull-request-number }}
+        CORE_VERSION: ${{ inputs.core-version }}
+      run: |
+        gh workflow run main-release.yml \
+          --repo "$TRACKING_REPO" \
+          --ref main \
+          -f action=resume \
+          -f component="$COMPONENT" \
+          -f status="$STATUS" \
+          -f pr-number="$PR_NUMBER" \
+          -f release-version="$CORE_VERSION"
+        echo "Orchestrator notified of status: ${STATUS}"
+      shell: bash

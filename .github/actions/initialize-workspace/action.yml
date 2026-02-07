@@ -2,8 +2,12 @@ name: Initialize Workspace
 description: Cleanup runner and checkout project code
 
 inputs:
+  repository:
+    default: ${{ github.repository }}
   fetch-depth:
     default: '0'
+  fetch-tags:
+    default: 'true'
   ref:
     default: ''
   submodules:
@@ -32,15 +36,17 @@ runs:
     - name: Checkout code
       uses: actions/checkout@v4
       with:
+        repository: ${{ inputs.repository }}
         submodules: ${{ inputs.submodules }}
         fetch-depth: ${{ inputs.fetch-depth }}
+        fetch-tags: ${{ inputs.fetch-tags }}
         ref: ${{ inputs.ref }}
         sparse-checkout: ${{ (inputs.dot-github-only == 'true' && '.github') || '' }}
         token: ${{ inputs.token }}
 
     - name: Determince remote actions branch
       id: get-remote-branch
-      if: ${{ inputs.remote-actions-repo != github.repository }}
+      if: ${{ inputs.remote-actions-repo != inputs.repository }}
       run: |
         for b in "${{ github.head_ref || github.ref_name }}" main master; do
           ls_remote="$(git ls-remote --heads \
@@ -54,7 +60,7 @@ runs:
       shell: bash
 
     - name: Checkout remote actions repo
-      if: ${{ inputs.remote-actions-repo != github.repository }}
+      if: ${{ inputs.remote-actions-repo != inputs.repository }}
       uses: actions/checkout@v4
       with:
         repository: ${{ inputs.remote-actions-repo }}
@@ -64,7 +70,7 @@ runs:
         token: ${{ inputs.token }}
 
     - name: Copy remote actions (without overwriting local ones)
-      if: ${{ inputs.remote-actions-repo != github.repository }}
+      if: ${{ inputs.remote-actions-repo != inputs.repository }}
       run: |
         cp -rn .github/remote-actions-repo/.github ./
         rm -rf .github/remote-actions-repo

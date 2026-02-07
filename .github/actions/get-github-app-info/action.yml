@@ -1,0 +1,55 @@
+name: 'Get GitHub App Info'
+description: 'Get information about a Github App user'
+
+inputs:
+  app-slug:
+    description: 'GitHub App slug'
+    required: true
+  token:
+    description: 'Access token used for retrieving App information'
+    default: ${{ github.token }}
+
+outputs:
+  user-login:
+    description: 'GitHub App user login'
+    value: ${{ steps.get-info.outputs.login }}
+  user-id:
+    description: 'GitHub App user ID'
+    value: ${{ steps.get-info.outputs.id }}
+  user-email:
+    description: 'GitHub App user email'
+    value: ${{ steps.get-info.outputs.email }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Get info
+      id: get-info
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+        APP_SLUG: ${{ inputs.app-slug }}
+      run: |
+        user=$(gh api "/users/${APP_SLUG}[bot]" 2>/dev/null || true)
+
+        login=
+        id=
+        email=
+        if [[ -n "$user" ]]; then
+          login=$(jq -r '.login' <<< "$user")
+          id=$(jq -r '.id' <<< "$user")
+          email="${id}+${login}@users.noreply.github.com"
+
+          echo "${APP_SLUG} user info:"
+          echo "  login: ${login}"
+          echo "  id: ${id}"
+          echo "  email: ${email}"
+        else
+          echo "No GitHub App found for slug: ${APP_SLUG}"
+        fi
+
+        {
+          echo "login=${login}"
+          echo "id=${id}"
+          echo "email=${email}"
+        } >> "$GITHUB_OUTPUT"
+      shell: bash

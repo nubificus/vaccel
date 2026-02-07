@@ -7,8 +7,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  group: ${{ github.workflow }}-${{ github.ref }}
 
 jobs:
   build-dist:
@@ -16,4 +15,10 @@ jobs:
     uses: ./.github/workflows/verify-build.yml
     with:
       release: true
+    secrets: inherit
+
+  update-release-issue:
+    needs: build-dist
+    name: Update Release Issue
+    uses: ./.github/workflows/update-release-issue.yml
     secrets: inherit

@@ -1,0 +1,36 @@
+```json
+{{ state | tojson }}
+```
+
+{% if action == "create" %}
+{% if created_at == updated_at %}
+📝 Initial state created at {{ created_at }}
+{% else %}
+📝 State updated at {{ updated_at }}
+{% endif %}
+{% elif action == "update" %}
+{% for component in components.values() if component.previous_status != component.status %}
+{% if component.status == "pending" %}
+🔄 **{{ component.name }}** ({{ component.version }}) state reset
+{% elif component.status == "triggered" %}
+🚀 Triggered **{{ component.name }}** ({{ component.version }}) - PR will be created
+{% elif component.status == "pr-created" %}
+{% set pr = component.pr | default("") %}
+🔗 **{{ component.name }}** ({{ component.version }}) PR created{%- if pr %}: {{ pr }}{%- endif %}
+{% elif component.status == "pr-merged" %}
+🔀 **{{ component.name }}** ({{ component.version }}) PR merged
+{% elif component.status == "tagged" %}
+🏷️ Tagged **{{ component.name }}** with v{{ component.full_version }} - artifacts will be built and uploaded to S3
+{% elif component.status == "complete" %}
+✅ **{{ component.name }}** ({{ component.version }}) complete - artifacts uploaded to S3
+{% endif %}
+{% endfor %}
+{% elif action == "finalize" %}
+🎉 **Release v{{ version }} Complete!**
+
+All components done.
+
+📦 [Review and publish draft]({{ release_url }})
+{% else %}
+Unknown state action
+{% endif %}

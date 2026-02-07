@@ -1,0 +1,78 @@
+# git-cliff ~ configuration file
+# https://git-cliff.org/docs/configuration
+
+[changelog]
+body = """
+{% for group, commits in commits | group_by(attribute="group") %}
+  ### {{ group | striptags | trim | upper_first }}
+  {% for commit in commits %}
+    {% if commit.remote.pr_title -%}
+      {%- set pr_title = commit.remote.pr_title | split(pat="\n") | first | trim -%}
+      {%- set parts = pr_title | split(pat=": ") -%}
+
+      * {% if commit.remote.pr_number %}\
+          [[#{{ commit.remote.pr_number }}]({{ self::remote_url() }}/pull/{{ commit.remote.pr_number }})]\
+        {% endif %} \
+      {% if parts | length > 1 -%}\
+        {% set prefix = parts | first %}\
+        {% set message = parts | slice(start=1) | join(sep=": ") %} \
+        {%- if prefix is containing("(") -%}\
+          {%- set scope_parts = prefix | split(pat="(") -%}\
+          {%- set scope = scope_parts | last | trim_end_matches(pat=")") | trim_end_matches(pat=")!") -%}\
+          *{{ scope }}:* {{ message | upper_first }}\
+        {%- else -%}\
+          {{ message | upper_first }}\
+        {%- endif -%}\
+      {% else -%}\
+        {{ pr_title | upper_first }}\
+      {% endif -%}
+    {% endif -%}
+  {% endfor %}
+{% endfor -%}
+
+{% if version %}
+    {% if previous.version %}
+      **Full Changelog**: {{ self::remote_url() }}/compare/{{ previous.version }}...{{ version }}
+    {% endif %}
+{% else -%}
+  {% raw %}\n{% endraw %}
+{%- endif -%}
+
+{%- macro remote_url() -%}
+  https://github.com/{{ remote.github.owner }}/{{ remote.github.repo }}
+{%- endmacro -%}
+"""
+trim = true
+postprocessors = []
+
+[git]
+conventional_commits = true
+filter_unconventional = true
+split_commits = false
+#commit_preprocessors = [{ pattern = '\((\w+\s)?#([0-9]+)\)', replace = "" }]
+filter_commits = false
+topo_order = false
+sort_commits = "newest"
+
+commit_parsers = [
+    { field = "remote.pr_title", pattern = "^null", skip = true },
+    { field = "remote.pr_title", pattern = "^feat", group = "<!-- 00 -->Features" },
+    { field = "remote.pr_title", pattern = "^fix|^bug", group = "<!-- 01 -->Bug Fixes" },
+    { field = "remote.pr_title", pattern = "^refactor", group = "<!-- 02 -->Refactor" },
+    { field = "remote.pr_title", pattern = "^build", group = "<!-- 03 -->Build System" },
+    { field = "remote.pr_title", pattern = "^docs\\(coverage\\)", skip = true },
+    { field = "remote.pr_title", pattern = "^doc", group = "<!-- 04 -->Documentation" },
+    { field = "remote.pr_title", pattern = "^perf", group = "<!-- 05 -->Performance" },
+    { field = "remote.pr_title", pattern = "^style", group = "<!-- 06 -->Styling" },
+    { field = "remote.pr_title", pattern = "^test", group = "<!-- 07 -->Testing" },
+    { field = "remote.pr_title", pattern = "^chore\\(release\\): prepare for", skip = true },
+    { field = "remote.pr_title", pattern = "^chore\\(deps.*\\)", skip = true },
+    { field = "remote.pr_title", pattern = "^chore\\(pr\\)", skip = true },
+    { field = "remote.pr_title", pattern = "^chore\\(pull\\)", skip = true },
+    { field = "remote.pr_title", pattern = "^ci\\(deps\\)", skip = true },
+    { field = "remote.pr_title", pattern = "^ci.*Add.*to.*contributors.*", skip = true },
+    { field = "remote.pr_title", pattern = "^ci", group = "<!-- 08 -->CI/CD" },
+    { field = "remote.pr_title", pattern = "^chore", group = "<!-- 09 -->Miscellaneous Tasks" },
+    { field = "remote.pr_title", pattern = "^revert", group = "<!-- 10 -->Revert" },
+    { field = "remote.pr_title", pattern = ".*", group = "<!-- 11 -->Other" },
+]

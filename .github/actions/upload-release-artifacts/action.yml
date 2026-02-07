@@ -1,0 +1,244 @@
+name: 'Upload Release Artifacts'
+description: 'Download artifacts from S3 and upload to GitHub release'
+
+inputs:
+  component:
+    description: 'Component name'
+    required: true
+  components-path:
+    description: 'Path to components JSON file'
+    required: true
+  release-tag:
+    description: 'Tag of the GitHub release to upload artifacts to'
+    required: true
+  s3-basepath:
+    description: 'S3 base path (relative to the root)'
+    default: 'nbfc-assets/github/vaccel'
+  s3-subpath:
+    description: >
+      S3 subpath for component artifacts (relative to the base path)
+    default: ''
+  s3-access-key:
+    description: 'Access key for S3 authentication'
+    required: true
+  s3-secret-key:
+    description: 'Secret access key for S3 authentication'
+    required: true
+  token:
+    description: 'Access token used to upload artifacts to the release'
+    default: ${{ github.token }}
+
+outputs:
+  artifacts-uploaded:
+    description: 'Number of artifacts uploaded'
+    value: ${{ steps.upload.outputs.count }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Load component configuration
+      id: load-config
+      env:
+        COMPONENT: ${{ inputs.component }}
+        COMPONENTS_PATH: ${{ inputs.components-path }}
+      run: |
+        echo "Loading configuration for ${COMPONENT}..."
+
+        comp_data=$(jq -r ".\"${COMPONENT}\"" "$COMPONENTS_PATH")
+        if [[ "$comp_data" == "null" ]]; then
+          echo "::error::Component ${COMPONENT} not found"
+          exit 1
+        fi
+
+        version=$(jq -r '.version' <<< "$comp_data")
+        full_version=$(jq -r '.full_version' <<< "$comp_data")
+        artifacts=$(jq -r '.artifacts[]? // empty' <<< "$comp_data")
+
+        if [[ -z "$artifacts" ]]; then
+          echo "No artifacts defined for ${COMPONENT}"
+          echo 'has-artifacts=false' >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+
+        {
+          echo "has-artifacts=true"
+          echo "version=${version}"
+          echo "full-version=${full_version}"
+          echo 'artifacts<<EOF'
+          echo "$artifacts"
+          echo 'EOF'
+          echo "tmp-path=${RUNNER_TEMP}/${COMPONENT}"
+          echo "downloads-path=${RUNNER_TEMP}/${COMPONENT}/downloads"
+        } >> "$GITHUB_OUTPUT"
+
+        echo "Component:"
+        echo "  Version: ${version}"
+        echo "  Full version: ${full_version}"
+        echo "  Artifact patterns: $(echo \"$artifacts\" | wc -l)"
+      shell: bash
+
+    - name: Download artifacts from S3
+      if: steps.load-config.outputs.has-artifacts == 'true'
+      uses: ./.github/actions/download-from-s3
+      with:
+          ref: ${{ format('v{0}', steps.load-config.outputs.full-version) }}
+          arch: '*'
+          build-type: 'release'
+          remote-basepath: ${{ inputs.s3-basepath }}
+          remote-subpath: ${{ inputs.s3-subpath }}
+          remote-files: ${{ format('*{0}*', inputs.version) }}
+          access-key: ${{ inputs.s3-access-key }}
+          secret-key: ${{ inputs.s3-secret-key }}
+          local-path: ${{ steps.load-config.outputs.downloads-path }}
+
+    - name: Verify artifacts
+      id: verify
+      if: steps.load-config.outputs.has-artifacts == 'true'
+      working-directory: ${{ steps.load-config.outputs.downloads-path }}
+      env:
+        COMPONENT: ${{ inputs.component }}
+      run: |
+        if [[ ! "$(ls -A 2>/dev/null)" ]]; then
+          echo "::warning::No artifacts were downloaded for ${COMPONENT}"
+          echo "downloaded=false" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+        echo "downloaded=true" >> "$GITHUB_OUTPUT"
+
+        echo "Checking for checksum files..."
+        checksum_count=0
+        verified_count=0
+        failed_count=0
+        for checksum_file in *.sha256 *.sha512 *.md5; do
+          [[ -f "$checksum_file" ]] || continue
+
+          ((checksum_count++))
+          echo -e "\nVerifying: ${checksum_file}"
+
+          if [[ "$checksum_file" == *.sha256 ]]; then
+            check_cmd="sha256sum"
+          elif [[ "$checksum_file" == *.sha512 ]]; then
+            check_cmd="sha512sum"
+          elif [[ "$checksum_file" == *.md5 ]]; then
+            check_cmd="md5sum"
+          else
+            echo "::error::Unknown checksum type, skipping"
+            continue
+          fi
+
+          if $check_cmd -c "$checksum_file" 2>/dev/null; then
+            echo "Checksums verified"
+            ((verified_count++))
+          else
+            echo "Checksum verification failed"
+            ((failed_count++))
+          fi
+        done
+
+        if [[ $checksum_count -eq 0 ]]; then
+          echo -e "\nNo checksum files found"
+        else
+          echo -e "\nChecksum summary:"
+          echo "  Total: ${checksum_count}"
+          echo "  Verified: ${verified_count}"
+          echo "  Failed: ${failed_count}"
+        fi
+
+        if [[ $failed_count -gt 0 ]]; then
+          echo "::warning::Some checksum verifications failed"
+        fi
+      shell: bash
+
+    - name: Collect artifacts
+      id: collect
+      if: steps.verify.outputs.downloaded == 'true'
+      env:
+        COMPONENT: ${{ inputs.component }}
+        VERSION: ${{ steps.load-config.outputs.version }}
+        FULL_VERSION: ${{ steps.load-config.outputs.full-version }}
+        DOWNLOADS_PATH: ${{ steps.load-config.outputs.downloads-path }}
+        ARTIFACTS_PATH: ${{ steps.load-config.outputs.tmp-path }}/artifacts
+      run: |
+        mkdir -p "$ARTIFACTS_PATH"
+
+        echo "Collecting artifacts for ${COMPONENT} v${FULL_VERSION}..."
+        while IFS= read -r pattern; do
+          [[ -z "$pattern" ]] && continue
+
+          echo -e "\nPattern: ${pattern}"
+          for artifact in $(find "$DOWNLOADS_PATH" -name "$pattern"); do
+            [[ "$artifact" =~ "$VERSION" ]] || continue
+
+            mv "$artifact" "${ARTIFACTS_PATH}/"
+            echo "  Collected ${artifact}"
+          done
+        done <<< "${{ steps.load-config.outputs.artifacts }}"
+
+        if [[ ! "$(ls -A $ARTIFACTS_PATH 2>/dev/null)" ]]; then
+          echo "::warning::No artifacts were collected for ${COMPONENT}"
+          echo 'collected=false' >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+
+        echo -e "\nCollected artifacts"
+        echo 'collected=true' >> "$GITHUB_OUTPUT"
+        echo "artifacts-path=${ARTIFACTS_PATH}" >> "$GITHUB_OUTPUT"
+      shell: bash
+
+    - name: Upload to GitHub release
+      id: upload
+      if: steps.collect.outputs.collected == 'true'
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+        RELEASE_TAG: ${{ inputs.release-tag }}
+        COMPONENT: ${{ inputs.component }}
+        ARTIFACTS_PATH: ${{ steps.collect.outputs.artifacts-path }}
+      run: |
+        echo "Uploading artifacts to release ${RELEASE_TAG}..."
+
+        file_count=$(find "$ARTIFACTS_PATH" -type f | wc -l)
+        echo -e "  Files to upload: $file_count\n"
+
+        if [[ $file_count -eq 0 ]]; then
+          echo -e "  No files to upload\n"
+          echo "count=0" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+
+        success_count=0
+        fail_count=0
+        for file in "$ARTIFACTS_PATH"/*; do
+          [[ -f "$file" ]] || continue
+
+          filename=$(basename "$file")
+          filesize=$(du -h "$file" 2>/dev/null | cut -f1 || echo 'unknown')
+
+          echo "Uploading: ${filename} (${filesize})"
+
+          if gh release upload "$RELEASE_TAG" "$file" --clobber 2>&1; then
+            echo "  Uploaded"
+            success_count=$((success_count + 1))
+          else
+            echo "  Upload failed"
+            fail_count=$((fail_count + 1))
+          fi
+        done
+
+        echo -e "\nUpload summary:"
+        echo "  Successful: ${success_count}"
+        echo "  Failed: ${fail_count}"
+        echo "count=${success_count}" >> "$GITHUB_OUTPUT"
+
+        if [[ $fail_count -gt 0 ]]; then
+          echo "::warning::${fail_count} artifact(s) failed to upload"
+        fi
+      shell: bash
+
+    - name: Cleanup
+      if: always() && steps.load-config.outputs.has-artifacts == 'true'
+      env:
+        TMP_PATH: ${{ steps.load-config.outputs.tmp-path }}
+      run: |
+        echo "Cleaning up temporary directory: ${TMP_PATH}"
+        rm -rf "$TMP_PATH"
+      shell: bash
