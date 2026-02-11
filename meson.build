@@ -4,8 +4,9 @@ project('vaccel', 'c', 'cpp',
   license : 'Apache-2.0',
   license_files : 'LICENSE',
   version : run_command('sh', '-c',
-    'git submodule update --init >/dev/null && ' +
-    'scripts/common/generate-version.sh .',
+    '(git submodule update --init >/dev/null 2>&1 || true) && ' +
+    'scripts/common/generate-version.sh',
+    env: {'SH_SCRIPTS_DIR': meson.project_source_root() / 'scripts' / 'common'},
     check: true).stdout().strip())
 
 vaccel_common_args = ['-Wall','-Wextra','-Werror']
