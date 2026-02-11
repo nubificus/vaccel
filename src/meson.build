@@ -74,7 +74,7 @@ libvaccel_internal_dep = declare_dependency(
 
 pkg_mod = import('pkgconfig')
 pkg_mod.generate(libvaccel,
-  version : libvaccel_version,
+  version : meson.project_version(),
   subdirs: '.',
   name : 'vaccel',
   description : 'Hardware Acceleration for Serverless Computing')
