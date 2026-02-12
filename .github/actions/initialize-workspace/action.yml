@@ -35,8 +35,8 @@ runs:
         submodules: ${{ inputs.submodules }}
         fetch-depth: ${{ inputs.fetch-depth }}
         ref: ${{ inputs.ref }}
-        token: ${{ inputs.token }}
         sparse-checkout: ${{ (inputs.dot-github-only == 'true' && '.github') || '' }}
+        token: ${{ inputs.token }}
 
     - name: Determince remote actions branch
       id: get-remote-branch
@@ -61,6 +61,7 @@ runs:
         ref: ${{ steps.get-remote-branch.outputs.branch }}
         sparse-checkout: '.github'
         path: '.github/remote-actions-repo/'
+        token: ${{ inputs.token }}
 
     - name: Copy remote actions (without overwriting local ones)
       if: ${{ inputs.remote-actions-repo != github.repository }}

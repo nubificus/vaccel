@@ -43,7 +43,7 @@ on:
         type: boolean
         default: false
     secrets:
-      GIT_CLONE_PAT:
+      VACCEL_BOT_PRIVATE_KEY:
         required: false
       AWS_ACCESS_KEY:
         required: false
@@ -68,12 +68,23 @@ jobs:
       DOWNLOAD_PATH: ${{github.workspace}}/artifacts/downloads/${{fromJson(inputs.runner-arch-map)[0][matrix.arch]}}/${{matrix.build-type}}
       INSTALL_PREFIX: ${{github.workspace}}/artifacts/${{fromJson(inputs.runner-arch-map)[0][matrix.arch]}}/${{matrix.build-type}}
     steps:
+      - name: Generate vaccel-bot token
+        id: generate-token
+        if: vars.VACCEL_BOT_CLIENT_ID
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.VACCEL_BOT_CLIENT_ID }}
+          private-key: ${{ secrets.VACCEL_BOT_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          permission-contents: read
+
       - name: Checkout .github directory
         uses: actions/checkout@v6
         with:
           sparse-checkout: .github
           repository: ${{ inputs.actions-repo }}
           ref: ${{ env.ACTIONS_REV }}
+          token: ${{ steps.generate-token.outputs.token || github.token }}
 
       - name: Get revision info
         id: get-rev-info
@@ -86,8 +97,8 @@ jobs:
         with:
           fetch-depth: 0
           remote-actions-repo: ${{ inputs.actions-repo }}
-          token: ${{ secrets.GIT_CLONE_PAT || github.token }}
           ref: ${{ steps.get-rev-info.outputs.sha }}
+          token: ${{ steps.generate-token.outputs.token || github.token }}
 
       - name: Download artifacts from s3
         id: download-artifacts

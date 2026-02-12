@@ -11,7 +11,7 @@ on:
         default: 'main'
     secrets:
       VACCEL_BOT_PRIVATE_KEY:
-        required: true
+        required: false
 env:
   ACTIONS_REV: ${{ (github.repository != inputs.actions-repo) && inputs.actions-rev || '' }}
 
@@ -39,9 +39,10 @@ jobs:
 
       - name: Generate vaccel-bot token
         id: generate-token
-        uses: actions/create-github-app-token@v2
+        if: vars.VACCEL_BOT_CLIENT_ID
+        uses: actions/create-github-app-token@v3
         with:
-          app-id: ${{ vars.VACCEL_BOT_APP_ID }}
+          client-id: ${{ vars.VACCEL_BOT_CLIENT_ID }}
           private-key: ${{ secrets.VACCEL_BOT_PRIVATE_KEY }}
           repositories: |
             ${{ steps.parse-repos.outputs.repo-name }}
@@ -55,14 +56,14 @@ jobs:
           sparse-checkout: .github
           repository: ${{ inputs.actions-repo }}
           ref: ${{ env.ACTIONS_REV }}
-          token: ${{ steps.generate-token.outputs.token }}
+          token: ${{ steps.generate-token.outputs.token || github.token }}
 
       - name: Append trailers
         uses: nubificus/git-trailers@v2
         with:
           user-info: .github/contributors.yaml
-          token: ${{ steps.generate-token.outputs.token }}
           check-only: >-
             ${{ github.event_name == 'pull_request_review' && 'false' || 'true' }}
           fail-on-missing: >-
             ${{ github.event_name == 'pull_request_review' && 'false' || 'true' }}
+          token: ${{ steps.generate-token.outputs.token || github.token }}

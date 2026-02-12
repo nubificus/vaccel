@@ -31,7 +31,7 @@ on:
         type: boolean
         default: false
     secrets:
-      GIT_CLONE_PAT:
+      VACCEL_BOT_PRIVATE_KEY:
         required: false
       AWS_ACCESS_KEY:
         required: false
@@ -55,12 +55,23 @@ jobs:
       ARCH: ${{ fromJson(inputs.runner-arch-map)[0][matrix.arch] }}
       DOWNLOAD_PATH: ${{github.workspace}}/artifacts/downloads/${{fromJson(inputs.runner-arch-map)[0][matrix.arch]}}/${{matrix.build-type}}
     steps:
+      - name: Generate vaccel-bot token
+        id: generate-token
+        if: vars.VACCEL_BOT_CLIENT_ID
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.VACCEL_BOT_CLIENT_ID }}
+          private-key: ${{ secrets.VACCEL_BOT_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          permission-contents: read
+
       - name: Checkout .github directory
         uses: actions/checkout@v6
         with:
           sparse-checkout: .github
           repository: ${{ inputs.actions-repo }}
           ref: ${{ env.ACTIONS_REV }}
+          token: ${{ steps.generate-token.outputs.token || github.token }}
 
       - name: Initialize workspace
         id: initialize-workspace
@@ -68,7 +79,7 @@ jobs:
         with:
           fetch-depth: 0
           remote-actions-repo: ${{ inputs.actions-repo }}
-          token: ${{ secrets.GIT_CLONE_PAT || github.token }}
+          token: ${{ steps.generate-token.outputs.token || github.token }}
 
       - name: Download artifacts from s3
         id: download-artifacts
@@ -124,12 +135,23 @@ jobs:
       ARCH: ${{ fromJson(inputs.runner-arch-map)[0][matrix.arch] }}
       DOWNLOAD_PATH: ${{github.workspace}}/artifacts/downloads/${{fromJson(inputs.runner-arch-map)[0][matrix.arch]}}/${{matrix.build-type}}
     steps:
+      - name: Generate vaccel-bot token
+        id: generate-token
+        if: vars.VACCEL_BOT_CLIENT_ID
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.VACCEL_BOT_CLIENT_ID }}
+          private-key: ${{ secrets.VACCEL_BOT_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          permission-contents: read
+
       - name: Checkout .github directory
         uses: actions/checkout@v6
         with:
           sparse-checkout: .github
           repository: ${{ inputs.actions-repo }}
           ref: ${{ env.ACTIONS_REV }}
+          token: ${{ steps.generate-token.outputs.token || github.token }}
 
       - name: Initialize workspace
         id: initialize-workspace
@@ -137,7 +159,7 @@ jobs:
         with:
           fetch-depth: 0
           remote-actions-repo: ${{ inputs.actions-repo }}
-          token: ${{ secrets.GIT_CLONE_PAT || github.token }}
+          token: ${{ steps.generate-token.outputs.token || github.token }}
 
       - name: Download artifacts from s3
         id: download-artifacts
@@ -166,7 +188,7 @@ jobs:
         uses: cpp-linter/cpp-linter-action@v2
         id: cpp_linter
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
           UV_DISABLE_UPDATE: 1
         with:
           style: 'file'  # Use .clang-format config file
@@ -201,25 +223,49 @@ jobs:
       packages: read
       statuses: write
     steps:
+      - name: Parse repository names
+        id: parse-repos
+        env:
+          ACTIONS_REPO: ${{ inputs.actions-repo }}
+        run: |
+          {
+            echo "repo-name=$(basename "$GITHUB_REPOSITORY")"
+            echo "actions-repo-name=$(basename "$ACTIONS_REPO")"
+          } >> "$GITHUB_OUTPUT"
+        shell: bash
+
+      - name: Generate vaccel-bot token
+        id: generate-token
+        if: vars.VACCEL_BOT_CLIENT_ID
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.VACCEL_BOT_CLIENT_ID }}
+          private-key: ${{ secrets.VACCEL_BOT_PRIVATE_KEY }}
+          repositories: |
+            ${{ steps.parse-repos.outputs.repo-name }}
+            ${{ steps.parse-repos.outputs.actions-repo-name }}
+          permission-contents: read
+
       - name: Checkout .github directory
         uses: actions/checkout@v6
         with:
           sparse-checkout: .github
           repository: ${{ inputs.actions-repo }}
           ref: ${{ env.ACTIONS_REV }}
+          token: ${{ steps.generate-token.outputs.token || github.token }}
 
       - name: Initialize workspace
         uses: ./.github/actions/initialize-workspace
         with:
           fetch-depth: 0
           remote-actions-repo: ${{ inputs.actions-repo }}
-          token: ${{ secrets.GIT_CLONE_PAT || github.token }}
+          token: ${{ steps.generate-token.outputs.token || github.token }}
 
       - name: Run super-linter
         uses: super-linter/super-linter@v8
         env:
           DEFAULT_BRANCH: main
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
           ENABLE_GITHUB_PULL_REQUEST_SUMMARY_COMMENT: false
           VALIDATE_ALL_CODEBASE: true
           VALIDATE_PYTHON_RUFF: true
