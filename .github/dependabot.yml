@@ -1,8 +1,15 @@
 version: 2
 updates:
   - package-ecosystem: "github-actions"
-    directory: "/"
+    directories:
+      - "/"
+      # Workaround for https://github.com/dependabot/dependabot-core/issues/6345
+      - "/.github/actions/*"
     schedule:
       interval: "monthly"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
     commit-message:
       prefix: "ci(deps)"
