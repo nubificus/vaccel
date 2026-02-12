@@ -56,6 +56,7 @@ jobs:
     uses: ./.github/workflows/coverage-report.yml
     with:
       comment-diff: true
+    secrets: inherit
 
   jobs-completed:
     needs: [check-pr-status, generate-coverage]

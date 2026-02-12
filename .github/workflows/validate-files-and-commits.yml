@@ -10,7 +10,7 @@ on:
         type: string
         default: 'main'
     secrets:
-      GIT_CLONE_PAT:
+      VACCEL_BOT_PRIVATE_KEY:
         required: false
 
 env:
@@ -21,19 +21,43 @@ jobs:
     name: Lint Commit Messages
     runs-on: [base-dind-2204-amd64]
     steps:
+      - name: Parse repository names
+        id: parse-repos
+        env:
+          ACTIONS_REPO: ${{ inputs.actions-repo }}
+        run: |
+          {
+            echo "repo-name=$(basename "$GITHUB_REPOSITORY")"
+            echo "actions-repo-name=$(basename "$ACTIONS_REPO")"
+          } >> "$GITHUB_OUTPUT"
+        shell: bash
+
+      - name: Generate vaccel-bot token
+        id: generate-token
+        if: vars.VACCEL_BOT_CLIENT_ID
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.VACCEL_BOT_CLIENT_ID }}
+          private-key: ${{ secrets.VACCEL_BOT_PRIVATE_KEY }}
+          repositories: |
+            ${{ steps.parse-repos.outputs.repo-name }}
+            ${{ steps.parse-repos.outputs.actions-repo-name }}
+          permission-contents: read
+
       - name: Checkout .github directory
         uses: actions/checkout@v6
         with:
           sparse-checkout: .github
           repository: ${{ inputs.actions-repo }}
           ref: ${{ env.ACTIONS_REV }}
+          token: ${{ steps.generate-token.outputs.token || github.token }}
 
       - name: Initialize workspace
         uses: ./.github/actions/initialize-workspace
         with:
           submodules: 'false'
           remote-actions-repo: ${{ inputs.actions-repo }}
-          token: ${{ secrets.GIT_CLONE_PAT || github.token }}
+          token: ${{ steps.generate-token.outputs.token || github.token }}
 
       - name: Run commitlint
         uses: wagoid/commitlint-github-action@v6
@@ -44,19 +68,43 @@ jobs:
     name: Spell Check Repo
     runs-on: [base-dind-2204-amd64]
     steps:
+      - name: Parse repository names
+        id: parse-repos
+        env:
+          ACTIONS_REPO: ${{ inputs.actions-repo }}
+        run: |
+          {
+            echo "repo-name=$(basename "$GITHUB_REPOSITORY")"
+            echo "actions-repo-name=$(basename "$ACTIONS_REPO")"
+          } >> "$GITHUB_OUTPUT"
+        shell: bash
+
+      - name: Generate vaccel-bot token
+        id: generate-token
+        if: vars.VACCEL_BOT_CLIENT_ID
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.VACCEL_BOT_CLIENT_ID }}
+          private-key: ${{ secrets.VACCEL_BOT_PRIVATE_KEY }}
+          repositories: |
+            ${{ steps.parse-repos.outputs.repo-name }}
+            ${{ steps.parse-repos.outputs.actions-repo-name }}
+          permission-contents: read
+
       - name: Checkout .github directory
         uses: actions/checkout@v6
         with:
           sparse-checkout: .github
           repository: ${{ inputs.actions-repo }}
           ref: ${{ env.ACTIONS_REV }}
+          token: ${{ steps.generate-token.outputs.token || github.token }}
 
       - name: Initialize workspace
         uses: ./.github/actions/initialize-workspace
         with:
           submodules: 'false'
           remote-actions-repo: ${{ inputs.actions-repo }}
-          token: ${{ secrets.GIT_CLONE_PAT || github.token }}
+          token: ${{ steps.generate-token.outputs.token || github.token }}
 
       - name: Spell check
         uses: crate-ci/typos@master
@@ -67,21 +115,45 @@ jobs:
     name: Check License Headers
     runs-on: [base-dind-2204-amd64]
     steps:
+      - name: Parse repository names
+        id: parse-repos
+        env:
+          ACTIONS_REPO: ${{ inputs.actions-repo }}
+        run: |
+          {
+            echo "repo-name=$(basename "$GITHUB_REPOSITORY")"
+            echo "actions-repo-name=$(basename "$ACTIONS_REPO")"
+          } >> "$GITHUB_OUTPUT"
+        shell: bash
+
+      - name: Generate vaccel-bot token
+        id: generate-token
+        if: vars.VACCEL_BOT_CLIENT_ID
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.VACCEL_BOT_CLIENT_ID }}
+          private-key: ${{ secrets.VACCEL_BOT_PRIVATE_KEY }}
+          repositories: |
+            ${{ steps.parse-repos.outputs.repo-name }}
+            ${{ steps.parse-repos.outputs.actions-repo-name }}
+          permission-contents: read
+
       - name: Checkout .github directory
         uses: actions/checkout@v6
         with:
           sparse-checkout: .github
           repository: ${{ inputs.actions-repo }}
           ref: ${{ env.ACTIONS_REV }}
+          token: ${{ steps.generate-token.outputs.token || github.token }}
 
       - name: Initialize workspace
         uses: ./.github/actions/initialize-workspace
         with:
           submodules: 'false'
           remote-actions-repo: ${{ inputs.actions-repo }}
-          token: ${{ secrets.GIT_CLONE_PAT || github.token }}
+          token: ${{ steps.generate-token.outputs.token || github.token }}
 
-      - name: Initialize workspace
+      - name: Prepare GO environment
         run: |
           echo "Unset GO PATH, as the following action conflicts with the already installed version"
           export GOPATH=
@@ -91,9 +163,8 @@ jobs:
           export GOROOT=
           echo "GOROOT=${GOROOT}" >> "$GITHUB_ENV"
 
-
       - name: Run license-eye
         uses: apache/skywalking-eyes/header@main
         with:
           config: .github/linters/licenserc.yml
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ steps.generate-token.outputs.token || github.token }}
