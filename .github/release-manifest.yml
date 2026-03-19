@@ -1,31 +1,34 @@
-version: "0.7.1"
-
-config:
-  release_name: "vAccel"
+release:
+  version: "0.7.1"
+  name: "vAccel"
   core_component: "vaccel"
+  tracking:
+    repository: "nubificus/roadmap"
+    project_name: "vaccel"
+    project_column: "Release"
 
 components:
   vaccel:
     artifacts: ["*_*.tar.gz", "*.deb"]
 
   vaccel-rust:
-    component_version: "0.4.1"
+    version: "0.4.1"
     artifacts: ["*agent*_*.tar.gz", "*agent*.deb"]
 
   vaccel-plugin-rpc:
     depends_on: ["vaccel-rust"]
-    component_version: "0.2.1"
+    version: "0.2.1"
     artifacts: ["*_*.tar.gz", "*.deb"]
 
   virtio-accel:
-    component_version: "0.2.0"
+    version: "0.2.0"
 
   vaccel-virtio-common:
-    component_version: "0.0.1"
+    version: "0.0.1"
 
   qemu-vaccel:
     depends_on: ["vaccel-virtio-common"]
-    component_version: "10.0.0"
+    version: "10.0.0"
     branch: "main+vaccel"
 
   vaccel-plugin-virtio:
@@ -37,23 +40,23 @@ components:
     artifacts: ["*_vm.tar.xz", "*.deb"]
 
   vaccel-plugin-torch:
-    component_version: "0.2.1"
+    version: "0.2.1"
     artifacts: ["*_*.tar.gz"]
 
   vaccel-plugin-tf:
-    component_version: "0.2.0"
+    version: "0.2.0"
     artifacts: ["*_*.tar.gz"]
 
   vaccel-plugin-tvm:
-    component_version: "0.1.0"
+    version: "0.1.0"
     artifacts: ["*_*.tar.gz"]
 
   vaccel-python:
-    component_version: "0.2.0"
+    version: "0.2.0"
     artifacts: ["*.whl"]
 
   vaccel-go:
-    component_version: "0.1.0"
+    version: "0.1.0"
 
   vaccel-docs:
     depends_on:
