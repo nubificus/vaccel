@@ -21,9 +21,10 @@ inputs:
   committer-slug:
     description: 'App slug of the committer GitHub App'
     default: 'github-actions'
-  tracking-repo:
+  orchestrator-repo:
     description: >
-      Core repository (e.g., owner/repo - required to trigger orchestrator)
+      Repository orchestrating the release
+      (e.g., owner/repo - required to trigger orchestrator)
     required: false
   core-version:
     description: 'Core component version (required to trigger orchestrator)'
@@ -110,10 +111,10 @@ runs:
         add-paths: ${{ steps.get-paths.outputs.paths }}
 
     - name: Trigger orchestrator
-      if: inputs.tracking-repo && inputs.core-version
+      if: inputs.orchestrator-repo && inputs.core-version
       env:
         GH_TOKEN: ${{ inputs.token }}
-        TRACKING_REPO: ${{ inputs.tracking-repo }}
+        ORCHESTRATOR_REPO: ${{ inputs.orchestrator-repo }}
         COMPONENT: ${{ inputs.component }}
         STATUS: >-
           ${{ steps.create-pr.outputs.pull-request-number &&
@@ -122,7 +123,7 @@ runs:
         CORE_VERSION: ${{ inputs.core-version }}
       run: |
         gh workflow run main-release.yml \
-          --repo "$TRACKING_REPO" \
+          --repo "$ORCHESTRATOR_REPO" \
           --ref main \
           -f action=resume \
           -f component="$COMPONENT" \

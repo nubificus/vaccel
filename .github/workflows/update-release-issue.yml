@@ -13,6 +13,10 @@ on:
         description: 'Relative S3 path for component artifacts'
         type: string
         required: false
+      fail-on-no-issue:
+        description: 'Fail if no tracking issue is found'
+        type: boolean
+        default: false
     secrets:
       VACCEL_BOT_PRIVATE_KEY:
         required: true
@@ -56,7 +60,7 @@ jobs:
               for i in 1 2 3; do
                 pr_url=$(gh api \
                   "repos/${GITHUB_REPOSITORY}/commits/${GITHUB_SHA}/pulls" \
-                  --jq '.[0].html_url // empty' 2>/dev/null)
+                  --jq '.[0].html_url // ""' 2>/dev/null)
                 if [[ -n "$pr_url" ]]; then
                   break
                 fi
@@ -99,7 +103,7 @@ jobs:
               core_version="$version"
               ;;
           esac
-          tracking_repo="${GITHUB_REPOSITORY_OWNER}/${core_component}"
+          orchestrator_repo="${GITHUB_REPOSITORY_OWNER}/${core_component}"
 
           {
             echo "is-release=${is_release}"
@@ -108,8 +112,19 @@ jobs:
             echo "version=${version}"
             echo "core-component=${core_component}"
             echo "core-version=${core_version}"
-            echo "tracking-repo=${tracking_repo}"
+            echo "orchestrator-repo=${orchestrator_repo}"
           } >> "$GITHUB_OUTPUT"
+
+          if [[ "$is_release" == 'true' ]] ||
+            [[ "$is_prepare_release" == 'true' ]]
+          then
+            echo "Release info:"
+            echo "  Component: ${component}"
+            echo "  Version: ${version}"
+            echo "  Core component: ${core_component}"
+            echo "  Core version: ${core_version}"
+            echo "  Orchestrator repository: ${orchestrator_repo}"
+          fi
         shell: bash
 
       - name: Generate vaccel-bot token
@@ -123,67 +138,32 @@ jobs:
           private-key: ${{ secrets.VACCEL_BOT_PRIVATE_KEY }}
           repositories: ${{ steps.check-release.outputs.core-component }}
           permission-contents: read
-          permission-issues: read
           permission-actions: write
 
-      - name: Check for active orchestration
-        id: check-orchestration
+      - name: Trigger orchestrator
         if: >-
           steps.check-release.outputs.is-release == 'true' ||
           steps.check-release.outputs.is-prepare-release == 'true'
         env:
           GH_TOKEN: ${{ steps.generate-token.outputs.token }}
-          TRACKING_REPO: ${{ steps.check-release.outputs.tracking-repo }}
-          COMPONENT: ${{ steps.check-release.outputs.component }}
-          VERSION: ${{ steps.check-release.outputs.version }}
-          CORE_COMPONENT: ${{ steps.check-release.outputs.core-component }}
-          CORE_VERSION: ${{ steps.check-release.outputs.core-version }}
-        run: |
-          tracking_issue=$(gh issue list \
-            --repo "$TRACKING_REPO" \
-            --label "release-v${CORE_VERSION}" \
-            --state open \
-            --json number --jq '.[0].number' || echo '')
-
-          {
-            echo "components=${components}"
-            echo "tracking-issue=${tracking_issue}"
-          } >> "$GITHUB_OUTPUT"
-
-          if [[ -n "$tracking_issue" ]]; then
-            echo 'is-orchestrated=true' >> "$GITHUB_OUTPUT"
-            echo "Found active orchestration in ${TRACKING_REPO}#${tracking_issue}:"
-          else
-            echo 'is-orchestrated=false' >> "$GITHUB_OUTPUT"
-            echo "No orchestration found - this is a standalone release"
-          fi
-
-          echo "Release info:"
-          echo "  Component: ${COMPONENT}"
-          echo "  Version: ${VERSION}"
-          echo "  Core component: ${CORE_COMPONENT}"
-          echo "  Core version: ${CORE_VERSION}"
-        shell: bash
-
-      - name: Trigger orchestrator
-        if: steps.check-orchestration.outputs.is-orchestrated == 'true'
-        env:
-          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
-          TRACKING_REPO: ${{ steps.check-release.outputs.tracking-repo }}
+          ORCHESTRATOR_REPO: >-
+            ${{ steps.check-release.outputs.orchestrator-repo }}
           COMPONENT: ${{ steps.check-release.outputs.component }}
           STATUS: >-
             ${{ steps.check-release.outputs.is-prepare-release == 'true' &&
               'pr-merged' || 'complete' }}
           CORE_VERSION: ${{ steps.check-release.outputs.core-version }}
           ARTIFACTS_PATH: ${{ inputs.artifacts-path }}
+          FAIL_ON_NO_ISSUE: ${{ inputs.fail-on-no-issue }}
         run: |
           gh workflow run main-release.yml \
-            --repo "$TRACKING_REPO" \
+            --repo "$ORCHESTRATOR_REPO" \
             --ref main \
             -f action=resume \
             -f component="$COMPONENT" \
             -f status="$STATUS" \
             -f release-version="$CORE_VERSION" \
-            -f artifacts-path="$ARTIFACTS_PATH"
+            -f artifacts-path="$ARTIFACTS_PATH" \
+            -f fail-on-no-issue="$FAIL_ON_NO_ISSUE"
           echo "Orchestrator notified of status: ${STATUS}"
         shell: bash

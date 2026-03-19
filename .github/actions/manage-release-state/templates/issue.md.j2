@@ -36,13 +36,13 @@ None
 
 </details>
 
+{% if release_name | default("") %}
 ### Draft
 
-{% if release_name | default("") %}
   {% set tick = "x" if action == "finalize" else " " %}
 - [{{ tick }}] [{{ release_name }}]({{ release_url }})
-{% endif %}
 
+{% endif %}
 </br>
 
 > [!NOTE]

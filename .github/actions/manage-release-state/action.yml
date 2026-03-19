@@ -35,6 +35,15 @@ inputs:
       Release version. Required for "create" action. Can be used as an
       alternative to "issue-number" for finding the tracking issue.
     required: false
+  project-name:
+    description: >
+      Name of the project to add the tracking issue to (for "create" action)
+    required: false
+  project-column:
+    description: >
+      Column of the project to add the tracking issue to (for "create" action).
+      Effective only if "project-name" is set.
+    required: false
   reset:
     description: >
       Whether to reset component state before applying updates
@@ -43,6 +52,11 @@ inputs:
   close-on-finalization:
     description: >
       Whether to close the issue on finalization (for "finalize" action)
+    default: 'true'
+  fail-on-no-issue:
+    description: >
+      Whether to fail if no tracking issue is found
+      (for "get", "update", "finalize" actions)
     default: 'true'
   repository:
     description: >
@@ -59,6 +73,9 @@ outputs:
   issue-number:
     description: 'The number of the corresponding release issue'
     value: ${{ steps.set-outputs.outputs.issue-number }}
+  issue-url:
+    description: 'The URL of the corresponding release issue'
+    value: ${{ steps.set-outputs.outputs.issue-url }}
   state:
     description: 'Current state as JSON'
     value: ${{ steps.set-outputs.outputs.state }}
@@ -88,7 +105,7 @@ runs:
           *)
             echo "::error::Unknown action: ${ACTION}"
             exit 1
-          ;;
+            ;;
         esac
 
         echo "repo=${REPOSITORY:-"$GITHUB_REPOSITORY"}" \
@@ -103,31 +120,39 @@ runs:
         ACTION: ${{ inputs.action }}
         ISSUE_NUMBER: ${{ inputs.issue-number }}
         VERSION: ${{ inputs.version }}
+        FAIL_ON_NO_ISSUE: ${{ inputs.fail-on-no-issue }}
       run: |
         RELEASE_LABEL="release-v${VERSION}"
+
         if [[ -n "$ISSUE_NUMBER" ]]; then
-          if [[ -z "$VERSION" ]] || gh issue view "$ISSUE_NUMBER" \
-            --repo "$REPO" --state open --json labels \
-            --jq '.labels[].name' 2>/dev/null | grep -q "$RELEASE_LABEL"
+          issue_json=$(gh issue view "$ISSUE_NUMBER" \
+            --repo "$REPO" --json labels,number,url 2>/dev/null)
+
+          if [[ -z "$VERSION" ]] || \
+            jq -e --arg label "$RELEASE_LABEL" \
+            '.labels[].name | select(. == $label)' <<< "$issue_json" &>/dev/null
           then
-            issue_num="$ISSUE_NUMBER"
+            issue_num=$(jq -r '.number' <<< "$issue_json")
+            issue_url=$(jq -r '.url' <<< "$issue_json")
           else
-            echo "Issue #${ISSUE_NUMBER} is not a tracking issue for v${VERSION}"
+            echo "Issue ${REPO}#${ISSUE_NUMBER} is not a tracking issue for v${VERSION}"
           fi
         else
-          issue_num=$(gh issue list \
+          issue_json=$(gh issue list \
             --repo "$REPO" \
             --label "$RELEASE_LABEL" \
             --state open \
-            --json number --jq '.[0].number')
+            --json number,url --jq '.[0]')
+
+          issue_num=$(jq -r '.number' <<< "$issue_json")
+          issue_url=$(jq -r '.url' <<< "$issue_json")
         fi
 
         if [[ -z "$issue_num" ]]; then
-          if [[ "$ACTION" == 'create' ]]; then
-            {
-              echo 'issue-exists=false'
-              echo "issue-number=${issue_num}"
-            } >> "$GITHUB_OUTPUT"
+          if [[ "$ACTION" == 'create' ]] ||
+            [[ "$FAIL_ON_NO_ISSUE" == 'false' ]]
+          then
+            echo 'issue-exists=false' >> "$GITHUB_OUTPUT"
             echo "No tracking issue found for v${VERSION}"
             exit 0
           else
@@ -139,13 +164,16 @@ runs:
         {
           echo 'issue-exists=true'
           echo "issue-number=${issue_num}"
+          echo "issue-url=${issue_url}"
         } >> "$GITHUB_OUTPUT"
-        echo "Using tracking issue #${issue_num} for version ${VERSION}"
+        echo "Using tracking issue ${REPO}#${issue_num} for version ${VERSION}"
       shell: bash
 
     - name: Initialize new state
       id: initialize-state
-      if: steps.find-issue.outputs.issue-exists == 'false'
+      if: >-
+        inputs.action == 'create' &&
+        steps.find-issue.outputs.issue-exists == 'false'
       env:
         VERSION: ${{ inputs.version }}
         COMPONENTS_PATH: ${{ inputs.components-path }}
@@ -278,7 +306,6 @@ runs:
       if: steps.fetch-state.outputs.state
       env:
         GH_TOKEN: ${{ inputs.token }}
-        REPO: ${{ steps.prepare.outputs.repo }}
         ACTION: ${{ inputs.action }}
         VERSION: ${{ steps.fetch-state.outputs.version }}
         TARGET_COMPONENTS: ${{ inputs.target-components }}
@@ -294,11 +321,13 @@ runs:
           echo "Updating state"
         fi
 
+        release_name=
+        release_url=
         if jq -e '.metadata.release_name | . == null or . == ""' <<< "$STATE" \
           > /dev/null || [[ "$ACTION" == 'finalize' ]]
         then
-          release=$(gh release view "v$VERSION" \
-            --repo "$REPO" --json name,url 2>/dev/null || echo '')
+          release=$(gh release view "v${VERSION}" --json name,url 2>/dev/null ||
+            true)
           if [[ -n "$release" ]]; then
             release_name=$(jq -r '.name' <<< "$release")
             release_url=$(jq -r '.url' <<< "$release")
@@ -403,7 +432,7 @@ runs:
 
         {
           echo "has-changes=${has_changes}"
-          echo 'updated-state<<EOF'
+          echo 'state<<EOF'
           echo "$updated_state"
           echo 'EOF'
         } >> "$GITHUB_OUTPUT"
@@ -411,10 +440,14 @@ runs:
 
     - name: Update components JSON with state
       id: update-components
+      if: >-
+        steps.update-state.outputs.state ||
+        steps.fetch-state.outputs.state ||
+        steps.initialize-state.outputs.state
       env:
-        STATE: ${{ steps.fetch-state.outputs.state }}
-        UPDATED_STATE: >-
-          ${{ steps.update-state.outputs.updated-state ||
+        PREVIOUS_STATE: ${{ steps.fetch-state.outputs.state }}
+        STATE: >-
+          ${{ steps.update-state.outputs.state ||
             steps.fetch-state.outputs.state ||
             steps.initialize-state.outputs.state }}
         COMPONENTS_PATH: ${{ inputs.components-path }}
@@ -422,10 +455,10 @@ runs:
         UPDATED_COMPONENTS_PATH="${RUNNER_TEMP}/updated-components.json"
         TMP_PATH="${RUNNER_TEMP}/.updated-components.json"
 
-        previous_state=${STATE:-'{}'}
+        previous_state=${PREVIOUS_STATE:-'{}'}
         jq \
           --argjson previous "$previous_state" \
-          --argjson state "$UPDATED_STATE" '
+          --argjson state "$STATE" '
           def status_of(key; $s):
             if ($s == null or $s == {}) then "uninitialized"
             elif (key | IN($s.completed[])) then "complete"
@@ -457,8 +490,8 @@ runs:
         mv "$TMP_PATH" "$UPDATED_COMPONENTS_PATH"
 
         {
-          echo 'updated-state<<EOF'
-          echo "$UPDATED_STATE"
+          echo 'state<<EOF'
+          echo "$STATE"
           echo 'EOF'
           echo "updated-components-path=${UPDATED_COMPONENTS_PATH}"
         } >> "$GITHUB_OUTPUT"
@@ -468,9 +501,9 @@ runs:
     - name: Generate template data
       id: generate-data
       if: >-
-        steps.find-issue.outputs.issue-exists == 'false' ||
-        steps.update-state.outputs.has-changes == 'true' ||
-        inputs.action == 'finalize'
+        inputs.action == 'create' ||
+        inputs.action == 'finalize' ||
+        steps.update-state.outputs.has-changes == 'true'
       env:
         ACTION: ${{ inputs.action }}
         VERSION: >-
@@ -479,11 +512,10 @@ runs:
         UPDATED_AT: >-
           ${{ steps.fetch-state.outputs.updated-at ||
             steps.initialize-state.outputs.updated-at }}
-        STATE: ${{ steps.update-components.outputs.updated-state }}
+        STATE: ${{ steps.update-components.outputs.state }}
         COMPONENTS_PATH: >-
           ${{ steps.update-components.outputs.updated-components-path }}
       run: |
-        DEFAULT_URL="https://github.com/${REPO}/releases/tag/v${VERSION}"
         TEMPLATE_DATA_PATH="${RUNNER_TEMP}/release-template-data.json"
 
         jq \
@@ -530,6 +562,8 @@ runs:
           ${{ steps.fetch-state.outputs.version ||
             steps.initialize-state.outputs.version }}
         BODY: ${{ steps.render-issue.outputs.result }}
+        PROJECT_NAME: ${{ inputs.project-name }}
+        PROJECT_COLUMN: ${{ inputs.project-column }}
       run: |
         gh label create 'release-orchestration' \
           --repo "$REPO" \
@@ -543,9 +577,47 @@ runs:
           --body "$BODY" \
           --label "release-orchestration,release-v${VERSION}")
 
+        if [[ -n "$PROJECT_NAME" ]]; then
+          repo_owner=$(dirname "$REPO")
+
+          project_json=$(gh project list --owner "$repo_owner" --format json |
+            jq --arg name "$PROJECT_NAME" \
+            '.projects[] | select(.title == $name)')
+          project_number=$(jq -r '.number' <<< "$project_json")
+          project_id=$(jq -r '.id' <<< "$project_json")
+
+          item_id=$(gh project item-add "$project_number" \
+            --owner "$repo_owner" --url "$issue_url" --format json --jq '.id')
+
+          if [[ -n "$PROJECT_COLUMN" ]]; then
+            field_json=$(gh project field-list "$project_number" \
+              --owner "$repo_owner" --format json)
+            field_id=$(jq -r '.fields[] | select(.name == "Status") | .id' \
+              <<< "$field_json")
+            option_id=$(jq -r \
+              --arg col "$PROJECT_COLUMN" '
+              .fields[]
+              | select(.name == "Status")
+              | .options[]
+              | select(.name == $col)
+              | .id
+            ' <<< "$field_json")
+
+            gh project item-edit \
+              --project-id "$project_id" \
+              --id "$item_id" \
+              --field-id "$field_id" \
+              --single-select-option-id "$option_id"
+          fi
+        fi
+
         issue_num=${issue_url##*/}
-        echo "issue-number=${issue_num}" >> "$GITHUB_OUTPUT"
-        echo "Created tracking issue #${issue_num}"
+        {
+          echo "issue-number=${issue_num}"
+          echo "issue-url=${issue_url}"
+        } >> "$GITHUB_OUTPUT"
+
+        echo "Created tracking issue: ${issue_url}"
       shell: bash
 
     - name: Update tracking issue
@@ -559,8 +631,8 @@ runs:
         ISSUE_NUMBER: ${{ steps.find-issue.outputs.issue-number }}
         BODY: ${{ steps.render-issue.outputs.result }}
       run: |
-        gh issue edit "$ISSUE_NUMBER" --repo "$REPO" --body "$BODY"
-        echo "Updated tracking issue #${ISSUE_NUMBER}"
+        gh issue edit "$ISSUE_NUMBER" --repo "$REPO" --body "$BODY" >/dev/null
+        echo "Updated tracking issue ${REPO}#${ISSUE_NUMBER}"
       shell: bash
 
     - name: Render state comment
@@ -589,24 +661,32 @@ runs:
             --comment "$COMMENT" \
             --reason 'completed'
         else
-          gh issue comment "$ISSUE_NUMBER" \
+          comment_url=$(gh issue comment "$ISSUE_NUMBER" \
             --repo "$REPO" \
-            --body-file - <<< "$COMMENT"
-        fi
+            --body-file - <<< "$COMMENT")
 
-        echo "State posted to issue #${ISSUE_NUMBER}"
+          echo "State posted to issue: ${comment_url}"
+        fi
       shell: bash
 
     - name: Set outputs
       id: set-outputs
       env:
-        STATE: ${{ steps.update-components.outputs.updated-state }}
+        REPO: ${{ steps.prepare.outputs.repo }}
+        STATE: ${{ steps.update-components.outputs.state }}
         ISSUE_NUMBER: >-
           ${{ steps.create-issue.outputs.issue-number ||
             steps.find-issue.outputs.issue-number }}
+        ISSUE_URL: >-
+          ${{ steps.create-issue.outputs.issue-url ||
+            steps.find-issue.outputs.issue-url }}
         COMPONENTS_PATH: >-
           ${{ steps.update-components.outputs.updated-components-path }}
       run: |
+        if [[ -z "$ISSUE_NUMBER" ]]; then
+          exit 0
+        fi
+
         metadata_overwrite_tags=$(jq -r '.metadata.overwrite_tags // empty' \
           <<< "$STATE")
         {
@@ -614,11 +694,12 @@ runs:
           echo "$STATE"
           echo 'EOF'
           echo "issue-number=${ISSUE_NUMBER}"
+          echo "issue-url=${ISSUE_URL}"
           echo "components-path=${COMPONENTS_PATH}"
           echo "metadata-overwrite-tags=${metadata_overwrite_tags}"
         } >> "$GITHUB_OUTPUT"
 
-        echo "State for issue #${ISSUE_NUMBER}:"
+        echo "State for issue ${REPO}#${ISSUE_NUMBER}:"
         echo "  Pending: $(jq -rc .pending <<< "$STATE")"
         echo "  Triggered: $(jq -rc .triggered <<< "$STATE")"
         echo "  PR created: $(jq -rc .pr_created <<< "$STATE")"

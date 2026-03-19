@@ -35,7 +35,9 @@ on:
         type: string
         required: false
       release-version:
-        description: 'Version to release (e.g., 0.3.2, for "resume" action)'
+        description: >
+          Version to release
+          (e.g., 0.3.2 - defaults to manifest's release_version)
         type: string
         required: false
       force:
@@ -47,6 +49,10 @@ on:
         description: 'Overwrite existing tags (for "start" action)'
         type: boolean
         default: false
+      fail-on-no-issue:
+        description: 'Fail if no tracking issue is found (for "resume" action)'
+        type: boolean
+        default: true
 
 permissions: read-all
 
@@ -73,36 +79,47 @@ jobs:
 
       - name: Determine action
         id: determine-action
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          ACTION: ${{ inputs.action }}
         run: |
-          if [[ "${{ github.event_name }}" == "push" ]]; then
+          if [[ "$EVENT_NAME" == "push" ]]; then
             echo 'action=start' >> "$GITHUB_OUTPUT"
           else
-            echo "action=${{ inputs.action }}" >> "$GITHUB_OUTPUT"
+            echo "action=${ACTION}" >> "$GITHUB_OUTPUT"
           fi
         shell: bash
 
       - name: Handle manual trigger
         id: handle-manual
         if: github.event_name == 'workflow_dispatch'
+        env:
+          ACTION: ${{ steps.determine-action.outputs.action }}
+          FORCE: ${{ inputs.force }}
+          RELEASE_VERSION: ${{ inputs.release-version }}
         run: |
-          if [[ "${{ steps.determine-action.outputs.action }}" == 'resume' ]]
+          if [[ "$ACTION" == 'resume' ]]
           then
             echo 'should-run=true' >> "$GITHUB_OUTPUT"
             echo 'Manual resume - will run'
             exit 0
           fi
 
-          if [[ "${{ inputs.force }}" == "true" ]]; then
+          if [[ "$FORCE" == 'true' ]]; then
             echo 'should-run=true' >> "$GITHUB_OUTPUT"
             echo 'Manual start (forced) - will run'
             exit 0
           fi
 
-          version=$(yq eval '.version' .github/release-manifest.yml)
-          existing_issue=$(gh issue list \
-            --label "release-v${version}" \
-            --state open \
-            --json number --jq '.[0].number' || echo '')
+          version="${RELEASE_VERSION:-"$(yq eval '.release.version' \
+            .github/release-manifest.yml)"}"
+          existing_issue=
+          if [[ "$version" != 'null' ]]; then
+            existing_issue=$(gh issue list \
+              --label "release-v${version}" \
+              --state open \
+              --json number --jq '.[0].number' || echo '')
+          fi
 
           if [[ -n "$existing_issue" ]]; then
             echo 'should-run=false' >> "$GITHUB_OUTPUT"
@@ -118,12 +135,14 @@ jobs:
       - name: Check if version changed in push
         id: check-version
         if: github.event_name == 'push'
+        env:
+          EVENT_BEFORE: ${{ github.event.before }}
         run: |
           before_version=$(git show \
-            "${{ github.event.before }}:.github/release-manifest.yml" \
+            "${EVENT_BEFORE}:.github/release-manifest.yml" \
             2>/dev/null | \
-            yq eval '.version' - 2>/dev/null || echo '')
-          after_version=$(yq eval '.version' .github/release-manifest.yml)
+            yq eval '.release.version' - 2>/dev/null || echo '')
+          after_version=$(yq eval '.release.version' .github/release-manifest.yml)
 
           echo "Before: ${before_version}"
           echo "After: ${after_version}"
@@ -165,6 +184,8 @@ jobs:
 
       - name: Parse and cache manifest
         id: parse-manifest
+        env:
+          RELEASE_VERSION: ${{ inputs.release-version }}
         run: |
           MANIFEST_JSON="${RUNNER_TEMP}/manifest.json"
           COMPONENTS_JSON="${RUNNER_TEMP}/components.json"
@@ -172,32 +193,46 @@ jobs:
           echo "Parsing manifest to JSON..."
           yq eval -o=json '.' .github/release-manifest.yml > "$MANIFEST_JSON"
 
-          core_component=$(jq -r '.config.core_component // null' \
-            "$MANIFEST_JSON")
-          if ! jq -e ".components.\"${core_component}\"" "$MANIFEST_JSON" \
-            > /dev/null; then
-            echo "::error::Core component '${core_component}' not found in components"
+          release_version="${RELEASE_VERSION:-"$(jq -r '.release.version' \
+            "$MANIFEST_JSON")"}"
+          if [[ "$release_version" == 'null' ]]; then
+            echo '::error::No release version specified'
             exit 1
           fi
-          safe_core_name="${core_component//_/}"
 
-          release_name=$(jq -r '.config.release_name // null' "$MANIFEST_JSON")
+          release_name=$(jq -r '.release.name' "$MANIFEST_JSON")
           if [[ "$release_name" == 'null' ]]; then
             echo '::error::No release name specified'
             exit 1
           fi
 
-          core_version=$(jq -r '.version' "$MANIFEST_JSON")
-          if [[ "$core_version" == 'null' ]]; then
-            echo '::error::No release version specified'
+          core_component=$(jq -r '.release.core_component' \
+            "$MANIFEST_JSON")
+          if ! jq -e ".components.\"${core_component}\"" "$MANIFEST_JSON" \
+            > /dev/null
+          then
+            echo "::error::Core component '${core_component}' not found in components"
             exit 1
           fi
+          safe_core_name="${core_component//_/}"
+
+          tracking_repo=$(jq -r \
+            --arg default "$GITHUB_REPOSITORY" \
+            '.release.tracking.repository // $default' \
+            "$MANIFEST_JSON")
+
+          tracking_project_name=$(jq -r \
+            '.release.tracking.project_name // ""' \
+            "$MANIFEST_JSON")
+          tracking_project_column=$(jq -r \
+            '.release.tracking.project_column // ""' \
+            "$MANIFEST_JSON")
 
           echo "Building canonical component data..."
           components=$(jq \
+            --arg release_version "$release_version" \
             --arg core_component "$core_component" \
-            --arg safe_core_name "$safe_core_name" \
-            --arg core_version "$core_version" '
+            --arg safe_core_name "$safe_core_name" '
             .components
             | with_entries(
                 .value as $comp
@@ -206,14 +241,14 @@ jobs:
                   (if $name == $core_component then
                      $comp + {
                        name: $name,
-                       version: $core_version,
-                       full_version: $core_version,
+                       version: $release_version,
+                       full_version: $release_version,
                        branch: "",
                        is_core: true,
                        all_dependencies: []
                      }
                    else
-                     ($comp.component_version // $core_version) as $version
+                     ($comp.version // $release_version) as $version
                      | (
                          if ($comp | has("depends_on") | not) then
                            [$core_component]
@@ -227,10 +262,10 @@ jobs:
                          name: $name,
                          version: $version,
                          full_version:
-                           (if $comp.component_version == null
-                            then $core_version
+                           (if $comp.version == null
+                            then $release_version
                             else
-                              "\($version)+\($safe_core_name).\($core_version)"
+                              "\($version)+\($safe_core_name).\($release_version)"
                             end),
                          branch: ($comp.branch // ""),
                          is_core: false,
@@ -241,21 +276,30 @@ jobs:
           ' "$MANIFEST_JSON")
           echo "$components" > "$COMPONENTS_JSON"
 
-          component_repos=$(jq -r '. | keys | join(",")' \
-            <<< "$components")
+          component_repo_names=$(jq -r '. | keys[]' <<< "$components")
 
           {
             echo "manifest-path=${MANIFEST_JSON}"
             echo "components-path=${COMPONENTS_JSON}"
             echo "release-name=${release_name}"
-            echo "version=${core_version}"
+            echo "version=${release_version}"
             echo "core-component=${core_component}"
-            echo "component-repos=${component_repos}"
+            echo "tracking-repo=${tracking_repo}"
+            echo "tracking-project-name=${tracking_project_name}"
+            echo "tracking-project-column=${tracking_project_column}"
+            echo 'component-repo-names<<EOF'
+            echo "$component_repo_names"
+            echo 'EOF'
+            echo "tracking-repo-name=$(basename "$tracking_repo")"
           } >> "$GITHUB_OUTPUT"
 
           echo "Manifest parsed:"
-          echo "  Core version: ${core_version}"
+          echo "  Release version: ${release_version}"
           echo "  Core component: ${core_component}"
+          echo "  Tracking repository: ${tracking_repo}"
+          if [[ -n "$tracking_project_name" ]]; then
+            echo "  Tracking project: ${tracking_project_name}"
+          fi
           echo "  Components: $(jq -rc '. | keys' <<< "$components")"
         shell: bash
 
@@ -270,11 +314,14 @@ jobs:
         with:
           client-id: ${{ vars.VACCEL_BOT_CLIENT_ID }}
           private-key: ${{ secrets.VACCEL_BOT_PRIVATE_KEY }}
-          repositories: ${{ steps.parse-manifest.outputs.component-repos }}
+          repositories: |
+            ${{ steps.parse-manifest.outputs.component-repo-names }}
+            ${{ steps.parse-manifest.outputs.tracking-repo-name }}
           permission-actions: write
           permission-contents: write
           permission-issues: write
           permission-pull-requests: write
+          permission-organization-projects: write
 
       - name: Get vaccel-bot info
         id: get-bot-info
@@ -293,7 +340,12 @@ jobs:
           version: ${{ steps.parse-manifest.outputs.version }}
           components-path: ${{ steps.parse-manifest.outputs.components-path }}
           metadata-overwrite-tags: ${{ inputs.overwrite-tags || 'false' }}
+          project-name: >-
+            ${{ steps.parse-manifest.outputs.tracking-project-name }}
+          project-column: >-
+            ${{ steps.parse-manifest.outputs.tracking-project-column }}
           user-login: ${{ steps.get-bot-info.outputs.user-login }}
+          repository: ${{ steps.parse-manifest.outputs.tracking-repo }}
           token: ${{ steps.generate-token.outputs.token }}
 
       - name: Generate draft release note data
@@ -410,6 +462,7 @@ jobs:
           target-status: 'tagged'
           reset: ${{ env.RESET }}
           user-login: ${{ steps.get-bot-info.outputs.user-login }}
+          repository: ${{ steps.parse-manifest.outputs.tracking-repo }}
           token: ${{ steps.generate-token.outputs.token }}
 
       # --- RESUME: Process next components ---
@@ -428,22 +481,24 @@ jobs:
         uses: ./.github/actions/manage-release-state
         with:
           action: 'update'
-          version: ${{ inputs.release-version }}
+          version: ${{ steps.parse-manifest.outputs.version }}
           components-path: ${{ steps.parse-manifest.outputs.components-path }}
           target-components: ${{ steps.generate-component.outputs.component }}
           target-status: ${{ inputs.status }}
           target-pr-number: ${{ inputs.pr-number }}
           user-login: ${{ steps.get-bot-info.outputs.user-login }}
+          fail-on-no-issue: ${{ inputs.fail-on-no-issue }}
+          repository: ${{ steps.parse-manifest.outputs.tracking-repo }}
           token: ${{ steps.generate-token.outputs.token }}
 
       - name: Fetch and upload release artifacts
         if: >-
-          needs.check-run.outputs.action == 'resume' &&
+          steps.update-component.outputs.components-path &&
           inputs.status == 'complete'
         uses: ./.github/actions/upload-release-artifacts
         env:
           COMPONENTS_PATH: ${{ steps.update-component.outputs.components-path }}
-          RELEASE_TAG: ${{ format('v{0}', inputs.release-version) }}
+          RELEASE_TAG: "v${{ steps.parse-manifest.outputs.version }}"
         with:
           component: ${{ inputs.component }}
           components-path: ${{ env.COMPONENTS_PATH }}
@@ -455,6 +510,9 @@ jobs:
 
       - name: Trigger next components
         id: trigger-next
+        if: >-
+          steps.update-component.outputs.issue-number ||
+          steps.update-core.outputs.issue-number
         env:
           GH_TOKEN: ${{ steps.generate-token.outputs.token }}
           COMPONENTS_PATH: >-
@@ -463,9 +521,10 @@ jobs:
           ISSUE_NUMBER: >-
             ${{ steps.update-component.outputs.issue-number ||
               steps.update-core.outputs.issue-number }}
-          VERSION: >-
-            ${{ inputs.release-version ||
-              steps.parse-manifest.outputs.version }}
+          ISSUE_URL: >-
+            ${{ steps.update-component.outputs.issue-url ||
+              steps.update-core.outputs.issue-url }}
+          VERSION: ${{ steps.parse-manifest.outputs.version }}
           CORE_COMPONENT: ${{ steps.parse-manifest.outputs.core-component }}
           OVERWRITE_TAGS: >-
             ${{ steps.update-component.outputs.metadata-overwrite-tags ||
@@ -557,8 +616,8 @@ jobs:
                 -f branch="$branch" \
                 -f core-component="$CORE_COMPONENT" \
                 -f core-version="$VERSION" \
-                -f tracking-issue="$ISSUE_NUMBER" \
-                -f tracking-repo="$GITHUB_REPOSITORY" \
+                -f tracking-issue-url="$ISSUE_URL" \
+                -f orchestrator-repo="$GITHUB_REPOSITORY" \
                 -f dependencies="$workflow_deps"
             fi
           done
@@ -580,7 +639,9 @@ jobs:
 
       - name: Update tracking issue with triggered
         id: update-triggered
-        if: steps.trigger-next.outputs.triggered != '[]'
+        if: >-
+          steps.trigger-next.outputs.triggered &&
+          steps.trigger-next.outputs.triggered != '[]'
         uses: ./.github/actions/manage-release-state
         with:
           action: 'update'
@@ -593,11 +654,14 @@ jobs:
           target-components: ${{ steps.trigger-next.outputs.triggered }}
           target-status: 'triggered'
           user-login: ${{ steps.get-bot-info.outputs.user-login }}
+          repository: ${{ steps.parse-manifest.outputs.tracking-repo }}
           token: ${{ steps.generate-token.outputs.token }}
 
       - name: Update tracking issue with tagged
         id: update-tagged
-        if: steps.trigger-next.outputs.tagged != '[]'
+        if: >-
+          steps.trigger-next.outputs.tagged &&
+          steps.trigger-next.outputs.tagged != '[]'
         uses: ./.github/actions/manage-release-state
         with:
           action: 'update'
@@ -610,19 +674,21 @@ jobs:
           target-components: ${{ steps.trigger-next.outputs.tagged }}
           target-status: 'tagged'
           user-login: ${{ steps.get-bot-info.outputs.user-login }}
+          repository: ${{ steps.parse-manifest.outputs.tracking-repo }}
           token: ${{ steps.generate-token.outputs.token }}
 
       - name: Check if release complete
         id: check-complete
+        if: >-
+          steps.update-component.outputs.issue-number ||
+          steps.update-core.outputs.issue-number
         env:
           COMPONENTS_PATH: >-
             ${{ steps.update-tagged.outputs.components-path ||
               steps.update-triggered.outputs.components-path ||
               steps.update-component.outputs.components-path ||
               steps.update-core.outputs.components-path }}
-          VERSION: >-
-            ${{ inputs.release-version ||
-              steps.parse-manifest.outputs.version }}
+          VERSION: ${{ steps.parse-manifest.outputs.version }}
           ISSUE_NUMBER: >-
             ${{ steps.update-component.outputs.issue-number ||
               steps.update-core.outputs.issue-number }}
@@ -716,4 +782,5 @@ jobs:
           issue-number: ${{ steps.check-complete.outputs.issue-number }}
           components-path: ${{ steps.check-complete.outputs.components-path }}
           user-login: ${{ steps.get-bot-info.outputs.user-login }}
+          repository: ${{ steps.parse-manifest.outputs.tracking-repo }}
           token: ${{ steps.generate-token.outputs.token }}

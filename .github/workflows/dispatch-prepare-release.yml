@@ -24,12 +24,12 @@ on:
         description: 'Core component version'
         type: string
         required: true
-      tracking-issue:
-        description: 'Tracking issue number in core repo'
+      tracking-issue-url:
+        description: 'Tracking issue URL'
         type: string
         required: true
-      tracking-repo:
-        description: 'Core repository (e.g., owner/repo)'
+      orchestrator-repo:
+        description: 'Repository orchestrating the release (e.g., owner/repo)'
         type: string
         required: true
       dependencies:
@@ -56,7 +56,7 @@ jobs:
       branch: ${{ inputs.branch }}
       core-component: ${{ inputs.core-component }}
       core-version: ${{ inputs.core-version }}
-      tracking-issue: ${{ inputs.tracking-issue }}
-      tracking-repo: ${{ inputs.tracking-repo }}
+      tracking-issue-url: ${{ inputs.tracking-issue-url }}
+      orchestrator-repo: ${{ inputs.orchestrator-repo }}
       dependencies: ${{ inputs.dependencies }}
     secrets: inherit
