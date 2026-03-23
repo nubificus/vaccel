@@ -5,12 +5,16 @@ on:
     branches: [main]
     paths: ['.github/release-manifest.yml']
 
+  pull_request:
+    branches: [main]
+    paths: ['.github/release-manifest.yml']
+
   workflow_dispatch:
     inputs:
       action:
-        description: 'Action to perform: "start" or "resume"'
+        description: 'Action to perform'
         type: choice
-        options: [start, resume]
+        options: [start, resume, check-manifest]
         default: 'start'
       component:
         description: 'Component with updated status (for "resume" action)'
@@ -57,14 +61,21 @@ on:
 permissions: read-all
 
 jobs:
+  check-pr-status:
+    name: Check PR status
+    uses: ./.github/workflows/check-pr-status.yml
+    secrets: inherit
+
   check-run:
+    needs: check-pr-status
     name: Check if Orchestrator Should Run
     runs-on: base-dind-2204-amd64
     outputs:
       action: ${{ steps.determine-action.outputs.action }}
       should-run: >-
         ${{ steps.check-version.outputs.should-run ||
-          steps.handle-manual.outputs.should-run }}
+          steps.handle-manual.outputs.should-run ||
+          steps.handle-pr.outputs.should-run }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
@@ -83,11 +94,27 @@ jobs:
           EVENT_NAME: ${{ github.event_name }}
           ACTION: ${{ inputs.action }}
         run: |
-          if [[ "$EVENT_NAME" == "push" ]]; then
-            echo 'action=start' >> "$GITHUB_OUTPUT"
-          else
-            echo "action=${ACTION}" >> "$GITHUB_OUTPUT"
-          fi
+          case "$EVENT_NAME" in
+            pull_request)
+              echo 'action=check-manifest' >> "$GITHUB_OUTPUT"
+              ;;
+            push)
+              echo 'action=start' >> "$GITHUB_OUTPUT"
+              ;;
+            *)
+              echo "action=${ACTION}" >> "$GITHUB_OUTPUT"
+              ;;
+          esac
+        shell: bash
+
+      - name: Handle pull request
+        id: handle-pr
+        if: github.event_name == 'pull_request'
+        env:
+          EXPECTS_CHECKS: ${{ needs.check-pr-status.outputs.expects-checks }}
+        run: |
+            echo "should-run=${EXPECTS_CHECKS}" >> "$GITHUB_OUTPUT"
+            echo "Pull request - check manifest: ${EXPECTS_CHECKS}"
         shell: bash
 
       - name: Handle manual trigger
@@ -306,10 +333,16 @@ jobs:
       # Workaround for native concurrency cancelling more than one queued jobs.
       # See: https://github.com/orgs/community/discussions/12835
       - name: Wait for pending runs
+        if: >-
+          needs.check-run.outputs.action == 'start' ||
+          needs.check-run.outputs.action == 'resume'
         uses: softprops/turnstyle@v3
 
       - name: Generate vaccel-bot token
         id: generate-token
+        if: >-
+          needs.check-run.outputs.action == 'start' ||
+          needs.check-run.outputs.action == 'resume'
         uses: actions/create-github-app-token@v3
         with:
           client-id: ${{ vars.VACCEL_BOT_CLIENT_ID }}
@@ -325,6 +358,9 @@ jobs:
 
       - name: Get vaccel-bot info
         id: get-bot-info
+        if: >-
+          needs.check-run.outputs.action == 'start' ||
+          needs.check-run.outputs.action == 'resume'
         uses: ./.github/actions/get-github-app-info
         with:
           app-slug: ${{ steps.generate-token.outputs.app-slug }}
