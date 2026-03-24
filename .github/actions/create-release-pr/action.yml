@@ -29,6 +29,9 @@ inputs:
   core-version:
     description: 'Core component version (required to trigger orchestrator)'
     required: false
+  result:
+    description: 'Result of the executed job'
+    default: 'success'
   token:
     description: >
       Access token used for creating the PR and updating the release tracking
@@ -59,12 +62,14 @@ runs:
   steps:
     - name: Get committer app info
       id: get-app-info
+      if: inputs.result != 'failure'
       uses: ./.github/actions/get-github-app-info
       with:
         app-slug: ${{ inputs.committer-slug }}
 
     - name: Get paths to commit
       id: get-paths
+      if: inputs.result != 'failure'
       run: |
         # Exclude '.github' since previous steps modify it
         paths=$({ git diff --name-only; \
@@ -117,18 +122,24 @@ runs:
         ORCHESTRATOR_REPO: ${{ inputs.orchestrator-repo }}
         COMPONENT: ${{ inputs.component }}
         STATUS: >-
-          ${{ steps.create-pr.outputs.pull-request-number &&
-            'pr-created' || 'pr-merged' }}
-        PR_NUMBER: ${{ steps.create-pr.outputs.pull-request-number }}
+          ${{ inputs.result == 'failure'
+            && 'failed'
+            || steps.create-pr.outputs.pull-request-number
+            && 'pr-created'
+            || 'pr-merged' }}
+        PR_URL: ${{ steps.create-pr.outputs.pull-request-url }}
         CORE_VERSION: ${{ inputs.core-version }}
       run: |
+        RUN_URL="https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+
         gh workflow run main-release.yml \
           --repo "$ORCHESTRATOR_REPO" \
           --ref main \
           -f action=resume \
           -f component="$COMPONENT" \
           -f status="$STATUS" \
-          -f pr-number="$PR_NUMBER" \
-          -f release-version="$CORE_VERSION"
+          -f pr-url="$PR_URL" \
+          -f release-version="$CORE_VERSION" \
+          -f run-url="$RUN_URL"
         echo "Orchestrator notified of status: ${STATUS}"
       shell: bash

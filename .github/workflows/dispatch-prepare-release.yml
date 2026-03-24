@@ -1,4 +1,7 @@
 name: Prepare Release
+run-name: >-
+  ${{ format('Prepare release · {0} ({1})',
+    inputs.component || github.event.repository.name, inputs.version) }}
 
 on:
   workflow_dispatch:
@@ -48,7 +51,7 @@ permissions: read-all
 
 jobs:
   prepare-release:
-    name: Prepare Release
+    name: Prepare Release (Generic)
     uses: ./.github/workflows/prepare-release.yml
     with:
       version: ${{ inputs.version }}

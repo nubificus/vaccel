@@ -22,5 +22,8 @@ jobs:
   update-release-issue:
     needs: build-dist
     name: Update Release Issue
+    if: always()
     uses: ./.github/workflows/update-release-issue.yml
+    with:
+      result: ${{ needs.build-dist.result }}
     secrets: inherit

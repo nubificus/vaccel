@@ -13,6 +13,10 @@ on:
         description: 'Relative S3 path for component artifacts'
         type: string
         required: false
+      result:
+        description: 'Result of the executed jobs'
+        type: string
+        default: 'success'
       fail-on-no-issue:
         description: 'Fail if no tracking issue is found'
         type: boolean
@@ -150,12 +154,17 @@ jobs:
             ${{ steps.check-release.outputs.orchestrator-repo }}
           COMPONENT: ${{ steps.check-release.outputs.component }}
           STATUS: >-
-            ${{ steps.check-release.outputs.is-prepare-release == 'true' &&
-              'pr-merged' || 'complete' }}
+            ${{ inputs.result == 'failure'
+              && 'failed'
+              || steps.check-release.outputs.is-prepare-release == 'true'
+              && 'pr-merged'
+              || 'complete' }}
           CORE_VERSION: ${{ steps.check-release.outputs.core-version }}
           ARTIFACTS_PATH: ${{ inputs.artifacts-path }}
           FAIL_ON_NO_ISSUE: ${{ inputs.fail-on-no-issue }}
         run: |
+          RUN_URL="https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+
           gh workflow run main-release.yml \
             --repo "$ORCHESTRATOR_REPO" \
             --ref main \
@@ -164,6 +173,7 @@ jobs:
             -f status="$STATUS" \
             -f release-version="$CORE_VERSION" \
             -f artifacts-path="$ARTIFACTS_PATH" \
-            -f fail-on-no-issue="$FAIL_ON_NO_ISSUE"
+            -f fail-on-no-issue="$FAIL_ON_NO_ISSUE" \
+            -f run-url="$RUN_URL"
           echo "Orchestrator notified of status: ${STATUS}"
         shell: bash
