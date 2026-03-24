@@ -3,28 +3,46 @@
 ```
 
 {% if action == "create" %}
-{% if created_at == updated_at %}
+  {% if created_at == updated_at %}
 📝 Initial state created at {{ created_at }}
-{% else %}
+  {% else %}
 📝 State updated at {{ updated_at }}
-{% endif %}
+  {% endif %}
 {% elif action == "update" %}
-{% for component in components.values() if component.previous_status != component.status %}
-{% if component.status == "pending" %}
+  {% set ns = namespace(updated=false) %}
+  {% for component in components.values() if component.previous_status != component.status %}
+    {% set ns.updated = true %}
+    {% if component.run | default("")  %}
+      {% set run = " · [View run](" ~ component.run ~ ")" %}
+    {% else %}
+      {% set run = "" %}
+    {% endif -%}
+
+    {% if component.status == "pending" %}
 🔄 **{{ component.name }}** ({{ component.version }}) state reset
-{% elif component.status == "triggered" %}
-🚀 Triggered **{{ component.name }}** ({{ component.version }}) - PR will be created
-{% elif component.status == "pr-created" %}
-{% set pr = component.pr | default("") %}
-🔗 **{{ component.name }}** ({{ component.version }}) PR created{%- if pr %}: {{ pr }}{%- endif %}
-{% elif component.status == "pr-merged" %}
+    {% elif component.status == "triggered" %}
+🚀 Triggered **{{ component.name }}** ({{ component.version }}){{ run }}
+    {% elif component.status == "pr-created" %}
+      {% if component.pr | default("") %}
+        {% set pr = ": " ~ component.pr %}
+      {% else %}
+        {% set pr = "" %}
+      {% endif %}
+🔗 **{{ component.name }}** ({{ component.version }}) PR created{{ pr }}
+    {% elif component.status == "pr-merged" %}
 🔀 **{{ component.name }}** ({{ component.version }}) PR merged
-{% elif component.status == "tagged" %}
+    {% elif component.status == "tagged" %}
 🏷️ Tagged **{{ component.name }}** with v{{ component.full_version }} - artifacts will be built and uploaded to S3
-{% elif component.status == "complete" %}
+    {% elif component.status == "complete" %}
 ✅ **{{ component.name }}** ({{ component.version }}) complete - artifacts uploaded to S3
-{% endif %}
-{% endfor %}
+    {% elif component.status == "failed" %}
+❌ **{{ component.name }}** ({{ component.version }}) failed (previous status: {{ component.previous_status }}){{ run }}
+    {% endif %}
+  {% endfor %}
+
+  {%- if not ns.updated %}
+📝 State metadata updated at {{ updated_at }}
+  {% endif %}
 {% elif action == "finalize" %}
 🎉 **Release v{{ version }} Complete!**
 
@@ -33,4 +51,9 @@ All components done.
 📦 [Review and publish draft]({{ release_url }})
 {% else %}
 Unknown state action
+{% endif %}
+
+{%- if log_url %}
+
+[[View log]]({{ log_url }})
 {% endif %}

@@ -16,15 +16,23 @@ inputs:
   target-components:
     description: 'JSON array of component names to update (for "update" action)'
     default: '[]'
-  target-status:
+  statuses:
     description: >
-      Component status: "triggered", "tagged", "pr-created", "pr-merged" or
-      "complete" (for "update" action)
-    required: false
-  target-pr-number:
+      JSON array of component statuses: "triggered", "tagged", "pr-created",
+      "pr-merged", "complete" or "failed" (for "update" action).
+      Should match the target-components order.
+    default: '[]'
+  pr-urls:
     description: >
-      Number of created PR (for "update" action with "pr-created" status)
-    required: false
+      JSON array of URLs for created PRs
+      (for "update" action with "pr-created" status).
+      Should match the target-components order.
+    default: '[]'
+  run-urls:
+    description: >
+      JSON array of URLs for triggered runs (for "update" action).
+      Should match the target-components order.
+    default: '[]'
   metadata-overwrite-tags:
     description: >
       Whether existing tags should be overwritten (for "create" action).
@@ -108,8 +116,11 @@ runs:
             ;;
         esac
 
-        echo "repo=${REPOSITORY:-"$GITHUB_REPOSITORY"}" \
-          >> "$GITHUB_OUTPUT"
+        run_url="https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+        {
+          echo "repo=${REPOSITORY:-"$GITHUB_REPOSITORY"}"
+          echo "run-url=${run_url}"
+        } >> "$GITHUB_OUTPUT"
       shell: bash
 
     - name: Find tracking issue
@@ -195,19 +206,20 @@ runs:
           --arg overwrite_tags "$METADATA_OVERWRITE_TAGS" \
           --argjson pending "$component_names" '
           {
-            pending: $pending,
-            triggered: [],
+            pending:    $pending,
+            triggered:  [],
             pr_created: [],
-            pr_merged: [],
-            tagged: [],
-            completed: [],
+            pr_merged:  [],
+            tagged:     [],
+            completed:  [],
+            failed:     [],
             metadata: {
-              version: $version,
-              release_name: "",
-              release_url: "",
-              triggered_by: $actor,
-              created_at: $timestamp,
-              component_prs: [],
+              version:        $version,
+              release_name:   "",
+              release_url:    "",
+              triggered_by:   $actor,
+              created_at:     $timestamp,
+              component_urls:  [],
               overwrite_tags: $overwrite_tags
             }
           }')
@@ -271,13 +283,14 @@ runs:
             pr_merged:  [],
             tagged:     [],
             completed:  [],
+            failed:     [],
             metadata: {
-              version:       null,
-              release_name:  null,
-              release_url:   null,
-              triggered_by:  null,
-              created_at:    null,
-              component_prs: [],
+              version:        null,
+              release_name:   null,
+              release_url:    null,
+              triggered_by:   null,
+              created_at:     null,
+              component_urls:  [],
               overwrite_tags: null
             }
           } as $defaults
@@ -309,14 +322,16 @@ runs:
         ACTION: ${{ inputs.action }}
         VERSION: ${{ steps.fetch-state.outputs.version }}
         TARGET_COMPONENTS: ${{ inputs.target-components }}
-        STATUS: ${{ inputs.target-status }}
+        STATUSES: ${{ inputs.statuses }}
         STATE: ${{ steps.fetch-state.outputs.state }}
-        PR_NUMBER: ${{ inputs.target-pr-number }}
+        PR_URLS: ${{ inputs.pr-urls }}
+        RUN_URLS: ${{ inputs.run-urls }}
         METADATA_OVERWRITE_TAGS: ${{ inputs.metadata-overwrite-tags }}
         RESET: ${{ inputs.reset }}
+        WORKFLOW_RUN_URL: ${{ steps.prepare.outputs.run-url }}
       run: |
         if [[ "$TARGET_COMPONENTS" != '[]' ]]; then
-          echo "Updating ${TARGET_COMPONENTS} status to: ${STATUS}"
+          echo "Updating ${TARGET_COMPONENTS} status to: ${STATUSES}"
         else
           echo "Updating state"
         fi
@@ -336,18 +351,21 @@ runs:
 
         updated_state=$(jq \
           --argjson comps "$TARGET_COMPONENTS" \
-          --arg status "$STATUS" \
+          --argjson statuses "$STATUSES" \
           --arg action "$ACTION" \
           --arg release_name "$release_name" \
           --arg release_url "$release_url" \
           --arg owner "$GITHUB_REPOSITORY_OWNER" \
-          --arg pr_number "$PR_NUMBER" \
+          --argjson pr_urls "$PR_URLS" \
+          --argjson run_urls "$RUN_URLS" \
+          --arg default_run_url "$WORKFLOW_RUN_URL" \
           --arg overwrite_tags "$METADATA_OVERWRITE_TAGS" \
           --argjson reset "$RESET" '
           ($comps | flatten) as $c
+          | ($statuses | flatten) as $s
           | [
               "pending", "triggered", "pr_created", "pr_merged",
-              "tagged", "completed"
+              "tagged", "completed", "failed"
             ] as $all_fields
           | {
               "pending":    "pending",
@@ -355,12 +373,13 @@ runs:
               "pr-created": "pr_created",
               "pr-merged":  "pr_merged",
               "tagged":     "tagged",
-              "complete":   "completed"
+              "complete":   "completed",
+              "failed":     "failed"
             } as $transitions
-          | $transitions[$status] as $target
-          # Fail if status unknown
-          | if ($c | length) > 0 and $target == null
-            then error("Unknown status: \($status)")
+          # Fail if any status unknown
+          | if ($c | length) > 0
+              and ($s | map($transitions[.]) | any(. == null))
+            then error("Unknown status in: \($s)")
             else . end
           # Fail if any component does not exist
           | ([$all_fields[] as $f | .[$f][]?] | unique) as $existing
@@ -368,41 +387,96 @@ runs:
               and (($c | all(. as $x | $existing | index($x) != null)) | not)
             then error("One or more components do not exist in state")
             else . end
-          # Remove from all fields, add to target
-          | if ($c | length) > 0 then
-              reduce $all_fields[] as $f
-                (. ; .[$f] = (
-                  if $f == $target
-                  then ((.[$f] // []) + $c | unique)
-                  else ((.[$f] // []) - $c)
-                  end
-                ))
+          # Zip components with their target fields
+          | ( $c
+              | to_entries
+              | map({
+                  component: .value,
+                  target: ($transitions[$s[.key]])
+                })
+            ) as $pairs
+          # If reset, move all non-target components to pending and clear
+          # component_urls
+          | if $reset then
+              ($pairs | map(.target) | unique) as $targets
+              | ($existing - $c) as $rest
+              | .pending = (.pending + $rest | unique)
+              | reduce (
+                  $all_fields[]
+                  | select(
+                      . != "pending"
+                      and (. as $f | $targets | index($f) == null)
+                    )
+                ) as $f
+                  (. ; .[$f] = [])
+              | .metadata.component_urls = []
             else .
             end
-          # Update component_prs if pr-created
-          | if ($c | length) > 0 and $status == "pr-created"
-              and ($pr_number | length) > 0 then
-              (
-                $c | map({
-                  name: .,
-                  pr: "\($owner)/\(.)#\($pr_number)"
-                })
-              ) as $new_prs
-              | .metadata.component_prs = (
-                  ($new_prs + (.metadata.component_prs // []))
-                  | unique_by(.name)
+          # Remove each component from all fields, add to its target
+          | if ($c | length) > 0 then
+              reduce $pairs[] as $p
+                (. ; reduce $all_fields[] as $f
+                  (. ; .[$f] = (
+                    if $f == $p.target
+                    then ((.[$f] // []) + [$p.component] | unique)
+                    else ((.[$f] // []) - [$p.component])
+                    end
+                  ))
                 )
             else .
             end
-          # If reset, move all non-target components to pending
-          | if $reset then
-              ($existing - $c) as $rest
-              | .pending = (.pending + $rest | unique)
-              | reduce (
-                  $all_fields[] | select(. != "pending" and . != $target)
-                ) as $f
-                  (. ; .[$f] = [])
-              | .metadata.component_prs = []
+          # Update component prs if pr-created
+          | if ($c | length) > 0 and ($pr_urls | length) > 0 then
+              (
+                [ $pairs[]
+                  | select(.target == "pr_created")
+                  | . as $p
+                  | {name: $p.component, pr: $pr_urls[$c | index($p.component)]}
+                  | select(.pr | length > 0)
+                ]
+              ) as $new_entries
+              | if ($new_entries | length) > 0 then
+                  .metadata.component_urls = (
+                    ($new_entries + (.metadata.component_urls // []))
+                    | unique_by(.name)
+                  )
+                else .
+                end
+            else .
+            end
+          # Update component runs
+          | if ($c | length) > 0 then
+              (
+                [ range($c | length)
+                  | . as $i
+                  | select(
+                      ( $i < ($run_urls | length)
+                        and ($run_urls[$i] | length) > 0
+                      )
+                      or ($default_run_url | length) > 0
+                    )
+                  | {
+                      name: $c[$i],
+                      run: (
+                        if $i < ($run_urls | length)
+                          and ($run_urls[$i] | length) > 0
+                        then $run_urls[$i]
+                        else $default_run_url
+                        end
+                      )
+                    }]
+              ) as $new_entries
+              | .metadata.component_urls = (
+                  ((.metadata.component_urls // []) + $new_entries)
+                  | group_by(.name)
+                  | map(
+                      reduce .[] as $e (
+                        {name: .[0].name};
+                        if $e.pr then .pr = $e.pr else . end
+                        | if $e.run then .run = $e.run else . end
+                      )
+                    )
+                )
             else .
             end
           # If action is create, set caller metadata
@@ -461,12 +535,13 @@ runs:
           --argjson state "$STATE" '
           def status_of(key; $s):
             if ($s == null or $s == {}) then "uninitialized"
-            elif (key | IN($s.completed[])) then "complete"
-            elif (key | IN($s.tagged[])) then "tagged"
-            elif (key | IN($s.pr_merged[])) then "pr-merged"
-            elif (key | IN($s.pr_created[])) then "pr-created"
-            elif (key | IN($s.triggered[])) then "triggered"
             elif (key | IN($s.pending[])) then "pending"
+            elif (key | IN($s.triggered[])) then "triggered"
+            elif (key | IN($s.pr_created[])) then "pr-created"
+            elif (key | IN($s.pr_merged[])) then "pr-merged"
+            elif (key | IN($s.tagged[])) then "tagged"
+            elif (key | IN($s.completed[])) then "complete"
+            elif (key | IN($s.failed[])) then "failed"
             else "unknown"
             end;
           with_entries(
@@ -479,10 +554,12 @@ runs:
           | map(
               . as $entry
               | .value += (
-                  ($state.metadata.component_prs // [])
+                  ($state.metadata.component_urls // [])
                   | map(select(.name == $entry.key))
                   | first
-                  // {}
+                  | if . then {pr, run} | with_entries(select(.value != null))
+                    else {}
+                    end
                 )
             )
           | from_entries
@@ -515,6 +592,7 @@ runs:
         STATE: ${{ steps.update-components.outputs.state }}
         COMPONENTS_PATH: >-
           ${{ steps.update-components.outputs.updated-components-path }}
+        WORKFLOW_RUN_URL: ${{ steps.prepare.outputs.run-url }}
       run: |
         TEMPLATE_DATA_PATH="${RUNNER_TEMP}/release-template-data.json"
 
@@ -522,7 +600,8 @@ runs:
           --arg action "$ACTION" \
           --arg version "$VERSION" \
           --arg updated_at "$UPDATED_AT" \
-          --argjson state "$STATE" '
+          --argjson state "$STATE" \
+          --arg log_url "$WORKFLOW_RUN_URL" '
           {
             action: $action,
             version: $version,
@@ -532,7 +611,8 @@ runs:
             release_name: $state.metadata.release_name,
             release_url: $state.metadata.release_url,
             state: $state,
-            components: .
+            components: .,
+            log_url: $log_url
           }
         ' "$COMPONENTS_PATH" > "$TEMPLATE_DATA_PATH"
 
@@ -649,13 +729,15 @@ runs:
       env:
         GH_TOKEN: ${{ inputs.token }}
         REPO: ${{ steps.prepare.outputs.repo }}
+        ACTION: ${{ inputs.action }}
         ISSUE_NUMBER: >-
           ${{ steps.create-issue.outputs.issue-number ||
             steps.find-issue.outputs.issue-number }}
         COMMENT: ${{ steps.render-comment.outputs.result }}
+        CLOSE_ON_FINALIZATION: ${{ inputs.close-on-finalization }}
       run: |
-        if [[ "${{ inputs.action }}" == 'finalize' ]] &&
-          [[ "${{ inputs.close-on-finalization }}" == 'true' ]]; then
+        if [[ "$ACTION" == 'finalize' ]] &&
+          [[ "$CLOSE_ON_FINALIZATION" == 'true' ]]; then
           gh issue close "$ISSUE_NUMBER" \
             --repo "$REPO" \
             --comment "$COMMENT" \

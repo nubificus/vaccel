@@ -10,6 +10,9 @@ Current release status and component progress.
     {% set status = "" -%}
   {% else %}
     {% set status = " `" ~ component.status ~ "`" -%}
+    {% if component.status == "failed" and component.run | default("") %}
+      {% set status = status ~ " · ❌ [View log](" ~ component.run ~ ")" -%}
+    {% endif %}
   {% endif %}
 - [{{ tick }}] **{{ component.name }}** {{ component.version }}{{ status }}
 {% endfor %}

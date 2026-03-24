@@ -1,4 +1,12 @@
 name: Release Orchestrator
+run-name: >-
+  ${{ github.event_name == 'pull_request'
+    && format('Release · check manifest (PR #{0})', github.event.pull_request.number)
+    || github.event_name == 'push'
+    && format('Release · start ({0})', inputs.release-version || 'manifest version')
+    || inputs.action == 'resume'
+    && format('Release · resume | {0} → {1}', inputs.component, inputs.status)
+    || format('Release · {0}', inputs.action) }}
 
 on:
   push:
@@ -17,19 +25,17 @@ on:
         options: [start, resume, check-manifest]
         default: 'start'
       component:
-        description: 'Component with updated status (for "resume" action)'
+        description: 'Component updated (for "resume" action)'
         type: string
         required: false
       status:
-        description: >
-          Component status: "pr-created", "pr-merged" or "complete"
-          (for "resume" action)
+        description: 'Component status (for "resume" action)'
         type: choice
-        options: [pr-created, pr-merged, complete]
+        options: [pr-created, pr-merged, complete, failed, pending]
         default: 'complete'
-      pr-number:
+      pr-url:
         description: >
-          Number of created PR (for "resume" action with status "pr-created")
+          URL of created PR (for "resume" action with status "pr-created")
         type: string
         required: false
       artifacts-path:
@@ -42,6 +48,11 @@ on:
         description: >
           Version to release
           (e.g., 0.3.2 - defaults to manifest's release_version)
+        type: string
+        required: false
+      run-url:
+        description: >
+          URL of the run that triggered the workflow (for "resume" action)
         type: string
         required: false
       force:
@@ -68,7 +79,7 @@ jobs:
 
   check-run:
     needs: check-pr-status
-    name: Check if Orchestrator Should Run
+    name: Check If Orchestrator Should Run
     runs-on: base-dind-2204-amd64
     outputs:
       action: ${{ steps.determine-action.outputs.action }}
@@ -93,6 +104,8 @@ jobs:
         env:
           EVENT_NAME: ${{ github.event_name }}
           ACTION: ${{ inputs.action }}
+          COMPONENT: ${{ inputs.component }}
+          RUN_URL: ${{ inputs.run-url }}
         run: |
           case "$EVENT_NAME" in
             pull_request)
@@ -105,6 +118,12 @@ jobs:
               echo "action=${ACTION}" >> "$GITHUB_OUTPUT"
               ;;
           esac
+
+          if [[ -n "$COMPONENT" ]] && [[ -n "$RUN_URL" ]]; then
+            echo "## ${GITHUB_WORKFLOW}" >> "$GITHUB_STEP_SUMMARY"
+            echo "Triggered by **$COMPONENT**: ${RUN_URL}" |
+              tee -a "$GITHUB_STEP_SUMMARY"
+          fi
         shell: bash
 
       - name: Handle pull request
@@ -446,16 +465,16 @@ jobs:
           OVERWRITE_TAGS: >-
             ${{ steps.create-issue.outputs.metadata-overwrite-tags }}
         run: |
-          component=$(jq -nc --arg name "$CORE_COMPONENT" '[$name]')
-          tagged='false'
+          status=tagged
+          updated=false
 
           if git tag --points-at HEAD | grep -qx "$tag"; then
             echo "HEAD already tagged with ${tag}, skipping"
 
-            if jq -e --argjson comp "$component" \
-              '.pending | contains($comp)' <<< "$STATE" > /dev/null
+            if jq -e --argjson name "$CORE_COMPONENT" \
+              '.pending | index($name) != null' <<< "$STATE" >/dev/null
             then
-              tagged='true'
+              updated=true
             fi
           else
             tag="v${VERSION}"
@@ -466,18 +485,24 @@ jobs:
               git push origin ":refs/tags/${tag}" 2>/dev/null || true
             fi
 
-            gh api "repos/${GITHUB_REPOSITORY}/git/refs" \
+            if gh api "repos/${GITHUB_REPOSITORY}/git/refs" \
               --silent \
               -f ref="refs/tags/${tag}" \
               -f sha="$sha"
+            then
+              echo "Tagged ${CORE_COMPONENT} with ${tag}"
+            else
+              status=failed
+              echo "Failed to tag ${CORE_COMPONENT} with ${tag}"
+            fi
 
-            tagged='true'
-            echo "Tagged ${CORE_COMPONENT} with ${tag}"
+            updated=true
           fi
 
           {
-            echo "tagged=${tagged}"
-            echo "component=${component}"
+            echo "component=${CORE_COMPONENT}"
+            echo "status=${status}"
+            echo "updated=${updated}"
           } >> "$GITHUB_OUTPUT"
         shell: bash
 
@@ -486,30 +511,30 @@ jobs:
         if: needs.check-run.outputs.action == 'start'
         env:
           ACTION: >-
-            ${{ steps.tag-core.outputs.tagged == 'true' && 'update' || 'get' }}
-          RESET: >-
-            ${{ steps.tag-core.outputs.tagged == 'true' && 'true' || 'false' }}
+            ${{ steps.tag-core.outputs.updated == 'true' && 'update' || 'get' }}
         uses: ./.github/actions/manage-release-state
         with:
           action: ${{ env.ACTION }}
           issue-number: ${{ steps.create-issue.outputs.issue-number }}
           components-path: ${{ steps.parse-manifest.outputs.components-path }}
-          target-components: ${{ steps.tag-core.outputs.component }}
-          target-status: 'tagged'
-          reset: ${{ env.RESET }}
+          target-components: >-
+            ${{ format('["{0}"]', steps.tag-core.outputs.component) }}
+          statuses: ${{ format('["{0}"]', steps.tag-core.outputs.status) }}
+          reset: ${{ steps.tag-core.outputs.updated }}
           user-login: ${{ steps.get-bot-info.outputs.user-login }}
           repository: ${{ steps.parse-manifest.outputs.tracking-repo }}
           token: ${{ steps.generate-token.outputs.token }}
 
-      # --- RESUME: Process next components ---
-
-      - name: Generate target component
-        id: generate-component
-        if: needs.check-run.outputs.action == 'resume'
+      - name: Exit on core tag failure
+        if: steps.tag-core.outputs.status == 'failed'
+        env:
+          COMPONENT: ${{ steps.tag-core.outputs.component }}
         run: |
-          component=$(jq -nc --arg name "${{ inputs.component }}" '[$name]')
-          echo "component=${component}" >> "$GITHUB_OUTPUT"
+          echo "::error::Failed to tag ${COMPONENT}"
+          exit 1
         shell: bash
+
+      # --- RESUME: Process next components ---
 
       - name: Update component status
         id: update-component
@@ -519,9 +544,10 @@ jobs:
           action: 'update'
           version: ${{ steps.parse-manifest.outputs.version }}
           components-path: ${{ steps.parse-manifest.outputs.components-path }}
-          target-components: ${{ steps.generate-component.outputs.component }}
-          target-status: ${{ inputs.status }}
-          target-pr-number: ${{ inputs.pr-number }}
+          target-components: ${{ format('["{0}"]', inputs.component) }}
+          statuses: ${{ format('["{0}"]', inputs.status) }}
+          pr-urls: ${{ format('["{0}"]', inputs.pr-url) }}
+          run-urls: ${{ format('["{0}"]', inputs.run-url) }}
           user-login: ${{ steps.get-bot-info.outputs.user-login }}
           fail-on-no-issue: ${{ inputs.fail-on-no-issue }}
           repository: ${{ steps.parse-manifest.outputs.tracking-repo }}
@@ -608,7 +634,14 @@ jobs:
               )
           ' "$COMPONENTS_PATH")
 
-          jq -c '.[]' <<< "$actions" | while read -r comp; do
+          run_urls='[]'
+          statuses='[]'
+          triggered='[]'
+          tagged='[]'
+          failed_tags='[]'
+          failed_triggers='[]'
+
+          while read -r comp; do
             name=$(jq -r '.name' <<< "$comp")
             repo=$(jq -r '.repo' <<< "$comp")
             branch=$(jq -r '.branch' <<< "$comp")
@@ -629,10 +662,19 @@ jobs:
                   -X DELETE \
                   2>/dev/null || true
               fi
-              gh api "repos/${repo}/git/refs" \
+
+              if gh api "repos/${repo}/git/refs" \
                   --silent \
                 -f ref="refs/tags/${tag}" \
                 -f sha="$sha"
+              then
+                statuses=$(jq -c --arg s "tagged" '. + [$s]' <<< "$statuses")
+                tagged=$(jq -c --arg n "$name" '. + [$n]' <<< "$tagged")
+              else
+                statuses=$(jq -c --arg s "failed" '. + [$s]' <<< "$statuses")
+                failed_tags=$(jq -c --arg n "$name" '. + [$n]' \
+                  <<< "$failed_tags")
+              fi
             elif [[ "$action" == "trigger" ]]; then
               echo "Triggering prepare-release for ${name} (${full_version})"
               status=$(gh api \
@@ -645,7 +687,7 @@ jobs:
                 target_repo="$GITHUB_REPOSITORY"
               fi
 
-              gh workflow run dispatch-prepare-release.yml \
+              if run_url=$(gh workflow run dispatch-prepare-release.yml \
                 --repo "$target_repo" \
                 -f version="$full_version" \
                 -f component="$name" \
@@ -654,30 +696,48 @@ jobs:
                 -f core-version="$VERSION" \
                 -f tracking-issue-url="$ISSUE_URL" \
                 -f orchestrator-repo="$GITHUB_REPOSITORY" \
-                -f dependencies="$workflow_deps"
+                -f dependencies="$workflow_deps")
+              then
+                statuses=$(jq -c --arg s "triggered" '. + [$s]' <<< "$statuses")
+                run_urls=$(jq -c --arg url "$run_url" '. + [$url]' \
+                  <<< "$run_urls")
+                triggered=$(jq -c --arg n "$name" '. + [$n]' <<< "$triggered")
+                echo "└─ Run triggered: ${run_url}"
+              else
+                statuses=$(jq -c --arg s "failed" '. + [$s]' <<< "$statuses")
+                run_urls=$(jq -c '. + [""]' <<< "$run_urls")
+                failed_triggers=$(jq -c --arg n "$name" '. + [$n]' \
+                  <<< "$failed_triggers")
+              fi
             fi
-          done
+          done < <(jq -c '.[]' <<< "$actions")
 
-          triggered=$(jq -rc '[.[] | select(.action == "trigger") | .name]' \
-            <<< "$actions")
-          tagged=$(jq -rc '[.[] | select(.action == "tag") | .name]' \
-            <<< "$actions")
+          components=$(jq -rc '[.[] | .name]' <<< "$actions")
+          has_failures=$(jq -c 'any(. == "failed")' <<< "$statuses")
 
           {
-            echo "triggered=${triggered}"
-            echo "tagged=${tagged}"
+            echo "components=${components}"
+            echo "statuses=${statuses}"
+            echo "run-urls=${run_urls}"
+            echo "has-failures=${has_failures}"
           } >> "$GITHUB_OUTPUT"
 
-          echo "Trigger step complete:"
+          printf "\nTrigger step complete:\n"
           echo "  Triggered: ${triggered}"
           echo "  Tagged: ${tagged}"
+          if [[ "$failed_triggers" != '[]' ]]; then
+            echo "  Failed triggers: ${failed_triggers}"
+          fi
+          if [[ "$failed_tags" != '[]' ]]; then
+            echo "  Failed tags: ${failed_tags}"
+          fi
         shell: bash
 
-      - name: Update tracking issue with triggered
+      - name: Update tracking issue with triggered/tagged
         id: update-triggered
         if: >-
-          steps.trigger-next.outputs.triggered &&
-          steps.trigger-next.outputs.triggered != '[]'
+          steps.trigger-next.outputs.components &&
+          steps.trigger-next.outputs.components != '[]'
         uses: ./.github/actions/manage-release-state
         with:
           action: 'update'
@@ -687,31 +747,19 @@ jobs:
           components-path: >-
             ${{ steps.update-component.outputs.components-path ||
               steps.update-core.outputs.components-path }}
-          target-components: ${{ steps.trigger-next.outputs.triggered }}
-          target-status: 'triggered'
+          target-components: ${{ steps.trigger-next.outputs.components }}
+          statuses: ${{ steps.trigger-next.outputs.statuses }}
+          run-urls: ${{ steps.trigger-next.outputs.run-urls }}
           user-login: ${{ steps.get-bot-info.outputs.user-login }}
           repository: ${{ steps.parse-manifest.outputs.tracking-repo }}
           token: ${{ steps.generate-token.outputs.token }}
 
-      - name: Update tracking issue with tagged
-        id: update-tagged
-        if: >-
-          steps.trigger-next.outputs.tagged &&
-          steps.trigger-next.outputs.tagged != '[]'
-        uses: ./.github/actions/manage-release-state
-        with:
-          action: 'update'
-          issue-number: >-
-            ${{ steps.update-component.outputs.issue-number ||
-              steps.update-core.outputs.issue-number }}
-          components-path: >-
-            ${{ steps.update-component.outputs.components-path ||
-              steps.update-core.outputs.components-path }}
-          target-components: ${{ steps.trigger-next.outputs.tagged }}
-          target-status: 'tagged'
-          user-login: ${{ steps.get-bot-info.outputs.user-login }}
-          repository: ${{ steps.parse-manifest.outputs.tracking-repo }}
-          token: ${{ steps.generate-token.outputs.token }}
+      - name: Exit on trigger/tag failure
+        if: steps.trigger-next.outputs.has-failures == 'true'
+        run: |
+          echo "::error::Failed to trigger/tag components"
+          exit 1
+        shell: bash
 
       - name: Check if release complete
         id: check-complete
@@ -720,8 +768,7 @@ jobs:
           steps.update-core.outputs.issue-number
         env:
           COMPONENTS_PATH: >-
-            ${{ steps.update-tagged.outputs.components-path ||
-              steps.update-triggered.outputs.components-path ||
+            ${{ steps.update-triggered.outputs.components-path ||
               steps.update-component.outputs.components-path ||
               steps.update-core.outputs.components-path }}
           VERSION: ${{ steps.parse-manifest.outputs.version }}

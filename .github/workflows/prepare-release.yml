@@ -1,4 +1,4 @@
-name: Prepare Release
+name: Prepare Release (Generic)
 
 on:
   workflow_call:
@@ -196,6 +196,7 @@ jobs:
 
       - name: Generate PR vaccel-bot token
         id: generate-pr-token
+        if: always()
         uses: actions/create-github-app-token@v3
         with:
           client-id: ${{ vars.VACCEL_BOT_CLIENT_ID }}
@@ -209,6 +210,7 @@ jobs:
 
       - name: Create release PR
         id: create-release-pr
+        if: always()
         uses: ./.github/actions/create-release-pr
         with:
           component: ${{ steps.parse-repos.outputs.component-repo-name }}
@@ -217,4 +219,5 @@ jobs:
           orchestrator-repo: ${{ inputs.orchestrator-repo }}
           core-version: ${{ inputs.core-version }}
           committer-slug: ${{ steps.generate-pr-token.outputs.app-slug }}
+          result: ${{ job.status }}
           token: ${{ steps.generate-pr-token.outputs.token }}
