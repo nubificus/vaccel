@@ -22,7 +22,7 @@ on:
       action:
         description: 'Action to perform'
         type: choice
-        options: [start, resume, check-manifest]
+        options: [start, resume, publish, check-manifest]
         default: 'start'
       component:
         description: 'Component updated (for "resume" action)'
@@ -53,6 +53,11 @@ on:
       run-url:
         description: >
           URL of the run that triggered the workflow (for "resume" action)
+        type: string
+        required: false
+      component-release-url:
+        description: >
+          URL of the component's GitHub release (for "resume" action)
         type: string
         required: false
       force:
@@ -144,10 +149,10 @@ jobs:
           FORCE: ${{ inputs.force }}
           RELEASE_VERSION: ${{ inputs.release-version }}
         run: |
-          if [[ "$ACTION" == 'resume' ]]
+          if [[ "$ACTION" != 'start' ]]
           then
             echo 'should-run=true' >> "$GITHUB_OUTPUT"
-            echo 'Manual resume - will run'
+            echo "Manual ${ACTION} - will run"
             exit 0
           fi
 
@@ -217,6 +222,11 @@ jobs:
     name: Release Orchestrator
     if: needs.check-run.outputs.should-run == 'true'
     runs-on: base-dind-2204-amd64
+    outputs:
+      tracking-repo: ${{ steps.set-outputs.outputs.tracking-repo }}
+      tracking-issue: ${{ steps.set-outputs.outputs.tracking-issue }}
+      components-matrix: ${{ steps.set-outputs.outputs.components-matrix }}
+      components-json: ${{ steps.set-outputs.outputs.components-json }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
@@ -352,16 +362,12 @@ jobs:
       # Workaround for native concurrency cancelling more than one queued jobs.
       # See: https://github.com/orgs/community/discussions/12835
       - name: Wait for pending runs
-        if: >-
-          needs.check-run.outputs.action == 'start' ||
-          needs.check-run.outputs.action == 'resume'
+        if: needs.check-run.outputs.action != 'check-manifest'
         uses: softprops/turnstyle@v3
 
       - name: Generate vaccel-bot token
         id: generate-token
-        if: >-
-          needs.check-run.outputs.action == 'start' ||
-          needs.check-run.outputs.action == 'resume'
+        if: needs.check-run.outputs.action != 'check-manifest'
         uses: actions/create-github-app-token@v3
         with:
           client-id: ${{ vars.VACCEL_BOT_CLIENT_ID }}
@@ -377,9 +383,7 @@ jobs:
 
       - name: Get vaccel-bot info
         id: get-bot-info
-        if: >-
-          needs.check-run.outputs.action == 'start' ||
-          needs.check-run.outputs.action == 'resume'
+        if: needs.check-run.outputs.action != 'check-manifest'
         uses: ./.github/actions/get-github-app-info
         with:
           app-slug: ${{ steps.generate-token.outputs.app-slug }}
@@ -414,11 +418,11 @@ jobs:
           NOTES_PATH="${RUNNER_TEMP}/draft_notes.json"
           jq \
             --arg version "$VERSION" \
-            --arg issue_number "$ISSUE_NUMBER" \
-            '{
+            --arg issue_number "$ISSUE_NUMBER" '
+            {
               version: $version,
               tracking_issue: $issue_number,
-              is_draft: false,
+              in_progress: true,
               components: .
             }' "$COMPONENTS_PATH" > "$NOTES_PATH"
             echo "notes-path=${NOTES_PATH}" >> "$GITHUB_OUTPUT"
@@ -426,7 +430,7 @@ jobs:
 
       - name: Render draft release notes
         id: render-draft
-        if: needs.check-run.outputs.action == 'start'
+        if: steps.generate-draft.outputs.notes-path
         uses: ./.github/actions/render-template
         with:
           template: .github/templates/release.md.j2
@@ -435,23 +439,17 @@ jobs:
 
       - name: Create draft release
         if: needs.check-run.outputs.action == 'start'
+        uses: ./.github/actions/manage-github-release
         env:
-          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
-          VERSION: ${{ steps.parse-manifest.outputs.version }}
           RELEASE_NAME: ${{ steps.parse-manifest.outputs.release-name }}
-          NOTES: ${{ steps.render-draft.outputs.result }}
-        run: |
-          TAG="v${VERSION}"
-          if gh release view "$TAG" > /dev/null 2>&1; then
-            echo "Draft release exists"
-          else
-            gh release create "$TAG" \
-              --title "${RELEASE_NAME} v${VERSION}" \
-              --notes "$NOTES" \
-              --draft
-            echo "Draft release created"
-          fi
-        shell: bash
+          TAG: "v${{ steps.parse-manifest.outputs.version }}"
+        with:
+          tag: ${{ env.TAG }}
+          title: ${{ format('{0} {1}', env.RELEASE_NAME, env.TAG) }}
+          notes: ${{ steps.render-draft.outputs.result }}
+          changelog: false
+          draft: true
+          token: ${{ steps.generate-token.outputs.token }}
 
       - name: Tag core component
         id: tag-core
@@ -538,16 +536,21 @@ jobs:
 
       - name: Update component status
         id: update-component
-        if: needs.check-run.outputs.action == 'resume'
+        if: >-
+          needs.check-run.outputs.action == 'resume' ||
+          needs.check-run.outputs.action == 'publish'
         uses: ./.github/actions/manage-release-state
         with:
-          action: 'update'
+          action: >-
+            ${{ needs.check-run.outputs.action == 'resume' &&
+              'update' || 'get' }}
           version: ${{ steps.parse-manifest.outputs.version }}
           components-path: ${{ steps.parse-manifest.outputs.components-path }}
           target-components: ${{ format('["{0}"]', inputs.component) }}
           statuses: ${{ format('["{0}"]', inputs.status) }}
           pr-urls: ${{ format('["{0}"]', inputs.pr-url) }}
           run-urls: ${{ format('["{0}"]', inputs.run-url) }}
+          release-urls: ${{ format('["{0}"]', inputs.component-release-url) }}
           user-login: ${{ steps.get-bot-info.outputs.user-login }}
           fail-on-no-issue: ${{ inputs.fail-on-no-issue }}
           repository: ${{ steps.parse-manifest.outputs.tracking-repo }}
@@ -556,6 +559,7 @@ jobs:
       - name: Fetch and upload release artifacts
         if: >-
           steps.update-component.outputs.components-path &&
+          inputs.component &&
           inputs.status == 'complete'
         uses: ./.github/actions/upload-release-artifacts
         env:
@@ -761,7 +765,7 @@ jobs:
           exit 1
         shell: bash
 
-      - name: Check if release complete
+      - name: Check if all components are complete
         id: check-complete
         if: >-
           steps.update-component.outputs.issue-number ||
@@ -788,49 +792,33 @@ jobs:
             exit 0
           fi
 
-          previous_release=$(git describe --tags --abbrev=0 v"$VERSION"^)
-
           {
             echo 'is-complete=true'
             echo "version=${VERSION}"
             echo "components-path=${COMPONENTS_PATH}"
-            echo "previous-release=${previous_release}"
             echo "issue-number=${ISSUE_NUMBER}"
           } >> "$GITHUB_OUTPUT"
           echo "All components complete"
         shell: bash
 
-      - name: Generate release changelog
-        id: generate-changelog
-        if: steps.check-complete.outputs.is-complete == 'true'
-        uses: orhun/git-cliff-action@v4
-        env:
-          VERSION: ${{ steps.check-complete.outputs.version }}
-          PREVIOUS_RELEASE: ${{ steps.check-complete.outputs.previous-release }}
-          OUTPUT: ${{ format('{0}/{1}', runner.temp, 'CHANGELOG.md') }}
-        with:
-          config: .github/cliff.toml
-          args: ${{ format('{0}..v{1} -v', env.PREVIOUS_RELEASE, env.VERSION) }}
-
       - name: Generate final release note data
         id: generate-final
-        if: steps.check-complete.outputs.is-complete == 'true'
+        if: >-
+          steps.check-complete.outputs.is-complete == 'true' &&
+          needs.check-run.outputs.action != 'publish'
         env:
           VERSION: ${{ steps.check-complete.outputs.version }}
           ISSUE_NUMBER: ${{ steps.check-complete.outputs.issue-number }}
-          CHANGELOG: ${{ steps.generate-changelog.outputs.content }}
           COMPONENTS_PATH: ${{ steps.check-complete.outputs.components-path }}
         run: |
           NOTES_PATH="${RUNNER_TEMP}/final_notes.json"
           jq \
             --arg version "$VERSION" \
-            --arg tracking_issue "$ISSUE_NUMBER" \
-            --arg changelog "$CHANGELOG" \
-            '{
+            --arg tracking_issue "$ISSUE_NUMBER" '
+            {
               version: $version,
               tracking_issue: $tracking_issue,
-              changelog: $changelog,
-              is_draft: true,
+              in_progress: false,
               components: .
             }' "$COMPONENTS_PATH" > "$NOTES_PATH"
             echo "notes-path=${NOTES_PATH}" >> "$GITHUB_OUTPUT"
@@ -838,27 +826,26 @@ jobs:
 
       - name: Render final release notes
         id: render-final
-        if: steps.check-complete.outputs.is-complete == 'true'
+        if: steps.generate-final.outputs.notes-path
         uses: ./.github/actions/render-template
         with:
           template: .github/templates/release.md.j2
           data: ${{ steps.generate-final.outputs.notes-path }}
           is-file: true
 
-      - name: Finalize release
-        id: finalize-release
-        if: steps.check-complete.outputs.is-complete == 'true'
-        env:
-          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
-          VERSION: ${{ steps.check-complete.outputs.version }}
-          NOTES: ${{ steps.render-final.outputs.result }}
-        run: |
-          gh release edit "v${VERSION}" --notes "$NOTES"
-          echo "Release finalized"
-        shell: bash
+      - name: Finalize release draft
+        if: steps.render-final.outputs.result
+        uses: ./.github/actions/manage-github-release
+        with:
+          tag: "v${{ steps.parse-manifest.outputs.version }}"
+          notes: ${{ steps.render-final.outputs.result }}
+          draft: true
+          token: ${{ steps.generate-token.outputs.token }}
 
-      - name: Report completion and close tracking issue
-        if: steps.check-complete.outputs.is-complete == 'true'
+      - name: Finalize release state
+        if: >-
+          steps.check-complete.outputs.is-complete == 'true' &&
+          needs.check-run.outputs.action != 'publish'
         uses: ./.github/actions/manage-release-state
         with:
           action: 'finalize'
@@ -866,4 +853,187 @@ jobs:
           components-path: ${{ steps.check-complete.outputs.components-path }}
           user-login: ${{ steps.get-bot-info.outputs.user-login }}
           repository: ${{ steps.parse-manifest.outputs.tracking-repo }}
+          token: ${{ steps.generate-token.outputs.token }}
+
+      - name: Set outputs
+        id: set-outputs
+        if: >-
+          steps.check-complete.outputs.is-complete == 'true' &&
+          needs.check-run.outputs.action == 'publish'
+        env:
+          TRACKING_REPO: ${{ steps.parse-manifest.outputs.tracking-repo }}
+          ISSUE_NUMBER: ${{ steps.check-complete.outputs.issue-number }}
+          COMPONENTS_PATH: ${{ steps.check-complete.outputs.components-path }}
+        run: |
+          components_matrix=$(jq -c '[to_entries[] | .value]' \
+            "$COMPONENTS_PATH")
+          {
+            echo "tracking-repo=${TRACKING_REPO}"
+            echo "tracking-issue=${ISSUE_NUMBER}"
+            echo "components-matrix=${components_matrix}"
+            echo 'components-json<<EOF'
+            cat "$COMPONENTS_PATH"
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
+        shell: bash
+
+      - name: Cleanup
+        if: always() && steps.generate-draft.outputs.notes-path
+        env:
+          TMP_DRAFT_PATH: ${{ steps.generate-draft.outputs.notes-path }}
+          TMP_FINAL_PATH: ${{ steps.generate-final.outputs.notes-path }}
+        run: |
+          echo "Cleaning up temporary file: ${TMP_DRAFT_PATH}"
+          rm -f "$TMP_DRAFT_PATH"
+          if [[ -z "$TMP_FINAL_PATH" ]]; then
+            echo "Cleaning up temporary file: ${TMP_FINAL_PATH}"
+            rm -f "$TMP_FINAL_PATH"
+          fi
+        shell: bash
+
+  publish:
+    needs: [check-run, orchestrate]
+    name: Publish Release
+    if: >-
+      needs.check-run.outputs.action == 'publish' &&
+      needs.orchestrate.outputs.components-matrix
+    runs-on: base-dind-2204-amd64
+    strategy:
+      max-parallel: 1
+      matrix:
+        component: ${{ fromJSON(needs.orchestrate.outputs.components-matrix) }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          sparse-checkout: .github
+
+      - name: Prepare action
+        id: prepare
+        env:
+          COMPONENTS_JSON: ${{ needs.orchestrate.outputs.components-json }}
+          TRACKING_REPO: ${{ needs.orchestrate.outputs.tracking-repo }}
+        run: |
+          COMPONENTS_PATH="${RUNNER_TEMP}/components.json"
+          echo "$COMPONENTS_JSON" > "$COMPONENTS_PATH"
+
+          core_component=$(jq -r \
+            '[. | values[] | select(.is_core == true)] | .[0].name' \
+            <<< "$COMPONENTS_JSON")
+
+          {
+            echo "components-path=${COMPONENTS_PATH}"
+            echo "core-component=${core_component}"
+            echo "tracking-repo-name=$(basename "$TRACKING_REPO")"
+          } >> "$GITHUB_OUTPUT"
+        shell: bash
+
+      - name: Generate vaccel-bot token
+        id: generate-token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.VACCEL_BOT_CLIENT_ID }}
+          private-key: ${{ secrets.VACCEL_BOT_PRIVATE_KEY }}
+          repositories: |
+            ${{ matrix.component.name }}
+            ${{ steps.prepare.outputs.core-component }}
+            ${{ steps.prepare.outputs.tracking-repo-name }}
+          permission-actions: write
+          permission-contents: write
+          permission-issues: write
+          permission-organization-projects: write
+
+      - name: Get vaccel-bot info
+        id: get-bot-info
+        uses: ./.github/actions/get-github-app-info
+        with:
+          app-slug: ${{ steps.generate-token.outputs.app-slug }}
+
+      - name: "Publish ${{ matrix.component.name }} release"
+        id: publish-release
+        uses: ./.github/actions/manage-github-release
+        with:
+          tag: "v${{ matrix.component.full_version }}"
+          repository: >-
+            ${{ format('{0}/{1}',
+              github.repository_owner, matrix.component.name) }}
+          changelog: false
+          create-if-missing: false
+          token: ${{ steps.generate-token.outputs.token }}
+
+      - name: "Update ${{ matrix.component.name }} release URL"
+        uses: ./.github/actions/manage-release-state
+        with:
+          action: 'update'
+          issue-number: ${{ needs.orchestrate.outputs.tracking-issue }}
+          components-path: ${{ steps.prepare.outputs.components-path }}
+          target-components: ${{ format('["{0}"]', matrix.component.name) }}
+          statuses: ${{ format('["{0}"]', 'complete') }}
+          release-urls: >-
+            ${{ format('["{0}"]', steps.publish-release.outputs.url) }}
+          user-login: ${{ steps.get-bot-info.outputs.user-login }}
+          repository: ${{ needs.orchestrate.outputs.tracking-repo }}
+          token: ${{ steps.generate-token.outputs.token }}
+
+  complete:
+    needs: [check-run, orchestrate, publish]
+    name: Complete Release
+    if: >-
+      needs.check-run.outputs.action == 'publish' &&
+      needs.orchestrate.outputs.components-json
+    runs-on: base-dind-2204-amd64
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          sparse-checkout: .github
+
+      - name: Prepare action
+        id: prepare
+        env:
+          COMPONENTS_JSON: ${{ needs.orchestrate.outputs.components-json }}
+          TRACKING_REPO: ${{ needs.orchestrate.outputs.tracking-repo }}
+        run: |
+          COMPONENTS_PATH="${RUNNER_TEMP}/components.json"
+          echo "$COMPONENTS_JSON" > "$COMPONENTS_PATH"
+
+          core_component=$(jq -r \
+            '[. | values[] | select(.is_core == true)] | .[0].name' \
+            <<< "$COMPONENTS_JSON")
+
+          {
+            echo "components-path=${COMPONENTS_PATH}"
+            echo "core-component=${core_component}"
+            echo "tracking-repo-name=$(basename "$TRACKING_REPO")"
+          } >> "$GITHUB_OUTPUT"
+        shell: bash
+
+      - name: Generate vaccel-bot token
+        id: generate-token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.VACCEL_BOT_CLIENT_ID }}
+          private-key: ${{ secrets.VACCEL_BOT_PRIVATE_KEY }}
+          repositories: |
+            ${{ steps.prepare.outputs.core-component }}
+            ${{ steps.prepare.outputs.tracking-repo-name }}
+          permission-actions: write
+          permission-contents: write
+          permission-issues: write
+          permission-organization-projects: write
+
+      - name: Get vaccel-bot info
+        id: get-bot-info
+        uses: ./.github/actions/get-github-app-info
+        with:
+          app-slug: ${{ steps.generate-token.outputs.app-slug }}
+
+      - name: Complete release
+        uses: ./.github/actions/manage-release-state
+        with:
+          action: 'complete'
+          issue-number: ${{ needs.orchestrate.outputs.tracking-issue }}
+          components-path: ${{ steps.prepare.outputs.components-path }}
+          user-login: ${{ steps.get-bot-info.outputs.user-login }}
+          repository: ${{ needs.orchestrate.outputs.tracking-repo }}
           token: ${{ steps.generate-token.outputs.token }}

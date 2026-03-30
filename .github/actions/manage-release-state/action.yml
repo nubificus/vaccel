@@ -3,15 +3,16 @@ description: 'Manage release state in GitHub issues'
 
 inputs:
   action:
-    description: 'Action to perform: "create", "get", "update" or "finalize"'
+    description: >
+      Action to perform: "create", "get", "update", "finalize" or "complete"
     required: true
   components-path:
     description: 'Path to components JSON file'
     required: true
   issue-number:
     description: >
-      Issue number to manage. Required for "get", "update", "finalize" actions
-      if "version" is not provided.
+      Issue number to manage. Required for "get", "update", "finalize",
+      "complete" actions, if "version" is not provided.
     required: false
   target-components:
     description: 'JSON array of component names to update (for "update" action)'
@@ -31,6 +32,11 @@ inputs:
   run-urls:
     description: >
       JSON array of URLs for triggered runs (for "update" action).
+      Should match the target-components order.
+    default: '[]'
+  release-urls:
+    description: >
+      JSON array of URLs for component GitHub releases (for "update" action).
       Should match the target-components order.
     default: '[]'
   metadata-overwrite-tags:
@@ -57,18 +63,18 @@ inputs:
       Whether to reset component state before applying updates
       (for "update" action)
     default: 'false'
-  close-on-finalization:
+  close-on-completion:
     description: >
-      Whether to close the issue on finalization (for "finalize" action)
+      Whether to close the tracking issue on completion (for "complete" action)
     default: 'true'
   fail-on-no-issue:
     description: >
       Whether to fail if no tracking issue is found
-      (for "get", "update", "finalize" actions)
+      (for "get", "update", "finalize", "complete" actions)
     default: 'true'
   repository:
     description: >
-      Repository hosting the tracking issue. Defaults to $GITHUB_REPOSITORY.
+      Repository hosting the tracking issue. Defaults to GITHUB_REPOSITORY.
     required: false
   user-login:
     description: 'Login of the user posting the state comments'
@@ -107,7 +113,8 @@ runs:
           create | \
           get | \
           update | \
-          finalize \
+          finalize | \
+          complete \
           )
             ;;  # valid
           *)
@@ -116,9 +123,14 @@ runs:
             ;;
         esac
 
+        workflow_file=$(echo "$GITHUB_WORKFLOW_REF" \
+          | sed 's|.*\.github/workflows/||; s|@.*||')
+        workflow_url="https://github.com/${GITHUB_REPOSITORY}/actions/workflows/${workflow_file}"
         run_url="https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+
         {
           echo "repo=${REPOSITORY:-"$GITHUB_REPOSITORY"}"
+          echo "workflow-url=${workflow_url}"
           echo "run-url=${run_url}"
         } >> "$GITHUB_OUTPUT"
       shell: bash
@@ -219,8 +231,9 @@ runs:
               release_url:    "",
               triggered_by:   $actor,
               created_at:     $timestamp,
-              component_urls:  [],
-              overwrite_tags: $overwrite_tags
+              component_urls: [],
+              overwrite_tags: $overwrite_tags,
+              finalized:      false
             }
           }')
 
@@ -291,7 +304,8 @@ runs:
               triggered_by:   null,
               created_at:     null,
               component_urls:  [],
-              overwrite_tags: null
+              overwrite_tags: null,
+              finalized:      false
             }
           } as $defaults
           | ($defaults + ($state // {})
@@ -301,11 +315,13 @@ runs:
         ')
 
         version=$(jq -r '.metadata.version' <<< "$state")
+        finalized=$(jq -r '.metadata.finalized' <<< "$state")
         timestamp=$(date -u +'%Y-%m-%d %H:%M %Z')
 
         {
           echo "version=${version}"
           echo "updated-at=${timestamp}"
+          echo "finalized=${finalized}"
           echo 'state<<EOF'
           echo "$state"
           echo 'EOF'
@@ -316,7 +332,7 @@ runs:
 
     - name: Update component state
       id: update-state
-      if: steps.fetch-state.outputs.state
+      if: inputs.action != 'get' && steps.fetch-state.outputs.state
       env:
         GH_TOKEN: ${{ inputs.token }}
         ACTION: ${{ inputs.action }}
@@ -326,6 +342,7 @@ runs:
         STATE: ${{ steps.fetch-state.outputs.state }}
         PR_URLS: ${{ inputs.pr-urls }}
         RUN_URLS: ${{ inputs.run-urls }}
+        COMPONENT_RELEASE_URLS: ${{ inputs.release-urls }}
         METADATA_OVERWRITE_TAGS: ${{ inputs.metadata-overwrite-tags }}
         RESET: ${{ inputs.reset }}
         WORKFLOW_RUN_URL: ${{ steps.prepare.outputs.run-url }}
@@ -339,7 +356,9 @@ runs:
         release_name=
         release_url=
         if jq -e '.metadata.release_name | . == null or . == ""' <<< "$STATE" \
-          > /dev/null || [[ "$ACTION" == 'finalize' ]]
+          > /dev/null ||
+          [[ "$ACTION" == 'finalize' ]] ||
+          [[ "$ACTION" == 'complete' ]]
         then
           release=$(gh release view "v${VERSION}" --json name,url 2>/dev/null ||
             true)
@@ -358,9 +377,26 @@ runs:
           --arg owner "$GITHUB_REPOSITORY_OWNER" \
           --argjson pr_urls "$PR_URLS" \
           --argjson run_urls "$RUN_URLS" \
+          --argjson comp_release_urls "$COMPONENT_RELEASE_URLS" \
           --arg default_run_url "$WORKFLOW_RUN_URL" \
           --arg overwrite_tags "$METADATA_OVERWRITE_TAGS" \
           --argjson reset "$RESET" '
+          def merge_component_urls($new_entries):
+            if ($new_entries | length) > 0 then
+              .metadata.component_urls = (
+                ((.metadata.component_urls // []) + $new_entries)
+                | group_by(.name)
+                | map(
+                    reduce .[] as $e (
+                      {name: .[0].name};
+                      if $e.pr     then .pr      = $e.pr      else . end
+                      | if $e.run  then .run     = $e.run      else . end
+                      | if $e.release then .release = $e.release else . end
+                    )
+                  )
+              )
+            else .
+            end;
           ($comps | flatten) as $c
           | ($statuses | flatten) as $s
           | [
@@ -410,6 +446,7 @@ runs:
                 ) as $f
                   (. ; .[$f] = [])
               | .metadata.component_urls = []
+              | .metadata.finalized = false
             else .
             end
           # Remove each component from all fields, add to its target
@@ -427,59 +464,48 @@ runs:
             end
           # Update component prs if pr-created
           | if ($c | length) > 0 and ($pr_urls | length) > 0 then
-              (
-                [ $pairs[]
-                  | select(.target == "pr_created")
-                  | . as $p
-                  | {name: $p.component, pr: $pr_urls[$c | index($p.component)]}
-                  | select(.pr | length > 0)
-                ]
-              ) as $new_entries
-              | if ($new_entries | length) > 0 then
-                  .metadata.component_urls = (
-                    ($new_entries + (.metadata.component_urls // []))
-                    | unique_by(.name)
-                  )
-                else .
-                end
+              merge_component_urls([
+                $pairs[]
+                | select(.target == "pr_created")
+                | . as $p
+                | {name: $p.component, pr: $pr_urls[$c | index($p.component)]}
+                | select(.pr != null and (.pr | length) > 0)
+              ])
             else .
             end
           # Update component runs
           | if ($c | length) > 0 then
-              (
-                [ range($c | length)
-                  | . as $i
-                  | select(
-                      ( $i < ($run_urls | length)
+              merge_component_urls([
+                range($c | length)
+                | . as $i
+                | select(
+                    ($i < ($run_urls | length) and ($run_urls[$i] | length) > 0)
+                    or ($default_run_url | length) > 0
+                  )
+                | {
+                    name: $c[$i],
+                    run: (
+                      if $i < ($run_urls | length)
                         and ($run_urls[$i] | length) > 0
-                      )
-                      or ($default_run_url | length) > 0
+                      then $run_urls[$i]
+                      else $default_run_url
+                      end
                     )
-                  | {
-                      name: $c[$i],
-                      run: (
-                        if $i < ($run_urls | length)
-                          and ($run_urls[$i] | length) > 0
-                        then $run_urls[$i]
-                        else $default_run_url
-                        end
-                      )
-                    }]
-              ) as $new_entries
-              | .metadata.component_urls = (
-                  ((.metadata.component_urls // []) + $new_entries)
-                  | group_by(.name)
-                  | map(
-                      reduce .[] as $e (
-                        {name: .[0].name};
-                        if $e.pr then .pr = $e.pr else . end
-                        | if $e.run then .run = $e.run else . end
-                      )
-                    )
-                )
+                  }
+              ])
             else .
             end
-          # If action is create, set caller metadata
+          # Update component release urls
+          | if ($c | length) > 0 and ($comp_release_urls | length) > 0 then
+              merge_component_urls([
+                range($c | length)
+                | . as $i
+                | {name: $c[$i], release: $comp_release_urls[$i]}
+                | select(.release != null and (.release | length) > 0)
+              ])
+            else .
+            end
+          # Update metadata
           | if $action == "create" then
               .metadata += {
                 overwrite_tags: $overwrite_tags
@@ -492,6 +518,12 @@ runs:
           | if ($release_url | length) > 0 then
               .metadata.release_url = $release_url
             else . end
+          | if $action == "finalize" then
+              .metadata += {
+                finalized: true
+              }
+            else .
+            end
         ' <<< "$STATE")
 
         if jq -en \
@@ -557,7 +589,8 @@ runs:
                   ($state.metadata.component_urls // [])
                   | map(select(.name == $entry.key))
                   | first
-                  | if . then {pr, run} | with_entries(select(.value != null))
+                  | if . then {pr, run, release}
+                      | with_entries(select(.value != null))
                     else {}
                     end
                 )
@@ -580,6 +613,7 @@ runs:
       if: >-
         inputs.action == 'create' ||
         inputs.action == 'finalize' ||
+        inputs.action == 'complete' ||
         steps.update-state.outputs.has-changes == 'true'
       env:
         ACTION: ${{ inputs.action }}
@@ -592,6 +626,7 @@ runs:
         STATE: ${{ steps.update-components.outputs.state }}
         COMPONENTS_PATH: >-
           ${{ steps.update-components.outputs.updated-components-path }}
+        WORKFLOW_URL: ${{ steps.prepare.outputs.workflow-url }}
         WORKFLOW_RUN_URL: ${{ steps.prepare.outputs.run-url }}
       run: |
         TEMPLATE_DATA_PATH="${RUNNER_TEMP}/release-template-data.json"
@@ -601,6 +636,7 @@ runs:
           --arg version "$VERSION" \
           --arg updated_at "$UPDATED_AT" \
           --argjson state "$STATE" \
+          --arg workflow_url "$WORKFLOW_URL" \
           --arg log_url "$WORKFLOW_RUN_URL" '
           {
             action: $action,
@@ -612,6 +648,7 @@ runs:
             release_url: $state.metadata.release_url,
             state: $state,
             components: .,
+            workflow_url: $workflow_url,
             log_url: $log_url
           }
         ' "$COMPONENTS_PATH" > "$TEMPLATE_DATA_PATH"
@@ -734,10 +771,11 @@ runs:
           ${{ steps.create-issue.outputs.issue-number ||
             steps.find-issue.outputs.issue-number }}
         COMMENT: ${{ steps.render-comment.outputs.result }}
-        CLOSE_ON_FINALIZATION: ${{ inputs.close-on-finalization }}
+        CLOSE_ON_COMPLETION: ${{ inputs.close-on-completion }}
       run: |
-        if [[ "$ACTION" == 'finalize' ]] &&
-          [[ "$CLOSE_ON_FINALIZATION" == 'true' ]]; then
+        if [[ "$ACTION" == 'complete' ]] &&
+          [[ "$CLOSE_ON_COMPLETION" == 'true' ]]
+        then
           gh issue close "$ISSUE_NUMBER" \
             --repo "$REPO" \
             --comment "$COMMENT" \

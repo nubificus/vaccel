@@ -1,0 +1,197 @@
+name: 'Manage GitHub Release'
+description: >
+  Create or update a GitHub release. Requires the repository to be checked out
+  to generate a changelog.
+
+inputs:
+  tag:
+    description: 'Tag to release'
+    required: true
+  title:
+    description: 'Title of the release. Defaults to the tag name.'
+    required: false
+  notes:
+    description: 'Release notes'
+    required: false
+  draft:
+    description: 'Whether to keep the release as draft'
+    default: 'false'
+  changelog:
+    description: >
+      Whether to generate and append a changelog to the release notes
+    default: 'true'
+  create-if-missing:
+    description: >
+      Whether to create a release if none exists for the tag specified
+    default: 'true'
+  repository:
+    description: 'Repository to release. Defaults to GITHUB_REPOSITORY.'
+    required: false
+  token:
+    description: 'Access token used to manage the GitHub release'
+    default: ${{ github.token }}
+
+outputs:
+  url:
+    description: 'URL of the release'
+    value: ${{ steps.set-outputs.outputs.url }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Prepare action
+      id: prepare
+      env:
+        REPOSITORY: ${{ inputs.repository }}
+      run: echo "repo=${REPOSITORY:-"$GITHUB_REPOSITORY"}"  >> "$GITHUB_OUTPUT"
+      shell: bash
+
+    - name: Get previous release tag
+      id: get-previous
+      if: inputs.changelog == 'true'
+      env:
+        TAG: ${{ inputs.tag }}
+      run: |
+          previous=$(git describe --tags --abbrev=0 "$TAG"^ 2>/dev/null ||
+            true)
+          echo "tag=${previous}" >> "$GITHUB_OUTPUT"
+      shell: bash
+
+    - name: Generate release changelog
+      id: generate-changelog
+      if: inputs.changelog == 'true'
+      uses: orhun/git-cliff-action@v4
+      env:
+        GITHUB_REPO: ${{ steps.prepare.outputs.repo }}
+        GITHUB_TOKEN: ${{ inputs.token }}
+        TAG: ${{ inputs.tag }}
+        RANGE: >-
+          ${{ steps.get-previous.outputs.tag &&
+            format('{0}..{1}', steps.get-previous.outputs.tag, env.TAG) ||
+            '--latest' }}
+        OUTPUT: ${{ format('{0}/{1}', runner.temp, 'CHANGELOG.md') }}
+      with:
+        config: .github/actions/manage-github-release/cliff.toml
+        args: "${{ env.RANGE }} -vv"
+
+    - name: Generate template data
+      id: generate-template-data
+      env:
+        TAG: ${{ inputs.tag }}
+        NOTES: ${{ inputs.notes }}
+        CHANGELOG: ${{ steps.generate-changelog.outputs.content }}
+      run: |
+        NOTES_PATH="${RUNNER_TEMP}/final_notes.json"
+        jq -n \
+          --arg tag "$TAG" \
+          --arg notes "$NOTES" \
+          --arg changelog "$CHANGELOG" \
+          '{
+            tag: $tag,
+            notes: $notes,
+            changelog: $changelog,
+          }' > "$NOTES_PATH"
+          echo "path=${NOTES_PATH}" >> "$GITHUB_OUTPUT"
+      shell: bash
+
+    - name: Render release notes
+      id: render-notes
+      if: steps.generate-template-data.outputs.path
+      uses: ./.github/actions/render-template
+      with:
+        template: .github/actions/manage-github-release/templates/release.md.j2
+        data: ${{ steps.generate-template-data.outputs.path }}
+        is-file: true
+
+    - name: Fetch release
+      id: fetch
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+        REPO: ${{ steps.prepare.outputs.repo }}
+        TAG: ${{ inputs.tag }}
+      run: |
+        if url=$(gh release view "$TAG" \
+          --repo "$REPO" --json url --jq '.url' 2>&1)
+        then
+          echo "Release exists: ${url}"
+          {
+            echo 'exists=true'
+            echo "url=${url}"
+          } >> "$GITHUB_OUTPUT"
+        else
+          echo "Release ${TAG} does not exist"
+          echo 'exists=false' >> "$GITHUB_OUTPUT"
+        fi
+      shell: bash
+
+    - name: Create release
+      id: create
+      if: steps.fetch.outputs.exists == 'false'
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+        REPO: ${{ steps.prepare.outputs.repo }}
+        TAG: ${{ inputs.tag }}
+        TITLE: ${{ inputs.title || inputs.tag }}
+        NOTES: ${{ steps.render-notes.outputs.result }}
+        DRAFT: ${{ inputs.draft }}
+        CREATE_IF_MISSING: ${{ inputs.create-if-missing }}
+      run: |
+        if [[ "$CREATE_IF_MISSING" == 'false' ]]; then
+          echo "Release ${TAG} does not exist - skipping"
+          exit 0
+        fi
+
+        draft_flag=$([[ "$DRAFT" == 'true' ]] && echo '--draft' || echo '')
+        url=$(gh release create "$TAG" \
+          --repo "$REPO" \
+          --title "$TITLE" \
+          --notes "$NOTES" \
+          $draft_flag)
+        echo "Release created${draft_flag:+ (draft)}: ${url}"
+        echo "url=${url}" >> "$GITHUB_OUTPUT"
+      shell: bash
+
+    - name: Update release
+      id: update
+      if: steps.fetch.outputs.exists == 'true'
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+        REPO: ${{ steps.prepare.outputs.repo }}
+        TAG: ${{ inputs.tag }}
+        INPUT_NOTES: ${{ inputs.notes }}
+        NOTES: ${{ steps.render-notes.outputs.result }}
+        DRAFT: ${{ inputs.draft }}
+        CHANGELOG: ${{ inputs.changelog }}
+      run: |
+        if [[ "$CHANGELOG" == 'false' ]] && [[ -z "$INPUT_NOTES" ]]; then
+          url=$(gh release edit "$TAG" \
+            --repo "$REPO" \
+            --draft="$DRAFT")
+        else
+          url=$(gh release edit "$TAG" \
+            --repo "$REPO" \
+            --notes "$NOTES" \
+            --draft="$DRAFT")
+        fi
+        echo "Release updated: ${url}"
+        echo "url=${url}" >> "$GITHUB_OUTPUT"
+      shell: bash
+
+    - name: Set outputs
+      id: set-outputs
+      env:
+        URL: >-
+          ${{ steps.update.outputs.url ||
+            steps.create.outputs.url ||
+            steps.fetch.outputs.url }}
+      run: echo "url=${URL}" >> "$GITHUB_OUTPUT"
+      shell: bash
+
+    - name: Cleanup
+      if: always() && steps.generate-template-data.outputs.path
+      env:
+        TMP_PATH: ${{ steps.generate-template-data.outputs.path }}
+      run: |
+        echo "Cleaning up temporary file: ${TMP_PATH}"
+        rm -f "$TMP_PATH"
+      shell: bash

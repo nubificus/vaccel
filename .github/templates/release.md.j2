@@ -1,29 +1,23 @@
 # Release v{{ version }}
 
-{% if not is_draft %}
+{% if in_progress %}
 Tracking issue: #{{ tracking_issue }} · ⏳ in progress
+{% else %}
+For more details about each component and installation instructions, see the [docs](https://docs.vaccel.org).
+{% endif %}
+
+{%- if components | length > 0 %}
 
 ## Components
 
 {% for component in components.values() %}
 - **{{ component.name }}** {{ component.version }}
 {% endfor %}
+{% endif %}
+
+{%- if in_progress %}
 
 > [!NOTE]
 > - Artifacts are attached automatically as components complete
 > - Final release notes are added once all components are complete
-
-{% else %}
-For more details about each component and installation instructions, see the [docs](https://docs.vaccel.org).
-
-## Components
-
-{% for component in components.values() %}
-- **{{ component.name }}** {{ component.version }}
-{% endfor %}
-
-## What's Changed
-
-{{ changelog }}
-
 {% endif %}

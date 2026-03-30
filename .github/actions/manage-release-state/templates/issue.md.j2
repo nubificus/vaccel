@@ -39,13 +39,34 @@ None
 
 </details>
 
-{% if release_name | default("") %}
-### Draft
+{% if release_name | default("") or components | length > 0 %}
+### Drafts
 
-  {% set tick = "x" if action == "finalize" else " " %}
-- [{{ tick }}] [{{ release_name }}]({{ release_url }})
+  {% if release_name | default("") %}
+    {% set tick = "x" if state.metadata.finalized else " " %}
+- [{{ tick }}] [**{{ release_name }}**]({{ release_url }})
+  {% endif %}
 
+  {%- for component in components.values() %}
+    {% if component.release | default("") and component.release != release_url %}
+- [x] [{{ component.name }} v{{ component.full_version }}]({{ component.release }})
+    {% endif %}
+  {% endfor %}
+
+{% endif -%}
+
+### Status
+
+{% if action == "complete" %}
+🎉 Published
+{% elif action == "finalize" %}
+📦 Draft ready
+{% elif state.metadata.finalized %}
+🚀 Publishing
+{% else %}
+⏳ In progress
 {% endif %}
+
 </br>
 
 > [!NOTE]

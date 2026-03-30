@@ -19,11 +19,12 @@ jobs:
       release: true
     secrets: inherit
 
-  update-release-issue:
+  update-release:
     needs: build-dist
-    name: Update Release Issue
+    name: Update Release
     if: always()
-    uses: ./.github/workflows/update-release-issue.yml
+    uses: ./.github/workflows/update-release.yml
     with:
+      create-github-release: false
       result: ${{ needs.build-dist.result }}
     secrets: inherit
