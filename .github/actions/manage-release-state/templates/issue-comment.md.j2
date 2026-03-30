@@ -44,11 +44,11 @@
 📝 State metadata updated at {{ updated_at }}
   {% endif %}
 {% elif action == "finalize" %}
-🎉 **Release v{{ version }} Complete!**
+📦 **Release v{{ version }} ready** - all components done.
 
-All components done.
-
-📦 [Review and publish draft]({{ release_url }})
+Review the drafts and [trigger the publish workflow]({{ workflow_url }}) to complete the release.
+{% elif action == "complete" %}
+🎉 **Release v{{ version }} published!**
 {% else %}
 Unknown state action
 {% endif %}

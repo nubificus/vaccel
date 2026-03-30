@@ -1,14 +1,22 @@
-name: Update Release Issue
+name: Update Release
 
 on:
   workflow_call:
     inputs:
+      actions-repo:
+        description: 'Repository with remote actions'
+        type: string
+        default: 'nubificus/vaccel'
+      actions-ref:
+        description: 'Revision of remote actions repository'
+        type: string
+        default: 'main'
       core-component:
         description: >
-          Specify core component (in case it is not detectable but the tag/label
+          Core component name (in case it is not detectable but the tag/label
           scheme)
         type: string
-        required: false
+        default: 'vaccel'
       artifacts-path:
         description: 'Relative S3 path for component artifacts'
         type: string
@@ -17,6 +25,10 @@ on:
         description: 'Result of the executed jobs'
         type: string
         default: 'success'
+      create-github-release:
+        description: 'Create a GitHub release for the component'
+        type: boolean
+        default: true
       fail-on-no-issue:
         description: 'Fail if no tracking issue is found'
         type: boolean
@@ -28,15 +40,52 @@ on:
 permissions: read-all
 
 env:
+  ACTIONS_REF: >-
+    ${{ github.repository != inputs.actions-repo && inputs.actions-ref || '' }}
   DEFAULT_CORE_COMPONENT: 'vaccel'
 
 jobs:
   update-release:
-    name: Update Release Issue
+    name: Update Release
     runs-on: base-2204-amd64
     steps:
-      - name: Checkout repository
+      - name: Parse repository names
+        id: parse-repos
+        env:
+          ACTIONS_REPO: ${{ inputs.actions-repo }}
+        run: |
+          {
+            echo "repo-name=$(basename "$GITHUB_REPOSITORY")"
+            echo "actions-repo-name=$(basename "$ACTIONS_REPO")"
+          } >> "$GITHUB_OUTPUT"
+        shell: bash
+
+      - name: Generate initialization vaccel-bot token
+        id: generate-init-token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.VACCEL_BOT_CLIENT_ID }}
+          private-key: ${{ secrets.VACCEL_BOT_PRIVATE_KEY }}
+          repositories: |
+            ${{ steps.parse-repos.outputs.actions-repo-name }}
+            ${{ steps.parse-repos.outputs.repo-name }}
+          permission-contents: read
+
+      - name: Checkout .github directory
         uses: actions/checkout@v6
+        with:
+          sparse-checkout: .github
+          repository: ${{ inputs.actions-repo }}
+          ref: ${{ env.ACTIONS_REF }}
+          token: ${{ steps.generate-init-token.outputs.token }}
+
+      - name: Initialize workspace
+        uses: ./.github/actions/initialize-workspace
+        with:
+          remote-actions-repo: ${{ inputs.actions-repo }}
+          fetch-depth: 0
+          submodules: 'false'
+          token: ${{ steps.generate-init-token.outputs.token }}
 
       - name: Check if event refers to a release
         id: check-release
@@ -131,30 +180,79 @@ jobs:
           fi
         shell: bash
 
-      - name: Generate vaccel-bot token
-        id: generate-token
+      - name: Generate release vaccel-bot token
+        id: generate-release-token
         if: >-
+          always() &&
           steps.check-release.outputs.is-release == 'true' ||
           steps.check-release.outputs.is-prepare-release == 'true'
         uses: actions/create-github-app-token@v3
         with:
           client-id: ${{ vars.VACCEL_BOT_CLIENT_ID }}
           private-key: ${{ secrets.VACCEL_BOT_PRIVATE_KEY }}
-          repositories: ${{ steps.check-release.outputs.core-component }}
-          permission-contents: read
+          repositories: |
+            ${{ steps.check-release.outputs.component }}
+            ${{ steps.check-release.outputs.core-component }}
+          permission-contents: >-
+            ${{ (inputs.create-github-release &&
+              steps.check-release.outputs.is-release == 'true') &&
+              'write' || 'read' }}
           permission-actions: write
+          permission-pull-requests: read
+
+      - name: Generate draft release note data
+        id: generate-note-data
+        if: >-
+          inputs.create-github-release &&
+          steps.check-release.outputs.is-release == 'true'
+        env:
+          VERSION: ${{ steps.check-release.outputs.version }}
+        run: |
+          NOTES_PATH="${RUNNER_TEMP}/draft_notes.json"
+          jq -n \
+            --arg version "$VERSION" '
+            {
+              version: $version,
+              in_progress: false,
+              components: []
+            }' > "$NOTES_PATH"
+            echo "path=${NOTES_PATH}" >> "$GITHUB_OUTPUT"
+        shell: bash
+
+      - name: Render draft release notes
+        id: render-notes
+        if: steps.generate-note-data.outputs.path
+        uses: ./.github/actions/render-template
+        with:
+          template: .github/templates/release.md.j2
+          data: ${{ steps.generate-note-data.outputs.path }}
+          is-file: true
+
+      - name: Create GitHub release
+        id: create-release
+        if: >-
+          inputs.create-github-release &&
+          steps.check-release.outputs.is-release == 'true'
+        uses: ./.github/actions/manage-github-release
+        with:
+          tag: "v${{ steps.check-release.outputs.version }}"
+          notes: ${{ steps.render-notes.outputs.result }}
+          changelog: true
+          draft: true
+          token: ${{ steps.generate-release-token.outputs.token }}
 
       - name: Trigger orchestrator
         if: >-
-          steps.check-release.outputs.is-release == 'true' ||
-          steps.check-release.outputs.is-prepare-release == 'true'
+          always() &&
+          (steps.check-release.outputs.is-release == 'true' ||
+          steps.check-release.outputs.is-prepare-release == 'true')
         env:
-          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
+          GH_TOKEN: ${{ steps.generate-release-token.outputs.token }}
           ORCHESTRATOR_REPO: >-
             ${{ steps.check-release.outputs.orchestrator-repo }}
           COMPONENT: ${{ steps.check-release.outputs.component }}
           STATUS: >-
-            ${{ inputs.result == 'failure'
+            ${{ (inputs.result == 'failure' || job.status == 'failure')
               && 'failed'
               || steps.check-release.outputs.is-prepare-release == 'true'
               && 'pr-merged'
@@ -162,6 +260,7 @@ jobs:
           CORE_VERSION: ${{ steps.check-release.outputs.core-version }}
           ARTIFACTS_PATH: ${{ inputs.artifacts-path }}
           FAIL_ON_NO_ISSUE: ${{ inputs.fail-on-no-issue }}
+          COMPONENT_RELEASE_URL: ${{ steps.create-release.outputs.url }}
         run: |
           RUN_URL="https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
 
@@ -174,6 +273,16 @@ jobs:
             -f release-version="$CORE_VERSION" \
             -f artifacts-path="$ARTIFACTS_PATH" \
             -f fail-on-no-issue="$FAIL_ON_NO_ISSUE" \
-            -f run-url="$RUN_URL"
+            -f run-url="$RUN_URL" \
+            -f component-release-url="$COMPONENT_RELEASE_URL"
           echo "Orchestrator notified of status: ${STATUS}"
+        shell: bash
+
+      - name: Cleanup
+        if: always() && steps.generate-note-data.outputs.path
+        env:
+          TMP_PATH: ${{ steps.generate-note-data.outputs.path }}
+        run: |
+          echo "Cleaning up temporary file: ${TMP_PATH}"
+          rm -f "$TMP_PATH"
         shell: bash

@@ -1,0 +1,12 @@
+{% if notes %}
+{{ notes }}
+{% else %}
+# Release {{ tag }}
+{% endif %}
+
+{%- if changelog and changelog | length > 0 %}
+
+## What's Changed
+
+{{ changelog }}
+{% endif %}
