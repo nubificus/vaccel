@@ -44,6 +44,8 @@ concurrency:
     ${{ format('{0}-{1}_{2}',
       github.workflow, inputs.component || github.repository, inputs.version) }}
 
+permissions: read-all
+
 jobs:
   prepare-release:
     name: Prepare Release

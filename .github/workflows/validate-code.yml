@@ -4,30 +4,39 @@ on:
   workflow_call:
     inputs:
       actions-repo:
+        description: 'Repository with remote actions'
         type: string
         default: 'nubificus/vaccel'
-      actions-rev:
+      actions-ref:
+        description: 'Branch, tag or SHA of remote actions repository'
         type: string
         default: 'main'
       runner:
+        description: 'JSON array of runner name parts (excluding architecture)'
         type: string
         default: '["base", "dind", "2204"]'
       runner-archs:
+        description: 'JSON array of runner architectures to run on'
         type: string
         default: '["amd64"]'
       runner-arch-map:
+        description: 'JSON object mapping runner to GNU architectures'
         type: string
         default: '[{"amd64":"x86_64", "arm64":"aarch64", "arm":"armv7l"}]'
       options:
+        description: 'Comma-separated list of build options'
         type: string
         default: 'auto_features=enabled'
       build:
+        description: 'Whether to build the code before validating'
         type: boolean
         default: false
       skip-download:
+        description: 'Whether to skip downloading the core package'
         type: boolean
         default: false
       skip-cppcheck:
+        description: 'Whether to skip running cppcheck linter'
         type: boolean
         default: false
     secrets:
@@ -38,14 +47,18 @@ on:
       AWS_SECRET_ACCESS_KEY:
         required: false
 
+permissions: read-all
+
 env:
-  ACTIONS_REV: ${{ (github.repository != inputs.actions-repo) && inputs.actions-rev || '' }}
+  ACTIONS_REF: >-
+    ${{ github.repository != inputs.actions-repo && inputs.actions-ref || '' }}
 
 jobs:
   linter-cppcheck:
     name: Lint C/C++ (cppcheck)
-    if: ${{ inputs.skip-cppcheck == false }}
-    runs-on: ${{ format('{0}-{1}', join(fromJSON(inputs.runner), '-'), matrix.arch) }}
+    if: inputs.skip-cppcheck == false
+    runs-on: >-
+      ${{ format('{0}-{1}', join(fromJSON(inputs.runner), '-'), matrix.arch) }}
     strategy:
       matrix:
         arch: ["${{ fromJSON(inputs.runner-archs) }}"]
@@ -53,7 +66,9 @@ jobs:
       fail-fast: false
     env:
       ARCH: ${{ fromJson(inputs.runner-arch-map)[0][matrix.arch] }}
-      DOWNLOAD_PATH: ${{github.workspace}}/artifacts/downloads/${{fromJson(inputs.runner-arch-map)[0][matrix.arch]}}/${{matrix.build-type}}
+      DOWNLOAD_PATH: >-
+        ${{ format('{0}/artifacts/downloads/{1}/{2}', github.workspace,
+          fromJson(inputs.runner-arch-map)[0][matrix.arch], matrix.build-type) }}
     steps:
       - name: Generate initialization vaccel-bot token
         id: generate-init-token
@@ -70,7 +85,7 @@ jobs:
         with:
           sparse-checkout: .github
           repository: ${{ inputs.actions-repo }}
-          ref: ${{ env.ACTIONS_REV }}
+          ref: ${{ env.ACTIONS_REF }}
           token: ${{ steps.generate-init-token.outputs.token || github.token }}
 
       - name: Initialize workspace
@@ -84,11 +99,13 @@ jobs:
       - name: Download artifacts from s3
         id: download-artifacts
         if: >-
-          ${{ inputs.actions-repo != github.repository &&
-          inputs.skip-download == false }}
+          inputs.actions-repo != github.repository &&
+          inputs.skip-download == false
         uses: ./.github/actions/download-from-s3
         with:
-          branch: ${{ steps.initialize-workspace.outputs.remote-branch }}
+          ref: >-
+            ${{ steps.initialize-workspace.outputs.remote-tag ||
+              steps.initialize-workspace.outputs.remote-branch }}
           build-type: ${{ matrix.build-type }}
           arch: ${{ env.ARCH }}
           access-key: ${{ secrets.AWS_ACCESS_KEY }}
@@ -105,24 +122,28 @@ jobs:
           options: ${{ inputs.options }}
 
       - name: Run cppcheck
+        env:
+          BUILD_TYPE: ${{ matrix.build-type }}
         run: |
           cppcheck \
-            --project=build_${{ matrix.build-type }}/compile_commands.json \
+            --project="build_${BUILD_TYPE}/compile_commands.json" \
             -itest -ithird-party -isubprojects \
             --suppressions-list=.github/linters/cppcheck.txt \
             --error-exitcode=2
 
       - name: Clean-up
-        if: ${{ always() }}
+        if: always()
+        env:
+          INSTALLED: ${{ steps.download-artifacts.outputs.installed }}
         run: |
           sudo rm -rf build*
-          sudo apt-get purge -y \
-            ${{ steps.download-artifacts.outputs.installed }} || echo
+          sudo apt-get purge -y "$INSTALLED" || true
         shell: bash
 
   linter-cpp-linter:
     name: Lint C/C++ (cpp-linter)
-    runs-on: ${{ format('{0}-{1}', join(fromJSON(inputs.runner), '-'), matrix.arch) }}
+    runs-on: >-
+      ${{ format('{0}-{1}', join(fromJSON(inputs.runner), '-'), matrix.arch) }}
     strategy:
       matrix:
         arch: ["${{ fromJSON(inputs.runner-archs) }}"]
@@ -130,7 +151,9 @@ jobs:
       fail-fast: false
     env:
       ARCH: ${{ fromJson(inputs.runner-arch-map)[0][matrix.arch] }}
-      DOWNLOAD_PATH: ${{github.workspace}}/artifacts/downloads/${{fromJson(inputs.runner-arch-map)[0][matrix.arch]}}/${{matrix.build-type}}
+      DOWNLOAD_PATH: >-
+        ${{ format('{0}/artifacts/downloads/{1}/{2}', github.workspace,
+          fromJson(inputs.runner-arch-map)[0][matrix.arch], matrix.build-type) }}
     steps:
       - name: Generate initialization vaccel-bot token
         id: generate-init-token
@@ -147,7 +170,7 @@ jobs:
         with:
           sparse-checkout: .github
           repository: ${{ inputs.actions-repo }}
-          ref: ${{ env.ACTIONS_REV }}
+          ref: ${{ env.ACTIONS_REF }}
           token: ${{ steps.generate-init-token.outputs.token || github.token }}
 
       - name: Initialize workspace
@@ -161,11 +184,13 @@ jobs:
       - name: Download artifacts from s3
         id: download-artifacts
         if: >-
-          ${{ inputs.actions-repo != github.repository &&
-          inputs.skip-download == false }}
+          inputs.actions-repo != github.repository &&
+          inputs.skip-download == false
         uses: ./.github/actions/download-from-s3
         with:
-          branch: ${{ steps.initialize-workspace.outputs.remote-branch }}
+          ref: >-
+            ${{ steps.initialize-workspace.outputs.remote-tag ||
+              steps.initialize-workspace.outputs.remote-branch }}
           build-type: ${{ matrix.build-type }}
           arch: ${{ env.ARCH }}
           access-key: ${{ secrets.AWS_ACCESS_KEY }}
@@ -208,11 +233,12 @@ jobs:
           version: 18
 
       - name: Clean-up
-        if: ${{ always() }}
+        if: always()
+        env:
+          INSTALLED: ${{ steps.download-artifacts.outputs.installed }}
         run: |
           sudo rm -rf build*
-          sudo apt-get purge -y \
-            ${{ steps.download-artifacts.outputs.installed }} || echo
+          sudo apt-get purge -y "$INSTALLED" || true
         shell: bash
 
       - name: Fail on error
@@ -221,7 +247,8 @@ jobs:
 
   linter-super-linter:
     name: Lint Python/Shell/Dockerfiles/GHActions/Markdown/YAML/JS
-    runs-on: ${{ format('{0}-{1}', join(fromJSON(inputs.runner), '-'), matrix.arch) }}
+    runs-on: >-
+      ${{ format('{0}-{1}', join(fromJSON(inputs.runner), '-'), matrix.arch) }}
     strategy:
       matrix:
         arch: ["${{ fromJSON(inputs.runner-archs) }}"]
@@ -255,7 +282,7 @@ jobs:
         with:
           sparse-checkout: .github
           repository: ${{ inputs.actions-repo }}
-          ref: ${{ env.ACTIONS_REV }}
+          ref: ${{ env.ACTIONS_REF }}
           token: ${{ steps.generate-init-token.outputs.token || github.token }}
 
       - name: Initialize workspace
@@ -279,7 +306,6 @@ jobs:
       - name: Run super-linter
         uses: super-linter/super-linter@v8
         env:
-          DEFAULT_BRANCH: main
           GITHUB_TOKEN: >-
             ${{ steps.generate-linter-token.outputs.token || github.token }}
           ENABLE_GITHUB_PULL_REQUEST_SUMMARY_COMMENT: false

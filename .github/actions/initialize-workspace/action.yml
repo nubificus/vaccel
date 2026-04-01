@@ -1,100 +1,193 @@
-name: Initialize Workspace
-description: Cleanup runner and checkout project code
+name: 'Initialize Workspace'
+description: 'Cleanup runner and checkout project code'
 
 inputs:
   repository:
+    description: 'Repository to checkout (e.g., owner/repo)'
     default: ${{ github.repository }}
   fetch-depth:
-    default: '0'
+    description: >
+      Number of commits to fetch. 0 indicates all history for all branches and
+      tags.
+    default: '1'
   fetch-tags:
+    description: 'Whether to fetch tags, even if fetch-depth > 0'
     default: 'true'
   ref:
+    description: >
+      The branch, tag or SHA to checkout. When checking out the repository that
+      triggered a workflow, this defaults to the reference or SHA for that
+      event. Otherwise, uses the default branch.
     default: ''
   submodules:
+    description: >
+      Whether to checkout submodules: "true" to checkout submodules or
+      "recursive" to recursively checkout submodules
     default: 'recursive'
   token:
+    description: >
+      Access token used to fetch content and information for the triggering and
+      the remote actions repositories
     default: ${{ github.token }}
   remote-actions-repo:
+    description: >
+      Remote repository to fetch actions from. Used to populate the ".github"
+      directory from a remote repository without overwriting local actions.
     default: ''
+  remote-actions-ref:
+    description: >
+      The branch, tag or SHA of the remote actions repository to fetch
+    required: false
   dot-github-only:
+    description: 'Whether to only fetch the ".github" directory'
+    default: 'false'
+  git-auth:
+    description: 'Configure git credentials using the provided token'
     default: 'false'
 
 outputs:
+  remote-ref:
+    description: 'Ref of the remote actions repository fetched'
+    value: ${{ steps.get-remote-revision.outputs.ref }}
   remote-branch:
-    value: ${{ steps.get-remote-branch.outputs.branch }}
+    description: 'Branch of the remote actions repository fetched'
+    value: ${{ steps.get-remote-revision.outputs.branch }}
+  remote-sha:
+    description: 'SHA of the remote actions repository fetched'
+    value: ${{ steps.get-remote-revision.outputs.sha }}
+  remote-tag:
+    description: 'Tag of the remote actions repository fetched (if any)'
+    value: ${{ steps.get-remote-revision.outputs.tag }}
 
 runs:
-  using: composite
+  using: 'composite'
   steps:
     - name: Cleanup previous jobs
       run: |
         echo "Cleaning up previous runs"
-        sudo rm -rf ${{ github.workspace }}/*
-        sudo rm -rf ${{ github.workspace }}/.??*
+        sudo rm -rf "$GITHUB_WORKSPACE"/*
+        sudo rm -rf "$GITHUB_WORKSPACE"/.??*
       shell: bash
 
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         repository: ${{ inputs.repository }}
         submodules: ${{ inputs.submodules }}
         fetch-depth: ${{ inputs.fetch-depth }}
         fetch-tags: ${{ inputs.fetch-tags }}
         ref: ${{ inputs.ref }}
-        sparse-checkout: ${{ (inputs.dot-github-only == 'true' && '.github') || '' }}
+        sparse-checkout: >-
+          ${{ (inputs.dot-github-only == 'true' && '.github') || '' }}
         token: ${{ inputs.token }}
 
-    - name: Determince remote actions branch
-      id: get-remote-branch
-      if: ${{ inputs.remote-actions-repo != inputs.repository }}
+    - name: Get remote actions repo info
+      id: get-remote-info
+      if: inputs.remote-actions-repo != inputs.repository
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+        ACTIONS_REPO: ${{ inputs.remote-actions-repo }}
+        ACTIONS_REF: ${{ inputs.remote-actions-ref }}
+        HEAD_REF: ${{ github.head_ref || github.ref_name }}
       run: |
-        for b in "${{ github.head_ref || github.ref_name }}" main master; do
-          ls_remote="$(git ls-remote --heads \
-            "https://github.com/${{ inputs.remote-actions-repo }}" refs/heads/"$b")"
-          if [ -n "${ls_remote}" ]; then
-            echo "branch=$b" >> "$GITHUB_OUTPUT"
-            break
-          fi
-        done
-        echo "Remote actions branch is '$b'"
+        if [[ -n "$ACTIONS_REF" ]]; then
+          ref="$ACTIONS_REF"
+        elif gh api "repos/${ACTIONS_REPO}/git/ref/heads/${HEAD_REF}" \
+          --silent 2>/dev/null
+        then
+          echo 'No ref specified - using current branch'
+          ref="$HEAD_REF"
+        else
+          echo 'No specified ref or matching branch found - falling back to default branch'
+          ref=$(gh repo view "$ACTIONS_REPO" \
+            --json defaultBranchRef \
+            --jq '.defaultBranchRef.name')
+        fi
+
+        {
+          echo "checkout-ref=${ref}"
+          echo "checkout-path=${GITHUB_WORKSPACE}/.github/remote-actions-repo"
+        } >> "$GITHUB_OUTPUT"
+        echo "Remote actions checkout ref: ${ref}"
       shell: bash
 
     - name: Checkout remote actions repo
-      if: ${{ inputs.remote-actions-repo != inputs.repository }}
-      uses: actions/checkout@v4
+      if: inputs.remote-actions-repo != inputs.repository
+      uses: actions/checkout@v6
       with:
         repository: ${{ inputs.remote-actions-repo }}
-        ref: ${{ steps.get-remote-branch.outputs.branch }}
+        ref: ${{ steps.get-remote-info.outputs.checkout-ref }}
         sparse-checkout: '.github'
-        path: '.github/remote-actions-repo/'
+        fetch-tags: true
+        path: ${{ steps.get-remote-info.outputs.checkout-path }}
         token: ${{ inputs.token }}
 
-    - name: Copy remote actions (without overwriting local ones)
-      if: ${{ inputs.remote-actions-repo != inputs.repository }}
+    - name: Configure git credentials
+      if: inputs.git-auth == 'true'
+      env:
+        TOKEN: ${{ inputs.token }}
       run: |
-        cp -rn .github/remote-actions-repo/.github ./
-        rm -rf .github/remote-actions-repo
+        token_url="https://x-access-token:${TOKEN}@github.com/"
+        git config \
+          --global "url.${token_url}.insteadOf" "https://github.com/"
+      shell: bash
+
+    - name: Get remote actions revision info
+      id: get-remote-revision
+      if: inputs.remote-actions-repo != inputs.repository
+      working-directory: ${{ steps.get-remote-info.outputs.checkout-path }}
+      run: |
+        tag=$(git tag --points-at HEAD)
+        sha=$(git rev-parse HEAD)
+        ref="${tag:-"$sha"}"
+        branch=$(git branch -r --contains HEAD |
+          head -1 | sed 's/.*origin\///' | tr -d ' ')
+
+        {
+          echo "ref=${ref}"
+          echo "branch=${branch}"
+          echo "sha=${sha}"
+          echo "tag=${tag}"
+        } >> "$GITHUB_OUTPUT"
+
+        echo "Remote actions revision:"
+        echo "  ref: ${ref}"
+        echo "  branch: ${branch}"
+        echo "  sha: ${sha}"
+        echo "  tag: ${tag}"
+      shell: bash
+
+    - name: Copy remote actions (without overwriting local ones)
+      if: inputs.remote-actions-repo != inputs.repository
+      env:
+        CHECKOUT_PATH: ${{ steps.get-remote-info.outputs.checkout-path }}
+      run: |
+        cp -rn "${CHECKOUT_PATH}/.github" ./
+        rm -rf "$CHECKOUT_PATH"
       shell: bash
 
     - name: Load scripts' variables
       run: |
-        SCRIPTS_DIR=${{ github.workspace }}/scripts
-        echo "SCRIPTS_DIR=${SCRIPTS_DIR}" >> "$GITHUB_ENV"
-        echo "SCRIPTS_DEF_CFG_DIR=${SCRIPTS_DIR}/common/config" >> "$GITHUB_ENV"
-        echo "SCRIPTS_DEF_CFG_ENV=${SCRIPTS_DIR}/common/config/config-env.sh" \
-          >> "$GITHUB_ENV"
-        SCRIPTS_DEF_CONFIG_VARS=${SCRIPTS_DEF_DIR}/config/variables.env
-        if [ -f "${SCRIPTS_DEF_CONFIG_VARS}" ]; then
-          source "${SCRIPTS_DEF_CONFIG_VARS}"
+        SCRIPTS_DIR="${GITHUB_WORKSPACE}/scripts"
+        {
+          echo "SCRIPTS_DIR=${SCRIPTS_DIR}"
+          echo "SCRIPTS_DEF_CFG_DIR=${SCRIPTS_DIR}/common/config"
+          echo "SCRIPTS_DEF_CFG_ENV=${SCRIPTS_DIR}/common/config/config-env.sh"
+        } >> "$GITHUB_ENV"
+
+        SCRIPTS_DEF_CONFIG_VARS="${SCRIPTS_DEF_DIR}/config/variables.env"
+        if [[ -f "$SCRIPTS_DEF_CONFIG_VARS" ]]; then
+          source "$SCRIPTS_DEF_CONFIG_VARS"
           while IFS= read -r line; do
             eval "echo $line" >> "$GITHUB_ENV"
-          done < "${SCRIPTS_DEF_CONFIG_VARS}"
+          done < "$SCRIPTS_DEF_CONFIG_VARS"
         fi
-        SCRIPTS_CONFIG_VARS=${SCRIPTS_DIR}/config/variables.env
-        if [ -f "${SCRIPTS_CONFIG_VARS}" ]; then
-          source "${SCRIPTS_CONFIG_VARS}"
+
+        SCRIPTS_CONFIG_VARS="${SCRIPTS_DIR}/config/variables.env"
+        if [[ -f "$SCRIPTS_CONFIG_VARS" ]]; then
+          source "$SCRIPTS_CONFIG_VARS"
           while IFS= read -r line; do
             eval "echo $line" >> "$GITHUB_ENV"
-          done < "${SCRIPTS_CONFIG_VARS}"
+          done < "$SCRIPTS_CONFIG_VARS"
         fi
       shell: bash

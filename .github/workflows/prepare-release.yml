@@ -7,8 +7,8 @@ on:
         description: 'Repository with remote actions'
         type: string
         default: 'nubificus/vaccel'
-      actions-rev:
-        description: 'Revision of remote actions repository'
+      actions-ref:
+        description: 'Branch, tag or SHA of remote actions repository'
         type: string
         default: 'main'
       version:
@@ -61,9 +61,11 @@ on:
         description: 'URL of the created pull request'
         value: ${{ jobs.prepare.outputs.pr-url }}
 
+permissions: read-all
+
 env:
-  ACTIONS_REV: >-
-    ${{ github.repository != inputs.actions-repo && inputs.actions-rev || '' }}
+  ACTIONS_REF: >-
+    ${{ github.repository != inputs.actions-repo && inputs.actions-ref || '' }}
 
 jobs:
   prepare:
@@ -108,7 +110,7 @@ jobs:
         with:
           sparse-checkout: .github
           repository: ${{ inputs.actions-repo }}
-          ref: ${{ env.ACTIONS_REV }}
+          ref: ${{ env.ACTIONS_REF }}
           token: ${{ steps.generate-initial-token.outputs.token }}
 
       - name: Initialize workspace

@@ -4,18 +4,24 @@ on:
   workflow_call:
     inputs:
       actions-repo:
+        description: 'Repository with remote actions'
         type: string
         default: 'nubificus/vaccel'
-      actions-rev:
+      actions-ref:
+        description: 'Branch, tag or SHA of remote actions repository'
         type: string
         default: 'main'
       options:
+        description: 'Comma-separated list of build options'
         type: string
         default: 'auto_features=enabled'
       commit:
+        description: 'Whether to commit the coverage report'
         type: boolean
         default: false
       comment-diff:
+        description: >
+          Whether to post a pull request comment with the coverage diff
         type: boolean
         default: false
     secrets:
@@ -26,13 +32,16 @@ on:
       AWS_SECRET_ACCESS_KEY:
         required: false
 
+permissions: read-all
+
 env:
-  ACTIONS_REV: ${{ (github.repository != inputs.actions-repo) && inputs.actions-rev || '' }}
+  ACTIONS_REF: >-
+    ${{ github.repository != inputs.actions-repo && inputs.actions-ref || '' }}
 
 jobs:
   coverage-report:
     name: Coverage Report
-    runs-on: [base-dind-2204-amd64]
+    runs-on: base-dind-2204-amd64
     strategy:
       matrix:
         build-type: [plain]
@@ -70,7 +79,7 @@ jobs:
         with:
           sparse-checkout: .github
           repository: ${{ inputs.actions-repo }}
-          ref: ${{ env.ACTIONS_REV }}
+          ref: ${{ env.ACTIONS_REF }}
           token: ${{ steps.generate-init-token.outputs.token || github.token }}
 
       - name: Initialize workspace
@@ -86,7 +95,9 @@ jobs:
         if: inputs.actions-repo != github.repository
         uses: ./.github/actions/download-from-s3
         with:
-          branch: ${{ steps.initialize-workspace.outputs.remote-branch }}
+          ref: >-
+            ${{ steps.initialize-workspace.outputs.remote-tag ||
+              steps.initialize-workspace.outputs.remote-branch }}
           build-type: ${{ matrix.build-type }}
           access-key: ${{ secrets.AWS_ACCESS_KEY }}
           secret-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -124,7 +135,7 @@ jobs:
           path:  ${{ steps.set-repo-dirs.outputs.repo-default }}
 
       - name: Build project @default_branch
-        if: ${{ inputs.comment-diff == true }}
+        if: inputs.comment-diff == true
         uses: ./.github/actions/build
         with:
           build-path: build_${{ matrix.build-type }}
@@ -134,7 +145,7 @@ jobs:
           options: ${{ inputs.options }}
 
       - name: Generate coverage report @default_branch
-        if: ${{ inputs.comment-diff == true }}
+        if: inputs.comment-diff == true
         uses: ./.github/actions/run-tests
         with:
           build-path: build_${{ matrix.build-type }}
@@ -142,18 +153,23 @@ jobs:
           coverage: 'true'
 
       - name: Calculate coverage diff
-        if: ${{ inputs.comment-diff == true }}
+        if: inputs.comment-diff == true
+        env:
+          REPO_DEFAULT_DIR: ${{ steps.set-repo-dirs.outputs.repo-default }}
+          REPO_DIR: ${{ steps.set-repo-dirs.outputs.repo }}
+          BUILD_TYPE: ${{ matrix.build-type }}
         run: |
           pycobertura diff \
-            "$(find \
-              "${{ steps.set-repo-dirs.outputs.repo-default }}/build_${{ matrix.build-type }}" \
+            "$(find "${REPO_DEFAULT_DIR}/build_${BUILD_TYPE}" \
               -name "coverage*.xml")" \
-            "$(find \
-              "${{ steps.set-repo-dirs.outputs.repo }}/build_${{ matrix.build-type }}" \
-              -name "coverage*.xml")" \
-            --no-color --no-source -f markdown > coverage_diff.txt  || PYCOB_RESULT="$?"
+            "$(find "${REPO_DIR}/build_${BUILD_TYPE}" -name "coverage*.xml")" \
+            --no-color --no-source -f markdown > coverage_diff.txt ||
+            PYCOB_RESULT="$?"
+
           echo "pycobertura exited with ${PYCOB_RESULT:-0}"
-          [ "$PYCOB_RESULT" == 1 ] && exit 1
+          if [[ "$PYCOB_RESULT" == 1 ]]; then
+            exit 1
+          fi
 
           echo -e '# Coverage report diff\n' > coverage_diff.md && \
             cat coverage_diff.txt >> coverage_diff.md
@@ -162,8 +178,8 @@ jobs:
       - name: Generate PR vaccel-bot token
         id: generate-pr-token
         if: >-
-          ${{ vars.VACCEL_BOT_CLIENT_ID &&
-            (inputs.comment-diff == true || inputs.commit == true) }}
+          vars.VACCEL_BOT_CLIENT_ID &&
+          (inputs.comment-diff == true || inputs.commit == true)
         uses: actions/create-github-app-token@v3
         with:
           client-id: ${{ vars.VACCEL_BOT_CLIENT_ID }}
@@ -173,7 +189,7 @@ jobs:
           permission-pull-requests: write
 
       - name: PR comment with file
-        if: ${{ inputs.comment-diff == true }}
+        if: inputs.comment-diff == true
         uses: mshick/add-pr-comment@v3
         with:
           message-path: ./coverage_diff.md
@@ -183,24 +199,28 @@ jobs:
 
       - name: Generate markdown file
         id: generate-md-file
-        if: ${{ inputs.commit == true }}
+        if: inputs.commit == true
+        env:
+          REPO_DIR: ${{ steps.set-repo-dirs.outputs.repo }}
+          BUILD_TYPE: ${{ matrix.build-type }}
+          COVERAGE_FILE: 'docs/tests/coverage/coverage.md'
         run: |
-          COVERAGE_FILE="docs/tests/coverage/coverage.md"
           pycobertura show \
-            "$(find "${{ steps.set-repo-dirs.outputs.repo }}/build_${{ matrix.build-type }}" \
-              -name "coverage*.xml")" \
-            --format markdown --output "coverage.md"
+            "$(find "${REPO_DIR}/build_${BUILD_TYPE}" -name "coverage*.xml")" \
+            --format markdown \
+            --output "coverage.md"
+
           printf "%s\n%s\n\n" \
             '<!-- markdownlint-disable-file MD013 -->' \
             '# Tests coverage report' \
-            > "${{ steps.set-repo-dirs.outputs.repo }}/$COVERAGE_FILE"
-          cat coverage.md >> "${{ steps.set-repo-dirs.outputs.repo }}/$COVERAGE_FILE"
+            > "${REPO_DIR}/$COVERAGE_FILE"
+          cat coverage.md >> "${REPO_DIR}/${COVERAGE_FILE}"
           rm -f coverage.md
           echo "coverage-file=${COVERAGE_FILE}" >> "$GITHUB_OUTPUT"
         shell: bash
 
       - name: Commit report
-        if: ${{ inputs.commit == true }}
+        if: inputs.commit == true
         uses: ./.github/actions/commit-file
         with:
           workdir: ${{ steps.set-repo-dirs.outputs.repo }} 
@@ -210,11 +230,12 @@ jobs:
           token: ${{ steps.generate-pr-token.outputs.token || github.token }}
 
       - name: Clean-up
-        if: ${{ always() }}
+        if: always()
+        env:
+          REPO_DIR: ${{ steps.set-repo-dirs.outputs.repo }}
+          REPO_DEFAULT_DIR: ${{ steps.set-repo-dirs.outputs.repo-default }}
+          INSTALLED: ${{ steps.download-artifacts.outputs.installed }}
         run: |
-          sudo rm -rf artifacts coverage* \
-            ${{ steps.set-repo-dirs.outputs.repo }} \
-            ${{ steps.set-repo-dirs.outputs.repo-default }}
-          sudo apt-get purge -y \
-            ${{ steps.download-artifacts.outputs.installed }} || echo
+          sudo rm -rf artifacts coverage* "$REPO_DIR" "$REPO_DEFAULT_DIR"
+          sudo apt-get purge -y "$INSTALLED" || true
         shell: bash

@@ -1,50 +1,64 @@
-name: Run Tests
-description: Run project tests and generate coverage report
+name: 'Run Tests'
+description: 'Run project tests and generate coverage report'
 
 inputs:
   build-path:
+    description: >
+      Path to the project's build directory
     default: 'build'
   source-path:
+    description: >
+      Path to the project's source directory
     default: '.'
   valgrind:
+    description: 'Whether to run the tests with valgrind'
     default: 'false'
   coverage:
+    description: 'Whether to generate a coverage report'
     default: 'false'
   gcov:
+    description: 'Gcov executable to use'
     required: false
 
 runs:
-  using: composite
+  using: 'composite'
   steps:
     - name: Run tests
       id: run-tests
       working-directory: ${{ inputs.source-path }}
-      run: meson test --print-errorlogs -C "${{ inputs.build-path }}"
+      env:
+        BUILD_PATH: ${{ inputs.build-path }}
+      run: meson test --print-errorlogs -C "$BUILD_PATH"
       shell: bash
 
     - name: Run tests with valgrind
       id: run-tests-valgrind
       working-directory: ${{ inputs.source-path }}
-      if: ${{ inputs.valgrind == 'true' }}
+      if: inputs.valgrind == 'true'
+      env:
+        BUILD_PATH: ${{ inputs.build-path }}
       run: |
         CONFIG_USE_VALGRIND=1
-        CONFIG_PKG_SCRIPTS_DIR="${{ env.SCRIPTS_DIR }}"
-        CONFIG_DEF_CFG_DIR="${{ env.SCRIPTS_DEF_CFG_DIR }}"
-        source "${{ env.SCRIPTS_DEF_CFG_ENV }}"
+        CONFIG_PKG_SCRIPTS_DIR="$SCRIPTS_DIR"
+        CONFIG_DEF_CFG_DIR="$SCRIPTS_DEF_CFG_DIR"
+        source "$SCRIPTS_DEF_CFG_ENV"
         meson test \
-          --wrap="${CONFIG_WRAPPER_CMD}" \
+          --wrap="$CONFIG_WRAPPER_CMD" \
           -t 7 \
           --print-errorlogs \
           -v \
-          -C "${{ inputs.build-path }}"
+          -C "$BUILD_PATH"
       shell: bash
 
     - name: Calculate coverage
       id: calculate-coverage
       working-directory: ${{ inputs.source-path }}
-      if: ${{ inputs.coverage == 'true' }}
+      if: inputs.coverage == 'true'
+      env:
+        GCOV: ${{ inputs.gcov }}
+        BUILD_PATH: ${{ inputs.build-path }}
       run: |
-        if [[ -n "${{ inputs.gcov }}" ]]; then
+        if [[ -n "$GCOV" ]]; then
           gcov_executable="$GCOV"
         elif cc_version=$(cc -dumpversion 2>&1 || true); then
           gcov_executable="gcov-${cc_version}"
@@ -58,5 +72,5 @@ runs:
           "filter = plugins/" \
           > gcovr.cfg
 
-        ninja coverage-xml -C "${{ inputs.build-path }}"
+        ninja coverage-xml -C "$BUILD_PATH"
       shell: bash

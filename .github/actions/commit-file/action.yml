@@ -1,69 +1,69 @@
-name: Commit File
-description: Commit file (signed)
+name: 'Commit File'
+description: 'Commit file (signed)'
 
 inputs:
   branch:
+    description: 'Branch to commit the file to'
     required: true
   file:
+    description: 'File to commit'
     required: true
   message:
+    description: 'Message of the commit'
     required: true
-  repo:
+  repository:
+    description: 'Repository to commit the file to'
     default: ${{ github.repository }}
   token:
+    description: 'Access token used to commit the file'
     default: ${{ github.token }}
+  signed-off-by:
+    description: >
+      The committer signing off the commit (e.g. "Name <email@address.com>").
+      Defaults to the GitHub Actions bot user.
+    default: 'github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>'
   workdir:
+    description: 'Workdir containing the file'
     default: '.'
 
 runs:
-  using: composite
+  using: 'composite'
   steps:
     - name: Verify file changed
       id: verify-file-changed
       working-directory: ${{ inputs.workdir }}
+      env:
+        FILE: ${{ inputs.file }}
       run: |
         res=0
-        git diff --quiet ${{ inputs.file }} || res="$?"
-        [ "$res" != 0 ] && [ "$res" != 1 ] && exit "$((res + 0))"
-        changed=$([ "$res" == 0 ] && echo 'false' || echo 'true')
-        echo "changed=${changed}" >> "$GITHUB_OUTPUT"
-        echo "changed=${changed}"
+        git diff --quiet "$FILE" || res="$?"
+        if [[ "$res" != 0 ]] && [[ "$res" != 1 ]]; then
+          exit "$((res + 0))"
+        fi
+
+        changed=$([[ "$res" == 0 ]] && echo 'false' || echo 'true')
+        echo "changed=${changed}" | tee -a "$GITHUB_OUTPUT"
       shell: bash
 
     - name: Commit file
-      if: ${{ steps.verify-file-changed.outputs.changed == 'true' }}
+      if: steps.verify-file-changed.outputs.changed == 'true'
       working-directory: ${{ inputs.workdir }}
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+        REPO: ${{ inputs.repository }}
+        BRANCH: ${{ inputs.branch }}
+        FILE: ${{ inputs.file }}
+        MESSAGE: ${{ inputs.message }}
+        SIGNED_OFF_BY: ${{ inputs.signed-off-by }}
       run: |
-        content=$(base64 -i "${{ inputs.file }}")
-        url=https://api.github.com/repos/${{ inputs.repo }}/contents/${{ inputs.file }}
-        sha=$(git rev-parse "${{ inputs.branch }}:${{ inputs.file }}")
-        message=$(printf "%s\n\n%s" "${{ inputs.message }}" \
-          "Signed-off-by: github-actions[bot] <support@github.com>")
-        json=$(jq -n \
-          --arg jowner "$(dirname ${{ inputs.repo }})" \
-          --arg jrepo "$(basename ${{ inputs.repo }})" \
-          --arg jpath "${{ inputs.file }}" \
-          --arg jmessage "$message" \
-          --arg jcontent "$content" \
-          --arg jsha "$sha" \
-          --arg jbranch "${{ inputs.branch }}" \
-          '{
-            owner: $jowner,
-            repo: $jrepo,
-            path: $jpath,
-            message: $jmessage,
-            content: $jcontent,
-            sha: $jsha,
-            branch: $jbranch
-          }'
-        )
+        content=$(base64 -w0 "$FILE")
+        sha=$(git rev-parse "${BRANCH}:${FILE}")
+        message=$(printf "%s\n\n%s" "$MESSAGE" "$SIGNED_OFF_BY")
 
-        curl --retry 5 --retry-max-time 60 --retry-all-errors --fail-with-body \
-          -L \
-          -X PUT \
-          -H "Accept: application/vnd.github+json" \
-          -H "Authorization: Bearer ${{ inputs.token }}" \
-          -H "X-GitHub-Api-Version: 2022-11-28" \
-          "https://api.github.com/repos/${{ inputs.repo }}/contents/${{ inputs.file }}" \
-          -d "$json"
+        gh api "repos/${REPO}/contents/${FILE}" \
+          --method PUT \
+          --field "message=${message}" \
+          --field "content=${content}" \
+          --field "sha=${sha}" \
+          --field "branch=${BRANCH}"
       shell: bash

@@ -1,32 +1,50 @@
-name: Build Project
-description: Configure, build and install project
+name: 'Build Meson Project'
+description: 'Configure, build and install meson projects'
 
 inputs:
   coverage:
+    description: 'Whether to enable coverage tracking for the build'
     default: 'false'
   options:
+    description: 'Comma-separated list of build options'
     default: ''
   prefix:
+    description: 'Installation prefix'
     default: ${{ github.workspace }}/opt
   pkgconfig-prefix:
+    description: 'Prefix of the PKG_CONFIG_PATH'
     default: ''
   build-path:
+    description: >
+      Path to the project's build directory
     default: 'build'
   source-path:
+    description: >
+      Path to the project's source directory
     default: '.'
   build-type:
+    description: 'Type of the build'
     default: 'plain'
   build:
+    description: 'Whether to build the project'
     default: ''
   install:
+    description: >
+      Whether to install the project. If "true", the project will first be
+      built.
     default: 'false'
   dist:
+    description: 'Whether to generate distribution artifacts for the project'
     default: 'false'
   subprojects:
+    description: >
+      Whether to include subprojects (when "install" or "dist" are "true")
     default: 'true'
   dist-tests:
+    description: 'Whether to run project tests (when "dist" is "true")'
     default: 'false'
   install-deb:
+    description: 'Whether to install generated .deb artifacts'
     default: 'false'
 
 outputs:
@@ -34,57 +52,80 @@ outputs:
     value: ${{ steps.dist.outputs.dist-path }}
 
 runs:
-  using: composite
+  using: 'composite'
   steps:
     - name: Configure project
       working-directory: ${{ inputs.source-path }}
+      env:
+        OPTIONS: ${{ inputs.options }}
+        PKGCONFIG_PREFIX: ${{ inputs.pkgconfig-prefix }}
+        PREFIX: ${{ inputs.prefix }}
+        BUILD_TYPE: ${{ inputs.build-type }}
+        COVERAGE: ${{ inputs.coverage }}
+        BUILD_PATH: ${{ inputs.build-path }}
       run: |
-        options=$(echo "${{ inputs.options }}" | \
-          sed -E 's/[,]*([^,]+)[,]*/-D\1 /g')
-        [ -n "${{ inputs.pkgconfig-prefix }}" ] && \
-          pkgconfig_dir="lib/$($CC -print-multiarch)/pkgconfig" && \
-          options="$options --pkg-config-path=${{ inputs.pkgconfig-prefix }}/$pkgconfig_dir"
+        build_options=$(echo "$OPTIONS" | sed -E 's/[,]*([^,]+)[,]*/-D\1 /g')
+        if [[ -n "$PKGCONFIG_PREFIX" ]]; then
+          pkgconfig_dir="lib/$($CC -print-multiarch)/pkgconfig"
+          build_options="${build_options} --pkg-config-path=${PKGCONFIG_PREFIX}/${pkgconfig_dir}"
+        fi
+
         eval meson setup \
           --reconfigure \
-          --prefix="${{ inputs.prefix }}" \
-          --buildtype="${{ inputs.build-type }}" \
-          -Db_coverage="${{ inputs.coverage }}" \
-          "$options" \
-          "${{ inputs.build-path }}"
+          --prefix="$PREFIX" \
+          --buildtype="$BUILD_TYPE" \
+          -Db_coverage="$COVERAGE" \
+          "$build_options" \
+          "$BUILD_PATH"
       shell: bash
 
     - name: Build project
       working-directory: ${{ inputs.source-path }}
       if: >-
-        ${{ (inputs.build == '' && inputs.dist == 'false') ||
-          inputs.build == 'true' || inputs.install == 'true' }}
-      run: meson compile -C "${{ inputs.build-path }}"
+        (inputs.build == '' && inputs.dist == 'false') ||
+        inputs.build == 'true' ||
+        inputs.install == 'true'
+      env:
+        BUILD_PATH: ${{ inputs.build-path }}
+      run: meson compile -C "$BUILD_PATH"
       shell: bash
 
     - name: Install project
       working-directory: ${{ inputs.source-path }}
-      if: ${{ inputs.install == 'true' }}
+      if: inputs.install == 'true'
+      env:
+        SUBPROJECTS: ${{ inputs.subprojects }}
+        BUILD_PATH: ${{ inputs.build-path }}
       run: |
-        [ "${{ inputs.subprojects }}" == "false" ] && \
+        if [[ "$SUBPROJECTS" == 'false' ]]; then
           args+=" --skip-subprojects"
-        eval meson install "${args}" -C "${{ inputs.build-path }}"
+        fi
+        eval meson install "$args" -C "$BUILD_PATH"
       shell: bash
 
     - name: Generate distribution artifacts
       id: dist
       working-directory: ${{ inputs.source-path }}
-      if: ${{ inputs.dist == 'true' || inputs.install-deb == 'true' }}
+      if: inputs.dist == 'true' || inputs.install-deb == 'true'
+      env:
+        SUBPROJECTS: ${{ inputs.subprojects }}
+        DIST_TESTS: ${{ inputs.dist-tests }}
+        BUILD_PATH: ${{ inputs.build-path }}
       run: |
-        [ "${{ inputs.subprojects }}" == "true" ] && \
+        if [[ "$SUBPROJECTS" == 'true' ]]; then
           args+=" --include-subprojects"
-        [ "${{ inputs.dist-tests }}" == "false" ] && \
+        fi
+        if [[ "$DIST_TESTS" == 'false' ]]; then
           args+=" --no-tests"
-        eval meson dist "${args}" --allow-dirty -C "${{ inputs.build-path }}"
-        echo "dist-path=${{ inputs.build-path }}/meson-dist" >> "$GITHUB_OUTPUT"
+        fi
+        eval meson dist "$args" --allow-dirty -C "$BUILD_PATH"
+        echo "dist-path=${BUILD_PATH}/meson-dist" >> "$GITHUB_OUTPUT"
       shell: bash
 
     - name: Install generated debs
       working-directory: ${{ inputs.source-path }}
-      if: ${{ inputs.install-deb == 'true' }}
-      run: sudo dpkg -i "${{ steps.dist.outputs.dist-path }}"/*.deb
+      if: inputs.install-deb == 'true'
+      env:
+        DIST_PATH: ${{ steps.dist.outputs.dist-path }}
+      run: sudo dpkg -i "$DIST_PATH"/*.deb
       shell: bash

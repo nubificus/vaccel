@@ -48,6 +48,8 @@ on:
         type: boolean
         default: false
 
+permissions: read-all
+
 jobs:
   check-run:
     name: Check if Orchestrator Should Run

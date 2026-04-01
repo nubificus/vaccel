@@ -4,16 +4,22 @@ on:
   workflow_call:
     inputs:
       actions-repo:
+        description: 'Repository with remote actions'
         type: string
         default: 'nubificus/vaccel'
-      actions-rev:
+      actions-ref:
+        description: 'Branch, tag or SHA of remote actions repository'
         type: string
         default: 'main'
     secrets:
       VACCEL_BOT_PRIVATE_KEY:
         required: false
+
+permissions: read-all
+
 env:
-  ACTIONS_REV: ${{ (github.repository != inputs.actions-repo) && inputs.actions-rev || '' }}
+  ACTIONS_REF: >-
+    ${{ github.repository != inputs.actions-repo && inputs.actions-ref || '' }}
 
 jobs:
   git-trailers:
@@ -22,8 +28,8 @@ jobs:
     steps:
       - name: Exit if PR is not rebaseable
         if: >-
-          ${{ github.event.pull_request.rebaseable != null &&
-            github.event.pull_request.rebaseable == false }}
+          github.event.pull_request.rebaseable != null &&
+          github.event.pull_request.rebaseable == false
         run: exit 1
 
       - name: Parse repository names
@@ -55,7 +61,7 @@ jobs:
         with:
           sparse-checkout: .github
           repository: ${{ inputs.actions-repo }}
-          ref: ${{ env.ACTIONS_REV }}
+          ref: ${{ env.ACTIONS_REF }}
           token: ${{ steps.generate-token.outputs.token || github.token }}
 
       - name: Append trailers
@@ -63,7 +69,9 @@ jobs:
         with:
           user-info: .github/contributors.yaml
           check-only: >-
-            ${{ github.event_name == 'pull_request_review' && 'false' || 'true' }}
+            ${{ github.event_name == 'pull_request_review' &&
+              'false' || 'true' }}
           fail-on-missing: >-
-            ${{ github.event_name == 'pull_request_review' && 'false' || 'true' }}
+            ${{ github.event_name == 'pull_request_review' &&
+              'false' || 'true' }}
           token: ${{ steps.generate-token.outputs.token || github.token }}

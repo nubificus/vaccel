@@ -4,22 +4,27 @@ on:
   workflow_call:
     inputs:
       actions-repo:
+        description: 'Repository with remote actions'
         type: string
         default: 'nubificus/vaccel'
-      actions-rev:
+      actions-ref:
+        description: 'Branch, tag or SHA of remote actions repository'
         type: string
         default: 'main'
     secrets:
       VACCEL_BOT_PRIVATE_KEY:
         required: false
 
+permissions: read-all
+
 env:
-  ACTIONS_REV: ${{ (github.repository != inputs.actions-repo) && inputs.actions-rev || '' }}
+  ACTIONS_REF: >-
+    ${{ github.repository != inputs.actions-repo && inputs.actions-ref || '' }}
 
 jobs:
   linter-commitlint:
     name: Lint Commit Messages
-    runs-on: [base-dind-2204-amd64]
+    runs-on: base-dind-2204-amd64
     steps:
       - name: Parse repository names
         id: parse-repos
@@ -49,7 +54,7 @@ jobs:
         with:
           sparse-checkout: .github
           repository: ${{ inputs.actions-repo }}
-          ref: ${{ env.ACTIONS_REV }}
+          ref: ${{ env.ACTIONS_REF }}
           token: ${{ steps.generate-init-token.outputs.token || github.token }}
 
       - name: Initialize workspace
@@ -66,7 +71,7 @@ jobs:
 
   linter-typos:
     name: Spell Check Repo
-    runs-on: [base-dind-2204-amd64]
+    runs-on: base-dind-2204-amd64
     steps:
       - name: Parse repository names
         id: parse-repos
@@ -96,7 +101,7 @@ jobs:
         with:
           sparse-checkout: .github
           repository: ${{ inputs.actions-repo }}
-          ref: ${{ env.ACTIONS_REV }}
+          ref: ${{ env.ACTIONS_REF }}
           token: ${{ steps.generate-init-token.outputs.token || github.token }}
 
       - name: Initialize workspace
@@ -113,7 +118,7 @@ jobs:
 
   linter-license-eye:
     name: Check License Headers
-    runs-on: [base-dind-2204-amd64]
+    runs-on: base-dind-2204-amd64
     steps:
       - name: Parse repository names
         id: parse-repos
@@ -143,7 +148,7 @@ jobs:
         with:
           sparse-checkout: .github
           repository: ${{ inputs.actions-repo }}
-          ref: ${{ env.ACTIONS_REV }}
+          ref: ${{ env.ACTIONS_REF }}
           token: ${{ steps.generate-init-token.outputs.token || github.token }}
 
       - name: Initialize workspace
@@ -167,11 +172,13 @@ jobs:
         run: |
           echo "Unset GO PATH, as the following action conflicts with the already installed version"
           export GOPATH=
-          echo "GOPATH=${GOPATH}" >> "$GITHUB_ENV"
           export GOTOOLDIR=
-          echo "GOTOOLDIR=${GOTOOLDIR}" >> "$GITHUB_ENV"
           export GOROOT=
-          echo "GOROOT=${GOROOT}" >> "$GITHUB_ENV"
+          {
+            echo "GOPATH=${GOPATH}"
+            echo "GOTOOLDIR=${GOTOOLDIR}"
+            echo "GOROOT=${GOROOT}"
+          } >> "$GITHUB_ENV"
 
       - name: Run license-eye
         uses: apache/skywalking-eyes/header@main
