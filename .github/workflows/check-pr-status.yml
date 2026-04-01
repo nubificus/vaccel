@@ -1,0 +1,84 @@
+name: Check PR Status
+
+on:
+  workflow_call:
+    inputs:
+      pr-number:
+        description: >
+          Number identifying the pull request to process. Defaults to the
+          current pull request number when used from a pull request event
+          context.
+        type: string
+        required: false
+      test-label:
+        description: 'Label that enables tests'
+        type: string
+        default: 'ok-to-test'
+    outputs:
+      expects-checks:
+        description: >
+          Whether checks are expected. Defaults to "true" if no pr-number
+          or test-label is specified.
+        value: ${{ jobs.check-pr-status.outputs.expects-checks }}
+      has-test-label:
+        description: >
+          Whether a test labels is present. Defaults to "true" if no pr-number
+          or test-label is specified.
+        value: ${{ jobs.check-pr-status.outputs.has-test-label }}
+      is-approved:
+        description: >
+          Whether the pull request is approved. Defaults to "false" if no pr-number
+          is specified.
+        value: ${{ jobs.check-pr-status.outputs.is-approved }}
+
+jobs:
+  check-pr-status:
+    name: Check PR status
+    runs-on: base-2204-amd64
+    outputs:
+      has-test-label: ${{ steps.check-status.outputs.has-test-label }}
+      expects-checks: ${{ steps.check-status.outputs.expects-checks }}
+      is-approved: ${{ steps.check-status.outputs.is-approved }}
+    steps:
+      - name: Check status
+        id: check-status
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: >-
+            ${{ inputs.pr-number || github.event.pull_request.number }}
+          TEST_LABEL: ${{ inputs.test-label }}
+        run: |
+          is_approved=false
+          has_test_label=true
+
+          if [[ -n "$PR_NUMBER" ]]; then
+            pr_info=$(gh pr view "$PR_NUMBER" \
+              --repo "$GITHUB_REPOSITORY" \
+              --json labels,reviews)
+
+            is_approved=$(jq -r '.reviews | any(.state == "APPROVED")' \
+              <<< "$pr_info")
+
+            if [[ -n "$TEST_LABEL" ]]; then
+              has_test_label=$(jq -r --arg lbl "$TEST_LABEL" \
+                '.labels | any(.name == $lbl)' <<< "$pr_info")
+            fi
+          else
+            echo "No PR number specified and not in PR context - using defaults"
+          fi
+
+          if [[ "$is_approved" == 'false' ]]; then
+            expects_checks="$has_test_label"
+          else
+            expects_checks=false
+          fi
+          {
+            echo "expects-checks=${expects_checks}"
+            echo "has-test-label=${has_test_label}"
+            echo "is-approved=${is_approved}"
+          } >> "$GITHUB_OUTPUT"
+
+          echo "Expects checks: ${expects_checks}"
+          echo "Has test label: ${has_test_label}"
+          echo "Is approved: ${is_approved}"
+        shell: bash

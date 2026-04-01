@@ -11,33 +11,61 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  check-pr-status:
+    name: Check PR status
+    uses: ./.github/workflows/check-pr-status.yml
+    secrets: inherit
+
   test-build:
+    needs: check-pr-status
     name: Test Build
-    if: ${{ contains(github.event.pull_request.labels.*.name, 'ok-to-test') }}
+    if: ${{ needs.check-pr-status.outputs.expects-checks == 'true' }}
     uses: ./.github/workflows/test-build.yml
     secrets: inherit
 
   verify-build:
+    needs: check-pr-status
     name: Verify Build
-    if: ${{ contains(github.event.pull_request.labels.*.name, 'ok-to-test') }}
+    if: ${{ needs.check-pr-status.outputs.expects-checks == 'true' }}
     uses: ./.github/workflows/verify-build.yml
     secrets: inherit
 
   validate-files-and-commits:
+    needs: check-pr-status
     name: Validate Files and Commits
-    if: ${{ contains(github.event.pull_request.labels.*.name, 'ok-to-test') }}
+    if: ${{ needs.check-pr-status.outputs.expects-checks == 'true' }}
     uses: ./.github/workflows/validate-files-and-commits.yml
     secrets: inherit
 
   validate-code:
+    needs: check-pr-status
     name: Validate Code
-    if: ${{ contains(github.event.pull_request.labels.*.name, 'ok-to-test') }}
+    if: ${{ needs.check-pr-status.outputs.expects-checks == 'true' }}
     uses: ./.github/workflows/validate-code.yml
     secrets: inherit
 
   generate-coverage:
-    needs: [test-build, verify-build, validate-files-and-commits, validate-code]
+    needs:
+      - check-pr-status
+      - test-build
+      - verify-build
+      - validate-files-and-commits
+      - validate-code
     name: Generate Coverage Report
+    if: ${{ needs.check-pr-status.outputs.expects-checks == 'true' }}
     uses: ./.github/workflows/coverage-report.yml
     with:
       comment-diff: true
+
+  jobs-completed:
+    needs: [check-pr-status, generate-coverage]
+    name: Jobs Completed
+    if: >-
+      ${{ always() &&
+        (needs.check-pr-status.outputs.is-approved == 'true' ||
+          (needs.check-pr-status.outputs.expects-checks == 'true' &&
+            !contains(needs.*.result, 'failure') &&
+            !contains(needs.*.result, 'cancelled'))) }}
+    runs-on: base-2204-amd64
+    steps:
+      - run: exit 0

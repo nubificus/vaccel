@@ -3,23 +3,41 @@ name: Add Git Trailers to PR commits
 on:
   pull_request_review:
     types: [submitted]
+  pull_request:
+    types: [synchronize, labeled]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
 
 jobs:
   commit-coverage:
     name: Commit coverage report
-    if: ${{ github.event.review.state == 'approved' }}
+    if: >-
+      github.event.pull_request.base.ref == 'main' &&
+      github.event_name == 'pull_request_review' &&
+      github.event.review.state == 'approved'
     uses: ./.github/workflows/coverage-report.yml
     with:
       commit: true
     secrets: inherit
 
-  git-trailers:
-    needs: [commit-coverage]
+  check-pr-status:
+    needs: commit-coverage
+    name: Check PR status
+    if: always() && github.event.pull_request.base.ref == 'main'
+    uses: ./.github/workflows/check-pr-status.yml
+    with:
+      pr-number: >-
+        ${{ github.event.pull_request_review.pull_request.number ||
+          github.event.pull_request.number }}
+    secrets: inherit
+
+  add-git-trailers:
+    needs: check-pr-status
     name: Add Git Trailers to PR commits
-    if: ${{ github.event.pull_request.base.ref == 'main' && github.event.review.state == 'approved' }}
+    if: >-
+      always() &&
+      github.event.pull_request.base.ref == 'main' &&
+      needs.check-pr-status.outputs.is-approved == 'true'
     uses: ./.github/workflows/add-git-trailers.yml
     secrets: inherit

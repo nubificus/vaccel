@@ -10,8 +10,6 @@ on:
         type: string
         default: 'main'
     secrets:
-      GIT_CLONE_PAT:
-        required: false
       VACCEL_BOT_PRIVATE_KEY:
         required: true
 env:
@@ -20,33 +18,24 @@ env:
 jobs:
   git-trailers:
     name: Add Git Trailers
-    runs-on: [base-2204-amd64]
-    permissions:
-      contents: write
-      pull-requests: write
+    runs-on: base-2204-amd64
     steps:
       - name: Exit if PR is not rebaseable
-        if: ${{ github.event.pull_request.rebaseable != null && github.event.pull_request.rebaseable == false }}
+        if: >-
+          ${{ github.event.pull_request.rebaseable != null &&
+            github.event.pull_request.rebaseable == false }}
         run: exit 1
 
-      - name: Checkout .github directory
-        uses: actions/checkout@v6
-        with:
-          sparse-checkout: .github
-          repository: ${{ inputs.actions-repo }}
-          ref: ${{ env.ACTIONS_REV }}
-
-      - name: Initialize workspace
-        uses: ./.github/actions/initialize-workspace
-        with:
-          fetch-depth: 0
-          remote-actions-repo: ${{ inputs.actions-repo }}
-          token: ${{ secrets.GIT_CLONE_PAT || github.token }}
-
-      - name: Append git trailers
-        uses: nubificus/git-trailers@feat_use_rebase
-        with:
-          user_info: .github/contributors.yaml
+      - name: Parse repository names
+        id: parse-repos
+        env:
+          ACTIONS_REPO: ${{ inputs.actions-repo }}
+        run: |
+          {
+            echo "repo-name=$(basename "$GITHUB_REPOSITORY")"
+            echo "actions-repo-name=$(basename "$ACTIONS_REPO")"
+          } >> "$GITHUB_OUTPUT"
+        shell: bash
 
       - name: Generate vaccel-bot token
         id: generate-token
@@ -54,10 +43,26 @@ jobs:
         with:
           app-id: ${{ vars.VACCEL_BOT_APP_ID }}
           private-key: ${{ secrets.VACCEL_BOT_PRIVATE_KEY }}
+          repositories: |
+            ${{ steps.parse-repos.outputs.repo-name }}
+            ${{ steps.parse-repos.outputs.actions-repo-name }}
+          permission-pull-requests: read
+          permission-contents: write
 
-      - name: Trigger required tests re-run
-        uses: ./.github/actions/readd-issue-label
+      - name: Checkout .github directory
+        uses: actions/checkout@v6
         with:
-          issue-number: ${{ github.event.pull_request.number }}
-          label: 'ok-to-test'
+          sparse-checkout: .github
+          repository: ${{ inputs.actions-repo }}
+          ref: ${{ env.ACTIONS_REV }}
           token: ${{ steps.generate-token.outputs.token }}
+
+      - name: Append trailers
+        uses: nubificus/git-trailers@v2
+        with:
+          user-info: .github/contributors.yaml
+          token: ${{ steps.generate-token.outputs.token }}
+          check-only: >-
+            ${{ github.event_name == 'pull_request_review' && 'false' || 'true' }}
+          fail-on-missing: >-
+            ${{ github.event_name == 'pull_request_review' && 'false' || 'true' }}

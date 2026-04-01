@@ -1,11 +1,11 @@
 users:
-  github-actionsbot:
+  github-actions:
     name: github-actions[bot]
     email: 41898282+github-actions[bot]@users.noreply.github.com
-  dependabotbot:
+  dependabot:
     name: dependabot[bot]
     email: support@github.com
-  vaccel-botbot:
+  vaccel-bot:
     name: vaccel-bot[bot]
     email: 175908213+vaccel-bot[bot]@users.noreply.github.com
   ananos:
