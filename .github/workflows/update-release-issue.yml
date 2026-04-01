@@ -17,6 +17,8 @@ on:
       VACCEL_BOT_PRIVATE_KEY:
         required: true
 
+permissions: read-all
+
 env:
   DEFAULT_CORE_COMPONENT: 'vaccel'
 

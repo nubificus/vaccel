@@ -7,7 +7,10 @@ on:
     types: [synchronize, labeled]
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: >-
+    ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+
+permissions: read-all
 
 jobs:
   commit-coverage:
@@ -24,7 +27,10 @@ jobs:
   check-pr-status:
     needs: commit-coverage
     name: Check PR status
-    if: always() && github.event.pull_request.base.ref == 'main'
+    if: >-
+      always() &&
+      github.event.pull_request.base.ref == 'main' &&
+      needs.commit-coverage.result != 'failure'
     uses: ./.github/workflows/check-pr-status.yml
     with:
       pr-number: >-

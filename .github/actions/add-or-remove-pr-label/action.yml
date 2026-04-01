@@ -1,0 +1,74 @@
+name: 'Add or Remove PR Label'
+description: 'Add, remove or readd pull request label'
+
+inputs:
+  label:
+    description: 'Label to add or remove'
+    required: true
+  pr-number:
+    description: >
+      Number identifying the pull request to process. Defaults to the
+      current pull request number when used from a pull request event
+      context.
+    required: false
+  repository:
+    description: 'Repository with the pull request'
+    default: ${{ github.repository }}
+  token:
+    description: 'Access token used to manage the pull request labels'
+    default: ${{ github.token }}
+  add:
+    description: 'Whether to add the specified label'
+    default: 'true'
+  remove:
+    description: 'Whether to remove the specified label'
+    default: 'true'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Check if PR has label
+      id: check-pr
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+        GH_REPO: ${{ inputs.repository }}
+        PR_NUMBER: ${{ inputs.pr-number || github.event.pull_request.number }}
+        LABEL: ${{ inputs.label }}
+      run: |
+        labels=$(gh pr view "$PR_NUMBER" \
+          --json labels \
+          --jq '.labels[].name')
+
+        echo "pr-number=${PR_NUMBER}" >> "$GITHUB_OUTPUT"
+        if echo "$labels" | grep -qx "$LABEL"; then
+          echo "has-label=true" >> "$GITHUB_OUTPUT"
+          echo "PR #${PR_NUMBER} has label '${LABEL}'"
+        else
+          echo "has-label=false" >> "$GITHUB_OUTPUT"
+          echo "PR #${PR_NUMBER} does not have label '${LABEL}'"
+        fi
+      shell: bash
+
+    - name: Remove label
+      if: >-
+        inputs.remove == 'true' &&
+        steps.check-pr.outputs.has-label == 'true'
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+        GH_REPO: ${{ inputs.repository }}
+        PR_NUMBER: ${{ steps.check-pr.outputs.pr-number }}
+        LABEL: ${{ inputs.label }}
+      run: |
+        gh pr edit "$PR_NUMBER" --remove-label "$LABEL"
+      shell: bash
+
+    - name: Add label
+      if: inputs.add == 'true'
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+        GH_REPO: ${{ inputs.repository }}
+        PR_NUMBER: ${{ steps.check-pr.outputs.pr-number }}
+        LABEL: ${{ inputs.label }}
+      run: |
+        gh pr edit "$PR_NUMBER" --add-label "$LABEL"
+      shell: bash

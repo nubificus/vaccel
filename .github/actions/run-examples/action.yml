@@ -1,39 +1,53 @@
-name: Run Examples
-description: Run vaccel examples
+name: 'Run Examples'
+description: 'Run project examples'
 
 inputs:
   prefix:
+    description: 'Installation prefix'
     default: ${{ github.workspace }}/opt
   valgrind:
+    description: 'Whether to run the examples with valgrind'
     default: 'false'
   package:
+    description: 'Name of the package with the examples'
     default: 'vaccel'
 
 runs:
-  using: composite
+  using: 'composite'
   steps:
     - name: Ensure run dir exists
       run: |
         uid=$(id -u)
-        [ -d "/run/user/${uid}" ] && exit 0
-        sudo mkdir -p "/run/user/${uid}"
-        sudo chown -R  "${uid}" "/run/user/${uid}"
+        run_dir="/run/user/${uid}"
+
+        if [[ -d "$run_dir" ]]; then
+          exit 0
+        fi
+
+        sudo mkdir -p "$run_dir"
+        sudo chown -R  "$uid" "$run_dir"
       shell: bash
 
     - name: Run examples
+      env:
+        PACKAGE: ${{ inputs.package }}
+        VALGRIND: ${{ inputs.valgrind }}
+        PREFIX: ${{ inputs.prefix }}
       run: |
-        if [ "${{ inputs.package }}" = "vaccel" ]; then
-          package="${{ inputs.package }}"
+        if [[ "$PACKAGE" == 'vaccel' ]]; then
+          package_name="$PACKAGE"
         else
-          package="vaccel-${{ inputs.package }}"
+          package_name="vaccel-${PACKAGE}"
         fi
-        if [ "${{ inputs.valgrind }}" = "true" ]; then
+
+        if [[ "$VALGRIND" == 'true' ]]; then
           use_valgrind=1
         else
           use_valgrind=0
         fi
-        export PKG_CONFIG_PATH=$(find "${{ inputs.prefix }}" \
+
+        export PKG_CONFIG_PATH=$(find "$PREFIX" \
           -type d -name "pkgconfig" | head -1)
-        "${{ github.workspace }}"/scripts/run-examples.sh \
-          "${package}" "${use_valgrind}"
+        "$GITHUB_WORKSPACE"/scripts/run-examples.sh \
+          "$package_name" "$use_valgrind"
       shell: bash

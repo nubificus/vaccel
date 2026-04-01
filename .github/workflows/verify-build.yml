@@ -4,42 +4,58 @@ on:
   workflow_call:
     inputs:
       actions-repo:
+        description: 'Repository with remote actions'
         type: string
         default: 'nubificus/vaccel'
-      actions-rev:
+      actions-ref:
+        description: 'Branch, tag or SHA of remote actions repository'
         type: string
         default: 'main'
       runner:
+        description: 'JSON array of runner name parts (excluding architecture)'
         type: string
         default: '["base", "dind", "2204"]'
       runner-archs:
+        description: 'JSON array of runner architectures to run on'
         type: string
         default: '["amd64", "arm64", "arm"]'
       runner-arch-map:
+        description: 'JSON object mapping runner to GNU architectures'
         type: string
         default: '[{"amd64":"x86_64", "arm64":"aarch64", "arm":"armv7l"}]'
       package:
+        description: 'Project package name'
         type: string
         default: 'vaccel'
       options:
+        description: 'Comma-separated list of build options'
         type: string
         default: 'auto_features=enabled'
       dist-options:
+        description: >
+          Comma-separated list of build options for distribution step
+          (if "release" is "true")
         type: string
         default: ''
       subprojects:
+        description: >
+          Whether to include subprojects in installation or dist steps
         type: boolean
         default: true
       skip-examples:
+        description: 'Whether to skip running the examples'
         type: boolean
         default: false
       valgrind:
+        description: 'Whether to run the examples with valgrind'
         type: boolean
         default: true
       upload-subpath:
+        description: 'Remote subpath for uploading artifacts'
         type: string
         default: ''
       release:
+        description: 'Whether to build and upload distribution artifacts'
         type: boolean
         default: false
     secrets:
@@ -50,14 +66,20 @@ on:
       AWS_SECRET_ACCESS_KEY:
         required: false
 
+permissions: read-all
+
 env:
-  ACTIONS_REV: ${{ (github.repository != inputs.actions-repo) && inputs.actions-rev || '' }}
-  DEFAULT_UPPATH: ${{ (inputs.package != 'vaccel') && format('{0}/{1}', 'plugins', inputs.package) || '' }}
+  ACTIONS_REF: >-
+    ${{ github.repository != inputs.actions-repo && inputs.actions-ref || '' }}
+  DEFAULT_UPPATH: >-
+    ${{ inputs.package != 'vaccel' &&
+      format('{0}/{1}', 'plugins', inputs.package) || '' }}
 
 jobs:
   verify-build:
     name: Verify Build
-    runs-on: ${{ format('{0}-{1}', join(fromJSON(inputs.runner), '-'), matrix.arch) }}
+    runs-on: >-
+      ${{ format('{0}-{1}', join(fromJSON(inputs.runner), '-'), matrix.arch) }}
     strategy:
       matrix:
         arch: ["${{ fromJSON(inputs.runner-archs) }}"]
@@ -65,8 +87,12 @@ jobs:
       fail-fast: false
     env:
       ARCH: ${{ fromJson(inputs.runner-arch-map)[0][matrix.arch] }}
-      DOWNLOAD_PATH: ${{github.workspace}}/artifacts/downloads/${{fromJson(inputs.runner-arch-map)[0][matrix.arch]}}/${{matrix.build-type}}
-      INSTALL_PREFIX: ${{github.workspace}}/artifacts/${{fromJson(inputs.runner-arch-map)[0][matrix.arch]}}/${{matrix.build-type}}
+      DOWNLOAD_PATH: >-
+        ${{ format('{0}/artifacts/downloads/{1}/{2}', github.workspace,
+          fromJson(inputs.runner-arch-map)[0][matrix.arch], matrix.build-type) }}
+      INSTALL_PREFIX: >-
+        ${{ format('{0}/artifacts/{1}/{2}', github.workspace,
+          fromJson(inputs.runner-arch-map)[0][matrix.arch], matrix.build-type) }}
     steps:
       - name: Generate vaccel-bot token
         id: generate-token
@@ -83,11 +109,11 @@ jobs:
         with:
           sparse-checkout: .github
           repository: ${{ inputs.actions-repo }}
-          ref: ${{ env.ACTIONS_REV }}
+          ref: ${{ env.ACTIONS_REF }}
           token: ${{ steps.generate-token.outputs.token || github.token }}
 
       - name: Get revision info
-        id: get-rev-info
+        id: get-revision
         uses: ./.github/actions/get-revision-info
 
       # use the actual branch rev so uploaded artifacts are versioned correctly
@@ -97,15 +123,17 @@ jobs:
         with:
           fetch-depth: 0
           remote-actions-repo: ${{ inputs.actions-repo }}
-          ref: ${{ steps.get-rev-info.outputs.sha }}
+          ref: ${{ steps.get-revision.outputs.sha }}
           token: ${{ steps.generate-token.outputs.token || github.token }}
 
       - name: Download artifacts from s3
         id: download-artifacts
-        if: ${{ inputs.actions-repo != github.repository }}
+        if: inputs.actions-repo != github.repository
         uses: ./.github/actions/download-from-s3
         with:
-          branch: ${{ steps.initialize-workspace.outputs.remote-branch }}
+          ref: >-
+            ${{ steps.initialize-workspace.outputs.remote-tag ||
+              steps.initialize-workspace.outputs.remote-branch }}
           build-type: ${{ matrix.build-type }}
           arch: ${{ env.ARCH }}
           access-key: ${{ secrets.AWS_ACCESS_KEY }}
@@ -114,7 +142,7 @@ jobs:
           install: 'true'
 
       - name: Build project
-        if: ${{ inputs.release == false }}
+        if: inputs.release == false
         uses: ./.github/actions/build
         with:
           prefix: ${{ env.INSTALL_PREFIX }}
@@ -125,14 +153,17 @@ jobs:
           subprojects: ${{ inputs.subprojects }}
 
       - name: Run examples
-        if: ${{ inputs.skip-examples == false && inputs.release == false }}
+        if: inputs.skip-examples == false && inputs.release == false
         uses: ./.github/actions/run-examples
         with:
           prefix: ${{ env.INSTALL_PREFIX }}
           package: ${{ inputs.package }}
 
       - name: Run examples with valgrind
-        if: ${{ inputs.skip-examples == false && inputs.release == false && inputs.valgrind == true }}
+        if: >-
+          inputs.skip-examples == false &&
+          inputs.release == false &&
+          inputs.valgrind == true
         uses: ./.github/actions/run-examples
         with:
           prefix: ${{ env.INSTALL_PREFIX }}
@@ -141,7 +172,9 @@ jobs:
 
       - name: Build project (dist)
         id: build-dist
-        if: ${{ contains(github.event.pull_request.labels.*.name, 'ok-to-upload') || inputs.release == true }}
+        if: >-
+          contains(github.event.pull_request.labels.*.name, 'ok-to-upload') ||
+          inputs.release == true
         uses: ./.github/actions/build
         with:
           prefix: ${{ env.INSTALL_PREFIX }}
@@ -152,20 +185,25 @@ jobs:
           subprojects: ${{ inputs.subprojects }}
 
       - name: Upload to s3
-        if: ${{ contains(github.event.pull_request.labels.*.name, 'ok-to-upload') || inputs.release == true }}
+        if: >-
+          contains(github.event.pull_request.labels.*.name, 'ok-to-upload') ||
+          inputs.release == true
         uses: ./.github/actions/upload-to-s3
         with:
           arch: ${{ env.ARCH }}
           build-type: ${{ matrix.build-type }}
           local-path: ${{ steps.build-dist.outputs.dist-path }}/*
-          remote-subpath: ${{ (inputs.upload-subpath != '' && inputs.upload-subpath) || env.DEFAULT_UPPATH }}
+          remote-subpath: >-
+            ${{ inputs.upload-subpath != '' &&
+              inputs.upload-subpath || env.DEFAULT_UPPATH }}
           access-key: ${{ secrets.AWS_ACCESS_KEY }}
           secret-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
       - name: Clean-up
-        if: ${{ always() }}
+        if: always()
+        env:
+          INSTALLED: ${{ steps.download-artifacts.outputs.installed }}
         run: |
           sudo rm -rf artifacts build*
-          sudo apt-get purge -y \
-            ${{ steps.download-artifacts.outputs.installed }} || echo
+          sudo apt-get purge -y "$INSTALLED" || true
         shell: bash

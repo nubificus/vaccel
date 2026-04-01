@@ -1,33 +1,49 @@
-name: Get Github Revision Info
-description: Get Github revision information
+name: 'Get GitHub Revision Info'
+description: 'Get GitHub revision information'
 
 outputs:
   sha:
-    value: ${{ steps.get-rev.outputs.sha }}
+    description: 'Revision SHA'
+    value: ${{ steps.get-revision.outputs.sha }}
+  ref:
+    description: 'Revision ref'
+    value: ${{ steps.get-revision.outputs.ref }}
   branch:
-    value: ${{ steps.get-rev.outputs.branch }}
+    description: 'Revision ref (deprecated)'
+    value: ${{ steps.get-revision.outputs.ref }}
 
 runs:
-  using: composite
+  using: 'composite'
   steps:
-    - name: Get revision SHA and branch
-      id: get-rev
+    - name: Get revision SHA and ref
+      id: get-revision
+      env:
+        EVENT_NAME: ${{ github.event_name }}
+        EVENT_PR_MERGED: ${{ github.event.pull_request.merged }}
+        EVENT_PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        EVENT_PR_HEAD_REF: ${{ github.event.pull_request.head.ref }}
       run: |
-        if [ "${{ github.event_name }}" == "pull_request" ]; then
-          if [ "${{ github.event.pull_request.merged }}" == true ]; then
-            sha="${{ github.sha }}"
-            branch="${{ github.base_ref }}"
-            echo "PR merged. SHA: ${sha}, Branch: ${branch}"
+        if [[ "$EVENT_NAME" == "pull_request" ]]; then
+          if [[ "$EVENT_PR_MERGED" == true ]]; then
+            sha="$GITHUB_SHA"
+            ref="$GITHUB_BASE_REF"
+            echo "Event ${EVENT_NAME} (merged):"
           else
-            sha="${{ github.event.pull_request.head.sha }}"
-            branch="${{ github.event.pull_request.head.ref }}"
-            echo "PR not yet merged. SHA: ${sha}, Branch: ${branch}"
+            sha="$EVENT_PR_HEAD_SHA"
+            ref="$EVENT_PR_HEAD_REF"
+            echo "Event ${EVENT_NAME} (not merged):"
           fi
         else
-          sha="${{ github.sha }}"
-          branch="${{ github.ref_name }}"
-          echo "${{ github.event_name }} event. SHA: ${sha}, Branch: ${branch}"
+          sha="$GITHUB_SHA"
+          ref="$GITHUB_REF_NAME"
+          echo "Event ${EVENT_NAME}:"
         fi
-        echo "sha=${sha}" >> "$GITHUB_OUTPUT"
-        echo "branch=${branch}" >> "$GITHUB_OUTPUT"
+
+        {
+          echo "sha=${sha}"
+          echo "ref=${ref}"
+        } >> "$GITHUB_OUTPUT"
+
+        echo "  SHA: ${sha}"
+        echo "  Ref: ${ref}"
       shell: bash

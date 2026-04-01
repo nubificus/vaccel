@@ -31,6 +31,8 @@ on:
           is specified.
         value: ${{ jobs.check-pr-status.outputs.is-approved }}
 
+permissions: read-all
+
 jobs:
   check-pr-status:
     name: Check PR status

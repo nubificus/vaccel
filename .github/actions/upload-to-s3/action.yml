@@ -1,67 +1,94 @@
-name: Upload to s3
-description: Upload artifacts to s3
+name: 'Upload to s3'
+description: 'Upload artifacts to s3'
 
 inputs:
   arch:
+    description: 'OS architecture of the artifacts'
     default: 'x86_64'
   build-type:
+    description: 'Build type of the artifacts'
     default: 'release'
   local-path:
+    description: 'Local path where the artifacts are'
     default: 'build'
   remote-basepath:
+    description: 'Remote base path (relative to the root)'
     default: 'nbfc-assets/github/vaccel'
   remote-subpath:
+    description: 'Remote subpath for artifacts (relative to the base path)'
     default: ''
   access-key:
+    description: 'Access key for S3 authentication'
     required: true
   secret-key:
+    description: 'Secret access key for S3 authentication'
     required: true
 
 runs:
-  using: composite
+  using: 'composite'
   steps:
     - name: Determine SHA and branch
-      id: get-rev-info
+      id: get-revision
       uses: ./.github/actions/get-revision-info
 
     - name: Generate paths
       id: get-artifact-vars
+      env:
+        LOCAL_PATH: ${{ inputs.local-path }}
+        BASE_PATH: ${{ inputs.remote-basepath }}
+        SUBPATH: ${{ inputs.remote-subpath }}
+        REF: ${{ steps.get-revision.outputs.ref }}
+        ARCH: ${{ inputs.arch }}
+        BUILD_TYPE: ${{ inputs.build-type }}
       run: |
-        branch=${{ steps.get-rev-info.outputs.branch }} 
-        local_path=$(realpath -s --relative-to="${{ github.workspace }}" \
-          "${{ inputs.local-path }}")
-        echo "local-path=${local_path}" >> "$GITHUB_OUTPUT"
-        base_path="${{ inputs.remote-basepath }}"
-        if [ -n "${{ inputs.remote-subpath }}" ]; then
-          base_path="${base_path}/${{ inputs.remote-subpath }}"
+        local_path=$(realpath -s --relative-to="$GITHUB_WORKSPACE" \
+          "$LOCAL_PATH")
+
+        base_path="$BASE_PATH"
+        if [[ -n "$SUBPATH" ]]; then
+          base_path="${base_path}/${SUBPATH}"
         fi
-        remote_path="${base_path}/rev/${branch}/${{inputs.arch}}/${{inputs.build-type}}/"
-        echo "remote-path=${remote_path}" >> "$GITHUB_OUTPUT"
+        remote_path="${base_path}/rev/${REF}/${ARCH}/${BUILD_TYPE}"
+
+        {
+          echo "local-path=${local_path}/"
+          echo "remote-path=${remote_path}"
+        } >> "$GITHUB_OUTPUT"
+        echo "Local path: ${local_path}"
+        echo "Remote path: ${remote_path}"
       shell: bash
 
     - name: Generate \"latest\" artifacts
+      env:
+        LOCAL_PATH: ${{ inputs.local-path }}
       run: |
-        # attempt to match filenames of the form
-        # pkg-A.B.C[-D-E{8}-][-M][moretext].extension
+        # Attempt to match filenames of the form
+        # pkg_A.B.C[+text-D.E.F][-D-E{8}-][-M][moretext].extension
         # where capital letters are numbers and E is 8 digits long
-        VERSION_REGEX="(.+)\d+\.\d+\.\d+(-\d+-[\da-z].{7})*(-\d+)*([^.]*\..+)"
-        if [ -d "${{ inputs.local-path }}" ]; then
+        BASE_RE='\d+\.\d+\.\d+' # base version: A.B.C
+        META_RE='\+[a-z_-]+\.\d+\.\d+\.\d+' # version metadata: +text.D.E.F
+        ABBR_RE='-\d+-[\da-z].{7}' # git abbreviation: -D-E{8}
+        VERSION_REGEX="([^\d]+)${BASE_RE}(${META_RE})*(${ABBR_RE})*(-\d+)*([^.]*\..+)"
+
+        if [ -d "$LOCAL_PATH" ]; then
           echo "Local path is a directory, skipping"
           exit 0
         fi
-        dir=$(dirname "${{ inputs.local-path }}")
-        files=$(basename "${{ inputs.local-path }}")
+
+        dir=$(dirname "$LOCAL_PATH")
+        files=$(basename "$LOCAL_PATH")
         pushd "${dir}"
         for f in $(find . -maxdepth 1 -type f -name "${files}"); do
           latest_filename=$(echo "$f" | \
-            perl -pe "s/${VERSION_REGEX}/\1latest\4/g")
+            perl -pe "s/${VERSION_REGEX}/\1latest\5/g")
+
           echo "Copying $f to ${latest_filename}"
-          cp "$f" "${latest_filename}"
+          cp "$f" "$latest_filename"
         done
         popd
       shell: bash
 
-    - name: Upload artifact to s3
+    - name: Upload artifacts to s3
       uses: cloudkernels/minio-upload@v5
       with:
         url: https://s3.nubificus.co.uk
