@@ -11,7 +11,7 @@ inputs:
   coverage:
     default: 'false'
   gcov:
-    default: 'gcov'
+    required: false
 
 runs:
   using: composite
@@ -44,7 +44,19 @@ runs:
       working-directory: ${{ inputs.source-path }}
       if: ${{ inputs.coverage == 'true' }}
       run: |
-        echo "gcov-executable = ${{ inputs.gcov }}" > gcovr.cfg
-        echo -e "filter = src/\nfilter = plugins/" >> gcovr.cfg
-        ninja coverage-xml -C ${{ inputs.build-path }}
+        if [[ -n "${{ inputs.gcov }}" ]]; then
+          gcov_executable="$GCOV"
+        elif cc_version=$(cc -dumpversion 2>&1 || true); then
+          gcov_executable="gcov-${cc_version}"
+        else
+          gcov_executable='gcov'
+        fi
+
+        printf '%s\n' \
+          "gcov-executable = ${gcov_executable}" \
+          "filter = src/" \
+          "filter = plugins/" \
+          > gcovr.cfg
+
+        ninja coverage-xml -C "${{ inputs.build-path }}"
       shell: bash
