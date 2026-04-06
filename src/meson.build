@@ -31,6 +31,8 @@ vaccel_sources = files([
   'log.c',
   'plugin.c',
   'prof.c',
+  'prof_backend.c',
+  'prof_base.c',
   'resource.c',
   'resource_registration.c',
   'session.c',
