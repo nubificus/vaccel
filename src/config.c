@@ -83,7 +83,8 @@ static inline const char *config_deprecate_env(const char *old, const char *new)
 
 int vaccel_config_init(struct vaccel_config *config, const char *plugins,
 		       vaccel_log_level_t log_level, const char *log_file,
-		       bool profiling_enabled, bool version_ignore)
+		       bool profiling_enabled, const char *profiling_backend,
+		       bool version_ignore)
 {
 	if (!config)
 		return VACCEL_EINVAL;
@@ -96,6 +97,10 @@ int vaccel_config_init(struct vaccel_config *config, const char *plugins,
 	if (log_file && !config->log_file)
 		return VACCEL_ENOMEM;
 	config->profiling_enabled = profiling_enabled;
+	config->profiling_backend =
+		profiling_backend ? strdup(profiling_backend) : NULL;
+	if (profiling_backend && !config->profiling_backend)
+		return VACCEL_ENOMEM;
 	config->version_ignore = version_ignore;
 
 	return VACCEL_OK;
@@ -133,6 +138,13 @@ int vaccel_config_init_from_env(struct vaccel_config *config)
 	if (ret)
 		return ret;
 
+	ret = config_str_from_env(&config->profiling_backend,
+				  CONFIG_PROFILING_BACKEND_ENV,
+				  CONFIG_PROFILING_BACKEND_DEFAULT);
+
+	if (ret)
+		return ret;
+
 	const char *version_ignore_env = config_deprecate_env(
 		CONFIG_VERSION_IGNORE_OLD_ENV, CONFIG_VERSION_IGNORE_ENV);
 	ret = config_bool_from_env(&config->version_ignore, version_ignore_env,
@@ -159,6 +171,12 @@ int vaccel_config_init_from(struct vaccel_config *config,
 	if (config_src->log_file && !config->log_file)
 		return VACCEL_ENOMEM;
 	config->profiling_enabled = config_src->profiling_enabled;
+	config->profiling_backend =
+		config_src->profiling_backend ?
+			strdup(config_src->profiling_backend) :
+			NULL;
+	if (config_src->profiling_backend && !config->profiling_backend)
+		return VACCEL_ENOMEM;
 	config->version_ignore = config_src->version_ignore;
 
 	return VACCEL_OK;
@@ -174,10 +192,14 @@ int vaccel_config_release(struct vaccel_config *config)
 	if (config->log_file)
 		free(config->log_file);
 
+	if (config->profiling_backend)
+		free(config->profiling_backend);
+
 	config->plugins = CONFIG_PLUGINS_DEFAULT;
 	config->log_level = CONFIG_LOG_LEVEL_DEFAULT;
 	config->log_file = CONFIG_LOG_FILE_DEFAULT;
 	config->profiling_enabled = CONFIG_PROFILING_ENABLED_DEFAULT;
+	config->profiling_backend = CONFIG_PROFILING_BACKEND_DEFAULT;
 	config->version_ignore = CONFIG_VERSION_IGNORE_DEFAULT;
 
 	return VACCEL_OK;
@@ -185,7 +207,8 @@ int vaccel_config_release(struct vaccel_config *config)
 
 int vaccel_config_new(struct vaccel_config **config, const char *plugins,
 		      vaccel_log_level_t log_level, const char *log_file,
-		      bool profiling_enabled, bool version_ignore)
+		      bool profiling_enabled, const char *profiling_backend,
+		      bool version_ignore)
 {
 	if (!config)
 		return VACCEL_EINVAL;
@@ -196,7 +219,8 @@ int vaccel_config_new(struct vaccel_config **config, const char *plugins,
 		return VACCEL_ENOMEM;
 
 	int ret = vaccel_config_init(c, plugins, log_level, log_file,
-				     profiling_enabled, version_ignore);
+				     profiling_enabled, profiling_backend,
+				     version_ignore);
 	if (ret) {
 		free(c);
 		return ret;
@@ -279,6 +303,7 @@ void vaccel_config_print_debug(struct vaccel_config *config)
 	vaccel_debug("  log_file = %s", config->log_file);
 	vaccel_debug("  profiling_enabled = %s",
 		     config->profiling_enabled ? "true" : "false");
+	vaccel_debug("	profiling_backend = %s", config->profiling_backend);
 	vaccel_debug("  version_ignore = %s",
 		     config->version_ignore ? "true" : "false");
 }
