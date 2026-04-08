@@ -46,6 +46,7 @@ TEST_CASE("vaccel_config_init_from_env", "[core][config]")
 		.log_level = CONFIG_LOG_LEVEL_DEFAULT,
 		.log_file = CONFIG_LOG_FILE_DEFAULT,
 		.profiling_enabled = CONFIG_PROFILING_ENABLED_DEFAULT,
+		.profiling_backend = nullptr,
 		.version_ignore = CONFIG_VERSION_IGNORE_DEFAULT
 	};
 
@@ -86,6 +87,7 @@ TEST_CASE("vaccel_config_init_from", "[core][config]")
 		.log_level = CONFIG_LOG_LEVEL_DEFAULT,
 		.log_file = CONFIG_LOG_FILE_DEFAULT,
 		.profiling_enabled = CONFIG_PROFILING_ENABLED_DEFAULT,
+		.profiling_backend = nullptr,
 		.version_ignore = CONFIG_VERSION_IGNORE_DEFAULT
 	};
 
@@ -197,13 +199,15 @@ TEST_CASE("vaccel_config_init", "[core][config]")
 		.log_level = CONFIG_LOG_LEVEL_DEFAULT,
 		.log_file = CONFIG_LOG_FILE_DEFAULT,
 		.profiling_enabled = CONFIG_PROFILING_ENABLED_DEFAULT,
+		.profiling_backend = nullptr,
 		.version_ignore = CONFIG_VERSION_IGNORE_DEFAULT
 	};
 
 	SECTION("success")
 	{
 		ret = vaccel_config_init(&config, plugins, log_level, log_file,
-					 profiling_enabled, version_ignore);
+					 profiling_enabled, "base",
+					 version_ignore);
 		REQUIRE(ret == VACCEL_OK);
 		REQUIRE(strcmp(config.plugins, plugins) == 0);
 		REQUIRE(config.log_level == log_level);
@@ -217,7 +221,8 @@ TEST_CASE("vaccel_config_init", "[core][config]")
 	SECTION("success with null strings")
 	{
 		ret = vaccel_config_init(&config, nullptr, log_level, nullptr,
-					 profiling_enabled, version_ignore);
+					 profiling_enabled, "base",
+					 version_ignore);
 		REQUIRE(ret == VACCEL_OK);
 		REQUIRE(config.plugins == nullptr);
 		REQUIRE(config.log_level == log_level);
@@ -231,7 +236,8 @@ TEST_CASE("vaccel_config_init", "[core][config]")
 	SECTION("invalid arguments")
 	{
 		ret = vaccel_config_init(nullptr, plugins, log_level, log_file,
-					 profiling_enabled, version_ignore);
+					 profiling_enabled, "base",
+					 version_ignore);
 		REQUIRE(ret == VACCEL_EINVAL);
 		REQUIRE(config.plugins == CONFIG_PLUGINS_DEFAULT);
 		REQUIRE(config.log_level == CONFIG_LOG_LEVEL_DEFAULT);
@@ -255,11 +261,12 @@ TEST_CASE("vaccel_config_release", "[core][config]")
 		.log_level = CONFIG_LOG_LEVEL_DEFAULT,
 		.log_file = CONFIG_LOG_FILE_DEFAULT,
 		.profiling_enabled = CONFIG_PROFILING_ENABLED_DEFAULT,
+		.profiling_backend = nullptr,
 		.version_ignore = CONFIG_VERSION_IGNORE_DEFAULT
 	};
 
 	ret = vaccel_config_init(&config, plugins, log_level, log_file,
-				 profiling_enabled, version_ignore);
+				 profiling_enabled, "base", version_ignore);
 	REQUIRE(ret == VACCEL_OK);
 
 	SECTION("invalid arguments")
@@ -295,7 +302,8 @@ TEST_CASE("vaccel_config_new", "[core][config]")
 	SECTION("success")
 	{
 		ret = vaccel_config_new(&config, plugins, log_level, log_file,
-					profiling_enabled, version_ignore);
+					profiling_enabled, "base",
+					version_ignore);
 		REQUIRE(ret == VACCEL_OK);
 		REQUIRE(config != nullptr);
 
@@ -305,7 +313,8 @@ TEST_CASE("vaccel_config_new", "[core][config]")
 	SECTION("invalid arguments")
 	{
 		ret = vaccel_config_new(nullptr, plugins, log_level, log_file,
-					profiling_enabled, version_ignore);
+					profiling_enabled, "base",
+					version_ignore);
 		REQUIRE(ret == VACCEL_EINVAL);
 		REQUIRE(config == nullptr);
 	}
@@ -340,7 +349,7 @@ TEST_CASE("config_create_from_existing_and_print", "[core][config]")
 	struct vaccel_config *config;
 
 	ret = vaccel_config_init(&config_src, plugins, log_level, log_file,
-				 profiling_enabled, version_ignore);
+				 profiling_enabled, "base", version_ignore);
 	REQUIRE(ret == VACCEL_OK);
 
 	REQUIRE(vaccel_config_from(&config, &config_src) == VACCEL_OK);
