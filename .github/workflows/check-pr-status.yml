@@ -54,10 +54,9 @@ jobs:
           if [[ -n "$PR_NUMBER" ]]; then
             pr_info=$(gh pr view "$PR_NUMBER" \
               --repo "$GITHUB_REPOSITORY" \
-              --json labels,reviews)
+              --json labels,reviewDecision)
 
-            is_approved=$(jq -r '.reviews | any(.state == "APPROVED")' \
-              <<< "$pr_info")
+            is_approved=$(jq -r '.reviewDecision == "APPROVED"' <<< "$pr_info")
 
             if [[ -n "$TEST_LABEL" ]]; then
               has_test_label=$(jq -r --arg lbl "$TEST_LABEL" \
