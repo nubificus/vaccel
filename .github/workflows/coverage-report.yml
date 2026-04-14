@@ -21,6 +21,10 @@ on:
     secrets:
       VACCEL_BOT_PRIVATE_KEY:
         required: false
+      AWS_ACCESS_KEY:
+        required: false
+      AWS_SECRET_ACCESS_KEY:
+        required: false
 
 env:
   ACTIONS_REV: ${{ (github.repository != inputs.actions-repo) && inputs.actions-rev || '' }}
@@ -33,6 +37,10 @@ jobs:
       matrix:
         build-type: [plain]
       fail-fast: false
+    env:
+      DOWNLOAD_PATH: >-
+        ${{ format('{0}/artifacts/downloads/{1}', github.workspace,
+          matrix.build-type) }}
     steps:
       - name: Set repository directories
         id: set-repo-dirs
@@ -66,11 +74,24 @@ jobs:
           token: ${{ steps.generate-init-token.outputs.token || github.token }}
 
       - name: Initialize workspace
+        id: initialize-workspace
         uses: ./.github/actions/initialize-workspace
         with:
           remote-actions-repo: ${{ inputs.actions-repo }}
           dot-github-only: 'true'
           token: ${{ steps.generate-init-token.outputs.token || github.token }}
+
+      - name: Download artifacts from s3
+        id: download-artifacts
+        if: inputs.actions-repo != github.repository
+        uses: ./.github/actions/download-from-s3
+        with:
+          branch: ${{ steps.initialize-workspace.outputs.remote-branch }}
+          build-type: ${{ matrix.build-type }}
+          access-key: ${{ secrets.AWS_ACCESS_KEY }}
+          secret-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          local-path: ${{ env.DOWNLOAD_PATH }}
+          install: 'true'
 
       - name: Checkout current branch
         uses: actions/checkout@v6
@@ -153,12 +174,11 @@ jobs:
 
       - name: PR comment with file
         if: ${{ inputs.comment-diff == true }}
-        uses: thollander/actions-comment-pull-request@v3
+        uses: mshick/add-pr-comment@v3
         with:
-          file-path: ./coverage_diff.md
-          comment-tag: coverage
-          mode: recreate
-          github-token: >-
+          message-path: ./coverage_diff.md
+          message-id: 'coverage'
+          repo-token: >-
             ${{ steps.generate-pr-token.outputs.token || github.token }}
 
       - name: Generate markdown file
@@ -192,5 +212,9 @@ jobs:
       - name: Clean-up
         if: ${{ always() }}
         run: |
-          sudo rm -rf coverage* ${{ steps.set-repo-dirs.outputs.repo }} \
+          sudo rm -rf artifacts coverage* \
+            ${{ steps.set-repo-dirs.outputs.repo }} \
             ${{ steps.set-repo-dirs.outputs.repo-default }}
+          sudo apt-get purge -y \
+            ${{ steps.download-artifacts.outputs.installed }} || echo
+        shell: bash
