@@ -55,8 +55,8 @@ jobs:
       ARCH: ${{ fromJson(inputs.runner-arch-map)[0][matrix.arch] }}
       DOWNLOAD_PATH: ${{github.workspace}}/artifacts/downloads/${{fromJson(inputs.runner-arch-map)[0][matrix.arch]}}/${{matrix.build-type}}
     steps:
-      - name: Generate vaccel-bot token
-        id: generate-token
+      - name: Generate initialization vaccel-bot token
+        id: generate-init-token
         if: vars.VACCEL_BOT_CLIENT_ID
         uses: actions/create-github-app-token@v3
         with:
@@ -71,7 +71,7 @@ jobs:
           sparse-checkout: .github
           repository: ${{ inputs.actions-repo }}
           ref: ${{ env.ACTIONS_REV }}
-          token: ${{ steps.generate-token.outputs.token || github.token }}
+          token: ${{ steps.generate-init-token.outputs.token || github.token }}
 
       - name: Initialize workspace
         id: initialize-workspace
@@ -79,7 +79,7 @@ jobs:
         with:
           fetch-depth: 0
           remote-actions-repo: ${{ inputs.actions-repo }}
-          token: ${{ steps.generate-token.outputs.token || github.token }}
+          token: ${{ steps.generate-init-token.outputs.token || github.token }}
 
       - name: Download artifacts from s3
         id: download-artifacts
@@ -128,15 +128,12 @@ jobs:
         arch: ["${{ fromJSON(inputs.runner-archs) }}"]
         build-type: [release]
       fail-fast: false
-    permissions:
-      pull-requests: write
-      contents: read
     env:
       ARCH: ${{ fromJson(inputs.runner-arch-map)[0][matrix.arch] }}
       DOWNLOAD_PATH: ${{github.workspace}}/artifacts/downloads/${{fromJson(inputs.runner-arch-map)[0][matrix.arch]}}/${{matrix.build-type}}
     steps:
-      - name: Generate vaccel-bot token
-        id: generate-token
+      - name: Generate initialization vaccel-bot token
+        id: generate-init-token
         if: vars.VACCEL_BOT_CLIENT_ID
         uses: actions/create-github-app-token@v3
         with:
@@ -151,7 +148,7 @@ jobs:
           sparse-checkout: .github
           repository: ${{ inputs.actions-repo }}
           ref: ${{ env.ACTIONS_REV }}
-          token: ${{ steps.generate-token.outputs.token || github.token }}
+          token: ${{ steps.generate-init-token.outputs.token || github.token }}
 
       - name: Initialize workspace
         id: initialize-workspace
@@ -159,7 +156,7 @@ jobs:
         with:
           fetch-depth: 0
           remote-actions-repo: ${{ inputs.actions-repo }}
-          token: ${{ steps.generate-token.outputs.token || github.token }}
+          token: ${{ steps.generate-init-token.outputs.token || github.token }}
 
       - name: Download artifacts from s3
         id: download-artifacts
@@ -176,6 +173,16 @@ jobs:
           local-path: ${{ env.DOWNLOAD_PATH }}
           install: 'true'
 
+      - name: Generate linter vaccel-bot token
+        id: generate-linter-token
+        if: vars.VACCEL_BOT_CLIENT_ID
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.VACCEL_BOT_CLIENT_ID }}
+          private-key: ${{ secrets.VACCEL_BOT_PRIVATE_KEY }}
+          permission-contents: read
+          permission-pull-requests: write
+
       - name: Prepare project
         uses: ./.github/actions/build
         with:
@@ -186,9 +193,10 @@ jobs:
 
       - name: Run cpp-linter
         uses: cpp-linter/cpp-linter-action@v2
-        id: cpp_linter
+        id: run-cpp-linter
         env:
-          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_TOKEN: >-
+            ${{ steps.generate-linter-token.outputs.token || github.token }}
           UV_DISABLE_UPDATE: 1
         with:
           style: 'file'  # Use .clang-format config file
@@ -208,7 +216,7 @@ jobs:
         shell: bash
 
       - name: Fail on error
-        if: steps.cpp_linter.outputs.clang-format-checks-failed > 0
+        if: steps.run-cpp-linter.outputs.clang-format-checks-failed > 0
         run: exit 1
 
   linter-super-linter:
@@ -218,10 +226,6 @@ jobs:
       matrix:
         arch: ["${{ fromJSON(inputs.runner-archs) }}"]
       fail-fast: false
-    permissions:
-      contents: read
-      packages: read
-      statuses: write
     steps:
       - name: Parse repository names
         id: parse-repos
@@ -234,8 +238,8 @@ jobs:
           } >> "$GITHUB_OUTPUT"
         shell: bash
 
-      - name: Generate vaccel-bot token
-        id: generate-token
+      - name: Generate initialization vaccel-bot token
+        id: generate-init-token
         if: vars.VACCEL_BOT_CLIENT_ID
         uses: actions/create-github-app-token@v3
         with:
@@ -252,20 +256,32 @@ jobs:
           sparse-checkout: .github
           repository: ${{ inputs.actions-repo }}
           ref: ${{ env.ACTIONS_REV }}
-          token: ${{ steps.generate-token.outputs.token || github.token }}
+          token: ${{ steps.generate-init-token.outputs.token || github.token }}
 
       - name: Initialize workspace
         uses: ./.github/actions/initialize-workspace
         with:
           fetch-depth: 0
           remote-actions-repo: ${{ inputs.actions-repo }}
-          token: ${{ steps.generate-token.outputs.token || github.token }}
+          token: ${{ steps.generate-init-token.outputs.token || github.token }}
+
+      - name: Generate linter vaccel-bot token
+        id: generate-linter-token
+        if: vars.VACCEL_BOT_CLIENT_ID
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.VACCEL_BOT_CLIENT_ID }}
+          private-key: ${{ secrets.VACCEL_BOT_PRIVATE_KEY }}
+          permission-contents: read
+          permission-packages: read
+          permission-statuses: write
 
       - name: Run super-linter
         uses: super-linter/super-linter@v8
         env:
           DEFAULT_BRANCH: main
-          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_TOKEN: >-
+            ${{ steps.generate-linter-token.outputs.token || github.token }}
           ENABLE_GITHUB_PULL_REQUEST_SUMMARY_COMMENT: false
           VALIDATE_ALL_CODEBASE: true
           VALIDATE_PYTHON_RUFF: true

@@ -33,9 +33,6 @@ jobs:
       matrix:
         build-type: [plain]
       fail-fast: false
-    permissions:
-      contents: write
-      pull-requests: write
     steps:
       - name: Set repository directories
         id: set-repo-dirs
@@ -50,8 +47,8 @@ jobs:
           }  >> "$GITHUB_OUTPUT"
         shell: bash
 
-      - name: Generate vaccel-bot token
-        id: generate-token
+      - name: Generate initialization vaccel-bot token
+        id: generate-init-token
         if: vars.VACCEL_BOT_CLIENT_ID
         uses: actions/create-github-app-token@v3
         with:
@@ -66,14 +63,14 @@ jobs:
           sparse-checkout: .github
           repository: ${{ inputs.actions-repo }}
           ref: ${{ env.ACTIONS_REV }}
-          token: ${{ steps.generate-token.outputs.token || github.token }}
+          token: ${{ steps.generate-init-token.outputs.token || github.token }}
 
       - name: Initialize workspace
         uses: ./.github/actions/initialize-workspace
         with:
           remote-actions-repo: ${{ inputs.actions-repo }}
           dot-github-only: 'true'
-          token: ${{ steps.generate-token.outputs.token || github.token }}
+          token: ${{ steps.generate-init-token.outputs.token || github.token }}
 
       - name: Checkout current branch
         uses: actions/checkout@v6
@@ -141,6 +138,19 @@ jobs:
             cat coverage_diff.txt >> coverage_diff.md
         shell: bash
 
+      - name: Generate PR vaccel-bot token
+        id: generate-pr-token
+        if: >-
+          ${{ vars.VACCEL_BOT_CLIENT_ID &&
+            (inputs.comment-diff == true || inputs.commit == true) }}
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.VACCEL_BOT_CLIENT_ID }}
+          private-key: ${{ secrets.VACCEL_BOT_PRIVATE_KEY }}
+          permission-contents: >-
+            ${{ inputs.commit == true && 'write' || 'read' }}
+          permission-pull-requests: write
+
       - name: PR comment with file
         if: ${{ inputs.comment-diff == true }}
         uses: thollander/actions-comment-pull-request@v3
@@ -148,6 +158,8 @@ jobs:
           file-path: ./coverage_diff.md
           comment-tag: coverage
           mode: recreate
+          github-token: >-
+            ${{ steps.generate-pr-token.outputs.token || github.token }}
 
       - name: Generate markdown file
         id: generate-md-file
@@ -175,6 +187,7 @@ jobs:
           branch: ${{ github.event.pull_request.head.ref || github.ref_name }} 
           file: ${{ steps.generate-md-file.outputs.coverage-file }}
           message: "docs(coverage): Update coverage report"
+          token: ${{ steps.generate-pr-token.outputs.token || github.token }}
 
       - name: Clean-up
         if: ${{ always() }}

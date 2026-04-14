@@ -32,8 +32,8 @@ jobs:
           } >> "$GITHUB_OUTPUT"
         shell: bash
 
-      - name: Generate vaccel-bot token
-        id: generate-token
+      - name: Generate initialization vaccel-bot token
+        id: generate-init-token
         if: vars.VACCEL_BOT_CLIENT_ID
         uses: actions/create-github-app-token@v3
         with:
@@ -50,14 +50,14 @@ jobs:
           sparse-checkout: .github
           repository: ${{ inputs.actions-repo }}
           ref: ${{ env.ACTIONS_REV }}
-          token: ${{ steps.generate-token.outputs.token || github.token }}
+          token: ${{ steps.generate-init-token.outputs.token || github.token }}
 
       - name: Initialize workspace
         uses: ./.github/actions/initialize-workspace
         with:
           submodules: 'false'
           remote-actions-repo: ${{ inputs.actions-repo }}
-          token: ${{ steps.generate-token.outputs.token || github.token }}
+          token: ${{ steps.generate-init-token.outputs.token || github.token }}
 
       - name: Run commitlint
         uses: wagoid/commitlint-github-action@v6
@@ -79,8 +79,8 @@ jobs:
           } >> "$GITHUB_OUTPUT"
         shell: bash
 
-      - name: Generate vaccel-bot token
-        id: generate-token
+      - name: Generate initialization vaccel-bot token
+        id: generate-init-token
         if: vars.VACCEL_BOT_CLIENT_ID
         uses: actions/create-github-app-token@v3
         with:
@@ -97,14 +97,14 @@ jobs:
           sparse-checkout: .github
           repository: ${{ inputs.actions-repo }}
           ref: ${{ env.ACTIONS_REV }}
-          token: ${{ steps.generate-token.outputs.token || github.token }}
+          token: ${{ steps.generate-init-token.outputs.token || github.token }}
 
       - name: Initialize workspace
         uses: ./.github/actions/initialize-workspace
         with:
           submodules: 'false'
           remote-actions-repo: ${{ inputs.actions-repo }}
-          token: ${{ steps.generate-token.outputs.token || github.token }}
+          token: ${{ steps.generate-init-token.outputs.token || github.token }}
 
       - name: Spell check
         uses: crate-ci/typos@master
@@ -126,8 +126,8 @@ jobs:
           } >> "$GITHUB_OUTPUT"
         shell: bash
 
-      - name: Generate vaccel-bot token
-        id: generate-token
+      - name: Generate initialization vaccel-bot token
+        id: generate-init-token
         if: vars.VACCEL_BOT_CLIENT_ID
         uses: actions/create-github-app-token@v3
         with:
@@ -144,14 +144,24 @@ jobs:
           sparse-checkout: .github
           repository: ${{ inputs.actions-repo }}
           ref: ${{ env.ACTIONS_REV }}
-          token: ${{ steps.generate-token.outputs.token || github.token }}
+          token: ${{ steps.generate-init-token.outputs.token || github.token }}
 
       - name: Initialize workspace
         uses: ./.github/actions/initialize-workspace
         with:
           submodules: 'false'
           remote-actions-repo: ${{ inputs.actions-repo }}
-          token: ${{ steps.generate-token.outputs.token || github.token }}
+          token: ${{ steps.generate-init-token.outputs.token || github.token }}
+
+      - name: Generate linter vaccel-bot token
+        id: generate-linter-token
+        if: vars.VACCEL_BOT_CLIENT_ID
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.VACCEL_BOT_CLIENT_ID }}
+          private-key: ${{ secrets.VACCEL_BOT_PRIVATE_KEY }}
+          permission-contents: read
+          permission-pull-requests: write
 
       - name: Prepare GO environment
         run: |
@@ -167,4 +177,5 @@ jobs:
         uses: apache/skywalking-eyes/header@main
         with:
           config: .github/linters/licenserc.yml
-          token: ${{ steps.generate-token.outputs.token || github.token }}
+          token: >-
+            ${{ steps.generate-linter-token.outputs.token || github.token }}
