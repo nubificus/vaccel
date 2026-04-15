@@ -11,6 +11,7 @@
 #include "list.h"
 #include "log.h"
 #include "plugin.h"
+#include "prof.h"
 #include "resource_registration.h"
 #include "session.h"
 #include "utils/fs.h"
@@ -1025,17 +1026,25 @@ int vaccel_resource_register(struct vaccel_resource *res,
 			     struct vaccel_session *sess)
 {
 	int ret;
+	struct vaccel_prof_region prof;
 
-	if (!resources.initialized)
-		return VACCEL_EPERM;
+	vaccel_prof_region_init(&prof, "resource_register");
+	vaccel_prof_region_start(&prof);
 
-	if (!res || !sess)
-		return VACCEL_EINVAL;
+	if (!resources.initialized) {
+		ret = VACCEL_EPERM;
+		goto out;
+	}
+
+	if (!res || !sess) {
+		ret = VACCEL_EINVAL;
+		goto out;
+	}
 
 	ret = resource_load_data(res, sess);
 	if (ret) {
 		vaccel_error("Failed to load resource data");
-		return ret;
+		goto out;
 	}
 
 	if (sess->plugin->info->resource_register) {
@@ -1047,32 +1056,34 @@ int vaccel_resource_register(struct vaccel_resource *res,
 			vaccel_error("session:%" PRId64
 				     " Failed to register %sresource %" PRId64,
 				     sess->id, rem_str, res_id);
-			return ret;
+			goto out;
 		}
 	} else if (sess->is_virtio) {
 		vaccel_error(
 			"session:%" PRId64
 			" Cannot register remote resource; no VirtIO plugin loaded yet",
 			sess->id);
-		return VACCEL_ENOTSUP;
+		ret = VACCEL_ENOTSUP;
+		goto out;
 	}
 
 	if (resource_registration_find(res, sess)) {
 		vaccel_warn("session:%" PRId64 " Resource %" PRId64
 			    " already registered",
 			    sess->id, res->id);
-		return VACCEL_OK;
+		ret = VACCEL_OK;
+		goto out;
 	}
 
 	struct resource_registration *reg;
 	ret = resource_registration_new(&reg, res, sess);
 	if (ret)
-		return ret;
+		goto out;
 
 	ret = resource_registration_link(reg);
 	if (ret) {
 		resource_registration_delete(reg);
-		return ret;
+		goto out;
 	}
 
 	if (sess->is_virtio) {
@@ -1084,21 +1095,36 @@ int vaccel_resource_register(struct vaccel_resource *res,
 			     sess->id, res->id);
 	}
 
-	return VACCEL_OK;
+	ret = VACCEL_OK;
+
+out:
+	vaccel_prof_region_stop(&prof);
+	return ret;
 }
 
 int vaccel_resource_unregister(struct vaccel_resource *res,
 			       struct vaccel_session *sess)
 {
-	if (!resources.initialized)
-		return VACCEL_EPERM;
+	int ret;
+	struct vaccel_prof_region prof;
 
-	if (!res || !sess)
-		return VACCEL_EINVAL;
+	vaccel_prof_region_init(&prof, "resource_unregister");
+	vaccel_prof_region_start(&prof);
+
+	if (!resources.initialized) {
+		ret = VACCEL_EPERM;
+		goto out;
+	}
+
+	if (!res || !sess) {
+		ret = VACCEL_EINVAL;
+		goto out;
+	}
 
 	if (res->id <= 0) {
 		vaccel_error("Cannot unregister uninitialized resource");
-		return VACCEL_EINVAL;
+		ret = VACCEL_EINVAL;
+		goto out;
 	}
 
 	struct resource_registration *reg =
@@ -1107,16 +1133,17 @@ int vaccel_resource_unregister(struct vaccel_resource *res,
 		vaccel_error("session:%" PRId64 " Resource %" PRId64
 			     " not registered",
 			     sess->id, res->id);
-		return VACCEL_EINVAL;
+		ret = VACCEL_EINVAL;
+		goto out;
 	}
 
-	int ret = resource_registration_delete(reg);
+	ret = resource_registration_delete(reg);
 	if (ret) {
 		vaccel_error("session:%" PRId64
 			     " Failed to delete resource %" PRId64
 			     " registration",
 			     sess->id, res->id);
-		return ret;
+		goto out;
 	}
 
 	if (sess->plugin->info->resource_unregister) {
@@ -1129,20 +1156,25 @@ int vaccel_resource_unregister(struct vaccel_resource *res,
 				"session:%" PRId64
 				" Failed to unregister %sresource %" PRId64,
 				sess->id, rem_str, res_id);
-			return ret;
+			goto out;
 		}
 	} else if (sess->is_virtio) {
 		vaccel_error("session:%" PRId64
 			     " Cannot unregister remote resource %" PRId64
 			     "; no VirtIO plugin loaded yet",
 			     sess->id, res->remote_id);
-		return VACCEL_ENOTSUP;
+		ret = VACCEL_ENOTSUP;
+		goto out;
 	}
 
 	vaccel_debug("session:%" PRId64 " Unregistered resource %" PRId64,
 		     sess->id, res->id);
 
-	return VACCEL_OK;
+	ret = VACCEL_OK;
+
+out:
+	vaccel_prof_region_stop(&prof);
+	return ret;
 }
 
 int vaccel_resource_sync(struct vaccel_resource *res,
