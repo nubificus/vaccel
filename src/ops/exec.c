@@ -11,6 +11,7 @@
 #include "resource.h"
 #include "session.h"
 #include <inttypes.h>
+#include <stddef.h>
 #include <stdint.h>
 
 static struct vaccel_prof_region exec_op_stats =
@@ -26,6 +27,7 @@ int vaccel_exec(struct vaccel_session *sess, const char *library,
 		struct vaccel_arg *write, size_t nr_write)
 {
 	int ret;
+	const char *plugin_name = NULL;
 
 	if (!sess)
 		return VACCEL_EINVAL;
@@ -45,7 +47,11 @@ int vaccel_exec(struct vaccel_session *sess, const char *library,
 			  nr_write);
 
 out:
-	vaccel_prof_region_stop(&exec_op_stats);
+	if (sess->plugin && sess->plugin->info)
+		plugin_name = sess->plugin->info->name;
+
+	vaccel_prof_region_stop_with_context(&exec_op_stats, op_type,
+					     plugin_name);
 
 	return ret;
 }
@@ -112,6 +118,7 @@ int vaccel_exec_with_resource(struct vaccel_session *sess,
 			      size_t nr_write)
 {
 	int ret;
+	const char *plugin_name = NULL;
 
 	if (!sess || !resource)
 		return VACCEL_EINVAL;
@@ -145,7 +152,11 @@ int vaccel_exec_with_resource(struct vaccel_session *sess,
 					nr_read, write, nr_write);
 
 out:
-	vaccel_prof_region_stop(&exec_res_op_stats);
+	if (sess->plugin && sess->plugin->info)
+		plugin_name = sess->plugin->info->name;
+
+	vaccel_prof_region_stop_with_context(&exec_res_op_stats, op_type,
+					     plugin_name);
 
 	return ret;
 }

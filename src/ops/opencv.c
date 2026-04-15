@@ -7,6 +7,7 @@
 #include "prof.h"
 #include "session.h"
 #include <inttypes.h>
+#include <stddef.h>
 #include <stdint.h>
 
 static struct vaccel_prof_region opencv_op_stats =
@@ -19,6 +20,7 @@ int vaccel_opencv(struct vaccel_session *sess, struct vaccel_arg *read,
 		  int nr_read, struct vaccel_arg *write, int nr_write)
 {
 	int ret;
+	const char *plugin_name = NULL;
 
 	if (!sess)
 		return VACCEL_EINVAL;
@@ -37,7 +39,11 @@ int vaccel_opencv(struct vaccel_session *sess, struct vaccel_arg *read,
 	ret = plugin_opencv(sess, read, nr_read, write, nr_write);
 
 out:
-	vaccel_prof_region_stop(&opencv_op_stats);
+	if (sess->plugin && sess->plugin->info)
+		plugin_name = sess->plugin->info->name;
+
+	vaccel_prof_region_stop_with_context(&opencv_op_stats, op_type,
+					     plugin_name);
 
 	return ret;
 }

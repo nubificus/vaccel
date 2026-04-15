@@ -9,6 +9,7 @@
 #include "prof.h"
 #include "session.h"
 #include <inttypes.h>
+#include <stddef.h>
 #include <stdint.h>
 
 static struct vaccel_prof_region noop_op_stats =
@@ -34,7 +35,13 @@ int vaccel_noop(struct vaccel_session *sess)
 
 	ret = plugin_noop(sess);
 
-	vaccel_prof_region_stop(&noop_op_stats);
+	const char *plugin_name = NULL;
+
+	if (sess->plugin && sess->plugin->info)
+		plugin_name = sess->plugin->info->name;
+
+	vaccel_prof_region_stop_with_context(&noop_op_stats, op_type,
+					     plugin_name);
 
 	return ret;
 }

@@ -160,6 +160,7 @@ int vaccel_tflite_model_load(struct vaccel_session *sess,
 			     struct vaccel_resource *model)
 {
 	int ret;
+	const char *plugin_name = NULL;
 
 	if (!sess || !model)
 		return VACCEL_EINVAL;
@@ -192,7 +193,11 @@ int vaccel_tflite_model_load(struct vaccel_session *sess,
 	ret = plugin_tflite_model_load(sess, model);
 
 out:
-	vaccel_prof_region_stop(&tflite_model_load_op_stats);
+	if (sess->plugin && sess->plugin->info)
+		plugin_name = sess->plugin->info->name;
+
+	vaccel_prof_region_stop_with_context(&tflite_model_load_op_stats,
+					     op_type, plugin_name);
 
 	return ret;
 }
@@ -207,6 +212,7 @@ int vaccel_tflite_model_unload(struct vaccel_session *sess,
 			       struct vaccel_resource *model)
 {
 	int ret;
+	const char *plugin_name = NULL;
 
 	if (!sess || !model)
 		return VACCEL_EINVAL;
@@ -239,7 +245,11 @@ int vaccel_tflite_model_unload(struct vaccel_session *sess,
 	ret = plugin_tflite_model_unload(sess, model);
 
 out:
-	vaccel_prof_region_stop(&tflite_model_unload_op_stats);
+	if (sess->plugin && sess->plugin->info)
+		plugin_name = sess->plugin->info->name;
+
+	vaccel_prof_region_stop_with_context(&tflite_model_unload_op_stats,
+					     op_type, plugin_name);
 
 	return ret;
 }
@@ -262,6 +272,7 @@ int vaccel_tflite_model_run(struct vaccel_session *sess,
 			    int nr_outputs, uint8_t *status)
 {
 	int ret;
+	const char *plugin_name = NULL;
 
 	if (!sess || !model)
 		return VACCEL_EINVAL;
@@ -295,7 +306,11 @@ int vaccel_tflite_model_run(struct vaccel_session *sess,
 				  nr_outputs, status);
 
 out:
-	vaccel_prof_region_stop(&tflite_model_run_op_stats);
+	if (sess->plugin && sess->plugin->info)
+		plugin_name = sess->plugin->info->name;
+
+	vaccel_prof_region_stop_with_context(&tflite_model_run_op_stats,
+					     op_type, plugin_name);
 
 	return ret;
 }

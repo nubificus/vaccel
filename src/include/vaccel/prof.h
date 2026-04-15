@@ -6,6 +6,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include <vaccel/op.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -44,6 +46,11 @@ int vaccel_prof_region_start(struct vaccel_prof_region *region);
 
 /* Stop profiling a region */
 int vaccel_prof_region_stop(const struct vaccel_prof_region *region);
+
+/* Stop profiling a region with operation context */
+int vaccel_prof_region_stop_with_context(const struct vaccel_prof_region *region,
+					 vaccel_op_type_t op_type,
+					 const char *plugin_name);
 
 /* Print profiling results of a region */
 int vaccel_prof_region_print(const struct vaccel_prof_region *region);
