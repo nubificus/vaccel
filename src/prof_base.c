@@ -367,6 +367,7 @@ vaccel_prof_base_regions_print_all_to_buf(char **tbuf, size_t tbuf_len,
 static const struct vaccel_prof_backend prof_base_backend = {
 	.region_start = vaccel_prof_base_region_start,
 	.region_stop = vaccel_prof_base_region_stop,
+	.region_stop_with_context = NULL,
 	.region_init = vaccel_prof_base_region_init,
 	.region_release = vaccel_prof_base_region_release,
 	.region_print = vaccel_prof_base_region_print,

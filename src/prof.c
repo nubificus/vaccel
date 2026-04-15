@@ -39,6 +39,27 @@ int vaccel_prof_region_stop(const struct vaccel_prof_region *region)
 	return vaccel_prof_backend_get()->region_stop(region);
 }
 
+int vaccel_prof_region_stop_with_context(const struct vaccel_prof_region *region,
+					 vaccel_op_type_t op_type,
+					 const char *plugin_name)
+
+{
+	if (!vaccel_prof_enabled())
+		return VACCEL_OK;
+
+	if (!region) {
+		vaccel_error("[prof] init region: Invalid profiling region");
+		return VACCEL_EINVAL;
+	}
+
+	const struct vaccel_prof_backend *backend = vaccel_prof_backend_get();
+
+	if (!backend->region_stop_with_context)
+		return backend->region_stop(region);
+
+	return backend->region_stop_with_context(region, op_type, plugin_name);
+}
+
 int vaccel_prof_region_init(struct vaccel_prof_region *region, const char *name)
 {
 	if (!vaccel_prof_enabled())
