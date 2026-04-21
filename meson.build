@@ -39,7 +39,6 @@ libm_dep = cc.find_library('m')
 
 subdir('src')
 subdir('plugins')
-subdir('python')
 
 fs = import('fs')
 
