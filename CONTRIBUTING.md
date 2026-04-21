@@ -24,8 +24,6 @@ The vAccel project is structured as follows:
   headers.
 - **`/plugins`:** Contains the implementation of core vAccel plugins.
 - **`/examples`:** Provides examples demonstrating library/API usage.
-- **`/python`:** Includes a library implementation for vAccel python
-  integration.
 - **`/docs`:** Houses project documentation.
 - **`/scripts`:** Contains scripts used for building and distributing vAccel.
 - **`/subprojects`:** Holds Meson-specific files for fetching/compiling build
