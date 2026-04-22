@@ -2,31 +2,27 @@
 
 #pragma once
 
-#include "prof.h"
+#include "include/vaccel/prof_backend.h" // IWYU pragma: export
 
-struct vaccel_prof_backend {
-	int (*region_start)(struct vaccel_prof_region *region);
-	int (*region_stop)(const struct vaccel_prof_region *region);
-	int (*region_stop_with_context)(const struct vaccel_prof_region *region,
-					vaccel_op_type_t op_type,
-					const char *plugin_name);
-	int (*region_init)(struct vaccel_prof_region *region, const char *name);
-	int (*region_release)(struct vaccel_prof_region *region);
-	int (*region_print)(const struct vaccel_prof_region *region);
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-	int (*regions_start_by_name)(struct vaccel_prof_region *regions,
-				     int nregions, const char *name);
-	int (*regions_stop_by_name)(struct vaccel_prof_region *regions,
-				    int nregions, const char *name);
-	int (*regions_init)(struct vaccel_prof_region *regions, int nregions);
-	int (*regions_release)(struct vaccel_prof_region *regions,
-			       int nregions);
-	int (*regions_print_all)(struct vaccel_prof_region *regions,
-				 int nregions);
-	int (*regions_print_all_to_buf)(char **tbuf, size_t tbuf_len,
-					struct vaccel_prof_region *regions,
-					int size);
-};
+/* Initialize the profiling selection with the built-in base backend. */
+int prof_backends_bootstrap(void);
 
+/* Clear the profiling backend selection. */
+int prof_backends_cleanup(void);
+
+/* Select active profiling backend after plugins have been loaded. */
+int prof_backend_select(void);
+
+/* Get the active profiling backend. */
 const struct vaccel_prof_backend *vaccel_prof_backend_get(void);
+
+/* Getter for the base backend. */
 const struct vaccel_prof_backend *vaccel_prof_base_backend_get(void);
+
+#ifdef __cplusplus
+}
+#endif

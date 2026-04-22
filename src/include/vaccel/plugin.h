@@ -4,6 +4,7 @@
 
 #include "list.h"
 #include "op.h"
+#include "prof_backend.h"
 #include "resource.h"
 #include "session.h"
 #include "utils/enum.h"
@@ -29,6 +30,7 @@ extern "C" {
 	VACCEL_ENUM_ITEM(JETSON, 0x0040, _ENUM_PREFIX)     \
 	VACCEL_ENUM_ITEM(GENERIC, 0x0080, _ENUM_PREFIX)    \
 	VACCEL_ENUM_ITEM(DEBUG, 0x0100, _ENUM_PREFIX)      \
+	VACCEL_ENUM_ITEM(PROFILING, 0x0200, _ENUM_PREFIX)  \
 	VACCEL_ENUM_ITEM(REMOTE, 0x4000, _ENUM_PREFIX)     \
 	VACCEL_ENUM_ITEM(ALL, 0xffff, _ENUM_PREFIX)
 
@@ -69,6 +71,9 @@ struct vaccel_plugin_info {
 				   struct vaccel_session *sess);
 	int (*resource_sync)(struct vaccel_resource *res,
 			     struct vaccel_session *sess);
+
+	/* profiling backend for this plugin */
+	const struct vaccel_prof_backend *prof_backend;
 };
 
 struct vaccel_plugin {

@@ -206,7 +206,7 @@ TEST_CASE("vaccel_config_init", "[core][config]")
 	SECTION("success")
 	{
 		ret = vaccel_config_init(&config, plugins, log_level, log_file,
-					 profiling_enabled, "base",
+					 profiling_enabled, "builtin",
 					 version_ignore);
 		REQUIRE(ret == VACCEL_OK);
 		REQUIRE(strcmp(config.plugins, plugins) == 0);
@@ -221,7 +221,7 @@ TEST_CASE("vaccel_config_init", "[core][config]")
 	SECTION("success with null strings")
 	{
 		ret = vaccel_config_init(&config, nullptr, log_level, nullptr,
-					 profiling_enabled, "base",
+					 profiling_enabled, "builtin",
 					 version_ignore);
 		REQUIRE(ret == VACCEL_OK);
 		REQUIRE(config.plugins == nullptr);
@@ -236,7 +236,7 @@ TEST_CASE("vaccel_config_init", "[core][config]")
 	SECTION("invalid arguments")
 	{
 		ret = vaccel_config_init(nullptr, plugins, log_level, log_file,
-					 profiling_enabled, "base",
+					 profiling_enabled, "builtin",
 					 version_ignore);
 		REQUIRE(ret == VACCEL_EINVAL);
 		REQUIRE(config.plugins == CONFIG_PLUGINS_DEFAULT);
@@ -266,7 +266,7 @@ TEST_CASE("vaccel_config_release", "[core][config]")
 	};
 
 	ret = vaccel_config_init(&config, plugins, log_level, log_file,
-				 profiling_enabled, "base", version_ignore);
+				 profiling_enabled, "builtin", version_ignore);
 	REQUIRE(ret == VACCEL_OK);
 
 	SECTION("invalid arguments")
@@ -302,7 +302,7 @@ TEST_CASE("vaccel_config_new", "[core][config]")
 	SECTION("success")
 	{
 		ret = vaccel_config_new(&config, plugins, log_level, log_file,
-					profiling_enabled, "base",
+					profiling_enabled, "builtin",
 					version_ignore);
 		REQUIRE(ret == VACCEL_OK);
 		REQUIRE(config != nullptr);
@@ -313,7 +313,7 @@ TEST_CASE("vaccel_config_new", "[core][config]")
 	SECTION("invalid arguments")
 	{
 		ret = vaccel_config_new(nullptr, plugins, log_level, log_file,
-					profiling_enabled, "base",
+					profiling_enabled, "builtin",
 					version_ignore);
 		REQUIRE(ret == VACCEL_EINVAL);
 		REQUIRE(config == nullptr);
@@ -349,7 +349,7 @@ TEST_CASE("config_create_from_existing_and_print", "[core][config]")
 	struct vaccel_config *config;
 
 	ret = vaccel_config_init(&config_src, plugins, log_level, log_file,
-				 profiling_enabled, "base", version_ignore);
+				 profiling_enabled, "builtin", version_ignore);
 	REQUIRE(ret == VACCEL_OK);
 
 	REQUIRE(vaccel_config_from(&config, &config_src) == VACCEL_OK);

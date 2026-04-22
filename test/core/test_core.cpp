@@ -107,7 +107,8 @@ TEST_CASE("bootstrap_with_config_and_cleanup", "[core]")
 	struct vaccel_config config_test;
 
 	int ret = vaccel_config_init(&config_test, plugins, log_level, log_file,
-				     profiling_enabled, "base", version_ignore);
+				     profiling_enabled, "builtin",
+				     version_ignore);
 	REQUIRE(ret == VACCEL_OK);
 
 	SECTION("invalid arguments")
@@ -157,7 +158,7 @@ TEST_CASE("bootstrap_initialized_and_cleanup", "[core]")
 	REQUIRE(ret == VACCEL_OK);
 
 	ret = vaccel_config_init(&config_test, plugins, log_level, log_file,
-				 profiling_enabled, "base", version_ignore);
+				 profiling_enabled, "builtin", version_ignore);
 	REQUIRE(ret == VACCEL_OK);
 
 	/* Initialize again with different config */
@@ -215,7 +216,8 @@ TEST_CASE("sessions_cleanup_existing", "[core]")
 	struct vaccel_config config_test;
 
 	REQUIRE(vaccel_config_init(&config_test, plugins, VACCEL_LOG_DEBUG,
-				   nullptr, false, "base", false) == VACCEL_OK);
+				   nullptr, false, "builtin",
+				   false) == VACCEL_OK);
 	REQUIRE(vaccel_bootstrap_with_config(&config_test) == VACCEL_OK);
 
 	for (auto &ses : sess)
@@ -266,7 +268,8 @@ TEST_CASE("resources_cleanup_existing", "[core]")
 	struct vaccel_config config_test;
 
 	REQUIRE(vaccel_config_init(&config_test, plugins, VACCEL_LOG_DEBUG,
-				   nullptr, false, "base", false) == VACCEL_OK);
+				   nullptr, false, "builtin",
+				   false) == VACCEL_OK);
 	REQUIRE(vaccel_bootstrap_with_config(&config_test) == VACCEL_OK);
 
 	for (auto &re : res)

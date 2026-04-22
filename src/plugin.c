@@ -283,6 +283,12 @@ int vaccel_plugin_register_ops(struct vaccel_op *ops, size_t nr_ops)
 	return VACCEL_OK;
 }
 
+/* A plugin serves ops unless its type declares nothing beyond PROFILING. */
+static inline bool plugin_serves_ops(const struct vaccel_plugin *plugin)
+{
+	return plugin->info->type != VACCEL_PLUGIN_PROFILING;
+}
+
 struct vaccel_plugin *plugin_find(unsigned int hint)
 {
 	unsigned int env_priority = hint & (~VACCEL_PLUGIN_REMOTE);
@@ -303,6 +309,8 @@ struct vaccel_plugin *plugin_find(unsigned int hint)
 	if (VACCEL_PLUGIN_REMOTE & hint) {
 		plugin_for_each(plugin, &plugins.all)
 		{
+			if (!plugin_serves_ops(plugin))
+				continue;
 			if (plugin->info->is_virtio) {
 				pthread_mutex_unlock(&plugins.lock);
 				return plugin;
@@ -318,6 +326,8 @@ struct vaccel_plugin *plugin_find(unsigned int hint)
 	if (env_priority) {
 		plugin_for_each(plugin, &plugins.all)
 		{
+			if (!plugin_serves_ops(plugin))
+				continue;
 			if ((env_priority & plugin->info->type) != 0) {
 				pthread_mutex_unlock(&plugins.lock);
 				return plugin;
@@ -329,6 +339,8 @@ struct vaccel_plugin *plugin_find(unsigned int hint)
 	// or any implementation if it's a single one
 	plugin_for_each(plugin, &plugins.all)
 	{
+		if (!plugin_serves_ops(plugin))
+			continue;
 		if (!plugin->info->is_virtio || plugins.count == 1) {
 			pthread_mutex_unlock(&plugins.lock);
 			return plugin;
@@ -337,6 +349,34 @@ struct vaccel_plugin *plugin_find(unsigned int hint)
 
 	pthread_mutex_unlock(&plugins.lock);
 	vaccel_error("Could not select plugin, no local plugin registered");
+
+	return NULL;
+}
+
+struct vaccel_plugin *plugin_find_by_name(const char *name)
+{
+	if (!name)
+		return NULL;
+
+	pthread_mutex_lock(&plugins.lock);
+
+	if (list_empty(&plugins.all)) {
+		pthread_mutex_unlock(&plugins.lock);
+		vaccel_error("No plugins registered");
+		return NULL;
+	}
+
+	struct vaccel_plugin *plugin = NULL;
+	plugin_for_each(plugin, &plugins.all)
+	{
+		if (strcmp(plugin->info->name, name) == 0) {
+			pthread_mutex_unlock(&plugins.lock);
+			return plugin;
+		}
+	}
+
+	pthread_mutex_unlock(&plugins.lock);
+	vaccel_error("Plugin '%s' is not registered", name);
 
 	return NULL;
 }
@@ -393,6 +433,19 @@ int vaccel_plugin_load(const char *lib)
 	if (!plugin) {
 		vaccel_error("%s is not a vaccel plugin", lib);
 		ret = VACCEL_ELIBBAD;
+		goto close_dl;
+	}
+
+	if (!(*plugin)->info || !(*plugin)->info->name) {
+		vaccel_error("%s has invalid plugin info", lib);
+		ret = VACCEL_EINVAL;
+		goto close_dl;
+	}
+
+	if (strcmp((*plugin)->info->name, "builtin") == 0) {
+		vaccel_error("Plugin name '%s' is reserved and cannot be used",
+			     (*plugin)->info->name);
+		ret = VACCEL_EINVAL;
 		goto close_dl;
 	}
 
