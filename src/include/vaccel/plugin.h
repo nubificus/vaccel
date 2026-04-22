@@ -4,6 +4,7 @@
 
 #include "list.h"
 #include "op.h"
+#include "prof_backend.h"
 #include "resource.h"
 #include "session.h"
 #include "utils/enum.h"
@@ -29,6 +30,7 @@ extern "C" {
 	VACCEL_ENUM_ITEM(JETSON, 0x0040, _ENUM_PREFIX)     \
 	VACCEL_ENUM_ITEM(GENERIC, 0x0080, _ENUM_PREFIX)    \
 	VACCEL_ENUM_ITEM(DEBUG, 0x0100, _ENUM_PREFIX)      \
+	VACCEL_ENUM_ITEM(PROFILING, 0x0200, _ENUM_PREFIX)  \
 	VACCEL_ENUM_ITEM(REMOTE, 0x4000, _ENUM_PREFIX)     \
 	VACCEL_ENUM_ITEM(ALL, 0xffff, _ENUM_PREFIX)
 
@@ -100,6 +102,14 @@ struct vaccel_plugin {
 
 /* Register operations from an array of operations */
 int vaccel_plugin_register_ops(struct vaccel_op *ops, size_t nr_ops);
+
+/* Register a profiling backend by name.
+ * The backend must stay valid until it is unregistered. */
+int vaccel_plugin_register_prof_backend(
+	const char *name, const struct vaccel_prof_backend *backend);
+
+/* Unregister a profiling backend by name. */
+int vaccel_plugin_unregister_prof_backend(const char *name);
 
 /* Load a plugin from a filename or path.
  * If a filename is provided, the compiler's library paths will be searched */
