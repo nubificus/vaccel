@@ -129,6 +129,8 @@ static int vaccel_prof_base_region_init(struct vaccel_prof_region *region,
 	region->name_owned = true;
 
 	region->nr_entries = 0;
+	region->samples = NULL;
+	region->size = 0;
 	if (grow_samples_array(region) != VACCEL_OK)
 		goto free_name;
 
