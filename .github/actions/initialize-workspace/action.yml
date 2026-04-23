@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 name: 'Initialize Workspace'
 description: 'Cleanup runner and checkout project code'
 

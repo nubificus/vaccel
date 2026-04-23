@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 name: 'Render Template'
 description: 'Render a Jinja2 template with JSON data'
 

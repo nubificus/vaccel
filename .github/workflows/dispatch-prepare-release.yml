@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 name: Prepare Release
 run-name: >-
   ${{ format('Prepare release · {0} ({1})',
