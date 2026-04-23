@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 name: 'Manage GitHub Release'
 description: >
   Create or update a GitHub release. Requires the repository to be checked out

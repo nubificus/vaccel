@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 name: 'Manage Release State'
 description: 'Manage release state in GitHub issues'
 

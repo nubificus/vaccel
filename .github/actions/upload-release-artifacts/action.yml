@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 name: 'Upload Release Artifacts'
 description: 'Download artifacts from S3 and upload to GitHub release'
 

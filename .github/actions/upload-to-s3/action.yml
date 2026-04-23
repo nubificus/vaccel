@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 name: 'Upload to s3'
 description: 'Upload artifacts to s3'
 

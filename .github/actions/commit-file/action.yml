@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 name: 'Commit File'
 description: 'Commit file (signed)'
 

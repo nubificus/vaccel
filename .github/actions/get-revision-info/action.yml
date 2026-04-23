@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 name: 'Get GitHub Revision Info'
 description: 'Get GitHub revision information'
 

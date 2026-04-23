@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 name: Release Orchestrator
 run-name: >-
   ${{ github.event_name == 'pull_request'

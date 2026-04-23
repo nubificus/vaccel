@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 name: 'Add or Remove PR Label'
 description: 'Add, remove or readd pull request label'
 
