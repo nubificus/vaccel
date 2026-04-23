@@ -1,0 +1,18 @@
+name: Update NOTICE
+
+on:
+  schedule:
+    # 00:05 UTC on January 1st every year
+    - cron: '5 0 1 1 *'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+
+permissions: read-all
+
+jobs:
+  update-notice:
+    name: Update NOTICE Year
+    uses: ./.github/workflows/update-notice-year.yml
+    secrets: inherit

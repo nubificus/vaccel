@@ -1,0 +1,153 @@
+name: Update NOTICE Year
+
+on:
+  workflow_call:
+    inputs:
+      actions-repo:
+        description: 'Repository with remote actions'
+        type: string
+        default: 'nubificus/vaccel'
+      actions-ref:
+        description: 'Revision of remote actions repository'
+        type: string
+        default: 'main'
+    secrets:
+      VACCEL_BOT_PRIVATE_KEY:
+        required: false
+
+permissions: read-all
+
+env:
+  ACTIONS_REF: >-
+    ${{ github.repository != inputs.actions-repo && inputs.actions-ref || '' }}
+
+jobs:
+  update-notice:
+    name: Update NOTICE copyright year
+    runs-on: base-2204-amd64
+    steps:
+      - name: Parse repository names
+        id: parse-repos
+        env:
+          ACTIONS_REPO: ${{ inputs.actions-repo }}
+        run: |
+          {
+            echo "repo-name=$(basename "$GITHUB_REPOSITORY")"
+            echo "actions-repo-name=$(basename "$ACTIONS_REPO")"
+          } >> "$GITHUB_OUTPUT"
+        shell: bash
+
+      - name: Generate initialization vaccel-bot token
+        id: generate-init-token
+        if: vars.VACCEL_BOT_CLIENT_ID
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.VACCEL_BOT_CLIENT_ID }}
+          private-key: ${{ secrets.VACCEL_BOT_PRIVATE_KEY }}
+          repositories: |
+            ${{ steps.parse-repos.outputs.actions-repo-name }}
+            ${{ steps.parse-repos.outputs.repo-name }}
+          permission-contents: read
+
+      - name: Checkout .github directory
+        uses: actions/checkout@v6
+        with:
+          sparse-checkout: .github
+          repository: ${{ inputs.actions-repo }}
+          ref: ${{ env.ACTIONS_REF }}
+          token: >-
+            ${{ steps.generate-init-token.outputs.token || github.token }}
+
+      - name: Initialize workspace
+        uses: ./.github/actions/initialize-workspace
+        with:
+          remote-actions-repo: ${{ inputs.actions-repo }}
+          fetch-depth: 1
+          submodules: 'false'
+          token: >-
+            ${{ steps.generate-init-token.outputs.token || github.token }}
+
+      - name: Update NOTICE year
+        id: update
+        run: |
+          if [[ ! -f NOTICE ]]; then
+            echo "NOTICE file not found"
+            exit 0
+          fi
+
+          year=$(date -u +%Y)
+
+          # Update an existing "Copyright YYYY-YYYY" range, or extend a bare
+          # "Copyright YYYY" into a range ending at the current year.
+          if grep -qE 'Copyright[[:space:]]+[0-9]{4}-[0-9]{4}' NOTICE; then
+            sed -i -E \
+              "s/(Copyright[[:space:]]+[0-9]{4})-[0-9]{4}/\1-${year}/" NOTICE
+          elif grep -qE 'Copyright[[:space:]]+[0-9]{4}([^0-9-]|$)' NOTICE; then
+            sed -i -E \
+              "s/(Copyright[[:space:]]+[0-9]{4})([^0-9-]|\$)/\1-${year}\2/" \
+              NOTICE
+          else
+            echo "::error::No Copyright line matched in NOTICE"
+            exit 1
+          fi
+
+          if git diff --quiet -- NOTICE; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+          echo "year=${year}" >> "$GITHUB_OUTPUT"
+        shell: bash
+
+      - name: Generate PR vaccel-bot token
+        id: generate-pr-token
+        if: >-
+          steps.update.outputs.changed == 'true' &&
+          vars.VACCEL_BOT_CLIENT_ID
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.VACCEL_BOT_CLIENT_ID }}
+          private-key: ${{ secrets.VACCEL_BOT_PRIVATE_KEY }}
+          repositories: |
+            ${{ steps.parse-repos.outputs.repo-name }}
+          permission-contents: write
+          permission-pull-requests: write
+
+      - name: Get committer app info
+        id: get-app-info
+        if: steps.update.outputs.changed == 'true'
+        uses: ./.github/actions/get-github-app-info
+        with:
+          app-slug: ${{ steps.generate-pr-token.outputs.app-slug }}
+
+      - name: Create pull request
+        if: steps.update.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v8
+        env:
+          YEAR: ${{ steps.update.outputs.year }}
+          COMMITTER: >-
+            ${{ format('{0} <{1}>',
+              steps.get-app-info.outputs.user-login,
+              steps.get-app-info.outputs.user-email) }}
+        with:
+          token: >-
+            ${{ steps.generate-pr-token.outputs.token || github.token }}
+          commit-message: |
+            chore: Update NOTICE copyright year to ${{ env.YEAR }}
+
+            Bump the end year in the NOTICE copyright range to ${{ env.YEAR }}
+            to reflect the current calendar year
+          committer: ${{ env.COMMITTER }}
+          sign-commits: true
+          signoff: true
+          branch: "chore_update_notice_year_${{ env.YEAR }}"
+          delete-branch: true
+          title: "chore: Update NOTICE copyright year to ${{ env.YEAR }}"
+          body: |
+            Bump the NOTICE copyright end year to ${{ env.YEAR }}.
+
+            Opened automatically by the `update-notice-year` workflow.
+          labels: |
+            copyright
+            ok-to-test
+          add-paths: NOTICE
