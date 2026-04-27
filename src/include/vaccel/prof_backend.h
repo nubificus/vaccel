@@ -32,6 +32,7 @@ struct vaccel_prof_backend {
 	int (*regions_print_all_to_buf)(char **tbuf, size_t tbuf_len,
 					struct vaccel_prof_region *regions,
 					int size);
+	int (*flush)(void);
 };
 
 #ifdef __cplusplus
