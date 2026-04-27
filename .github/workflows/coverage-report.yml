@@ -46,7 +46,7 @@ jobs:
     runs-on: base-dind-2204-amd64
     strategy:
       matrix:
-        build-type: [plain]
+        build-type: [debug]
       fail-fast: false
     env:
       DOWNLOAD_PATH: >-
