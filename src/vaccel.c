@@ -186,6 +186,12 @@ static int do_cleanup(void)
 
 	vaccel_debug("Cleaning up vAccel");
 
+	ret = vaccel_prof_flush();
+	if (ret) {
+		vaccel_error("Could not flush profiling backend");
+		return ret;
+	}
+
 	ret = sessions_cleanup();
 	if (ret) {
 		vaccel_error("Could not cleanup sessions");

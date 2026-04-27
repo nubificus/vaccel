@@ -120,6 +120,16 @@ int vaccel_plugin_register_prof_backend(
 	return VACCEL_OK;
 }
 
+int vaccel_prof_flush(void)
+{
+	const struct vaccel_prof_backend *backend = vaccel_prof_backend_get();
+
+	if (!backend || !backend->flush)
+		return VACCEL_OK;
+
+	return backend->flush();
+}
+
 int vaccel_plugin_unregister_prof_backend(const char *name)
 {
 	if (!name)
@@ -161,7 +171,7 @@ const struct vaccel_prof_backend *vaccel_prof_backend_get(void)
 	const char *requested = config->profiling_backend ?
 					config->profiling_backend :
 					PROF_BACKEND_BASE_NAME;
-	
+
 	pthread_mutex_lock(&prof_backends.lock);
 
 	const struct vaccel_prof_backend *found =
