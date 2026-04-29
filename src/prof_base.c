@@ -306,6 +306,7 @@ vaccel_prof_base_regions_print_all_to_buf(char **tbuf, size_t tbuf_len,
 {
 	int ssize = 0;
 	int tsize = 0;
+	int ret;
 
 	uint64_t total_time[size];
 	memset(total_time, 0, size * sizeof(uint64_t));
@@ -354,13 +355,25 @@ vaccel_prof_base_regions_print_all_to_buf(char **tbuf, size_t tbuf_len,
 				      (double)total_time[i];
 		}
 
-		tsize +=
-			snprintf(
-				*tbuf + tsize, tbuf_len - tsize,
-				"[prof] %s: total_time: %ju nsec nr_entries: %zu avg_time: %ju nsec ops_per_sec: %.2f",
-				regions[i].name, total_time[i],
-				regions[i].nr_entries, avg_time, ops_per_sec) +
-			1;
+		ret = snprintf(
+			*tbuf + tsize, tbuf_len - tsize,
+			"[prof] %s: total_time: %ju nsec nr_entries: %zu avg_time: %ju nsec ops_per_sec: %.2f",
+			regions[i].name, total_time[i], regions[i].nr_entries,
+			avg_time, ops_per_sec);
+
+		if (ret < 0) {
+			free(*tbuf);
+			return -VACCEL_EINVAL;
+		}
+
+		if (ret >= (int)(tbuf_len - tsize)) {
+			free(*tbuf);
+			return -VACCEL_ENOMEM;
+		}
+
+		tsize += ret;
+		(*tbuf)[tsize] = '\n';
+		tsize++;
 	}
 
 	return size;
