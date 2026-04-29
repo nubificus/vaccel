@@ -39,6 +39,9 @@ struct vaccel_prof_region {
 
 bool vaccel_prof_enabled(void);
 
+/* Flush the active profiling backend before cleanup. */
+int vaccel_prof_flush(void);
+
 /* Start profiling a region */
 int vaccel_prof_region_start(struct vaccel_prof_region *region);
 

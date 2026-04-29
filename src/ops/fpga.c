@@ -42,7 +42,13 @@ int vaccel_fpga_arraycopy(struct vaccel_session *sess, int a[], int out_a[],
 	ret = plugin_fpga_arraycopy(sess, a, out_a, len_a);
 
 out:
-	vaccel_prof_region_stop(&fpga_arraycopy_op_stats);
+	const char *plugin_name = NULL;
+
+	if (sess->plugin && sess->plugin->info)
+		plugin_name = sess->plugin->info->name;
+
+	vaccel_prof_region_stop_with_context(&fpga_arraycopy_op_stats, op_type,
+					     plugin_name);
 
 	return ret;
 }
@@ -101,7 +107,13 @@ int vaccel_fpga_mmult(struct vaccel_session *sess, float a[], float b[],
 	ret = plugin_fpga_mmult(sess, a, b, c, len_a);
 
 out:
-	vaccel_prof_region_stop(&fpga_mmult_op_stats);
+	const char *plugin_name = NULL;
+
+	if (sess->plugin && sess->plugin->info)
+		plugin_name = sess->plugin->info->name;
+
+	vaccel_prof_region_stop_with_context(&fpga_mmult_op_stats, op_type,
+					     plugin_name);
 
 	return ret;
 }
@@ -161,7 +173,13 @@ int vaccel_fpga_parallel(struct vaccel_session *sess, float a[], float b[],
 	ret = plugin_fpga_parallel(sess, a, b, add_output, mult_output, len_a);
 
 out:
-	vaccel_prof_region_stop(&fpga_parallel_op_stats);
+	const char *plugin_name = NULL;
+
+	if (sess->plugin && sess->plugin->info)
+		plugin_name = sess->plugin->info->name;
+
+	vaccel_prof_region_stop_with_context(&fpga_parallel_op_stats, op_type,
+					     plugin_name);
 
 	return ret;
 }
@@ -222,7 +240,13 @@ int vaccel_fpga_vadd(struct vaccel_session *sess, float a[], float b[],
 	ret = plugin_fpga_vadd(sess, a, b, c, len_a, len_b);
 
 out:
-	vaccel_prof_region_stop(&fpga_vadd_op_stats);
+	const char *plugin_name = NULL;
+
+	if (sess->plugin && sess->plugin->info)
+		plugin_name = sess->plugin->info->name;
+
+	vaccel_prof_region_stop_with_context(&fpga_vadd_op_stats, op_type,
+					     plugin_name);
 
 	return ret;
 }

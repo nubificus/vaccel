@@ -22,6 +22,9 @@ struct vaccel_config {
 	/* if true profiling is enabled */
 	bool profiling_enabled;
 
+	/* profiling backend to use */
+	char *profiling_backend;
+
 	/* if true plugins' vaccel version check is skipped */
 	bool version_ignore;
 };
@@ -29,7 +32,8 @@ struct vaccel_config {
 /* Initialize config */
 int vaccel_config_init(struct vaccel_config *config, const char *plugins,
 		       vaccel_log_level_t log_level, const char *log_file,
-		       bool profiling_enabled, bool version_ignore);
+		       bool profiling_enabled, const char *profiling_backend,
+		       bool version_ignore);
 
 /* Initialize config from environment variables */
 int vaccel_config_init_from_env(struct vaccel_config *config);
@@ -44,7 +48,8 @@ int vaccel_config_release(struct vaccel_config *config);
 /* Allocate and initialize config */
 int vaccel_config_new(struct vaccel_config **config, const char *plugins,
 		      vaccel_log_level_t log_level, const char *log_file,
-		      bool profiling_enabled, bool version_ignore);
+		      bool profiling_enabled, const char *profiling_backend,
+		      bool version_ignore);
 
 /* Allocate and initialize config from environment variables */
 int vaccel_config_from_env(struct vaccel_config **config);

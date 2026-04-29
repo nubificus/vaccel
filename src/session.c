@@ -7,6 +7,7 @@
 #include "list.h"
 #include "log.h"
 #include "plugin.h"
+#include "prof.h"
 #include "resource.h"
 #include "resource_registration.h"
 #include "utils/fs.h"
@@ -175,16 +176,26 @@ static int session_destroy_rundir(struct vaccel_session *sess)
 int vaccel_session_init(struct vaccel_session *sess, uint32_t flags)
 {
 	int ret;
+	struct vaccel_prof_region prof;
 
-	if (!sess)
-		return VACCEL_EINVAL;
+	vaccel_prof_region_init(&prof, "session_init");
+	vaccel_prof_region_start(&prof);
 
-	if (!sessions.initialized)
-		return VACCEL_ESESS;
+	if (!sess) {
+		ret = VACCEL_EINVAL;
+		goto out;
+	}
+
+	if (!sessions.initialized) {
+		ret = VACCEL_ESESS;
+		goto out;
+	}
 
 	get_session_id(sess);
-	if (sess->id < 0)
-		return -(int)sess->id;
+	if (sess->id < 0) {
+		ret = -(int)sess->id;
+		goto out;
+	}
 
 	sess->plugin = plugin_find(flags);
 	if (!sess->plugin) {
@@ -247,7 +258,8 @@ int vaccel_session_init(struct vaccel_session *sess, uint32_t flags)
 		vaccel_debug("Initialized session %" PRId64 " with plugin %s",
 			     sess->id, sess->plugin->info->name);
 
-	return VACCEL_OK;
+	ret = VACCEL_OK;
+	goto out;
 
 cleanup_session:
 	if (sess->is_virtio) {
@@ -258,6 +270,8 @@ release_id:
 	sess->plugin = NULL;
 	put_session_id(sess);
 
+out:
+	vaccel_prof_region_stop(&prof);
 	return ret;
 }
 
@@ -328,41 +342,52 @@ int vaccel_session_update(struct vaccel_session *sess, uint32_t flags)
 int vaccel_session_release(struct vaccel_session *sess)
 {
 	int ret;
+	struct vaccel_prof_region prof;
 
-	if (!sess)
-		return VACCEL_EINVAL;
+	vaccel_prof_region_init(&prof, "session_release");
+	vaccel_prof_region_start(&prof);
 
-	if (!sessions.initialized)
-		return VACCEL_ESESS;
+	if (!sess) {
+		ret = VACCEL_EINVAL;
+		goto out;
+	}
+
+	if (!sessions.initialized) {
+		ret = VACCEL_ESESS;
+		goto out;
+	}
 
 	if (sess->id <= 0) {
 		vaccel_error("Cannot release uninitialized session");
-		return VACCEL_EINVAL;
+		ret = VACCEL_EINVAL;
+		goto out;
 	}
 
 	ret = resource_registration_foreach_resource(
 		sess, vaccel_resource_unregister);
 	if (ret) {
 		vaccel_error("Could not unregister session resources");
-		return ret;
+		goto out;
 	}
 
 	pthread_mutex_destroy(&sess->resources_lock);
 
 	ret = session_destroy_rundir(sess);
 	if (ret)
-		return ret;
+		goto out;
 
 	if (sess->is_virtio) {
 		if (!sess->plugin->info->is_virtio) {
 			vaccel_error(
 				"Cannot release remote session; no VirtIO plugin loaded yet");
-			return VACCEL_ENOTSUP;
+			ret = VACCEL_ENOTSUP;
+			goto out;
 		}
 		if (!sess->plugin->info->session_release) {
 			vaccel_error(
 				"Cannot release remote session; invalid plugin `session_release()`");
-			return VACCEL_ENOTSUP;
+			ret = VACCEL_ENOTSUP;
+			goto out;
 		}
 
 		ret = sess->plugin->info->session_release(sess);
@@ -382,7 +407,10 @@ int vaccel_session_release(struct vaccel_session *sess)
 
 	put_session_id(sess);
 
-	return VACCEL_OK;
+	ret = VACCEL_OK;
+out:
+	vaccel_prof_region_stop(&prof);
+	return ret;
 }
 
 int vaccel_session_new(struct vaccel_session **sess, uint32_t flags)

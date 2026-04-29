@@ -44,7 +44,13 @@ int vaccel_minmax(struct vaccel_session *sess, const double *indata, int ndata,
 			    outdata, min, max);
 
 out:
-	vaccel_prof_region_stop(&minmax_op_stats);
+	const char *plugin_name = NULL;
+
+	if (sess->plugin && sess->plugin->info)
+		plugin_name = sess->plugin->info->name;
+
+	vaccel_prof_region_stop_with_context(&minmax_op_stats, op_type,
+					     plugin_name);
 
 	return ret;
 }

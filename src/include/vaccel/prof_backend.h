@@ -1,0 +1,40 @@
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+#include "op.h"
+#include "prof.h"
+#include <stddef.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+struct vaccel_prof_backend {
+	int (*region_start)(struct vaccel_prof_region *region);
+	int (*region_stop)(const struct vaccel_prof_region *region);
+	int (*region_stop_with_context)(const struct vaccel_prof_region *region,
+					vaccel_op_type_t op_type,
+					const char *plugin_name);
+	int (*region_init)(struct vaccel_prof_region *region, const char *name);
+	int (*region_release)(struct vaccel_prof_region *region);
+	int (*region_print)(const struct vaccel_prof_region *region);
+
+	int (*regions_start_by_name)(struct vaccel_prof_region *regions,
+				     int nregions, const char *name);
+	int (*regions_stop_by_name)(struct vaccel_prof_region *regions,
+				    int nregions, const char *name);
+	int (*regions_init)(struct vaccel_prof_region *regions, int nregions);
+	int (*regions_release)(struct vaccel_prof_region *regions,
+			       int nregions);
+	int (*regions_print_all)(struct vaccel_prof_region *regions,
+				 int nregions);
+	int (*regions_print_all_to_buf)(char **tbuf, size_t tbuf_len,
+					struct vaccel_prof_region *regions,
+					int size);
+	int (*flush)(void);
+};
+
+#ifdef __cplusplus
+}
+#endif

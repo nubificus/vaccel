@@ -37,7 +37,13 @@ int vaccel_opencv(struct vaccel_session *sess, struct vaccel_arg *read,
 	ret = plugin_opencv(sess, read, nr_read, write, nr_write);
 
 out:
-	vaccel_prof_region_stop(&opencv_op_stats);
+	const char *plugin_name = NULL;
+
+	if (sess->plugin && sess->plugin->info)
+		plugin_name = sess->plugin->info->name;
+
+	vaccel_prof_region_stop_with_context(&opencv_op_stats, op_type,
+					     plugin_name);
 
 	return ret;
 }

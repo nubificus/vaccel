@@ -43,7 +43,13 @@ int vaccel_sgemm(struct vaccel_session *sess, int64_t m, int64_t n, int64_t k,
 	ret = plugin_sgemm(sess, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc);
 
 out:
-	vaccel_prof_region_stop(&blas_op_stats);
+	const char *plugin_name = NULL;
+
+	if (sess->plugin && sess->plugin->info)
+		plugin_name = sess->plugin->info->name;
+
+	vaccel_prof_region_stop_with_context(&blas_op_stats, op_type,
+					     plugin_name);
 
 	return ret;
 }

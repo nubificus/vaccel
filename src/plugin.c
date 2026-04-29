@@ -283,6 +283,12 @@ int vaccel_plugin_register_ops(struct vaccel_op *ops, size_t nr_ops)
 	return VACCEL_OK;
 }
 
+/* A plugin serves ops unless its type declares nothing beyond PROFILING. */
+static inline bool plugin_serves_ops(const struct vaccel_plugin *plugin)
+{
+	return plugin->info->type != VACCEL_PLUGIN_PROFILING;
+}
+
 struct vaccel_plugin *plugin_find(unsigned int hint)
 {
 	unsigned int env_priority = hint & (~VACCEL_PLUGIN_REMOTE);
@@ -303,6 +309,8 @@ struct vaccel_plugin *plugin_find(unsigned int hint)
 	if (VACCEL_PLUGIN_REMOTE & hint) {
 		plugin_for_each(plugin, &plugins.all)
 		{
+			if (!plugin_serves_ops(plugin))
+				continue;
 			if (plugin->info->is_virtio) {
 				pthread_mutex_unlock(&plugins.lock);
 				return plugin;
@@ -318,6 +326,8 @@ struct vaccel_plugin *plugin_find(unsigned int hint)
 	if (env_priority) {
 		plugin_for_each(plugin, &plugins.all)
 		{
+			if (!plugin_serves_ops(plugin))
+				continue;
 			if ((env_priority & plugin->info->type) != 0) {
 				pthread_mutex_unlock(&plugins.lock);
 				return plugin;
@@ -329,6 +339,8 @@ struct vaccel_plugin *plugin_find(unsigned int hint)
 	// or any implementation if it's a single one
 	plugin_for_each(plugin, &plugins.all)
 	{
+		if (!plugin_serves_ops(plugin))
+			continue;
 		if (!plugin->info->is_virtio || plugins.count == 1) {
 			pthread_mutex_unlock(&plugins.lock);
 			return plugin;
