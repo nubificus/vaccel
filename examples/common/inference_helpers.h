@@ -19,8 +19,9 @@ typedef enum {
 	INFERENCE_IMAGE_FORMAT_TF
 } inference_image_format_t;
 
-int inference_load_labels(const char *filename, char ***labels,
-			  size_t *nr_labels);
+int inference_load_labels(const char *path, char ***labels, size_t *nr_labels);
+const char *inference_resolve_label(const char *token, char **labels,
+				    size_t nr_labels);
 int inference_preprocess_image(const unsigned char *image_data, int width,
 			       int height, int channels,
 			       inference_image_format_t format,

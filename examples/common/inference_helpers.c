@@ -3,31 +3,62 @@
 #define _POSIX_C_SOURCE 200809L
 
 #include "inference_helpers.h"
+#include "utils/net.h"
+#include "utils/path.h"
 #include "vaccel.h"
 #include <errno.h>
+#include <limits.h>
+#include <linux/limits.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <unistd.h>
 
 #ifdef USE_STB_IMAGE
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb/stb_image.h"
 #endif
 
-int inference_load_labels(const char *filename, char ***labels,
-			  size_t *nr_labels)
+int inference_load_labels(const char *path, char ***labels, size_t *nr_labels)
 {
-	if (!filename || !labels || !nr_labels)
+	if (!path || !labels || !nr_labels)
 		return VACCEL_EINVAL;
 
 	int ret = VACCEL_OK;
+	char dl_path[PATH_MAX];
+	const char *load_path = path;
+	bool is_temp = false;
 
-	FILE *file = fopen(filename, "r");
+	/* If `path` is a URL, download in a temporary vaccel rundir path */
+	if (net_path_is_url(path)) {
+		char filename[NAME_MAX];
+		ret = path_file_name(path, filename, NAME_MAX, NULL);
+		if (ret)
+			return ret;
+
+		ret = path_init_from_parts(dl_path, sizeof(dl_path),
+					   vaccel_rundir(), filename, NULL);
+		if (ret)
+			return ret;
+
+		ret = net_file_download(path, dl_path);
+		if (ret) {
+			unlink(dl_path);
+			return ret;
+		}
+
+		load_path = dl_path;
+		is_temp = true;
+	}
+
+	FILE *file = fopen(load_path, "r");
 	if (!file) {
-		fprintf(stderr, "Failed to open %s: %s\n", filename,
+		fprintf(stderr, "Failed to open %s: %s\n", load_path,
 			strerror(errno));
-		return VACCEL_EINVAL;
+		ret = VACCEL_EINVAL;
+		goto out_unlink;
 	}
 
 	size_t num_lines = 0;
@@ -81,7 +112,29 @@ int inference_load_labels(const char *filename, char ***labels,
 
 out_fclose:
 	fclose(file);
+out_unlink:
+	if (is_temp)
+		unlink(dl_path);
 	return ret;
+}
+
+const char *inference_resolve_label(const char *token, char **labels,
+				    size_t nr_labels)
+{
+	if (!token || !labels || nr_labels == 0)
+		return token;
+
+	/* If `token` parses as a non-negative integer in [0, nr_labels), return
+	 * `labels[id]`. Otherwise return `token` unchanged so older plugins
+	 * that already emit class names pass through. */
+	char *end;
+	errno = 0;
+	long const id = strtol(token, &end, 10);
+	if (errno != 0 || end == token || *end != '\0' || id < 0 ||
+	    (size_t)id >= nr_labels)
+		return token;
+
+	return labels[id];
 }
 
 int inference_preprocess_image(const unsigned char *image_data, int width,

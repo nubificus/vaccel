@@ -1,13 +1,46 @@
 // SPDX-License-Identifier: Apache-2.0
 
+#include "common/inference_helpers.h"
 #include "utils/fs.h"
 #include "vaccel.h"
 #include <inttypes.h>
+#include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 enum { STR_SIZE_MAX = 512 };
+
+static void print_detections(const unsigned char *raw, char **labels,
+			     size_t nr_labels)
+{
+	if (!labels || nr_labels == 0) {
+		printf("detection imagename: %s\n", raw);
+		return;
+	}
+
+	char buf[STR_SIZE_MAX];
+	strncpy(buf, (const char *)raw, sizeof(buf) - 1);
+	buf[sizeof(buf) - 1] = '\0';
+
+	printf("detections:\n");
+	char *saveptr = NULL;
+	for (char *det = strtok_r(buf, ";", &saveptr); det != NULL;
+	     det = strtok_r(NULL, ";", &saveptr)) {
+		while (*det == ' ')
+			det++;
+		char *space = strchr(det, ' ');
+		if (space == NULL) {
+			printf("  %s\n", det);
+			continue;
+		}
+		*space = '\0';
+		const char *name =
+			inference_resolve_label(det, labels, nr_labels);
+		printf("  %s %s\n", name, space + 1);
+	}
+}
 
 int main(int argc, char *argv[])
 {
@@ -17,12 +50,14 @@ int main(int argc, char *argv[])
 	unsigned char out_imagename[STR_SIZE_MAX] = { '\0' };
 	struct vaccel_session sess;
 	struct vaccel_resource model = { .id = 0 };
+	char **labels = NULL;
+	size_t nr_labels = 0;
 	struct vaccel_prof_region detect_stats =
 		VACCEL_PROF_REGION_INIT("detect");
 
-	if (argc < 2 || argc > 4) {
+	if (argc < 2 || argc > 5) {
 		fprintf(stderr,
-			"Usage: %s <image_file> [iterations] [model_path]\n",
+			"Usage: %s <image_file> [iterations] [model_path] [labels_path]\n",
 			argv[0]);
 		return VACCEL_EINVAL;
 	}
@@ -35,7 +70,7 @@ int main(int argc, char *argv[])
 
 	printf("Initialized session with id: %" PRId64 "\n", sess.id);
 
-	if (argc == 4) {
+	if (argc >= 4) {
 		ret = vaccel_resource_init(&model, argv[3],
 					   VACCEL_RESOURCE_MODEL);
 		if (ret) {
@@ -51,9 +86,18 @@ int main(int argc, char *argv[])
 		}
 	}
 
+	if (argc == 5) {
+		ret = inference_load_labels(argv[4], &labels, &nr_labels);
+		if (ret) {
+			fprintf(stderr, "Could not load labels from %s\n",
+				argv[4]);
+			goto unregister_resource;
+		}
+	}
+
 	ret = fs_file_read(argv[1], (void **)&image, &image_size);
 	if (ret)
-		goto unregister_resource;
+		goto free_labels;
 
 	const int iter = (argc > 2) ? atoi(argv[2]) : 1;
 	for (int i = 0; i < iter; i++) {
@@ -66,12 +110,18 @@ int main(int argc, char *argv[])
 
 		if (ret) {
 			fprintf(stderr, "Could not run op: %d\n", ret);
-			goto unregister_resource;
+			goto free_labels;
 		}
 
-		printf("detection imagename: %s\n", out_imagename);
+		print_detections(out_imagename, labels, nr_labels);
 	}
 
+free_labels:
+	if (labels) {
+		for (size_t i = 0; i < nr_labels; i++)
+			free(labels[i]);
+		free(labels);
+	}
 unregister_resource:
 	if (model.id > 0 && vaccel_resource_unregister(&model, &sess))
 		fprintf(stderr, "Could not unregister model from session\n");
