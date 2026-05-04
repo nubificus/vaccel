@@ -30,7 +30,8 @@ examples_includes = include_directories('.')
 examples = []
 foreach e : examples_sources
   name = fs.stem(e)
-  if name.contains('inference')
+  if name.contains('inference') or name in ['classify', 'classify_generic',
+      'detect', 'detect_generic']
     sources = [e, examples_common_inference_sources,
       examples_common_inference_headers]
   elif name.contains('serialized')
