@@ -60,7 +60,7 @@ int vaccel_genop(struct vaccel_session *sess, struct vaccel_arg *read,
 	}
 
 	vaccel_op_type_t op_type = (vaccel_op_type_t)u_op_type;
-	if (!op_type || op_type >= VACCEL_OP_MAX) {
+	if (op_type >= VACCEL_OP_MAX) {
 		vaccel_error("Invalid operation type");
 		return VACCEL_EINVAL;
 	}
