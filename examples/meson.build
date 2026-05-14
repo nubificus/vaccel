@@ -12,6 +12,7 @@ examples_sources = files([
   'local_and_virtio.c',
   'mbench.c',
   'noop.c',
+  'noop_generic.c',
   'pose.c',
   'pose_generic.c',
   'segment.c',
