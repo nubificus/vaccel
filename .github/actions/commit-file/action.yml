@@ -60,7 +60,7 @@ runs:
       run: |
         content=$(base64 -w0 "$FILE")
         sha=$(git rev-parse "${BRANCH}:${FILE}")
-        message=$(printf "%s\n\n%s" "$MESSAGE" "$SIGNED_OFF_BY")
+        message=$(printf "%s\n\nSigned-off-by: %s" "$MESSAGE" "$SIGNED_OFF_BY")
 
         gh api "repos/${REPO}/contents/${FILE}" \
           --method PUT \
