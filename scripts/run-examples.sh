@@ -31,6 +31,7 @@ printf "\n$(tput setaf 2)%s$(tput sgr0)\n" \
 	"Running examples with plugin '${VACCEL_PLUGINS}'"
 set -x
 eval "${CONFIG_WRAPPER_CMD}" "${EXAMPLES_DIR}/noop"
+eval "${CONFIG_WRAPPER_CMD}" "${EXAMPLES_DIR}/noop_generic" 1
 eval "${CONFIG_WRAPPER_CMD}" "${EXAMPLES_DIR}/classify" \
 	"${SHARE_DIR}/images/example.jpg" 1
 eval "${CONFIG_WRAPPER_CMD}" "${EXAMPLES_DIR}/classify" \
