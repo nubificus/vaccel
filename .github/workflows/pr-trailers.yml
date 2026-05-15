@@ -15,24 +15,9 @@ concurrency:
 permissions: read-all
 
 jobs:
-  commit-coverage:
-    name: Commit coverage report
-    if: >-
-      github.event.pull_request.base.ref == 'main' &&
-      github.event_name == 'pull_request_review' &&
-      github.event.review.state == 'approved'
-    uses: ./.github/workflows/coverage-report.yml
-    with:
-      commit: true
-    secrets: inherit
-
   check-pr-status:
-    needs: commit-coverage
     name: Check PR status
-    if: >-
-      always() &&
-      github.event.pull_request.base.ref == 'main' &&
-      needs.commit-coverage.result != 'failure'
+    if: github.event.pull_request.base.ref == 'main'
     uses: ./.github/workflows/check-pr-status.yml
     with:
       pr-number: >-
