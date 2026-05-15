@@ -21,6 +21,11 @@ on:
         description: 'Whether to commit the coverage report'
         type: boolean
         default: false
+      create-pr:
+        description: >
+          Whether to create or update a pull request with the coverage report
+        type: boolean
+        default: false
       comment-diff:
         description: >
           Whether to post a pull request comment with the coverage diff
@@ -130,6 +135,7 @@ jobs:
           coverage: 'true'
 
       - name: Checkout default_branch
+        if: inputs.comment-diff == true
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
@@ -181,13 +187,15 @@ jobs:
         id: generate-pr-token
         if: >-
           vars.VACCEL_BOT_CLIENT_ID &&
-          (inputs.comment-diff == true || inputs.commit == true)
+          (inputs.comment-diff == true || inputs.commit == true ||
+            inputs.create-pr == true)
         uses: actions/create-github-app-token@v3
         with:
           client-id: ${{ vars.VACCEL_BOT_CLIENT_ID }}
           private-key: ${{ secrets.VACCEL_BOT_PRIVATE_KEY }}
           permission-contents: >-
-            ${{ inputs.commit == true && 'write' || 'read' }}
+            ${{ (inputs.commit == true || inputs.create-pr == true)
+              && 'write' || 'read' }}
           permission-pull-requests: write
 
       - name: PR comment with file
@@ -201,7 +209,7 @@ jobs:
 
       - name: Generate markdown file
         id: generate-md-file
-        if: inputs.commit == true
+        if: inputs.commit == true || inputs.create-pr == true
         env:
           REPO_DIR: ${{ steps.set-repo-dirs.outputs.repo }}
           BUILD_TYPE: ${{ matrix.build-type }}
@@ -225,11 +233,49 @@ jobs:
         if: inputs.commit == true
         uses: ./.github/actions/commit-file
         with:
-          workdir: ${{ steps.set-repo-dirs.outputs.repo }} 
-          branch: ${{ github.event.pull_request.head.ref || github.ref_name }} 
+          workdir: ${{ steps.set-repo-dirs.outputs.repo }}
+          branch: ${{ github.event.pull_request.head.ref || github.ref_name }}
           file: ${{ steps.generate-md-file.outputs.coverage-file }}
           message: "docs(coverage): Update coverage report"
           token: ${{ steps.generate-pr-token.outputs.token || github.token }}
+
+      - name: Get committer app info
+        id: get-app-info
+        if: inputs.create-pr == true
+        uses: ./.github/actions/get-github-app-info
+        with:
+          app-slug: ${{ steps.generate-pr-token.outputs.app-slug }}
+
+      - name: Create coverage PR
+        if: inputs.create-pr == true
+        uses: peter-evans/create-pull-request@v8
+        env:
+          COMMITTER: >-
+            ${{ format('{0} <{1}>',
+              steps.get-app-info.outputs.user-login,
+              steps.get-app-info.outputs.user-email) }}
+        with:
+          path: ${{ steps.set-repo-dirs.outputs.repo }}
+          token: >-
+            ${{ steps.generate-pr-token.outputs.token || github.token }}
+          commit-message: |
+            docs(coverage): Update coverage report
+
+            Refresh the coverage report from the latest test run on main
+          committer: ${{ env.COMMITTER }}
+          sign-commits: true
+          signoff: true
+          branch: "docs_update_coverage_report"
+          delete-branch: true
+          title: "docs(coverage): Update coverage report"
+          body: |
+            Refresh the coverage report from the latest test run on main.
+
+            Opened automatically by the `coverage-report` workflow.
+          labels: |
+            coverage
+            ok-to-test
+          add-paths: ${{ steps.generate-md-file.outputs.coverage-file }}
 
       - name: Clean-up
         if: always()

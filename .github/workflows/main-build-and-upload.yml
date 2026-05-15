@@ -21,6 +21,14 @@ jobs:
       release: true
     secrets: inherit
 
+  generate-coverage:
+    name: Generate Coverage Report
+    if: github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/coverage-report.yml
+    with:
+      create-pr: true
+    secrets: inherit
+
   update-release:
     needs: build-dist
     name: Update Release
