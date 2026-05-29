@@ -3,7 +3,7 @@
 #define _POSIX_C_SOURCE 200809L
 
 #include "vaccel.h"
-#include "prof_backend.h"
+#include "prof/backend.h"
 #include <errno.h>
 #include <limits.h>
 #include <linux/limits.h>

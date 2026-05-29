@@ -2,7 +2,7 @@
 
 #define _POSIX_C_SOURCE 200809L
 
-#include "prof_backend.h"
+#include "backend.h"
 #include "error.h"
 #include "log.h"
 #include <bits/time.h>
@@ -83,7 +83,7 @@ get_next_sample(struct vaccel_prof_region *region)
 	return &region->samples[pos];
 }
 
-static int vaccel_prof_base_region_start(struct vaccel_prof_region *region)
+static int vaccel_prof_builtin_region_start(struct vaccel_prof_region *region)
 {
 	vaccel_debug("Start profiling region %s", region->name);
 
@@ -96,7 +96,8 @@ static int vaccel_prof_base_region_start(struct vaccel_prof_region *region)
 	return VACCEL_OK;
 }
 
-static int vaccel_prof_base_region_stop(const struct vaccel_prof_region *region)
+static int
+vaccel_prof_builtin_region_stop(const struct vaccel_prof_region *region)
 {
 	vaccel_debug("Stop profiling region %s", region->name);
 
@@ -109,8 +110,8 @@ static int vaccel_prof_base_region_stop(const struct vaccel_prof_region *region)
 	return VACCEL_OK;
 }
 
-static int vaccel_prof_base_region_init(struct vaccel_prof_region *region,
-					const char *name)
+static int vaccel_prof_builtin_region_init(struct vaccel_prof_region *region,
+					   const char *name)
 {
 	if (name == NULL) {
 		region->name = malloc(MAX_NAME);
@@ -141,7 +142,7 @@ free_name:
 	return VACCEL_ENOMEM;
 }
 
-static int vaccel_prof_base_region_release(struct vaccel_prof_region *region)
+static int vaccel_prof_builtin_region_release(struct vaccel_prof_region *region)
 {
 	if (region->samples)
 		free(region->samples);
@@ -159,7 +160,7 @@ static int vaccel_prof_base_region_release(struct vaccel_prof_region *region)
 }
 
 static int
-vaccel_prof_base_region_print(const struct vaccel_prof_region *region)
+vaccel_prof_builtin_region_print(const struct vaccel_prof_region *region)
 {
 	if (!region->nr_entries)
 		return VACCEL_OK;
@@ -186,8 +187,8 @@ vaccel_prof_base_region_print(const struct vaccel_prof_region *region)
 }
 
 static struct vaccel_prof_region *
-prof_base_regions_get_by_name(struct vaccel_prof_region *regions, int nregions,
-			      const char *name)
+prof_builtin_regions_get_by_name(struct vaccel_prof_region *regions,
+				 int nregions, const char *name)
 {
 	struct vaccel_prof_region *r = NULL;
 	for (int i = 0; i < nregions; i++) {
@@ -198,11 +199,11 @@ prof_base_regions_get_by_name(struct vaccel_prof_region *regions, int nregions,
 }
 
 static int
-vaccel_prof_base_regions_start_by_name(struct vaccel_prof_region *regions,
-				       int nregions, const char *name)
+vaccel_prof_builtin_regions_start_by_name(struct vaccel_prof_region *regions,
+					  int nregions, const char *name)
 {
 	struct vaccel_prof_region *r =
-		prof_base_regions_get_by_name(regions, nregions, name);
+		prof_builtin_regions_get_by_name(regions, nregions, name);
 	if (!r) {
 		vaccel_error("[prof] stop region: Invalid profiling region");
 		return VACCEL_EINVAL;
@@ -220,11 +221,11 @@ vaccel_prof_base_regions_start_by_name(struct vaccel_prof_region *regions,
 }
 
 static int
-vaccel_prof_base_regions_stop_by_name(struct vaccel_prof_region *regions,
-				      int nregions, const char *name)
+vaccel_prof_builtin_regions_stop_by_name(struct vaccel_prof_region *regions,
+					 int nregions, const char *name)
 {
 	struct vaccel_prof_region *r =
-		prof_base_regions_get_by_name(regions, nregions, name);
+		prof_builtin_regions_get_by_name(regions, nregions, name);
 	if (!r) {
 		vaccel_error("[prof] stop region: Invalid profiling region");
 		return VACCEL_EINVAL;
@@ -241,24 +242,25 @@ vaccel_prof_base_regions_stop_by_name(struct vaccel_prof_region *regions,
 	return VACCEL_OK;
 }
 
-static int vaccel_prof_base_regions_release(struct vaccel_prof_region *regions,
-					    int nregions)
+static int
+vaccel_prof_builtin_regions_release(struct vaccel_prof_region *regions,
+				    int nregions)
 {
 	for (int i = 0; i < nregions; i++)
-		vaccel_prof_base_region_release(&regions[i]);
+		vaccel_prof_builtin_region_release(&regions[i]);
 
 	return VACCEL_OK;
 }
 
-static int vaccel_prof_base_regions_init(struct vaccel_prof_region *regions,
-					 int nregions)
+static int vaccel_prof_builtin_regions_init(struct vaccel_prof_region *regions,
+					    int nregions)
 {
 	for (int i = 0; i < nregions; i++) {
 		regions[i].size = 0;
 		regions[i].samples = NULL;
-		int ret = vaccel_prof_base_region_init(&regions[i], NULL);
+		int ret = vaccel_prof_builtin_region_init(&regions[i], NULL);
 		if (ret != VACCEL_OK) {
-			vaccel_prof_base_regions_release(regions, i);
+			vaccel_prof_builtin_regions_release(regions, i);
 			return ret;
 		}
 	}
@@ -267,8 +269,8 @@ static int vaccel_prof_base_regions_init(struct vaccel_prof_region *regions,
 }
 
 static int
-vaccel_prof_base_regions_print_all(struct vaccel_prof_region *regions,
-				   int nregions)
+vaccel_prof_builtin_regions_print_all(struct vaccel_prof_region *regions,
+				      int nregions)
 {
 	for (int i = 0; i < nregions; i++) {
 		if (!regions[i].nr_entries)
@@ -297,9 +299,9 @@ vaccel_prof_base_regions_print_all(struct vaccel_prof_region *regions,
 }
 
 static int
-vaccel_prof_base_regions_print_all_to_buf(char **tbuf, size_t tbuf_len,
-					  struct vaccel_prof_region *regions,
-					  int size)
+vaccel_prof_builtin_regions_print_all_to_buf(char **tbuf, size_t tbuf_len,
+					     struct vaccel_prof_region *regions,
+					     int size)
 {
 	int ssize = 0;
 	int tsize = 0;
@@ -374,22 +376,23 @@ vaccel_prof_base_regions_print_all_to_buf(char **tbuf, size_t tbuf_len,
 	return size;
 }
 
-static const struct vaccel_prof_backend prof_base_backend = {
-	.region_start = vaccel_prof_base_region_start,
-	.region_stop = vaccel_prof_base_region_stop,
+static const struct vaccel_prof_backend prof_builtin_backend = {
+	.region_start = vaccel_prof_builtin_region_start,
+	.region_stop = vaccel_prof_builtin_region_stop,
 	.region_stop_with_context = NULL,
-	.region_init = vaccel_prof_base_region_init,
-	.region_release = vaccel_prof_base_region_release,
-	.region_print = vaccel_prof_base_region_print,
-	.regions_start_by_name = vaccel_prof_base_regions_start_by_name,
-	.regions_stop_by_name = vaccel_prof_base_regions_stop_by_name,
-	.regions_init = vaccel_prof_base_regions_init,
-	.regions_release = vaccel_prof_base_regions_release,
-	.regions_print_all = vaccel_prof_base_regions_print_all,
-	.regions_print_all_to_buf = vaccel_prof_base_regions_print_all_to_buf,
+	.region_init = vaccel_prof_builtin_region_init,
+	.region_release = vaccel_prof_builtin_region_release,
+	.region_print = vaccel_prof_builtin_region_print,
+	.regions_start_by_name = vaccel_prof_builtin_regions_start_by_name,
+	.regions_stop_by_name = vaccel_prof_builtin_regions_stop_by_name,
+	.regions_init = vaccel_prof_builtin_regions_init,
+	.regions_release = vaccel_prof_builtin_regions_release,
+	.regions_print_all = vaccel_prof_builtin_regions_print_all,
+	.regions_print_all_to_buf =
+		vaccel_prof_builtin_regions_print_all_to_buf,
 };
 
-const struct vaccel_prof_backend *vaccel_prof_base_backend_get(void)
+const struct vaccel_prof_backend *vaccel_prof_builtin_backend_get(void)
 {
-	return &prof_base_backend;
+	return &prof_builtin_backend;
 }

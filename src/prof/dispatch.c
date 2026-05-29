@@ -4,7 +4,7 @@
 #include "core.h"
 #include "error.h"
 #include "prof.h"
-#include "prof_backend.h"
+#include "backend.h"
 
 bool vaccel_prof_enabled(void)
 {

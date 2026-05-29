@@ -8,7 +8,7 @@
 extern "C" {
 #endif
 
-/* Initialize the profiling selection with the built-in base backend. */
+/* Initialize the profiling selection with the built-in backend. */
 int prof_backends_bootstrap(void);
 
 /* Clear the profiling backend selection. */
@@ -20,8 +20,8 @@ int prof_backend_select(void);
 /* Get the active profiling backend. */
 const struct vaccel_prof_backend *vaccel_prof_backend_get(void);
 
-/* Getter for the base backend. */
-const struct vaccel_prof_backend *vaccel_prof_base_backend_get(void);
+/* Getter for the built-in backend. */
+const struct vaccel_prof_backend *vaccel_prof_builtin_backend_get(void);
 
 #ifdef __cplusplus
 }

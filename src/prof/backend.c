@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-#include "prof_backend.h"
+#include "backend.h"
 #include "core.h"
 #include "error.h"
 #include "log.h"
@@ -20,7 +20,7 @@ static void prof_backend_set(const struct vaccel_prof_backend *backend)
 
 int prof_backends_bootstrap(void)
 {
-	prof_backend_set(vaccel_prof_base_backend_get());
+	prof_backend_set(vaccel_prof_builtin_backend_get());
 	return VACCEL_OK;
 }
 
@@ -35,7 +35,7 @@ int prof_backend_select(void)
 	const struct vaccel_config *config = vaccel_config();
 
 	if (!config || !config->profiling_enabled) {
-		prof_backend_set(vaccel_prof_base_backend_get());
+		prof_backend_set(vaccel_prof_builtin_backend_get());
 		return VACCEL_OK;
 	}
 
@@ -44,7 +44,7 @@ int prof_backend_select(void)
 					PROF_BACKEND_BUILTIN_NAME;
 
 	if (strcmp(requested, PROF_BACKEND_BUILTIN_NAME) == 0) {
-		prof_backend_set(vaccel_prof_base_backend_get());
+		prof_backend_set(vaccel_prof_builtin_backend_get());
 		return VACCEL_OK;
 	}
 
@@ -53,7 +53,7 @@ int prof_backend_select(void)
 		vaccel_warn(
 			"[prof] plugin '%s' not found, falling back to '%s'",
 			requested, PROF_BACKEND_BUILTIN_NAME);
-		prof_backend_set(vaccel_prof_base_backend_get());
+		prof_backend_set(vaccel_prof_builtin_backend_get());
 		return VACCEL_OK;
 	}
 
@@ -66,7 +66,7 @@ const struct vaccel_prof_backend *vaccel_prof_backend_get(void)
 	const struct vaccel_prof_backend *backend =
 		atomic_load_explicit(&active_backend, memory_order_acquire);
 
-	return backend ? backend : vaccel_prof_base_backend_get();
+	return backend ? backend : vaccel_prof_builtin_backend_get();
 }
 
 int vaccel_prof_flush(void)
