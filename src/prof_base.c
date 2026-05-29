@@ -244,11 +244,8 @@ vaccel_prof_base_regions_stop_by_name(struct vaccel_prof_region *regions,
 static int vaccel_prof_base_regions_release(struct vaccel_prof_region *regions,
 					    int nregions)
 {
-	for (int i = 0; i < nregions; i++) {
-		free(regions[i].samples);
-		regions[i].samples = NULL;
-		regions[i].size = 0;
-	}
+	for (int i = 0; i < nregions; i++)
+		vaccel_prof_base_region_release(&regions[i]);
 
 	return VACCEL_OK;
 }
