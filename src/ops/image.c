@@ -6,15 +6,15 @@
 #include "log.h"
 #include "op.h"
 #include "plugin.h"
-#include "prof.h"
+#include "profiler.h"
 #include "session.h"
 #include "utils/enum.h"
 #include <inttypes.h>
 #include <stddef.h>
 #include <stdint.h>
 
-static struct vaccel_prof_region image_op_stats =
-	VACCEL_PROF_REGION_INIT("vaccel_image_op");
+static struct vaccel_profiler_region image_op_stats =
+	VACCEL_PROFILER_REGION_INIT("vaccel_image_op");
 
 typedef int (*image_op_no_text_fn_t)(struct vaccel_session *sess,
 				     const void *img,
@@ -37,7 +37,7 @@ int vaccel_image_op(vaccel_op_type_t op_type, struct vaccel_session *sess,
 
 	op_debug_plugin_lookup(sess, op_type);
 
-	vaccel_prof_region_start(&image_op_stats);
+	vaccel_profiler_region_start(&image_op_stats);
 
 	int (*plugin_image_op)() = plugin_get_op_func(sess->plugin, op_type);
 	if (!plugin_image_op) {
@@ -56,7 +56,8 @@ int vaccel_image_op(vaccel_op_type_t op_type, struct vaccel_session *sess,
 	}
 
 out:
-	vaccel_prof_region_stop(&image_op_stats);
+	vaccel_profiler_region_stop_with_context(&image_op_stats, op_type,
+						 plugin_session_name(sess));
 
 	return ret;
 }
@@ -222,6 +223,6 @@ __attribute__((constructor)) static void vaccel_ops_init(void)
 
 __attribute__((destructor)) static void vaccel_ops_fini(void)
 {
-	vaccel_prof_region_print(&image_op_stats);
-	vaccel_prof_region_release(&image_op_stats);
+	vaccel_profiler_region_print(&image_op_stats);
+	vaccel_profiler_region_release(&image_op_stats);
 }

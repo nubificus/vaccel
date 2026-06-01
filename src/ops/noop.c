@@ -6,13 +6,13 @@
 #include "log.h"
 #include "op.h"
 #include "plugin.h"
-#include "prof.h"
+#include "profiler.h"
 #include "session.h"
 #include <inttypes.h>
 #include <stdint.h>
 
-static struct vaccel_prof_region noop_op_stats =
-	VACCEL_PROF_REGION_INIT("vaccel_noop_op");
+static struct vaccel_profiler_region noop_op_stats =
+	VACCEL_PROFILER_REGION_INIT("vaccel_noop_op");
 
 typedef int (*noop_fn_t)(struct vaccel_session *sess);
 
@@ -26,7 +26,7 @@ int vaccel_noop(struct vaccel_session *sess)
 	vaccel_op_type_t op_type = VACCEL_OP_NOOP;
 	op_debug_plugin_lookup(sess, op_type);
 
-	vaccel_prof_region_start(&noop_op_stats);
+	vaccel_profiler_region_start(&noop_op_stats);
 
 	noop_fn_t plugin_noop = plugin_get_op_func(sess->plugin, op_type);
 	if (!plugin_noop)
@@ -34,7 +34,8 @@ int vaccel_noop(struct vaccel_session *sess)
 
 	ret = plugin_noop(sess);
 
-	vaccel_prof_region_stop(&noop_op_stats);
+	vaccel_profiler_region_stop_with_context(&noop_op_stats, op_type,
+						 plugin_session_name(sess));
 
 	return ret;
 }
@@ -66,6 +67,6 @@ __attribute__((constructor)) static void vaccel_ops_init(void)
 
 __attribute__((destructor)) static void vaccel_ops_fini(void)
 {
-	vaccel_prof_region_print(&noop_op_stats);
-	vaccel_prof_region_release(&noop_op_stats);
+	vaccel_profiler_region_print(&noop_op_stats);
+	vaccel_profiler_region_release(&noop_op_stats);
 }

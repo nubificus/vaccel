@@ -13,8 +13,8 @@ enum { INPUT_VAL = 10 };
 int main(int argc, char *argv[])
 {
 	int ret;
-	struct vaccel_prof_region mytestfunc_stats =
-		VACCEL_PROF_REGION_INIT("mytestfunc");
+	struct vaccel_profiler_region mytestfunc_stats =
+		VACCEL_PROFILER_REGION_INIT("mytestfunc");
 
 	int input = INPUT_VAL;
 	int32_t output1 = 0;
@@ -99,14 +99,14 @@ int main(int argc, char *argv[])
 
 	const int iter = (argc > 2) ? atoi(argv[2]) : 1;
 	for (int i = 0; i < iter; i++) {
-		vaccel_prof_region_start(&mytestfunc_stats);
+		vaccel_profiler_region_start(&mytestfunc_stats);
 
 		ret = vaccel_exec_with_resource(&sess, &res1, "mytestfunc",
 						read_args.args, read_args.count,
 						write_args.args,
 						write_args.count);
 
-		vaccel_prof_region_stop(&mytestfunc_stats);
+		vaccel_profiler_region_stop(&mytestfunc_stats);
 
 		if (ret) {
 			fprintf(stderr, "Could not run op: %d\n", ret);
@@ -125,14 +125,14 @@ int main(int argc, char *argv[])
 	}
 
 	for (int i = 0; i < iter; i++) {
-		vaccel_prof_region_start(&mytestfunc_stats);
+		vaccel_profiler_region_start(&mytestfunc_stats);
 
 		ret = vaccel_exec_with_resource(&sess, &res2, "mytestfunc",
 						read_args.args, read_args.count,
 						write_args.args,
 						write_args.count);
 
-		vaccel_prof_region_stop(&mytestfunc_stats);
+		vaccel_profiler_region_stop(&mytestfunc_stats);
 
 		if (ret) {
 			fprintf(stderr, "Could not run op: %d\n", ret);
@@ -166,8 +166,8 @@ release_resource1:
 	if (vaccel_resource_release(&res1))
 		fprintf(stderr, "Could not release lib resource\n");
 
-	vaccel_prof_region_print(&mytestfunc_stats);
-	vaccel_prof_region_release(&mytestfunc_stats);
+	vaccel_profiler_region_print(&mytestfunc_stats);
+	vaccel_profiler_region_release(&mytestfunc_stats);
 
 	return ret;
 }

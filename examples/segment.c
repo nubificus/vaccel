@@ -17,8 +17,8 @@ int main(int argc, char *argv[])
 	unsigned char out_imagename[STR_SIZE_MAX] = { '\0' };
 	struct vaccel_session sess;
 	struct vaccel_resource model = { .id = 0 };
-	struct vaccel_prof_region segment_stats =
-		VACCEL_PROF_REGION_INIT("segment");
+	struct vaccel_profiler_region segment_stats =
+		VACCEL_PROFILER_REGION_INIT("segment");
 
 	if (argc < 2 || argc > 4) {
 		fprintf(stderr,
@@ -57,14 +57,14 @@ int main(int argc, char *argv[])
 
 	const int iter = (argc > 2) ? atoi(argv[2]) : 1;
 	for (int i = 0; i < iter; i++) {
-		vaccel_prof_region_start(&segment_stats);
+		vaccel_profiler_region_start(&segment_stats);
 
 		ret = vaccel_image_segmentation(&sess, image,
 						(unsigned char *)out_imagename,
 						image_size,
 						sizeof(out_imagename));
 
-		vaccel_prof_region_stop(&segment_stats);
+		vaccel_profiler_region_stop(&segment_stats);
 
 		if (ret) {
 			fprintf(stderr, "Could not run op: %d\n", ret);
@@ -88,8 +88,8 @@ release_session:
 	if (image)
 		free(image);
 
-	vaccel_prof_region_print(&segment_stats);
-	vaccel_prof_region_release(&segment_stats);
+	vaccel_profiler_region_print(&segment_stats);
+	vaccel_profiler_region_release(&segment_stats);
 
 	return ret;
 }

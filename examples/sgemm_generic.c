@@ -44,8 +44,8 @@ int main(int argc, char *argv[])
 	init(m, n, k, a, b, c);
 
 	struct vaccel_session sess;
-	struct vaccel_prof_region sgemm_stats =
-		VACCEL_PROF_REGION_INIT("sgemm");
+	struct vaccel_profiler_region sgemm_stats =
+		VACCEL_PROFILER_REGION_INIT("sgemm");
 
 	if (argc > 3) {
 		fprintf(stderr, "Usage: %s [iterations] [out_file]\n", argv[0]);
@@ -155,12 +155,12 @@ int main(int argc, char *argv[])
 
 	const int iter = (argc > 1) ? atoi(argv[1]) : 1;
 	for (int i = 0; i < iter; i++) {
-		vaccel_prof_region_start(&sgemm_stats);
+		vaccel_profiler_region_start(&sgemm_stats);
 
 		ret = vaccel_genop(&sess, read_args.args, read_args.count,
 				   write_args.args, write_args.count);
 
-		vaccel_prof_region_stop(&sgemm_stats);
+		vaccel_profiler_region_stop(&sgemm_stats);
 
 		if (ret) {
 			fprintf(stderr, "Could not run sgemm\n");
@@ -192,8 +192,8 @@ out_close:
 	if (data_fp)
 		fclose(data_fp);
 
-	vaccel_prof_region_print(&sgemm_stats);
-	vaccel_prof_region_release(&sgemm_stats);
+	vaccel_profiler_region_print(&sgemm_stats);
+	vaccel_profiler_region_release(&sgemm_stats);
 
 	return ret;
 }

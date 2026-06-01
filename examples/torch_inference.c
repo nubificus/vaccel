@@ -16,10 +16,10 @@ int main(int argc, char **argv)
 	struct vaccel_resource model;
 	int64_t dims[] = { 1, INFERENCE_IMAGE_CHANNELS, INFERENCE_IMAGE_WIDTH,
 			   INFERENCE_IMAGE_HEIGHT };
-	struct vaccel_prof_region torch_model_load_stats =
-		VACCEL_PROF_REGION_INIT("torch_model_load");
-	struct vaccel_prof_region torch_model_run_stats =
-		VACCEL_PROF_REGION_INIT("torch_model_run");
+	struct vaccel_profiler_region torch_model_load_stats =
+		VACCEL_PROFILER_REGION_INIT("torch_model_load");
+	struct vaccel_profiler_region torch_model_run_stats =
+		VACCEL_PROFILER_REGION_INIT("torch_model_run");
 
 	if (argc < 4 || argc > 5) {
 		fprintf(stderr,
@@ -50,7 +50,7 @@ int main(int argc, char **argv)
 		goto release_session;
 	}
 
-	vaccel_prof_region_start(&torch_model_load_stats);
+	vaccel_profiler_region_start(&torch_model_load_stats);
 
 	ret = vaccel_torch_model_load(&sess, &model);
 	if (ret) {
@@ -58,7 +58,7 @@ int main(int argc, char **argv)
 		goto unregister_resource;
 	}
 
-	vaccel_prof_region_stop(&torch_model_load_stats);
+	vaccel_profiler_region_stop(&torch_model_load_stats);
 
 	struct vaccel_torch_tensor *in;
 	ret = vaccel_torch_tensor_new(&in, 4, dims, VACCEL_TORCH_FLOAT);
@@ -81,12 +81,12 @@ int main(int argc, char **argv)
 
 	const int iter = (argc > 4) ? atoi(argv[4]) : 1;
 	for (int i = 0; i < iter; i++) {
-		vaccel_prof_region_start(&torch_model_run_stats);
+		vaccel_profiler_region_start(&torch_model_run_stats);
 
 		ret = vaccel_torch_model_run(&sess, &model, NULL, &in, 1, &out,
 					     1);
 
-		vaccel_prof_region_stop(&torch_model_run_stats);
+		vaccel_profiler_region_stop(&torch_model_run_stats);
 
 		if (ret) {
 			fprintf(stderr, "Could not run op: %d\n", ret);
@@ -125,11 +125,11 @@ release_resource:
 	if (vaccel_resource_release(&model) != VACCEL_OK)
 		fprintf(stderr, "Could not release model resource\n");
 
-	vaccel_prof_region_print(&torch_model_load_stats);
-	vaccel_prof_region_print(&torch_model_run_stats);
+	vaccel_profiler_region_print(&torch_model_load_stats);
+	vaccel_profiler_region_print(&torch_model_run_stats);
 
-	vaccel_prof_region_release(&torch_model_load_stats);
-	vaccel_prof_region_release(&torch_model_run_stats);
+	vaccel_profiler_region_release(&torch_model_load_stats);
+	vaccel_profiler_region_release(&torch_model_run_stats);
 
 	return ret;
 }

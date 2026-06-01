@@ -14,8 +14,8 @@ int main(int argc, char *argv[])
 	char *file;
 	size_t file_size;
 	struct vaccel_session sess;
-	struct vaccel_prof_region mbench_stats =
-		VACCEL_PROF_REGION_INIT("mbench");
+	struct vaccel_profiler_region mbench_stats =
+		VACCEL_PROFILER_REGION_INIT("mbench");
 
 	if (argc < 3 || argc > 4) {
 		fprintf(stderr, "Usage: %s <time_ms> <lib_file> [iterations]\n",
@@ -42,12 +42,12 @@ int main(int argc, char *argv[])
 
 	const int iter = (argc > 3) ? atoi(argv[3]) : 1;
 	for (int i = 0; i < iter; i++) {
-		vaccel_prof_region_start(&mbench_stats);
+		vaccel_profiler_region_start(&mbench_stats);
 
 		ret = vaccel_exec(&sess, "mbench", "mbench", read,
 				  sizeof(read) / sizeof(read[0]), NULL, 0);
 
-		vaccel_prof_region_stop(&mbench_stats);
+		vaccel_profiler_region_stop(&mbench_stats);
 
 		if (ret) {
 			fprintf(stderr, "Could not run op: %d\n", ret);
@@ -62,8 +62,8 @@ release_session:
 		return 1;
 	}
 
-	vaccel_prof_region_print(&mbench_stats);
-	vaccel_prof_region_release(&mbench_stats);
+	vaccel_profiler_region_print(&mbench_stats);
+	vaccel_profiler_region_release(&mbench_stats);
 
 	return ret;
 }

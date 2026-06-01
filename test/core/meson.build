@@ -6,6 +6,7 @@ tests_core_sources = files([
   'test_id_pool.cpp',
   'test_log.cpp',
   'test_plugin.cpp',
+  'test_profiler.cpp',
 ])
 
 tests_core_w_plugin_sources = files([

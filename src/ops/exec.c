@@ -7,14 +7,15 @@
 #include "log.h"
 #include "op.h"
 #include "plugin.h"
-#include "prof.h"
+#include "profiler.h"
 #include "resource.h"
 #include "session.h"
 #include <inttypes.h>
+#include <stddef.h>
 #include <stdint.h>
 
-static struct vaccel_prof_region exec_op_stats =
-	VACCEL_PROF_REGION_INIT("vaccel_exec_op");
+static struct vaccel_profiler_region exec_op_stats =
+	VACCEL_PROFILER_REGION_INIT("vaccel_exec_op");
 
 typedef int (*exec_fn_t)(struct vaccel_session *sess, const char *library,
 			 const char *fn_symbol, struct vaccel_arg *read,
@@ -33,7 +34,7 @@ int vaccel_exec(struct vaccel_session *sess, const char *library,
 	vaccel_op_type_t op_type = VACCEL_OP_EXEC;
 	op_debug_plugin_lookup(sess, op_type);
 
-	vaccel_prof_region_start(&exec_op_stats);
+	vaccel_profiler_region_start(&exec_op_stats);
 
 	exec_fn_t plugin_exec = plugin_get_op_func(sess->plugin, op_type);
 	if (!plugin_exec) {
@@ -45,7 +46,8 @@ int vaccel_exec(struct vaccel_session *sess, const char *library,
 			  nr_write);
 
 out:
-	vaccel_prof_region_stop(&exec_op_stats);
+	vaccel_profiler_region_stop_with_context(&exec_op_stats, op_type,
+						 plugin_session_name(sess));
 
 	return ret;
 }
@@ -95,8 +97,8 @@ int vaccel_exec_unpack(struct vaccel_session *sess, struct vaccel_arg *read,
 			   write, nr_write);
 }
 
-static struct vaccel_prof_region exec_res_op_stats =
-	VACCEL_PROF_REGION_INIT("vaccel_exec_with_resource_op");
+static struct vaccel_profiler_region exec_res_op_stats =
+	VACCEL_PROFILER_REGION_INIT("vaccel_exec_with_resource_op");
 
 typedef int (*exec_with_resource_fn_t)(struct vaccel_session *sess,
 				       struct vaccel_resource *resource,
@@ -132,7 +134,7 @@ int vaccel_exec_with_resource(struct vaccel_session *sess,
 		return VACCEL_EPERM;
 	}
 
-	vaccel_prof_region_start(&exec_res_op_stats);
+	vaccel_profiler_region_start(&exec_res_op_stats);
 
 	exec_with_resource_fn_t plugin_exec_with_resource =
 		plugin_get_op_func(sess->plugin, op_type);
@@ -145,7 +147,8 @@ int vaccel_exec_with_resource(struct vaccel_session *sess,
 					nr_read, write, nr_write);
 
 out:
-	vaccel_prof_region_stop(&exec_res_op_stats);
+	vaccel_profiler_region_stop_with_context(&exec_res_op_stats, op_type,
+						 plugin_session_name(sess));
 
 	return ret;
 }
@@ -214,9 +217,9 @@ __attribute__((constructor)) static void vaccel_ops_init(void)
 
 __attribute__((destructor)) static void vaccel_ops_fini(void)
 {
-	vaccel_prof_region_print(&exec_op_stats);
-	vaccel_prof_region_print(&exec_res_op_stats);
+	vaccel_profiler_region_print(&exec_op_stats);
+	vaccel_profiler_region_print(&exec_res_op_stats);
 
-	vaccel_prof_region_release(&exec_op_stats);
-	vaccel_prof_region_release(&exec_res_op_stats);
+	vaccel_profiler_region_release(&exec_op_stats);
+	vaccel_profiler_region_release(&exec_res_op_stats);
 }
