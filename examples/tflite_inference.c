@@ -12,12 +12,12 @@ int main(int argc, char *argv[])
 	int ret;
 	struct vaccel_session sess;
 	struct vaccel_resource model;
-	struct vaccel_prof_region tflite_model_load_stats =
-		VACCEL_PROF_REGION_INIT("tflite_model_load");
-	struct vaccel_prof_region tflite_model_run_stats =
-		VACCEL_PROF_REGION_INIT("tflite_model_run");
-	struct vaccel_prof_region tflite_model_unload_stats =
-		VACCEL_PROF_REGION_INIT("tflite_model_unload");
+	struct vaccel_profiler_region tflite_model_load_stats =
+		VACCEL_PROFILER_REGION_INIT("tflite_model_load");
+	struct vaccel_profiler_region tflite_model_run_stats =
+		VACCEL_PROFILER_REGION_INIT("tflite_model_run");
+	struct vaccel_profiler_region tflite_model_unload_stats =
+		VACCEL_PROFILER_REGION_INIT("tflite_model_unload");
 
 	if (argc < 4 || argc > 5) {
 		fprintf(stderr,
@@ -47,11 +47,11 @@ int main(int argc, char *argv[])
 		goto release_session;
 	}
 
-	vaccel_prof_region_start(&tflite_model_load_stats);
+	vaccel_profiler_region_start(&tflite_model_load_stats);
 
 	ret = vaccel_tflite_model_load(&sess, &model);
 
-	vaccel_prof_region_stop(&tflite_model_load_stats);
+	vaccel_profiler_region_stop(&tflite_model_load_stats);
 
 	if (ret) {
 		fprintf(stderr, "Could not load model\n");
@@ -83,12 +83,12 @@ int main(int argc, char *argv[])
 
 	const int iter = (argc > 4) ? atoi(argv[4]) : 1;
 	for (int i = 0; i < iter; i++) {
-		vaccel_prof_region_start(&tflite_model_run_stats);
+		vaccel_profiler_region_start(&tflite_model_run_stats);
 
 		ret = vaccel_tflite_model_run(&sess, &model, &in, 1, &out, 1,
 					      &status);
 
-		vaccel_prof_region_stop(&tflite_model_run_stats);
+		vaccel_profiler_region_stop(&tflite_model_run_stats);
 
 		printf("Session run status: %" PRIu8 "\n", status);
 		if (ret) {
@@ -117,12 +117,12 @@ delete_in_tensor:
 	if (vaccel_tflite_tensor_delete(in))
 		fprintf(stderr, "Could not delete input tensor\n");
 delete_tflite_model:
-	vaccel_prof_region_start(&tflite_model_unload_stats);
+	vaccel_profiler_region_start(&tflite_model_unload_stats);
 
 	if (vaccel_tflite_model_unload(&sess, &model))
 		fprintf(stderr, "Could not unload model\n");
 
-	vaccel_prof_region_stop(&tflite_model_unload_stats);
+	vaccel_profiler_region_stop(&tflite_model_unload_stats);
 unregister_resource:
 	if (vaccel_resource_unregister(&model, &sess))
 		fprintf(stderr, "Could not unregister model from session\n");
@@ -132,13 +132,13 @@ release_session:
 release_resource:
 	vaccel_resource_release(&model);
 
-	vaccel_prof_region_print(&tflite_model_load_stats);
-	vaccel_prof_region_print(&tflite_model_unload_stats);
-	vaccel_prof_region_print(&tflite_model_run_stats);
+	vaccel_profiler_region_print(&tflite_model_load_stats);
+	vaccel_profiler_region_print(&tflite_model_unload_stats);
+	vaccel_profiler_region_print(&tflite_model_run_stats);
 
-	vaccel_prof_region_release(&tflite_model_load_stats);
-	vaccel_prof_region_release(&tflite_model_unload_stats);
-	vaccel_prof_region_release(&tflite_model_run_stats);
+	vaccel_profiler_region_release(&tflite_model_load_stats);
+	vaccel_profiler_region_release(&tflite_model_unload_stats);
+	vaccel_profiler_region_release(&tflite_model_run_stats);
 
 	return ret;
 }

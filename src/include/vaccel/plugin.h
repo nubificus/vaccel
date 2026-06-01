@@ -4,7 +4,7 @@
 
 #include "list.h"
 #include "op.h"
-#include "prof/backend.h"
+#include "profiler/backend.h"
 #include "resource.h"
 #include "session.h"
 #include "utils/enum.h"
@@ -72,8 +72,8 @@ struct vaccel_plugin_info {
 	int (*resource_sync)(struct vaccel_resource *res,
 			     struct vaccel_session *sess);
 
-	/* profiling backend for this plugin */
-	const struct vaccel_prof_backend *prof_backend;
+	/* profiler backend for this plugin */
+	const struct vaccel_profiler_backend *profiler_backend;
 };
 
 struct vaccel_plugin {

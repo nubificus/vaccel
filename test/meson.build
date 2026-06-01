@@ -50,9 +50,9 @@ tests_env_exec.set('VACCEL_PLUGINS', libvaccel_exec.full_path())
 tests_env_exec_lazy = tests_env_exec
 tests_env_exec_lazy.set('VACCEL_EXEC_DLOPEN_MODE', 'lazy')
 
-tests_env_prof = tests_env
-tests_env_prof.set('VACCEL_PROFILING_ENABLED', '1')
-tests_env_prof.set('VACCEL_PROFILING_BACKEND', 'builtin')
+tests_env_profiler = tests_env
+tests_env_profiler.set('VACCEL_PROFILING_ENABLED', '1')
+tests_env_profiler.set('VACCEL_PROFILER_BACKEND', 'builtin')
 
 libtests_main = library('tests-main',
   ['main.cpp', 'utils.cpp', utils_hpp, 'mock_virtio.cpp', 'mock_virtio.hpp'],
@@ -86,10 +86,10 @@ foreach t : tests_core_sources + tests_utils_sources
     continue
   endif
 
-  if name == 'test_prof'
+  if name == 'test_profiler'
     test(name, exe,
       args : tests_args,
-      env : tests_env_prof,
+      env : tests_env_profiler,
       depends : tests_tgt_depends,
       is_parallel : false)
     continue

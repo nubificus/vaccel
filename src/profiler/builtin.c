@@ -5,7 +5,7 @@
 #include "backend.h"
 #include "error.h"
 #include "log.h"
-#include "prof.h"
+#include "profiler.h"
 #include <bits/time.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -27,22 +27,22 @@ static uint64_t get_tstamp_nsec(void)
 	return (uint64_t)tp.tv_sec * NS_PER_SEC + (uint64_t)tp.tv_nsec;
 }
 
-static void prof_sample_start(struct vaccel_prof_sample *sample)
+static void profiler_sample_start(struct vaccel_profiler_sample *sample)
 {
 	sample->start = get_tstamp_nsec();
 	sample->time = 0;
 }
 
-static void prof_sample_stop(struct vaccel_prof_sample *sample)
+static void profiler_sample_stop(struct vaccel_profiler_sample *sample)
 {
 	sample->time = get_tstamp_nsec() - sample->start;
 }
 
-static int grow_samples_array(struct vaccel_prof_region *region)
+static int grow_samples_array(struct vaccel_profiler_region *region)
 {
 	size_t alloc_size = (region->size) ? region->size * 2 : MIN_SAMPLES;
 
-	struct vaccel_prof_sample *new_ptr =
+	struct vaccel_profiler_sample *new_ptr =
 		realloc(region->samples, alloc_size * sizeof(*new_ptr));
 	if (!new_ptr)
 		return VACCEL_ENOMEM;
@@ -55,8 +55,8 @@ static int grow_samples_array(struct vaccel_prof_region *region)
 
 /* This will return that last used sample entry or NULL if no entries
  * have been used */
-static struct vaccel_prof_sample *
-get_last_sample(const struct vaccel_prof_region *region)
+static struct vaccel_profiler_sample *
+get_last_sample(const struct vaccel_profiler_region *region)
 {
 	size_t size = region->nr_entries;
 
@@ -66,12 +66,12 @@ get_last_sample(const struct vaccel_prof_region *region)
 	return &region->samples[size - 1];
 }
 
-/* Get next available profiling sample entry
+/* Get next available profiler sample entry
  *
  * This will return the first unused sample entry. If needed it will
  * grow the capacity of the array */
-static struct vaccel_prof_sample *
-get_next_sample(struct vaccel_prof_region *region)
+static struct vaccel_profiler_sample *
+get_next_sample(struct vaccel_profiler_region *region)
 {
 	size_t pos = region->nr_entries;
 
@@ -84,34 +84,37 @@ get_next_sample(struct vaccel_prof_region *region)
 	return &region->samples[pos];
 }
 
-static int vaccel_prof_builtin_region_start(struct vaccel_prof_region *region)
+static int
+vaccel_profiler_builtin_region_start(struct vaccel_profiler_region *region)
 {
-	vaccel_debug("Start profiling region %s", region->name);
+	vaccel_debug("Start profiler region %s", region->name);
 
-	struct vaccel_prof_sample *sample = get_next_sample(region);
+	struct vaccel_profiler_sample *sample = get_next_sample(region);
 	if (!sample)
 		return VACCEL_ENOMEM;
 
-	prof_sample_start(sample);
+	profiler_sample_start(sample);
 
 	return VACCEL_OK;
 }
 
-static int vaccel_prof_builtin_region_stop(struct vaccel_prof_region *region)
+static int
+vaccel_profiler_builtin_region_stop(struct vaccel_profiler_region *region)
 {
-	vaccel_debug("Stop profiling region %s", region->name);
+	vaccel_debug("Stop profiler region %s", region->name);
 
-	struct vaccel_prof_sample *sample = get_last_sample(region);
+	struct vaccel_profiler_sample *sample = get_last_sample(region);
 	if (!sample)
 		return VACCEL_ENOENT;
 
-	prof_sample_stop(sample);
+	profiler_sample_stop(sample);
 
 	return VACCEL_OK;
 }
 
-static int vaccel_prof_builtin_region_init(struct vaccel_prof_region *region,
-					   const char *name)
+static int
+vaccel_profiler_builtin_region_init(struct vaccel_profiler_region *region,
+				    const char *name)
 {
 	if (name == NULL) {
 		region->name = malloc(MAX_NAME);
@@ -139,7 +142,8 @@ free_name:
 	return VACCEL_ENOMEM;
 }
 
-static int vaccel_prof_builtin_region_release(struct vaccel_prof_region *region)
+static int
+vaccel_profiler_builtin_region_release(struct vaccel_profiler_region *region)
 {
 	if (region->samples)
 		free(region->samples);
@@ -156,7 +160,8 @@ static int vaccel_prof_builtin_region_release(struct vaccel_prof_region *region)
 	return VACCEL_OK;
 }
 
-static int vaccel_prof_builtin_region_print(struct vaccel_prof_region *region)
+static int
+vaccel_profiler_builtin_region_print(struct vaccel_profiler_region *region)
 {
 	if (!region->nr_entries)
 		return VACCEL_OK;
@@ -175,18 +180,18 @@ static int vaccel_prof_builtin_region_print(struct vaccel_prof_region *region)
 	}
 
 	vaccel_info(
-		"[prof] %s: total_time: %lu nsec nr_entries: %lu avg_time: %lu nsec ops_per_sec: %.2f",
+		"[profiler] %s: total_time: %lu nsec nr_entries: %lu avg_time: %lu nsec ops_per_sec: %.2f",
 		region->name, total_time, region->nr_entries, avg_time,
 		ops_per_sec);
 
 	return VACCEL_OK;
 }
 
-static struct vaccel_prof_region *
-prof_builtin_regions_get_by_name(struct vaccel_prof_region *regions,
-				 int nregions, const char *name)
+static struct vaccel_profiler_region *
+profiler_builtin_regions_get_by_name(struct vaccel_profiler_region *regions,
+				     int nregions, const char *name)
 {
-	struct vaccel_prof_region *r = NULL;
+	struct vaccel_profiler_region *r = NULL;
 	for (int i = 0; i < nregions; i++) {
 		if (strcmp(regions[i].name, name) == 0)
 			r = &regions[i];
@@ -194,67 +199,67 @@ prof_builtin_regions_get_by_name(struct vaccel_prof_region *regions,
 	return r;
 }
 
-static int
-vaccel_prof_builtin_regions_start_by_name(struct vaccel_prof_region *regions,
-					  int nregions, const char *name)
+static int vaccel_profiler_builtin_regions_start_by_name(
+	struct vaccel_profiler_region *regions, int nregions, const char *name)
 {
-	struct vaccel_prof_region *r =
-		prof_builtin_regions_get_by_name(regions, nregions, name);
+	struct vaccel_profiler_region *r =
+		profiler_builtin_regions_get_by_name(regions, nregions, name);
 	if (!r) {
-		vaccel_error("[prof] stop region: Invalid profiling region");
+		vaccel_error("[profiler] stop region: Invalid profiler region");
 		return VACCEL_EINVAL;
 	}
 
-	vaccel_debug("Start profiling region %s", r->name);
+	vaccel_debug("Start profiler region %s", r->name);
 
-	struct vaccel_prof_sample *sample = get_next_sample(r);
+	struct vaccel_profiler_sample *sample = get_next_sample(r);
 	if (!sample)
 		return VACCEL_ENOMEM;
 
-	prof_sample_start(sample);
+	profiler_sample_start(sample);
 
 	return VACCEL_OK;
 }
 
-static int
-vaccel_prof_builtin_regions_stop_by_name(struct vaccel_prof_region *regions,
-					 int nregions, const char *name)
+static int vaccel_profiler_builtin_regions_stop_by_name(
+	struct vaccel_profiler_region *regions, int nregions, const char *name)
 {
-	struct vaccel_prof_region *r =
-		prof_builtin_regions_get_by_name(regions, nregions, name);
+	struct vaccel_profiler_region *r =
+		profiler_builtin_regions_get_by_name(regions, nregions, name);
 	if (!r) {
-		vaccel_error("[prof] stop region: Invalid profiling region");
+		vaccel_error("[profiler] stop region: Invalid profiler region");
 		return VACCEL_EINVAL;
 	}
 
-	vaccel_debug("Stop profiling region %s", r->name);
+	vaccel_debug("Stop profiler region %s", r->name);
 
-	struct vaccel_prof_sample *sample = get_last_sample(r);
+	struct vaccel_profiler_sample *sample = get_last_sample(r);
 	if (!sample)
 		return VACCEL_ENOENT;
 
-	prof_sample_stop(sample);
+	profiler_sample_stop(sample);
 
 	return VACCEL_OK;
 }
 
 static int
-vaccel_prof_builtin_regions_release(struct vaccel_prof_region *regions,
-				    int nregions)
+vaccel_profiler_builtin_regions_release(struct vaccel_profiler_region *regions,
+					int nregions)
 {
 	for (int i = 0; i < nregions; i++)
-		vaccel_prof_builtin_region_release(&regions[i]);
+		vaccel_profiler_builtin_region_release(&regions[i]);
 
 	return VACCEL_OK;
 }
 
-static int vaccel_prof_builtin_regions_init(struct vaccel_prof_region *regions,
-					    int nregions)
+static int
+vaccel_profiler_builtin_regions_init(struct vaccel_profiler_region *regions,
+				     int nregions)
 {
 	for (int i = 0; i < nregions; i++) {
-		int ret = vaccel_prof_builtin_region_init(&regions[i], NULL);
+		int ret =
+			vaccel_profiler_builtin_region_init(&regions[i], NULL);
 		if (ret != VACCEL_OK) {
-			vaccel_prof_builtin_regions_release(regions, i);
+			vaccel_profiler_builtin_regions_release(regions, i);
 			return ret;
 		}
 	}
@@ -262,9 +267,8 @@ static int vaccel_prof_builtin_regions_init(struct vaccel_prof_region *regions,
 	return VACCEL_OK;
 }
 
-static int
-vaccel_prof_builtin_regions_print_all(struct vaccel_prof_region *regions,
-				      int nregions)
+static int vaccel_profiler_builtin_regions_print_all(
+	struct vaccel_profiler_region *regions, int nregions)
 {
 	for (int i = 0; i < nregions; i++) {
 		if (!regions[i].nr_entries)
@@ -284,7 +288,7 @@ vaccel_prof_builtin_regions_print_all(struct vaccel_prof_region *regions,
 		}
 
 		vaccel_info(
-			"[prof] %s: total_time: %lu nsec nr_entries: %lu avg_time: %lu nsec ops_per_sec: %.2f",
+			"[profiler] %s: total_time: %lu nsec nr_entries: %lu avg_time: %lu nsec ops_per_sec: %.2f",
 			regions[i].name, total_time, regions[i].nr_entries,
 			avg_time, ops_per_sec);
 	}
@@ -292,10 +296,9 @@ vaccel_prof_builtin_regions_print_all(struct vaccel_prof_region *regions,
 	return VACCEL_OK;
 }
 
-static int
-vaccel_prof_builtin_regions_print_all_to_buf(char **tbuf, size_t tbuf_len,
-					     struct vaccel_prof_region *regions,
-					     int size)
+static int vaccel_profiler_builtin_regions_print_all_to_buf(
+	char **tbuf, size_t tbuf_len, struct vaccel_profiler_region *regions,
+	int size)
 {
 	int ssize = 0;
 	int tsize = 0;
@@ -322,7 +325,7 @@ vaccel_prof_builtin_regions_print_all_to_buf(char **tbuf, size_t tbuf_len,
 		ssize +=
 			snprintf(
 				NULL, 0,
-				"[prof] %s: total_time: %ju nsec nr_entries: %zu avg_time: %ju nsec ops_per_sec: %.2f",
+				"[profiler] %s: total_time: %ju nsec nr_entries: %zu avg_time: %ju nsec ops_per_sec: %.2f",
 				regions[i].name, total_time[i],
 				regions[i].nr_entries, avg_time, ops_per_sec) +
 			1;
@@ -350,7 +353,7 @@ vaccel_prof_builtin_regions_print_all_to_buf(char **tbuf, size_t tbuf_len,
 
 		ret = snprintf(
 			*tbuf + tsize, tbuf_len - tsize,
-			"[prof] %s: total_time: %ju nsec nr_entries: %zu avg_time: %ju nsec ops_per_sec: %.2f",
+			"[profiler] %s: total_time: %ju nsec nr_entries: %zu avg_time: %ju nsec ops_per_sec: %.2f",
 			regions[i].name, total_time[i], regions[i].nr_entries,
 			avg_time, ops_per_sec);
 
@@ -370,23 +373,23 @@ vaccel_prof_builtin_regions_print_all_to_buf(char **tbuf, size_t tbuf_len,
 	return size;
 }
 
-static const struct vaccel_prof_backend prof_builtin_backend = {
-	.region_start = vaccel_prof_builtin_region_start,
-	.region_stop = vaccel_prof_builtin_region_stop,
+static const struct vaccel_profiler_backend profiler_builtin_backend = {
+	.region_start = vaccel_profiler_builtin_region_start,
+	.region_stop = vaccel_profiler_builtin_region_stop,
 	.region_stop_with_context = NULL,
-	.region_init = vaccel_prof_builtin_region_init,
-	.region_release = vaccel_prof_builtin_region_release,
-	.region_print = vaccel_prof_builtin_region_print,
-	.regions_start_by_name = vaccel_prof_builtin_regions_start_by_name,
-	.regions_stop_by_name = vaccel_prof_builtin_regions_stop_by_name,
-	.regions_init = vaccel_prof_builtin_regions_init,
-	.regions_release = vaccel_prof_builtin_regions_release,
-	.regions_print_all = vaccel_prof_builtin_regions_print_all,
+	.region_init = vaccel_profiler_builtin_region_init,
+	.region_release = vaccel_profiler_builtin_region_release,
+	.region_print = vaccel_profiler_builtin_region_print,
+	.regions_start_by_name = vaccel_profiler_builtin_regions_start_by_name,
+	.regions_stop_by_name = vaccel_profiler_builtin_regions_stop_by_name,
+	.regions_init = vaccel_profiler_builtin_regions_init,
+	.regions_release = vaccel_profiler_builtin_regions_release,
+	.regions_print_all = vaccel_profiler_builtin_regions_print_all,
 	.regions_print_all_to_buf =
-		vaccel_prof_builtin_regions_print_all_to_buf,
+		vaccel_profiler_builtin_regions_print_all_to_buf,
 };
 
-const struct vaccel_prof_backend *vaccel_prof_builtin_backend_get(void)
+const struct vaccel_profiler_backend *vaccel_profiler_builtin_backend_get(void)
 {
-	return &prof_builtin_backend;
+	return &profiler_builtin_backend;
 }

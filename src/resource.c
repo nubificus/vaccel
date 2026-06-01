@@ -11,7 +11,7 @@
 #include "list.h"
 #include "log.h"
 #include "plugin.h"
-#include "prof.h"
+#include "profiler.h"
 #include "resource_registration.h"
 #include "session.h"
 #include "utils/fs.h"
@@ -31,11 +31,11 @@
 
 enum { VACCEL_RESOURCES_MAX = 2048 };
 
-static struct vaccel_prof_region resource_register_stats =
-	VACCEL_PROF_REGION_INIT("vaccel_resource_register");
+static struct vaccel_profiler_region resource_register_stats =
+	VACCEL_PROFILER_REGION_INIT("vaccel_resource_register");
 
-static struct vaccel_prof_region resource_unregister_stats =
-	VACCEL_PROF_REGION_INIT("vaccel_resource_unregister");
+static struct vaccel_profiler_region resource_unregister_stats =
+	VACCEL_PROFILER_REGION_INIT("vaccel_resource_unregister");
 
 static struct {
 	/* true if the resources component has been initialized */
@@ -95,10 +95,10 @@ int resources_cleanup(void)
 	pthread_mutex_destroy(&resources.lock);
 	resources.initialized = false;
 
-	vaccel_prof_region_print(&resource_register_stats);
-	vaccel_prof_region_release(&resource_register_stats);
-	vaccel_prof_region_print(&resource_unregister_stats);
-	vaccel_prof_region_release(&resource_unregister_stats);
+	vaccel_profiler_region_print(&resource_register_stats);
+	vaccel_profiler_region_release(&resource_register_stats);
+	vaccel_profiler_region_print(&resource_unregister_stats);
+	vaccel_profiler_region_release(&resource_unregister_stats);
 
 	return id_pool_release(&resources.id_pool);
 }
@@ -1038,7 +1038,7 @@ int vaccel_resource_register(struct vaccel_resource *res,
 {
 	int ret;
 
-	vaccel_prof_region_start(&resource_register_stats);
+	vaccel_profiler_region_start(&resource_register_stats);
 
 	if (!resources.initialized) {
 		ret = VACCEL_EPERM;
@@ -1107,7 +1107,7 @@ int vaccel_resource_register(struct vaccel_resource *res,
 	ret = VACCEL_OK;
 
 out:
-	vaccel_prof_region_stop(&resource_register_stats);
+	vaccel_profiler_region_stop(&resource_register_stats);
 	return ret;
 }
 
@@ -1116,7 +1116,7 @@ int vaccel_resource_unregister(struct vaccel_resource *res,
 {
 	int ret;
 
-	vaccel_prof_region_start(&resource_unregister_stats);
+	vaccel_profiler_region_start(&resource_unregister_stats);
 
 	if (!resources.initialized) {
 		ret = VACCEL_EPERM;
@@ -1180,7 +1180,7 @@ int vaccel_resource_unregister(struct vaccel_resource *res,
 	ret = VACCEL_OK;
 
 out:
-	vaccel_prof_region_stop(&resource_unregister_stats);
+	vaccel_profiler_region_stop(&resource_unregister_stats);
 	return ret;
 }
 

@@ -10,7 +10,8 @@ int main(int argc, char *argv[])
 {
 	int ret;
 	struct vaccel_session sess;
-	struct vaccel_prof_region noop_stats = VACCEL_PROF_REGION_INIT("noop");
+	struct vaccel_profiler_region noop_stats =
+		VACCEL_PROFILER_REGION_INIT("noop");
 
 	if (argc > 2) {
 		fprintf(stderr, "Usage: %s [iterations]\n", argv[0]);
@@ -41,12 +42,12 @@ int main(int argc, char *argv[])
 
 	const int iter = (argc > 1) ? atoi(argv[1]) : 1;
 	for (int i = 0; i < iter; i++) {
-		vaccel_prof_region_start(&noop_stats);
+		vaccel_profiler_region_start(&noop_stats);
 
 		ret = vaccel_genop(&sess, read_args.args, read_args.count, NULL,
 				   0);
 
-		vaccel_prof_region_stop(&noop_stats);
+		vaccel_profiler_region_stop(&noop_stats);
 
 		if (ret) {
 			fprintf(stderr, "Could not run op: %d\n", ret);
@@ -61,8 +62,8 @@ release_session:
 	if (vaccel_session_release(&sess))
 		fprintf(stderr, "Could not release session\n");
 
-	vaccel_prof_region_print(&noop_stats);
-	vaccel_prof_region_release(&noop_stats);
+	vaccel_profiler_region_print(&noop_stats);
+	vaccel_profiler_region_release(&noop_stats);
 
 	return ret;
 }

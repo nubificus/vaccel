@@ -7,7 +7,7 @@
 #include "log.h"
 #include "op.h"
 #include "plugin.h"
-#include "prof.h"
+#include "profiler.h"
 #include "resource.h"
 #include "session.h"
 #include <inttypes.h>
@@ -150,8 +150,8 @@ int vaccel_tflite_tensor_take_data(struct vaccel_tflite_tensor *tensor,
 	return VACCEL_OK;
 }
 
-static struct vaccel_prof_region tflite_model_load_op_stats =
-	VACCEL_PROF_REGION_INIT("vaccel_tflite_model_load");
+static struct vaccel_profiler_region tflite_model_load_op_stats =
+	VACCEL_PROFILER_REGION_INIT("vaccel_tflite_model_load");
 
 typedef int (*tflite_model_load_fn_t)(struct vaccel_session *sess,
 				      struct vaccel_resource *model);
@@ -180,7 +180,7 @@ int vaccel_tflite_model_load(struct vaccel_session *sess,
 		return VACCEL_EPERM;
 	}
 
-	vaccel_prof_region_start(&tflite_model_load_op_stats);
+	vaccel_profiler_region_start(&tflite_model_load_op_stats);
 
 	tflite_model_load_fn_t plugin_tflite_model_load =
 		plugin_get_op_func(sess->plugin, op_type);
@@ -192,15 +192,15 @@ int vaccel_tflite_model_load(struct vaccel_session *sess,
 	ret = plugin_tflite_model_load(sess, model);
 
 out:
-	vaccel_prof_region_stop_with_context(&tflite_model_load_op_stats,
-					     op_type,
-					     plugin_session_name(sess));
+	vaccel_profiler_region_stop_with_context(&tflite_model_load_op_stats,
+						 op_type,
+						 plugin_session_name(sess));
 
 	return ret;
 }
 
-static struct vaccel_prof_region tflite_model_unload_op_stats =
-	VACCEL_PROF_REGION_INIT("vaccel_tflite_model_unload");
+static struct vaccel_profiler_region tflite_model_unload_op_stats =
+	VACCEL_PROFILER_REGION_INIT("vaccel_tflite_model_unload");
 
 typedef int (*tflite_model_unload_fn_t)(struct vaccel_session *sess,
 					struct vaccel_resource *model);
@@ -229,7 +229,7 @@ int vaccel_tflite_model_unload(struct vaccel_session *sess,
 		return VACCEL_EPERM;
 	}
 
-	vaccel_prof_region_start(&tflite_model_unload_op_stats);
+	vaccel_profiler_region_start(&tflite_model_unload_op_stats);
 
 	tflite_model_unload_fn_t plugin_tflite_model_unload =
 		plugin_get_op_func(sess->plugin, op_type);
@@ -241,15 +241,15 @@ int vaccel_tflite_model_unload(struct vaccel_session *sess,
 	ret = plugin_tflite_model_unload(sess, model);
 
 out:
-	vaccel_prof_region_stop_with_context(&tflite_model_unload_op_stats,
-					     op_type,
-					     plugin_session_name(sess));
+	vaccel_profiler_region_stop_with_context(&tflite_model_unload_op_stats,
+						 op_type,
+						 plugin_session_name(sess));
 
 	return ret;
 }
 
-static struct vaccel_prof_region tflite_model_run_op_stats =
-	VACCEL_PROF_REGION_INIT("vaccel_tflite_model_run");
+static struct vaccel_profiler_region tflite_model_run_op_stats =
+	VACCEL_PROFILER_REGION_INIT("vaccel_tflite_model_run");
 
 typedef int (*tflite_model_run_fn_t)(struct vaccel_session *sess,
 				     struct vaccel_resource *model,
@@ -286,7 +286,7 @@ int vaccel_tflite_model_run(struct vaccel_session *sess,
 		return VACCEL_EPERM;
 	}
 
-	vaccel_prof_region_start(&tflite_model_run_op_stats);
+	vaccel_profiler_region_start(&tflite_model_run_op_stats);
 
 	tflite_model_run_fn_t plugin_tflite_model =
 		plugin_get_op_func(sess->plugin, op_type);
@@ -299,7 +299,7 @@ int vaccel_tflite_model_run(struct vaccel_session *sess,
 				  nr_outputs, status);
 
 out:
-	vaccel_prof_region_stop_with_context(
+	vaccel_profiler_region_stop_with_context(
 		&tflite_model_run_op_stats, op_type, plugin_session_name(sess));
 
 	return ret;
@@ -311,11 +311,11 @@ __attribute__((constructor)) static void vaccel_tflite_ops_init(void)
 
 __attribute__((destructor)) static void vaccel_tflite_ops_fini(void)
 {
-	vaccel_prof_region_print(&tflite_model_load_op_stats);
-	vaccel_prof_region_print(&tflite_model_unload_op_stats);
-	vaccel_prof_region_print(&tflite_model_run_op_stats);
+	vaccel_profiler_region_print(&tflite_model_load_op_stats);
+	vaccel_profiler_region_print(&tflite_model_unload_op_stats);
+	vaccel_profiler_region_print(&tflite_model_run_op_stats);
 
-	vaccel_prof_region_release(&tflite_model_load_op_stats);
-	vaccel_prof_region_release(&tflite_model_unload_op_stats);
-	vaccel_prof_region_release(&tflite_model_run_op_stats);
+	vaccel_profiler_region_release(&tflite_model_load_op_stats);
+	vaccel_profiler_region_release(&tflite_model_unload_op_stats);
+	vaccel_profiler_region_release(&tflite_model_run_op_stats);
 }

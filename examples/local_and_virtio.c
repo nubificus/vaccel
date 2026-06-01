@@ -18,8 +18,8 @@ int main(int argc, char *argv[])
 	struct vaccel_session local_sess;
 	struct vaccel_session *sess;
 	struct vaccel_resource object;
-	struct vaccel_prof_region mytestfunc_stats =
-		VACCEL_PROF_REGION_INIT("mytestfunc");
+	struct vaccel_profiler_region mytestfunc_stats =
+		VACCEL_PROFILER_REGION_INIT("mytestfunc");
 
 	if (argc < 2 || argc > 3) {
 		fprintf(stderr, "Usage: %s <lib_file> [iterations]\n", argv[0]);
@@ -74,14 +74,14 @@ int main(int argc, char *argv[])
 	for (int i = 0; i < iter; i++) {
 		sess = i % 2 ? &local_sess : &virtio_sess;
 
-		vaccel_prof_region_start(&mytestfunc_stats);
+		vaccel_profiler_region_start(&mytestfunc_stats);
 
 		ret = vaccel_exec_with_resource(
 			sess, &object, "mytestfunc", read,
 			sizeof(read) / sizeof(read[0]), write,
 			sizeof(write) / sizeof(write[0]));
 
-		vaccel_prof_region_stop(&mytestfunc_stats);
+		vaccel_profiler_region_stop(&mytestfunc_stats);
 
 		if (ret) {
 			fprintf(stderr, "Could not run op: %d\n", ret);
@@ -109,8 +109,8 @@ release_resource:
 	if (vaccel_resource_release(&object))
 		fprintf(stderr, "Could not release resource\n");
 
-	vaccel_prof_region_print(&mytestfunc_stats);
-	vaccel_prof_region_release(&mytestfunc_stats);
+	vaccel_profiler_region_print(&mytestfunc_stats);
+	vaccel_profiler_region_release(&mytestfunc_stats);
 
 	return ret;
 }

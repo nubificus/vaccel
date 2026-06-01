@@ -3,7 +3,7 @@
 #define _POSIX_C_SOURCE 200809L
 
 #include "vaccel.h"
-#include "prof/backend.h"
+#include "profiler/backend.h"
 #include <errno.h>
 #include <limits.h>
 #include <linux/limits.h>
@@ -113,9 +113,9 @@ static int do_bootstrap(void)
 		return ret;
 	}
 
-	ret = prof_backends_bootstrap();
+	ret = profiler_backends_bootstrap();
 	if (ret) {
-		vaccel_error("Could not bootstrap profiling backends");
+		vaccel_error("Could not bootstrap profiler backends");
 		return ret;
 	}
 
@@ -133,9 +133,9 @@ static int do_bootstrap(void)
 		}
 	}
 
-	ret = prof_backend_select();
+	ret = profiler_backend_select();
 	if (ret) {
-		vaccel_error("Could not select profiling backend");
+		vaccel_error("Could not select profiler backend");
 		return ret;
 	}
 
@@ -192,9 +192,9 @@ static int do_cleanup(void)
 
 	vaccel_debug("Cleaning up vAccel");
 
-	ret = vaccel_prof_flush();
+	ret = vaccel_profiler_flush();
 	if (ret) {
-		vaccel_error("Could not flush profiling backend");
+		vaccel_error("Could not flush profiler backend");
 		return ret;
 	}
 
@@ -216,9 +216,9 @@ static int do_cleanup(void)
 		return ret;
 	}
 
-	ret = prof_backends_cleanup();
+	ret = profiler_backends_cleanup();
 	if (ret) {
-		vaccel_error("Could not cleanup profiling backends");
+		vaccel_error("Could not cleanup profiler backends");
 		return ret;
 	}
 

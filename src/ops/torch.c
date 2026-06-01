@@ -5,7 +5,7 @@
 #include "log.h"
 #include "op.h"
 #include "plugin.h"
-#include "prof.h"
+#include "profiler.h"
 #include "resource.h"
 #include "session.h"
 #include <inttypes.h>
@@ -220,8 +220,8 @@ int vaccel_torch_tensor_take_data(struct vaccel_torch_tensor *tensor,
 	return VACCEL_OK;
 }
 
-static struct vaccel_prof_region torch_model_load_op_stats =
-	VACCEL_PROF_REGION_INIT("vaccel_torch_model_load_op");
+static struct vaccel_profiler_region torch_model_load_op_stats =
+	VACCEL_PROFILER_REGION_INIT("vaccel_torch_model_load_op");
 
 typedef int (*torch_model_load_fn_t)(struct vaccel_session *sess,
 				     struct vaccel_resource *model);
@@ -250,7 +250,7 @@ int vaccel_torch_model_load(struct vaccel_session *sess,
 		return VACCEL_EPERM;
 	}
 
-	vaccel_prof_region_start(&torch_model_load_op_stats);
+	vaccel_profiler_region_start(&torch_model_load_op_stats);
 
 	torch_model_load_fn_t plugin_torch_model_load =
 		plugin_get_op_func(sess->plugin, op_type);
@@ -262,14 +262,14 @@ int vaccel_torch_model_load(struct vaccel_session *sess,
 	ret = plugin_torch_model_load(sess, model);
 
 out:
-	vaccel_prof_region_stop_with_context(
+	vaccel_profiler_region_stop_with_context(
 		&torch_model_load_op_stats, op_type, plugin_session_name(sess));
 
 	return ret;
 }
 
-static struct vaccel_prof_region torch_model_run_op_stats =
-	VACCEL_PROF_REGION_INIT("vaccel_torch_model_run_op");
+static struct vaccel_profiler_region torch_model_run_op_stats =
+	VACCEL_PROFILER_REGION_INIT("vaccel_torch_model_run_op");
 
 typedef int (*torch_model_run_fn_t)(
 	struct vaccel_session *sess, struct vaccel_resource *model,
@@ -305,7 +305,7 @@ int vaccel_torch_model_run(struct vaccel_session *sess,
 		return VACCEL_EPERM;
 	}
 
-	vaccel_prof_region_start(&torch_model_run_op_stats);
+	vaccel_profiler_region_start(&torch_model_run_op_stats);
 
 	torch_model_run_fn_t plugin_torch_model_run =
 		plugin_get_op_func(sess->plugin, op_type);
@@ -318,14 +318,14 @@ int vaccel_torch_model_run(struct vaccel_session *sess,
 				     nr_inputs, outputs, nr_outputs);
 
 out:
-	vaccel_prof_region_stop_with_context(&torch_model_run_op_stats, op_type,
-					     plugin_session_name(sess));
+	vaccel_profiler_region_stop_with_context(
+		&torch_model_run_op_stats, op_type, plugin_session_name(sess));
 
 	return ret;
 }
 
-static struct vaccel_prof_region torch_sgemm_op_stats =
-	VACCEL_PROF_REGION_INIT("vaccel_sgemm_op");
+static struct vaccel_profiler_region torch_sgemm_op_stats =
+	VACCEL_PROFILER_REGION_INIT("vaccel_sgemm_op");
 
 typedef int (*torch_sgemm_fn_t)(struct vaccel_session *sess,
 				struct vaccel_torch_tensor **in_A,
@@ -347,7 +347,7 @@ int vaccel_torch_sgemm(struct vaccel_session *sess,
 	vaccel_op_type_t op_type = VACCEL_OP_TORCH_SGEMM;
 	op_debug_plugin_lookup(sess, op_type);
 
-	vaccel_prof_region_start(&torch_sgemm_op_stats);
+	vaccel_profiler_region_start(&torch_sgemm_op_stats);
 
 	torch_sgemm_fn_t plugin_torch_sgemm =
 		plugin_get_op_func(sess->plugin, op_type);
@@ -359,8 +359,8 @@ int vaccel_torch_sgemm(struct vaccel_session *sess,
 	ret = plugin_torch_sgemm(sess, in_A, in_B, in_C, M, N, K, out);
 
 out:
-	vaccel_prof_region_stop_with_context(&torch_sgemm_op_stats, op_type,
-					     plugin_session_name(sess));
+	vaccel_profiler_region_stop_with_context(&torch_sgemm_op_stats, op_type,
+						 plugin_session_name(sess));
 
 	return ret;
 }
@@ -371,11 +371,11 @@ __attribute__((constructor)) static void vaccel_ops_init(void)
 
 __attribute__((destructor)) static void vaccel_ops_fini(void)
 {
-	vaccel_prof_region_print(&torch_model_load_op_stats);
-	vaccel_prof_region_print(&torch_model_run_op_stats);
-	vaccel_prof_region_print(&torch_sgemm_op_stats);
+	vaccel_profiler_region_print(&torch_model_load_op_stats);
+	vaccel_profiler_region_print(&torch_model_run_op_stats);
+	vaccel_profiler_region_print(&torch_sgemm_op_stats);
 
-	vaccel_prof_region_release(&torch_model_load_op_stats);
-	vaccel_prof_region_release(&torch_model_run_op_stats);
-	vaccel_prof_region_release(&torch_sgemm_op_stats);
+	vaccel_profiler_region_release(&torch_model_load_op_stats);
+	vaccel_profiler_region_release(&torch_model_run_op_stats);
+	vaccel_profiler_region_release(&torch_sgemm_op_stats);
 }

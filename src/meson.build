@@ -15,7 +15,7 @@ vaccel_headers = files([
   'list.h',
   'log.h',
   'plugin.h',
-  'prof.h',
+  'profiler.h',
   'op.h',
   'resource.h',
   'resource_registration.h',
@@ -38,7 +38,7 @@ vaccel_sources = files([
 
 subdir('include')
 subdir('ops')
-subdir('prof')
+subdir('profiler')
 subdir('utils')
 
 vaccel_sources += [vaccel_headers, vaccel_h, vaccel_public_headers]

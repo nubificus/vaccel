@@ -8,13 +8,13 @@
 #include "log.h"
 #include "op.h"
 #include "plugin.h"
-#include "prof.h"
+#include "profiler.h"
 #include "session.h"
 #include <inttypes.h>
 #include <stdint.h>
 
-static struct vaccel_prof_region minmax_op_stats =
-	VACCEL_PROF_REGION_INIT("vaccel_minmax_op");
+static struct vaccel_profiler_region minmax_op_stats =
+	VACCEL_PROFILER_REGION_INIT("vaccel_minmax_op");
 
 typedef int (*minmax_fn_t)(struct vaccel_session *sess, const double *indata,
 			   int ndata, int low_threshold, int high_threshold,
@@ -32,7 +32,7 @@ int vaccel_minmax(struct vaccel_session *sess, const double *indata, int ndata,
 	vaccel_op_type_t op_type = VACCEL_OP_MINMAX;
 	op_debug_plugin_lookup(sess, op_type);
 
-	vaccel_prof_region_start(&minmax_op_stats);
+	vaccel_profiler_region_start(&minmax_op_stats);
 
 	minmax_fn_t plugin_minmax = plugin_get_op_func(sess->plugin, op_type);
 	if (!plugin_minmax) {
@@ -44,8 +44,8 @@ int vaccel_minmax(struct vaccel_session *sess, const double *indata, int ndata,
 			    outdata, min, max);
 
 out:
-	vaccel_prof_region_stop_with_context(&minmax_op_stats, op_type,
-					     plugin_session_name(sess));
+	vaccel_profiler_region_stop_with_context(&minmax_op_stats, op_type,
+						 plugin_session_name(sess));
 
 	return ret;
 }
@@ -84,6 +84,6 @@ __attribute__((constructor)) static void vaccel_ops_init(void)
 
 __attribute__((destructor)) static void vaccel_ops_fini(void)
 {
-	vaccel_prof_region_print(&minmax_op_stats);
-	vaccel_prof_region_release(&minmax_op_stats);
+	vaccel_profiler_region_print(&minmax_op_stats);
+	vaccel_profiler_region_release(&minmax_op_stats);
 }

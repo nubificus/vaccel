@@ -46,7 +46,7 @@ TEST_CASE("vaccel_config_init_from_env", "[core][config]")
 		.log_level = CONFIG_LOG_LEVEL_DEFAULT,
 		.log_file = CONFIG_LOG_FILE_DEFAULT,
 		.profiling_enabled = CONFIG_PROFILING_ENABLED_DEFAULT,
-		.profiling_backend = CONFIG_PROFILING_BACKEND_DEFAULT,
+		.profiler_backend = CONFIG_PROFILER_BACKEND_DEFAULT,
 		.version_ignore = CONFIG_VERSION_IGNORE_DEFAULT
 	};
 
@@ -87,7 +87,7 @@ TEST_CASE("vaccel_config_init_from", "[core][config]")
 		.log_level = CONFIG_LOG_LEVEL_DEFAULT,
 		.log_file = CONFIG_LOG_FILE_DEFAULT,
 		.profiling_enabled = CONFIG_PROFILING_ENABLED_DEFAULT,
-		.profiling_backend = CONFIG_PROFILING_BACKEND_DEFAULT,
+		.profiler_backend = CONFIG_PROFILER_BACKEND_DEFAULT,
 		.version_ignore = CONFIG_VERSION_IGNORE_DEFAULT
 	};
 
@@ -199,7 +199,7 @@ TEST_CASE("vaccel_config_init", "[core][config]")
 		.log_level = CONFIG_LOG_LEVEL_DEFAULT,
 		.log_file = CONFIG_LOG_FILE_DEFAULT,
 		.profiling_enabled = CONFIG_PROFILING_ENABLED_DEFAULT,
-		.profiling_backend = CONFIG_PROFILING_BACKEND_DEFAULT,
+		.profiler_backend = CONFIG_PROFILER_BACKEND_DEFAULT,
 		.version_ignore = CONFIG_VERSION_IGNORE_DEFAULT
 	};
 
@@ -261,7 +261,7 @@ TEST_CASE("vaccel_config_release", "[core][config]")
 		.log_level = CONFIG_LOG_LEVEL_DEFAULT,
 		.log_file = CONFIG_LOG_FILE_DEFAULT,
 		.profiling_enabled = CONFIG_PROFILING_ENABLED_DEFAULT,
-		.profiling_backend = CONFIG_PROFILING_BACKEND_DEFAULT,
+		.profiler_backend = CONFIG_PROFILER_BACKEND_DEFAULT,
 		.version_ignore = CONFIG_VERSION_IGNORE_DEFAULT
 	};
 

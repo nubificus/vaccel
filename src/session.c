@@ -7,7 +7,7 @@
 #include "list.h"
 #include "log.h"
 #include "plugin.h"
-#include "prof.h"
+#include "profiler.h"
 #include "resource.h"
 #include "resource_registration.h"
 #include "utils/fs.h"
@@ -24,11 +24,11 @@
 
 enum { VACCEL_SESSIONS_MAX = 1024 };
 
-static struct vaccel_prof_region session_init_stats =
-	VACCEL_PROF_REGION_INIT("vaccel_session_init");
+static struct vaccel_profiler_region session_init_stats =
+	VACCEL_PROFILER_REGION_INIT("vaccel_session_init");
 
-static struct vaccel_prof_region session_release_stats =
-	VACCEL_PROF_REGION_INIT("vaccel_session_release");
+static struct vaccel_profiler_region session_release_stats =
+	VACCEL_PROFILER_REGION_INIT("vaccel_session_release");
 
 static struct {
 	/* true if the sessions component has been initialized */
@@ -96,10 +96,10 @@ int sessions_cleanup(void)
 	pthread_mutex_destroy(&sessions.lock);
 	sessions.initialized = false;
 
-	vaccel_prof_region_print(&session_init_stats);
-	vaccel_prof_region_release(&session_init_stats);
-	vaccel_prof_region_print(&session_release_stats);
-	vaccel_prof_region_release(&session_release_stats);
+	vaccel_profiler_region_print(&session_init_stats);
+	vaccel_profiler_region_release(&session_init_stats);
+	vaccel_profiler_region_print(&session_release_stats);
+	vaccel_profiler_region_release(&session_release_stats);
 
 	return id_pool_release(&sessions.ids);
 }
@@ -188,7 +188,7 @@ int vaccel_session_init(struct vaccel_session *sess, uint32_t flags)
 {
 	int ret;
 
-	vaccel_prof_region_start(&session_init_stats);
+	vaccel_profiler_region_start(&session_init_stats);
 
 	if (!sess) {
 		ret = VACCEL_EINVAL;
@@ -280,7 +280,7 @@ release_id:
 	put_session_id(sess);
 
 out:
-	vaccel_prof_region_stop(&session_init_stats);
+	vaccel_profiler_region_stop(&session_init_stats);
 	return ret;
 }
 
@@ -352,7 +352,7 @@ int vaccel_session_release(struct vaccel_session *sess)
 {
 	int ret;
 
-	vaccel_prof_region_start(&session_release_stats);
+	vaccel_profiler_region_start(&session_release_stats);
 
 	if (!sess) {
 		ret = VACCEL_EINVAL;
@@ -416,7 +416,7 @@ int vaccel_session_release(struct vaccel_session *sess)
 
 	ret = VACCEL_OK;
 out:
-	vaccel_prof_region_stop(&session_release_stats);
+	vaccel_profiler_region_stop(&session_release_stats);
 	return ret;
 }
 

@@ -8,8 +8,8 @@
 #include <string.h>
 #include <time.h>
 
-static struct vaccel_prof_region mbench_plugin_stats =
-	VACCEL_PROF_REGION_INIT("vaccel_mbench_plugin");
+static struct vaccel_profiler_region mbench_plugin_stats =
+	VACCEL_PROFILER_REGION_INIT("vaccel_mbench_plugin");
 
 #define NS_PER_SEC 1000000000L
 #define NS_PER_MS 1000000L
@@ -63,11 +63,11 @@ static int mbench_unpack(struct vaccel_session *session, const char *library,
 
 	time = atoi(read_args[0].buf);
 
-	vaccel_prof_region_start(&mbench_plugin_stats);
+	vaccel_profiler_region_start(&mbench_plugin_stats);
 
 	ret = mbench(time);
 
-	vaccel_prof_region_stop(&mbench_plugin_stats);
+	vaccel_profiler_region_stop(&mbench_plugin_stats);
 
 	return ret;
 }
@@ -83,8 +83,8 @@ static int init(void)
 
 static int fini(void)
 {
-	vaccel_prof_region_print(&mbench_plugin_stats);
-	vaccel_prof_region_release(&mbench_plugin_stats);
+	vaccel_profiler_region_print(&mbench_plugin_stats);
+	vaccel_profiler_region_release(&mbench_plugin_stats);
 
 	return VACCEL_OK;
 }

@@ -9,7 +9,7 @@ performance metrics of vAccel API operations and plugins.
 
 ## Profiling Stack
 
-vAccel profiling is built around the concept of profiling regions. A region
+vAccel profiling is built around the concept of profiler regions. A region
 represents a specific part of the code where performance data is collected. The
 profiling stack includes various functions to manage these regions, from
 initialization to data collection and reporting.
@@ -18,19 +18,19 @@ initialization to data collection and reporting.
 
 ### Region Initialization and Destruction
 
-**Initialization**: A profiling region is initialized using
-`vaccel_prof_region_init()`. This sets up the region with a specified name.
+**Initialization**: A profiler region is initialized using
+`vaccel_profiler_region_init()`. This sets up the region with a specified name.
 
 **Destruction**: When a region is no longer needed,
-`vaccel_prof_region_destroy()` is used to clean up any resources associated
+`vaccel_profiler_region_destroy()` is used to clean up any resources associated
 with it.
 
 ### Start and Stop Profiling
 
-**Start Profiling**: Use `vaccel_prof_region_start()` to begin collecting
+**Start Profiling**: Use `vaccel_profiler_region_start()` to begin collecting
 performance data for a region.
 
-**Stop Profiling**: To stop data collection, `vaccel_prof_region_stop()` is
+**Stop Profiling**: To stop data collection, `vaccel_profiler_region_stop()` is
 used.
 
 ### Data Collection and Reporting
@@ -38,32 +38,31 @@ used.
 **Sample Collection**: The profiling system collects samples of performance
 data during the execution of a region.
 
-**Reporting**: `vaccel_prof_region_print()` is used to output the collected
+**Reporting**: `vaccel_profiler_region_print()` is used to output the collected
 data for analysis.
 
-**Profiling State**: `vaccel_prof_enabled()` can be used to check if vAccel
+**Profiling State**: `vaccel_profiler_enabled()` can be used to check if vAccel
 profiling is enabled or not.
 
 ### Batch Operations
 
-To simplify handling of multiple profiling regions, ie. when converting from
-non-vAccel profiling data types, vAccel provides functions for batch
-operations.
+To simplify handling of multiple profiler regions, ie. when converting from
+non-vAccel profiler data types, vAccel provides functions for batch operations.
 
-**Initialize Array of Regions**: `vaccel_prof_regions_init()` initializes an
+**Initialize Array of Regions**: `vaccel_profiler_regions_init()` initializes an
 array of regions.
 
-**Release Regions' Array Data**: `vaccel_prof_regions_release()` releases collected
-data from a region array.
+**Release Regions' Array Data**: `vaccel_profiler_regions_release()` releases
+collected data from a region array.
 
-**Start by Name**: `vaccel_prof_regions_start_by_name()` starts data collection
-for a region, from an array of regions, with the specified name.
+**Start by Name**: `vaccel_profiler_regions_start_by_name()` starts data
+collection for a region, from an array of regions, with the specified name.
 
-**Stop by Name**: `vaccel_prof_regions_stop_by_name()` stops data collection
+**Stop by Name**: `vaccel_profiler_regions_stop_by_name()` stops data collection
 for a region, from an array of regions, accordingly.
 
-**Print All**: `vaccel_prof_regions_print_all()` prints profiling data for all
-regions in the array.
+**Print All**: `vaccel_profiler_regions_print_all()` prints profiling data for
+all regions in the array.
 
 ### Enabling Profiling
 
@@ -78,7 +77,7 @@ export VACCEL_PROFILING_ENABLED=1
 
 To add profiling to your vaccel API operation or plugin, follow these steps:
 
-### Include Profiling Headers
+### Include Profiler Headers
 
 Ensure that you include the necessary headers in your code:
 
@@ -89,16 +88,17 @@ Ensure that you include the necessary headers in your code:
 Alternatively, to include only the profiling functionality:
 
 ```c
-#include <vaccel/prof.h>
+#include <vaccel/profiler.h>
 ```
 
-### Define and Initialize a Profiling Region
+### Define and Initialize a Profiler Region
 
-Define a `vaccel_prof_region` structure and initialize it:
+Define a `vaccel_profiler_region` structure and initialize it:
 
 ```c
-struct vaccel_prof_region my_region = VACCEL_PROF_REGION_INIT("my_operation");
-vaccel_prof_region_init(&my_region, "my_operation");
+struct vaccel_profiler_region my_region =
+    VACCEL_PROFILER_REGION_INIT("my_operation");
+vaccel_profiler_region_init(&my_region, "my_operation");
 ```
 
 ### Start Profiling
@@ -106,7 +106,7 @@ vaccel_prof_region_init(&my_region, "my_operation");
 Before the code section you want to profile, start profiling the region:
 
 ```c
-vaccel_prof_region_start(&my_region);
+vaccel_profiler_region_start(&my_region);
 ```
 
 ### Stop Profiling
@@ -114,7 +114,7 @@ vaccel_prof_region_start(&my_region);
 After the code section, stop profiling the region:
 
 ```c
-vaccel_prof_region_stop(&my_region);
+vaccel_profiler_region_stop(&my_region);
 ```
 
 ### Print Profiling Results
@@ -122,37 +122,38 @@ vaccel_prof_region_stop(&my_region);
 To output the profiling results, use:
 
 ```c
-vaccel_prof_region_print(&my_region);
+vaccel_profiler_region_print(&my_region);
 ```
 
-### Destroy the Profiling Region
+### Destroy the Profiler Region
 
-Finally, clean up the profiling region:
+Finally, clean up the profiler region:
 
 ```c
-vaccel_prof_region_destroy(&my_region);
+vaccel_profiler_region_destroy(&my_region);
 ```
 
 ## Example Code
 ```c
-#include <vaccel/prof.h>
+#include <vaccel/profiler.h>
 
 void my_vaccel_operation() {
-    struct vaccel_prof_region my_region = VACCEL_PROF_REGION_INIT("my_operation");
-    vaccel_prof_region_init(&my_region, "my_operation");
+    struct vaccel_profiler_region my_region =
+        VACCEL_PROFILER_REGION_INIT("my_operation");
+    vaccel_profiler_region_init(&my_region, "my_operation");
 
-    vaccel_prof_region_start(&my_region);
+    vaccel_profiler_region_start(&my_region);
     // Your code here
-    vaccel_prof_region_stop(&my_region);
+    vaccel_profiler_region_stop(&my_region);
 
-    vaccel_prof_region_print(&my_region);
-    vaccel_prof_region_destroy(&my_region);
+    vaccel_profiler_region_print(&my_region);
+    vaccel_profiler_region_destroy(&my_region);
 }
 ```
 
-By following these steps, you can effectively instrument your code with
-profiling regions, allowing you to gather valuable performance data and
-optimize your vAccel operations and plugins.
+By following these steps, you can effectively instrument your code with profiler
+regions, allowing you to gather valuable performance data and optimize your
+vAccel operations and plugins.
 
 Below you can find example output from a torch speech classification tool:
 
@@ -166,81 +167,81 @@ vaccel_single_model_register(): Time Taken: 0 milliseconds
 Created new model 1
 Initialized vAccel session 1
 vaccel_preprocess(): Time Taken: 4 milliseconds
-2024.06.24-17:49:46.98 - <info> [prof] torch_input: total_time: 127964 nsec nr_entries: 1
-2024.06.24-17:49:46.98 - <info> [prof] torch_run: total_time: 180927987 nsec nr_entries: 1
-2024.06.24-17:49:46.98 - <info> [prof] torch_out: total_time: 31391 nsec nr_entries: 1
+2024.06.24-17:49:46.98 - <info> [profiler] torch_input: total_time: 127964 nsec nr_entries: 1
+2024.06.24-17:49:46.98 - <info> [profiler] torch_run: total_time: 180927987 nsec nr_entries: 1
+2024.06.24-17:49:46.98 - <info> [profiler] torch_out: total_time: 31391 nsec nr_entries: 1
 ==========Show Result(vAccel)==========
 Prediction: offensive-language
 Length: 27
 Duration: 462
 vaccel_preprocess(): Time Taken: 8 milliseconds
-2024.06.24-17:49:47.43 - <info> [prof] torch_input: total_time: 162719 nsec nr_entries: 2
-2024.06.24-17:49:47.43 - <info> [prof] torch_run: total_time: 321256735 nsec nr_entries: 2
-2024.06.24-17:49:47.43 - <info> [prof] torch_out: total_time: 37025 nsec nr_entries: 2
+2024.06.24-17:49:47.43 - <info> [profiler] torch_input: total_time: 162719 nsec nr_entries: 2
+2024.06.24-17:49:47.43 - <info> [profiler] torch_run: total_time: 321256735 nsec nr_entries: 2
+2024.06.24-17:49:47.43 - <info> [profiler] torch_out: total_time: 37025 nsec nr_entries: 2
 ==========Show Result(vAccel)==========
 Prediction: offensive-language
 Length: 18
 Duration: 438
 vaccel_preprocess(): Time Taken: 7 milliseconds
-2024.06.24-17:49:47.87 - <info> [prof] torch_input: total_time: 198476 nsec nr_entries: 3
-2024.06.24-17:49:47.87 - <info> [prof] torch_run: total_time: 457327127 nsec nr_entries: 3
-2024.06.24-17:49:47.87 - <info> [prof] torch_out: total_time: 42321 nsec nr_entries: 3
+2024.06.24-17:49:47.87 - <info> [profiler] torch_input: total_time: 198476 nsec nr_entries: 3
+2024.06.24-17:49:47.87 - <info> [profiler] torch_run: total_time: 457327127 nsec nr_entries: 3
+2024.06.24-17:49:47.87 - <info> [profiler] torch_out: total_time: 42321 nsec nr_entries: 3
 ==========Show Result(vAccel)==========
 Prediction: offensive-language
 Length: 23
 Duration: 436
 vaccel_preprocess(): Time Taken: 7 milliseconds
-2024.06.24-17:49:48.30 - <info> [prof] torch_input: total_time: 233884 nsec nr_entries: 4
-2024.06.24-17:49:48.30 - <info> [prof] torch_run: total_time: 586921978 nsec nr_entries: 4
-2024.06.24-17:49:48.30 - <info> [prof] torch_out: total_time: 47551 nsec nr_entries: 4
+2024.06.24-17:49:48.30 - <info> [profiler] torch_input: total_time: 233884 nsec nr_entries: 4
+2024.06.24-17:49:48.30 - <info> [profiler] torch_run: total_time: 586921978 nsec nr_entries: 4
+2024.06.24-17:49:48.30 - <info> [profiler] torch_out: total_time: 47551 nsec nr_entries: 4
 ==========Show Result(vAccel)==========
 Prediction: neither
 Length: 11
 Duration: 413
 vaccel_preprocess(): Time Taken: 7 milliseconds
-2024.06.24-17:49:48.64 - <info> [prof] torch_input: total_time: 269105 nsec nr_entries: 5
-2024.06.24-17:49:48.64 - <info> [prof] torch_run: total_time: 721709173 nsec nr_entries: 5
-2024.06.24-17:49:48.64 - <info> [prof] torch_out: total_time: 53077 nsec nr_entries: 5
+2024.06.24-17:49:48.64 - <info> [profiler] torch_input: total_time: 269105 nsec nr_entries: 5
+2024.06.24-17:49:48.64 - <info> [profiler] torch_run: total_time: 721709173 nsec nr_entries: 5
+2024.06.24-17:49:48.64 - <info> [profiler] torch_out: total_time: 53077 nsec nr_entries: 5
 ==========Show Result(vAccel)==========
 Prediction: offensive-language
 Length: 28
 Duration: 333
 vaccel_preprocess(): Time Taken: 8 milliseconds
-2024.06.24-17:49:48.98 - <info> [prof] torch_input: total_time: 304956 nsec nr_entries: 6
-2024.06.24-17:49:48.98 - <info> [prof] torch_run: total_time: 855291441 nsec nr_entries: 6
-2024.06.24-17:49:48.98 - <info> [prof] torch_out: total_time: 58215 nsec nr_entries: 6
+2024.06.24-17:49:48.98 - <info> [profiler] torch_input: total_time: 304956 nsec nr_entries: 6
+2024.06.24-17:49:48.98 - <info> [profiler] torch_run: total_time: 855291441 nsec nr_entries: 6
+2024.06.24-17:49:48.98 - <info> [profiler] torch_out: total_time: 58215 nsec nr_entries: 6
 ==========Show Result(vAccel)==========
 Prediction: offensive-language
 Length: 21
 Duration: 329
 vaccel_preprocess(): Time Taken: 7 milliseconds
-2024.06.24-17:49:49.29 - <info> [prof] torch_input: total_time: 340191 nsec nr_entries: 7
-2024.06.24-17:49:49.29 - <info> [prof] torch_run: total_time: 988087659 nsec nr_entries: 7
-2024.06.24-17:49:49.29 - <info> [prof] torch_out: total_time: 63358 nsec nr_entries: 7
+2024.06.24-17:49:49.29 - <info> [profiler] torch_input: total_time: 340191 nsec nr_entries: 7
+2024.06.24-17:49:49.29 - <info> [profiler] torch_run: total_time: 988087659 nsec nr_entries: 7
+2024.06.24-17:49:49.29 - <info> [profiler] torch_out: total_time: 63358 nsec nr_entries: 7
 ==========Show Result(vAccel)==========
 Prediction: offensive-language
 Length: 22
 Duration: 310
 vaccel_preprocess(): Time Taken: 8 milliseconds
-2024.06.24-17:49:49.63 - <info> [prof] torch_input: total_time: 375959 nsec nr_entries: 8
-2024.06.24-17:49:49.63 - <info> [prof] torch_run: total_time: 1119080025 nsec nr_entries: 8
-2024.06.24-17:49:49.63 - <info> [prof] torch_out: total_time: 68831 nsec nr_entries: 8
+2024.06.24-17:49:49.63 - <info> [profiler] torch_input: total_time: 375959 nsec nr_entries: 8
+2024.06.24-17:49:49.63 - <info> [profiler] torch_run: total_time: 1119080025 nsec nr_entries: 8
+2024.06.24-17:49:49.63 - <info> [profiler] torch_out: total_time: 68831 nsec nr_entries: 8
 ==========Show Result(vAccel)==========
 Prediction: offensive-language
 Length: 15
 Duration: 327
 vaccel_preprocess(): Time Taken: 7 milliseconds
-2024.06.24-17:49:49.94 - <info> [prof] torch_input: total_time: 412773 nsec nr_entries: 9
-2024.06.24-17:49:49.94 - <info> [prof] torch_run: total_time: 1249991356 nsec nr_entries: 9
-2024.06.24-17:49:49.94 - <info> [prof] torch_out: total_time: 74032 nsec nr_entries: 9
+2024.06.24-17:49:49.94 - <info> [profiler] torch_input: total_time: 412773 nsec nr_entries: 9
+2024.06.24-17:49:49.94 - <info> [profiler] torch_run: total_time: 1249991356 nsec nr_entries: 9
+2024.06.24-17:49:49.94 - <info> [profiler] torch_out: total_time: 74032 nsec nr_entries: 9
 ==========Show Result(vAccel)==========
 Prediction: offensive-language
 Length: 15
 Duration: 303
 vaccel_preprocess(): Time Taken: 8 milliseconds
-2024.06.24-17:49:50.25 - <info> [prof] torch_input: total_time: 446881 nsec nr_entries: 10
-2024.06.24-17:49:50.25 - <info> [prof] torch_run: total_time: 1380077421 nsec nr_entries: 10
-2024.06.24-17:49:50.25 - <info> [prof] torch_out: total_time: 79266 nsec nr_entries: 10
+2024.06.24-17:49:50.25 - <info> [profiler] torch_input: total_time: 446881 nsec nr_entries: 10
+2024.06.24-17:49:50.25 - <info> [profiler] torch_run: total_time: 1380077421 nsec nr_entries: 10
+2024.06.24-17:49:50.25 - <info> [profiler] torch_out: total_time: 79266 nsec nr_entries: 10
 ==========Show Result(vAccel)==========
 Prediction: neither
 Length: 8
@@ -258,15 +259,15 @@ sys    0m1.235s
 and the respective code:
 
 ```c
-struct vaccel_prof_region torch_input_stats =
-        VACCEL_PROF_REGION_INIT("torch_input");
-struct vaccel_prof_region torch_run_stats =
-        VACCEL_PROF_REGION_INIT("torch_run");
-struct vaccel_prof_region torch_out_stats =
-        VACCEL_PROF_REGION_INIT("torch_out");
+struct vaccel_profiler_region torch_input_stats =
+        VACCEL_PROFILER_REGION_INIT("torch_input");
+struct vaccel_profiler_region torch_run_stats =
+        VACCEL_PROFILER_REGION_INIT("torch_run");
+struct vaccel_profiler_region torch_out_stats =
+        VACCEL_PROFILER_REGION_INIT("torch_out");
 
 [..]
-    vaccel_prof_region_start(&torch_input_stats);
+    vaccel_profiler_region_start(&torch_input_stats);
 
     std::vector<torch::jit::IValue> input;
     torch::jit::IValue output_ori;
@@ -281,61 +282,61 @@ struct vaccel_prof_region torch_out_stats =
     input_ids = input_ids.to(device);
     masks = masks.to(device);
 
-    vaccel_prof_region_stop(&torch_input_stats);
+    vaccel_profiler_region_stop(&torch_input_stats);
 
     input.push_back(input_ids);
     input.push_back(masks);
 
-    vaccel_prof_region_start(&torch_run_stats);
+    vaccel_profiler_region_start(&torch_run_stats);
     output_ori = model_trace.forward(input);
-    vaccel_prof_region_stop(&torch_run_stats);
+    vaccel_profiler_region_stop(&torch_run_stats);
 
 [..]
 
-    vaccel_prof_region_start(&torch_out_stats);
+    vaccel_profiler_region_start(&torch_out_stats);
 
     ret = tensors_to_vaccel(output, out_tensors, nr_outputs);
     float* data = static_cast<float*>((*out_tensors)->data);
     int64_t num_elements = output.numel();
 
-    vaccel_prof_region_stop(&torch_out_stats);
+    vaccel_profiler_region_stop(&torch_out_stats);
 
-    vaccel_prof_region_print(&torch_input_stats);
-    vaccel_prof_region_print(&torch_model_stats);
-    vaccel_prof_region_print(&torch_run_stats);
-    vaccel_prof_region_print(&torch_out_stats);
+    vaccel_profiler_region_print(&torch_input_stats);
+    vaccel_profiler_region_print(&torch_model_stats);
+    vaccel_profiler_region_print(&torch_run_stats);
+    vaccel_profiler_region_print(&torch_out_stats);
 ```
 
 ## Example Code for Batch Operations
 
-The code sample below demonstrates the use of profiling batch
-operations for creating and printing an array of profiling regions
-from an external timers object.
+The code sample below demonstrates the use of profiler batch operations for
+creating and printing an array of profiler regions from an external timers
+object.
 
 ```c
 void my_operation(struct vaccel_session *session)
 {
-    if (!vaccel_prof_enabled())
+    if (!vaccel_profiler_enabled())
         return;
 
     // User function to get external timers.
-    // Get the timers/profiling regions number first
+    // Get the timers/profiler regions number first
     int nr_timers = my_timers_func(session->remote_id, NULL, 0);
     if (nr_timers == 0)
         return;
 
-    struct vaccel_prof_region *timers =
+    struct vaccel_profiler_region *timers =
                     malloc(nr_timers * sizeof(*timers));
 
-    vaccel_prof_regions_init(timers, nr_timers);
+    vaccel_profiler_regions_init(timers, nr_timers);
 
-    // Profiling regions are allocated and initialized.
-    // Now set profiling regions' data.
+    // Profiler regions are allocated and initialized.
+    // Now set profiler regions' data.
     my_timers_func(session->remote_id, timers, nr_timers);
 
-    vaccel_prof_regions_print_all(timers, nr_timers);
+    vaccel_profiler_regions_print_all(timers, nr_timers);
 
-    vaccel_prof_regions_release(timers, nr_timers);
+    vaccel_profiler_regions_release(timers, nr_timers);
     free(timers);
 }
 ```

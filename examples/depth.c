@@ -17,8 +17,8 @@ int main(int argc, char *argv[])
 	unsigned char out_imagename[STR_SIZE_MAX] = { '\0' };
 	struct vaccel_session sess;
 	struct vaccel_resource model = { .id = 0 };
-	struct vaccel_prof_region depth_stats =
-		VACCEL_PROF_REGION_INIT("depth");
+	struct vaccel_profiler_region depth_stats =
+		VACCEL_PROFILER_REGION_INIT("depth");
 
 	if (argc < 2 || argc > 4) {
 		fprintf(stderr,
@@ -57,12 +57,12 @@ int main(int argc, char *argv[])
 
 	const int iter = (argc > 2) ? atoi(argv[2]) : 1;
 	for (int i = 0; i < iter; i++) {
-		vaccel_prof_region_start(&depth_stats);
+		vaccel_profiler_region_start(&depth_stats);
 
 		ret = vaccel_image_depth(&sess, image, out_imagename,
 					 image_size, sizeof(out_imagename));
 
-		vaccel_prof_region_stop(&depth_stats);
+		vaccel_profiler_region_stop(&depth_stats);
 
 		if (ret) {
 			fprintf(stderr, "Could not run op: %d\n", ret);
@@ -86,8 +86,8 @@ release_session:
 	if (image)
 		free(image);
 
-	vaccel_prof_region_print(&depth_stats);
-	vaccel_prof_region_release(&depth_stats);
+	vaccel_profiler_region_print(&depth_stats);
+	vaccel_profiler_region_release(&depth_stats);
 
 	return ret;
 }

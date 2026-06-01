@@ -6,14 +6,14 @@
 #include "log.h"
 #include "op.h"
 #include "plugin.h"
-#include "prof.h"
+#include "profiler.h"
 #include "session.h"
 #include <inttypes.h>
 #include <stddef.h>
 #include <stdint.h>
 
-static struct vaccel_prof_region blas_op_stats =
-	VACCEL_PROF_REGION_INIT("vaccel_blas_op");
+static struct vaccel_profiler_region blas_op_stats =
+	VACCEL_PROFILER_REGION_INIT("vaccel_blas_op");
 
 typedef int (*sgemm_fn_t)(struct vaccel_session *sess, int64_t m, int64_t n,
 			  int64_t k, float alpha, float *a, int64_t lda,
@@ -32,7 +32,7 @@ int vaccel_sgemm(struct vaccel_session *sess, int64_t m, int64_t n, int64_t k,
 	vaccel_op_type_t op_type = VACCEL_OP_BLAS_SGEMM;
 	op_debug_plugin_lookup(sess, op_type);
 
-	vaccel_prof_region_start(&blas_op_stats);
+	vaccel_profiler_region_start(&blas_op_stats);
 
 	sgemm_fn_t plugin_sgemm = plugin_get_op_func(sess->plugin, op_type);
 	if (!plugin_sgemm) {
@@ -43,8 +43,8 @@ int vaccel_sgemm(struct vaccel_session *sess, int64_t m, int64_t n, int64_t k,
 	ret = plugin_sgemm(sess, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc);
 
 out:
-	vaccel_prof_region_stop_with_context(&blas_op_stats, op_type,
-					     plugin_session_name(sess));
+	vaccel_profiler_region_stop_with_context(&blas_op_stats, op_type,
+						 plugin_session_name(sess));
 
 	return ret;
 }
@@ -164,6 +164,6 @@ __attribute__((constructor)) static void vaccel_ops_init(void)
 
 __attribute__((destructor)) static void vaccel_ops_fini(void)
 {
-	vaccel_prof_region_print(&blas_op_stats);
-	vaccel_prof_region_release(&blas_op_stats);
+	vaccel_profiler_region_print(&blas_op_stats);
+	vaccel_profiler_region_release(&blas_op_stats);
 }

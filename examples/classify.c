@@ -22,8 +22,8 @@ int main(int argc, char *argv[])
 	struct vaccel_resource model = { .id = 0 };
 	char **labels = NULL;
 	size_t nr_labels = 0;
-	struct vaccel_prof_region classify_stats =
-		VACCEL_PROF_REGION_INIT("classify");
+	struct vaccel_profiler_region classify_stats =
+		VACCEL_PROFILER_REGION_INIT("classify");
 
 	if (argc < 2 || argc > 5) {
 		fprintf(stderr,
@@ -71,14 +71,14 @@ int main(int argc, char *argv[])
 
 	const int iter = (argc > 2) ? atoi(argv[2]) : 1;
 	for (int i = 0; i < iter; i++) {
-		vaccel_prof_region_start(&classify_stats);
+		vaccel_profiler_region_start(&classify_stats);
 
 		ret = vaccel_image_classification(&sess, image, out_text,
 						  out_imagename, image_size,
 						  sizeof(out_text),
 						  sizeof(out_imagename));
 
-		vaccel_prof_region_stop(&classify_stats);
+		vaccel_profiler_region_stop(&classify_stats);
 
 		if (ret) {
 			fprintf(stderr, "Could not run op: %d\n", ret);
@@ -111,8 +111,8 @@ release_session:
 	if (image)
 		free(image);
 
-	vaccel_prof_region_print(&classify_stats);
-	vaccel_prof_region_release(&classify_stats);
+	vaccel_profiler_region_print(&classify_stats);
+	vaccel_profiler_region_release(&classify_stats);
 
 	return ret;
 }

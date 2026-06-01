@@ -7,7 +7,7 @@
 #include "log.h"
 #include "op.h"
 #include "plugin.h"
-#include "prof.h"
+#include "profiler.h"
 #include "resource.h"
 #include "session.h"
 #include <inttypes.h>
@@ -338,8 +338,8 @@ int vaccel_tf_status_delete(struct vaccel_tf_status *status)
 	return VACCEL_OK;
 }
 
-static struct vaccel_prof_region tf_model_load_op_stats =
-	VACCEL_PROF_REGION_INIT("vaccel_tf_model_load");
+static struct vaccel_profiler_region tf_model_load_op_stats =
+	VACCEL_PROFILER_REGION_INIT("vaccel_tf_model_load");
 
 typedef int (*tf_model_load_fn_t)(struct vaccel_session *sess,
 				  struct vaccel_resource *model,
@@ -370,7 +370,7 @@ int vaccel_tf_model_load(struct vaccel_session *sess,
 		return VACCEL_EPERM;
 	}
 
-	vaccel_prof_region_start(&tf_model_load_op_stats);
+	vaccel_profiler_region_start(&tf_model_load_op_stats);
 
 	tf_model_load_fn_t plugin_tf_model_load =
 		plugin_get_op_func(sess->plugin, op_type);
@@ -382,14 +382,14 @@ int vaccel_tf_model_load(struct vaccel_session *sess,
 	ret = plugin_tf_model_load(sess, model, status);
 
 out:
-	vaccel_prof_region_stop_with_context(&tf_model_load_op_stats, op_type,
-					     plugin_session_name(sess));
+	vaccel_profiler_region_stop_with_context(
+		&tf_model_load_op_stats, op_type, plugin_session_name(sess));
 
 	return ret;
 }
 
-static struct vaccel_prof_region tf_model_unload_op_stats =
-	VACCEL_PROF_REGION_INIT("vaccel_tf_model_unload");
+static struct vaccel_profiler_region tf_model_unload_op_stats =
+	VACCEL_PROFILER_REGION_INIT("vaccel_tf_model_unload");
 
 typedef int (*tf_model_unload_fn_t)(struct vaccel_session *sess,
 				    struct vaccel_resource *model,
@@ -420,7 +420,7 @@ int vaccel_tf_model_unload(struct vaccel_session *sess,
 		return VACCEL_EPERM;
 	}
 
-	vaccel_prof_region_start(&tf_model_unload_op_stats);
+	vaccel_profiler_region_start(&tf_model_unload_op_stats);
 
 	tf_model_unload_fn_t plugin_tf_model_unload =
 		plugin_get_op_func(sess->plugin, op_type);
@@ -432,14 +432,14 @@ int vaccel_tf_model_unload(struct vaccel_session *sess,
 	ret = plugin_tf_model_unload(sess, model, status);
 
 out:
-	vaccel_prof_region_stop_with_context(&tf_model_unload_op_stats, op_type,
-					     plugin_session_name(sess));
+	vaccel_profiler_region_stop_with_context(
+		&tf_model_unload_op_stats, op_type, plugin_session_name(sess));
 
 	return ret;
 }
 
-static struct vaccel_prof_region tf_model_run_op_stats =
-	VACCEL_PROF_REGION_INIT("vaccel_tf_model_run");
+static struct vaccel_profiler_region tf_model_run_op_stats =
+	VACCEL_PROFILER_REGION_INIT("vaccel_tf_model_run");
 
 typedef int (*tf_model_run_fn_t)(struct vaccel_session *sess,
 				 struct vaccel_resource *model,
@@ -481,7 +481,7 @@ int vaccel_tf_model_run(struct vaccel_session *sess,
 		return VACCEL_EPERM;
 	}
 
-	vaccel_prof_region_start(&tf_model_run_op_stats);
+	vaccel_profiler_region_start(&tf_model_run_op_stats);
 
 	tf_model_run_fn_t plugin_tf_model_run =
 		plugin_get_op_func(sess->plugin, op_type);
@@ -495,8 +495,8 @@ int vaccel_tf_model_run(struct vaccel_session *sess,
 				  nr_outputs, status);
 
 out:
-	vaccel_prof_region_stop_with_context(&tf_model_run_op_stats, op_type,
-					     plugin_session_name(sess));
+	vaccel_profiler_region_stop_with_context(
+		&tf_model_run_op_stats, op_type, plugin_session_name(sess));
 
 	return ret;
 }
@@ -507,11 +507,11 @@ __attribute__((constructor)) static void vaccel_tf_ops_init(void)
 
 __attribute__((destructor)) static void vaccel_tf_ops_fini(void)
 {
-	vaccel_prof_region_print(&tf_model_load_op_stats);
-	vaccel_prof_region_print(&tf_model_unload_op_stats);
-	vaccel_prof_region_print(&tf_model_run_op_stats);
+	vaccel_profiler_region_print(&tf_model_load_op_stats);
+	vaccel_profiler_region_print(&tf_model_unload_op_stats);
+	vaccel_profiler_region_print(&tf_model_run_op_stats);
 
-	vaccel_prof_region_release(&tf_model_load_op_stats);
-	vaccel_prof_region_release(&tf_model_unload_op_stats);
-	vaccel_prof_region_release(&tf_model_run_op_stats);
+	vaccel_profiler_region_release(&tf_model_load_op_stats);
+	vaccel_profiler_region_release(&tf_model_unload_op_stats);
+	vaccel_profiler_region_release(&tf_model_run_op_stats);
 }
