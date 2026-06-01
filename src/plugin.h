@@ -5,6 +5,8 @@
 #include "include/vaccel/plugin.h" // IWYU pragma: export
 #include "list.h"
 #include "op.h"
+#include "session.h"
+#include <stddef.h>
 #include <stdint.h>
 
 #ifdef __cplusplus
@@ -22,6 +24,13 @@ struct vaccel_plugin *plugin_find_by_name(const char *name);
 void *plugin_get_op_func(struct vaccel_plugin *plugin,
 			 vaccel_op_type_t op_type);
 size_t plugin_count();
+
+static inline const char *plugin_session_name(const struct vaccel_session *sess)
+{
+	if (sess && sess->plugin && sess->plugin->info)
+		return sess->plugin->info->name;
+	return NULL;
+}
 
 /* Helper macros for iterating lists of containers */
 #define plugin_for_each(iter, list) \

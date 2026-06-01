@@ -27,7 +27,6 @@ int vaccel_exec(struct vaccel_session *sess, const char *library,
 		struct vaccel_arg *write, size_t nr_write)
 {
 	int ret;
-	const char *plugin_name = NULL;
 
 	if (!sess)
 		return VACCEL_EINVAL;
@@ -47,11 +46,8 @@ int vaccel_exec(struct vaccel_session *sess, const char *library,
 			  nr_write);
 
 out:
-	if (sess->plugin && sess->plugin->info)
-		plugin_name = sess->plugin->info->name;
-
 	vaccel_prof_region_stop_with_context(&exec_op_stats, op_type,
-					     plugin_name);
+					     plugin_session_name(sess));
 
 	return ret;
 }
@@ -118,7 +114,6 @@ int vaccel_exec_with_resource(struct vaccel_session *sess,
 			      size_t nr_write)
 {
 	int ret;
-	const char *plugin_name = NULL;
 
 	if (!sess || !resource)
 		return VACCEL_EINVAL;
@@ -152,11 +147,8 @@ int vaccel_exec_with_resource(struct vaccel_session *sess,
 					nr_read, write, nr_write);
 
 out:
-	if (sess->plugin && sess->plugin->info)
-		plugin_name = sess->plugin->info->name;
-
 	vaccel_prof_region_stop_with_context(&exec_res_op_stats, op_type,
-					     plugin_name);
+					     plugin_session_name(sess));
 
 	return ret;
 }

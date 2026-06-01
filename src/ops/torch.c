@@ -230,7 +230,6 @@ int vaccel_torch_model_load(struct vaccel_session *sess,
 			    struct vaccel_resource *model)
 {
 	int ret;
-	const char *plugin_name = NULL;
 
 	if (!sess || !model)
 		return VACCEL_EINVAL;
@@ -263,11 +262,8 @@ int vaccel_torch_model_load(struct vaccel_session *sess,
 	ret = plugin_torch_model_load(sess, model);
 
 out:
-	if (sess->plugin && sess->plugin->info)
-		plugin_name = sess->plugin->info->name;
-
-	vaccel_prof_region_stop_with_context(&torch_model_load_op_stats,
-					     op_type, plugin_name);
+	vaccel_prof_region_stop_with_context(
+		&torch_model_load_op_stats, op_type, plugin_session_name(sess));
 
 	return ret;
 }
@@ -289,7 +285,6 @@ int vaccel_torch_model_run(struct vaccel_session *sess,
 			   int nr_outputs)
 {
 	int ret;
-	const char *plugin_name = NULL;
 
 	if (!sess || !model)
 		return VACCEL_EINVAL;
@@ -323,11 +318,8 @@ int vaccel_torch_model_run(struct vaccel_session *sess,
 				     nr_inputs, outputs, nr_outputs);
 
 out:
-	if (sess->plugin && sess->plugin->info)
-		plugin_name = sess->plugin->info->name;
-
 	vaccel_prof_region_stop_with_context(&torch_model_run_op_stats, op_type,
-					     plugin_name);
+					     plugin_session_name(sess));
 
 	return ret;
 }
@@ -348,7 +340,6 @@ int vaccel_torch_sgemm(struct vaccel_session *sess,
 		       struct vaccel_torch_tensor **out)
 {
 	int ret;
-	const char *plugin_name = NULL;
 
 	if (!sess)
 		return VACCEL_EINVAL;
@@ -368,11 +359,8 @@ int vaccel_torch_sgemm(struct vaccel_session *sess,
 	ret = plugin_torch_sgemm(sess, in_A, in_B, in_C, M, N, K, out);
 
 out:
-	if (sess->plugin && sess->plugin->info)
-		plugin_name = sess->plugin->info->name;
-
 	vaccel_prof_region_stop_with_context(&torch_sgemm_op_stats, op_type,
-					     plugin_name);
+					     plugin_session_name(sess));
 
 	return ret;
 }

@@ -31,7 +31,6 @@ int vaccel_image_op(vaccel_op_type_t op_type, struct vaccel_session *sess,
 		    size_t len_out_text, size_t len_out_imgname)
 {
 	int ret;
-	const char *plugin_name = NULL;
 
 	if (!sess)
 		return VACCEL_EINVAL;
@@ -57,11 +56,8 @@ int vaccel_image_op(vaccel_op_type_t op_type, struct vaccel_session *sess,
 	}
 
 out:
-	if (sess->plugin && sess->plugin->info)
-		plugin_name = sess->plugin->info->name;
-
 	vaccel_prof_region_stop_with_context(&image_op_stats, op_type,
-					     plugin_name);
+					     plugin_session_name(sess));
 
 	return ret;
 }

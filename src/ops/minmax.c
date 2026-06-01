@@ -12,7 +12,6 @@
 #include "session.h"
 #include <inttypes.h>
 #include <stdint.h>
-#include <stddef.h>
 
 static struct vaccel_prof_region minmax_op_stats =
 	VACCEL_PROF_REGION_INIT("vaccel_minmax_op");
@@ -26,7 +25,6 @@ int vaccel_minmax(struct vaccel_session *sess, const double *indata, int ndata,
 		  double *min, double *max)
 {
 	int ret;
-	const char *plugin_name = NULL;
 
 	if (!sess)
 		return VACCEL_EINVAL;
@@ -46,11 +44,8 @@ int vaccel_minmax(struct vaccel_session *sess, const double *indata, int ndata,
 			    outdata, min, max);
 
 out:
-	if (sess->plugin && sess->plugin->info)
-		plugin_name = sess->plugin->info->name;
-
 	vaccel_prof_region_stop_with_context(&minmax_op_stats, op_type,
-					     plugin_name);
+					     plugin_session_name(sess));
 
 	return ret;
 }
