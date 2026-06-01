@@ -3,6 +3,7 @@
 #define _POSIX_C_SOURCE 200809L
 
 #include "plugin.h"
+#include "prof/backend.h"
 #include "vaccel.h"
 #include <assert.h>
 #include <dlfcn.h>
@@ -442,7 +443,8 @@ int vaccel_plugin_load(const char *lib)
 		goto close_dl;
 	}
 
-	if (strcmp((*plugin)->info->name, "builtin") == 0) {
+	if (strcmp((*plugin)->info->name, VACCEL_PROF_BACKEND_BUILTIN_NAME) ==
+	    0) {
 		vaccel_error("Plugin name '%s' is reserved and cannot be used",
 			     (*plugin)->info->name);
 		ret = VACCEL_EINVAL;

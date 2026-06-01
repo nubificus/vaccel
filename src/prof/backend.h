@@ -4,6 +4,9 @@
 
 #include "include/vaccel/prof/backend.h" // IWYU pragma: export
 
+/* Name of the built-in backend; reserved as a plugin name. */
+#define VACCEL_PROF_BACKEND_BUILTIN_NAME "builtin"
+
 #ifdef __cplusplus
 extern "C" {
 #endif

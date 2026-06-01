@@ -199,7 +199,7 @@ int vaccel_config_release(struct vaccel_config *config)
 	config->log_level = CONFIG_LOG_LEVEL_DEFAULT;
 	config->log_file = CONFIG_LOG_FILE_DEFAULT;
 	config->profiling_enabled = CONFIG_PROFILING_ENABLED_DEFAULT;
-	config->profiling_backend = NULL;
+	config->profiling_backend = CONFIG_PROFILING_BACKEND_DEFAULT;
 	config->version_ignore = CONFIG_VERSION_IGNORE_DEFAULT;
 
 	return VACCEL_OK;

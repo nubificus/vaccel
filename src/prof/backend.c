@@ -9,9 +9,19 @@
 #include <stdatomic.h>
 #include <string.h>
 
-#define PROF_BACKEND_BUILTIN_NAME "builtin"
-
 static _Atomic(const struct vaccel_prof_backend *) active_backend;
+
+/* A backend must implement every hook except the optional
+ * region_stop_with_context and flush. */
+static bool prof_backend_valid(const struct vaccel_prof_backend *backend)
+{
+	return backend->region_start && backend->region_stop &&
+	       backend->region_init && backend->region_release &&
+	       backend->region_print && backend->regions_start_by_name &&
+	       backend->regions_stop_by_name && backend->regions_init &&
+	       backend->regions_release && backend->regions_print_all &&
+	       backend->regions_print_all_to_buf;
+}
 
 static void prof_backend_set(const struct vaccel_prof_backend *backend)
 {
@@ -41,9 +51,9 @@ int prof_backend_select(void)
 
 	const char *requested = config->profiling_backend ?
 					config->profiling_backend :
-					PROF_BACKEND_BUILTIN_NAME;
+					VACCEL_PROF_BACKEND_BUILTIN_NAME;
 
-	if (strcmp(requested, PROF_BACKEND_BUILTIN_NAME) == 0) {
+	if (strcmp(requested, VACCEL_PROF_BACKEND_BUILTIN_NAME) == 0) {
 		prof_backend_set(vaccel_prof_builtin_backend_get());
 		return VACCEL_OK;
 	}
@@ -52,7 +62,15 @@ int prof_backend_select(void)
 	if (!plugin || !plugin->info || !plugin->info->prof_backend) {
 		vaccel_warn(
 			"[prof] plugin '%s' not found, falling back to '%s'",
-			requested, PROF_BACKEND_BUILTIN_NAME);
+			requested, VACCEL_PROF_BACKEND_BUILTIN_NAME);
+		prof_backend_set(vaccel_prof_builtin_backend_get());
+		return VACCEL_OK;
+	}
+
+	if (!prof_backend_valid(plugin->info->prof_backend)) {
+		vaccel_warn(
+			"[prof] backend '%s' is missing required hooks, falling back to '%s'",
+			requested, VACCEL_PROF_BACKEND_BUILTIN_NAME);
 		prof_backend_set(vaccel_prof_builtin_backend_get());
 		return VACCEL_OK;
 	}
