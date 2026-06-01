@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "backend.h"
+#include "config.h"
 #include "core.h"
 #include "error.h"
 #include "log.h"
 #include "plugin.h"
-
 #include <stdatomic.h>
 #include <string.h>
 

@@ -25,7 +25,7 @@ vaccel_public_headers = files([
   'vaccel/ops/torch.h',
   'vaccel/plugin.h',
   'vaccel/prof.h',
-  'vaccel/prof_backend.h',
+  'vaccel/prof/backend.h',
   'vaccel/resource.h',
   'vaccel/session.h',
   'vaccel/utils/enum.h',

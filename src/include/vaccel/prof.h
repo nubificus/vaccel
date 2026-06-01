@@ -2,11 +2,10 @@
 
 #pragma once
 
+#include "op.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-
-#include <vaccel/op.h>
 
 #ifdef __cplusplus
 extern "C" {

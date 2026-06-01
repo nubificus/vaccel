@@ -2,8 +2,8 @@
 
 #pragma once
 
-#include "op.h"
-#include "prof.h"
+#include "vaccel/op.h"
+#include "vaccel/prof.h"
 #include <stddef.h>
 
 #ifdef __cplusplus

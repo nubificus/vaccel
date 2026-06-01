@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "include/vaccel/prof_backend.h" // IWYU pragma: export
+#include "include/vaccel/prof/backend.h" // IWYU pragma: export
 
 #ifdef __cplusplus
 extern "C" {

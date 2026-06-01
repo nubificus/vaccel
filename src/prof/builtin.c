@@ -5,6 +5,7 @@
 #include "backend.h"
 #include "error.h"
 #include "log.h"
+#include "prof.h"
 #include <bits/time.h>
 #include <stddef.h>
 #include <stdint.h>

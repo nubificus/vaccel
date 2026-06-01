@@ -30,9 +30,6 @@ vaccel_sources = files([
   'id_pool.c',
   'log.c',
   'plugin.c',
-  'prof/dispatch.c',
-  'prof/backend.c',
-  'prof/builtin.c',
   'resource.c',
   'resource_registration.c',
   'session.c',
@@ -41,6 +38,7 @@ vaccel_sources = files([
 
 subdir('include')
 subdir('ops')
+subdir('prof')
 subdir('utils')
 
 vaccel_sources += [vaccel_headers, vaccel_h, vaccel_public_headers]

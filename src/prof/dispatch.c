@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
+#include "backend.h"
 #include "config.h"
 #include "core.h"
 #include "error.h"
+#include "log.h"
+#include "op.h"
 #include "prof.h"
-#include "backend.h"
 
 bool vaccel_prof_enabled(void)
 {

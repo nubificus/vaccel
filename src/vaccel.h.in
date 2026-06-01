@@ -28,6 +28,7 @@
 #include "ops/torch.h"
 #include "plugin.h"
 #include "prof.h"
+#include "prof/backend.h"
 #include "resource.h"
 #include "resource_registration.h"
 #include "session.h"
