@@ -19,7 +19,6 @@ tests_includes = include_directories('.')
 subdir('core')
 subdir('ops')
 subdir('utils')
-subdir('prof')
 
 tests_deps = [libvaccel_internal_dep, catch2_dep, fff_dep]
 
@@ -52,7 +51,6 @@ tests_env_exec_lazy = tests_env_exec
 tests_env_exec_lazy.set('VACCEL_EXEC_DLOPEN_MODE', 'lazy')
 
 tests_env_prof = tests_env
-tests_env_prof.set('VACCEL_PLUGINS', libvaccel_noop.full_path())
 tests_env_prof.set('VACCEL_PROFILING_ENABLED', '1')
 tests_env_prof.set('VACCEL_PROFILING_BACKEND', 'builtin')
 
@@ -83,6 +81,15 @@ foreach t : tests_core_sources + tests_utils_sources
     test(name, exe,
       args : tests_args,
       env : tests_env_core,
+      depends : tests_tgt_depends,
+      is_parallel : false)
+    continue
+  endif
+
+  if name == 'test_prof'
+    test(name, exe,
+      args : tests_args,
+      env : tests_env_prof,
       depends : tests_tgt_depends,
       is_parallel : false)
     continue
@@ -137,23 +144,6 @@ foreach t : tests_core_w_plugin_sources + tests_ops_sources
       depends : tests_tgt_depends,
       is_parallel : false)
   endif
-endforeach
-
-foreach t : tests_prof_sources
-  name = fs.stem(t)
-  exe = executable(name,
-    sources : t,
-    cpp_args : tests_cpp_args,
-    include_directories : tests_includes,
-    dependencies : tests_deps,
-    link_with : libtests_main,
-    install : false)
-
-  test(name + '+noop', exe,
-    args : tests_args,
-    env : tests_env_prof,
-    depends : tests_tgt_depends,
-    is_parallel : false)
 endforeach
 
 gcovr_cfg = '''

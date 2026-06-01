@@ -1,27 +1,28 @@
 // SPDX-License-Identifier: Apache-2.0
 
 /*
- * Unit Testing for VAccel Profiling
+ * Unit Testing for Profiling
  */
 
 #include "vaccel.h"
 #include <catch2/catch_test_macros.hpp>
+#include <chrono>
 #include <cstdlib>
 #include <cstring>
 #include <thread>
 #include <vector>
 
-TEST_CASE("vaccel_prof_enabled", "[prof]")
+TEST_CASE("vaccel_prof_enabled", "[core][prof]")
 {
 	REQUIRE(vaccel_prof_enabled());
 }
 
-TEST_CASE("vaccel_prof_flush", "[prof]")
+TEST_CASE("vaccel_prof_flush", "[core][prof]")
 {
 	REQUIRE(vaccel_prof_flush() == VACCEL_OK);
 }
 
-TEST_CASE("vaccel_prof_region_init", "[prof]")
+TEST_CASE("vaccel_prof_region_init", "[core][prof]")
 {
 	int ret;
 	struct vaccel_prof_region region;
@@ -58,7 +59,7 @@ TEST_CASE("vaccel_prof_region_init", "[prof]")
 	}
 }
 
-TEST_CASE("vaccel_prof_region_release", "[prof]")
+TEST_CASE("vaccel_prof_region_release", "[core][prof]")
 {
 	int ret;
 	struct vaccel_prof_region region;
@@ -84,7 +85,7 @@ TEST_CASE("vaccel_prof_region_release", "[prof]")
 	}
 }
 
-TEST_CASE("vaccel_prof_region_start", "[prof]")
+TEST_CASE("vaccel_prof_region_start", "[core][prof]")
 {
 	int ret;
 	struct vaccel_prof_region region;
@@ -111,7 +112,7 @@ TEST_CASE("vaccel_prof_region_start", "[prof]")
 	}
 }
 
-TEST_CASE("vaccel_prof_region_stop", "[prof]")
+TEST_CASE("vaccel_prof_region_stop", "[core][prof]")
 {
 	int ret;
 	struct vaccel_prof_region region;
@@ -125,6 +126,20 @@ TEST_CASE("vaccel_prof_region_stop", "[prof]")
 		ret = vaccel_prof_region_stop(&region);
 		REQUIRE(ret == VACCEL_OK);
 		REQUIRE(region.nr_entries == 1);
+
+		REQUIRE(vaccel_prof_region_release(&region) == VACCEL_OK);
+	}
+
+	SECTION("records elapsed time")
+	{
+		REQUIRE(vaccel_prof_region_init(&region, "test_region") ==
+			VACCEL_OK);
+		REQUIRE(vaccel_prof_region_start(&region) == VACCEL_OK);
+		std::this_thread::sleep_for(std::chrono::milliseconds(1));
+		REQUIRE(vaccel_prof_region_stop(&region) == VACCEL_OK);
+
+		REQUIRE(region.nr_entries == 1);
+		REQUIRE(region.samples[0].time > 0);
 
 		REQUIRE(vaccel_prof_region_release(&region) == VACCEL_OK);
 	}
@@ -147,7 +162,7 @@ TEST_CASE("vaccel_prof_region_stop", "[prof]")
 	}
 }
 
-TEST_CASE("vaccel_prof_region_stop_with_context", "[prof]")
+TEST_CASE("vaccel_prof_region_stop_with_context", "[core][prof]")
 {
 	int ret;
 	struct vaccel_prof_region region;
@@ -180,7 +195,7 @@ TEST_CASE("vaccel_prof_region_stop_with_context", "[prof]")
 	}
 }
 
-TEST_CASE("vaccel_prof_region_print", "[prof]")
+TEST_CASE("vaccel_prof_region_print", "[core][prof]")
 {
 	int ret;
 	struct vaccel_prof_region region;
@@ -196,6 +211,19 @@ TEST_CASE("vaccel_prof_region_print", "[prof]")
 		REQUIRE(vaccel_prof_region_release(&region) == VACCEL_OK);
 	}
 
+	SECTION("with samples")
+	{
+		REQUIRE(vaccel_prof_region_init(&region, "test_region") ==
+			VACCEL_OK);
+		REQUIRE(vaccel_prof_region_start(&region) == VACCEL_OK);
+		REQUIRE(vaccel_prof_region_stop(&region) == VACCEL_OK);
+
+		ret = vaccel_prof_region_print(&region);
+		REQUIRE(ret == VACCEL_OK);
+
+		REQUIRE(vaccel_prof_region_release(&region) == VACCEL_OK);
+	}
+
 	SECTION("invalid arguments")
 	{
 		ret = vaccel_prof_region_print(nullptr);
@@ -203,7 +231,7 @@ TEST_CASE("vaccel_prof_region_print", "[prof]")
 	}
 }
 
-TEST_CASE("vaccel_prof_regions_init", "[prof]")
+TEST_CASE("vaccel_prof_regions_init", "[core][prof]")
 {
 	int ret;
 	struct vaccel_prof_region regions[2];
@@ -223,7 +251,7 @@ TEST_CASE("vaccel_prof_regions_init", "[prof]")
 	}
 }
 
-TEST_CASE("vaccel_prof_regions_release", "[prof]")
+TEST_CASE("vaccel_prof_regions_release", "[core][prof]")
 {
 	int ret;
 	struct vaccel_prof_region regions[2];
@@ -243,7 +271,7 @@ TEST_CASE("vaccel_prof_regions_release", "[prof]")
 	}
 }
 
-TEST_CASE("vaccel_prof_regions_start_by_name", "[prof]")
+TEST_CASE("vaccel_prof_regions_start_by_name", "[core][prof]")
 {
 	int ret;
 	struct vaccel_prof_region regions[] = {
@@ -272,7 +300,7 @@ TEST_CASE("vaccel_prof_regions_start_by_name", "[prof]")
 	}
 }
 
-TEST_CASE("vaccel_prof_regions_stop_by_name", "[prof]")
+TEST_CASE("vaccel_prof_regions_stop_by_name", "[core][prof]")
 {
 	int ret;
 	struct vaccel_prof_region regions[] = {
@@ -310,7 +338,7 @@ TEST_CASE("vaccel_prof_regions_stop_by_name", "[prof]")
 	}
 }
 
-TEST_CASE("vaccel_prof_regions_print_all", "[prof]")
+TEST_CASE("vaccel_prof_regions_print_all", "[core][prof]")
 {
 	int ret;
 	struct vaccel_prof_region regions[] = {
@@ -326,6 +354,19 @@ TEST_CASE("vaccel_prof_regions_print_all", "[prof]")
 		REQUIRE(vaccel_prof_regions_release(regions, 2) == VACCEL_OK);
 	}
 
+	SECTION("with samples")
+	{
+		REQUIRE(vaccel_prof_regions_start_by_name(
+				regions, 2, "region_0") == VACCEL_OK);
+		REQUIRE(vaccel_prof_regions_stop_by_name(
+				regions, 2, "region_0") == VACCEL_OK);
+
+		ret = vaccel_prof_regions_print_all(regions, 2);
+		REQUIRE(ret == VACCEL_OK);
+
+		REQUIRE(vaccel_prof_regions_release(regions, 2) == VACCEL_OK);
+	}
+
 	SECTION("invalid arguments")
 	{
 		ret = vaccel_prof_regions_print_all(nullptr, 2);
@@ -333,7 +374,7 @@ TEST_CASE("vaccel_prof_regions_print_all", "[prof]")
 	}
 }
 
-TEST_CASE("vaccel_prof_regions_print_all_to_buf", "[prof]")
+TEST_CASE("vaccel_prof_regions_print_all_to_buf", "[core][prof]")
 {
 	int ret;
 	char *buf = nullptr;
@@ -348,6 +389,24 @@ TEST_CASE("vaccel_prof_regions_print_all_to_buf", "[prof]")
 							   2);
 		REQUIRE(ret == 2);
 		REQUIRE(buf != nullptr);
+
+		free(buf);
+		REQUIRE(vaccel_prof_regions_release(regions, 2) == VACCEL_OK);
+	}
+
+	SECTION("success with samples")
+	{
+		REQUIRE(vaccel_prof_regions_start_by_name(
+				regions, 2, "region_0") == VACCEL_OK);
+		REQUIRE(vaccel_prof_regions_stop_by_name(
+				regions, 2, "region_0") == VACCEL_OK);
+
+		ret = vaccel_prof_regions_print_all_to_buf(&buf, 1024, regions,
+							   2);
+		REQUIRE(ret == 2);
+		REQUIRE(buf != nullptr);
+		REQUIRE(strstr(buf, "region_0") != nullptr);
+		REQUIRE(strstr(buf, "total_time") != nullptr);
 
 		free(buf);
 		REQUIRE(vaccel_prof_regions_release(regions, 2) == VACCEL_OK);
@@ -380,7 +439,7 @@ enum {
 	TEST_ITERATIONS_NUM = 5000,
 };
 
-TEST_CASE("prof_region_concurrent_start_stop", "[prof]")
+TEST_CASE("prof_region_concurrent_start_stop", "[core][prof]")
 {
 	struct vaccel_prof_region region;
 	REQUIRE(vaccel_prof_region_init(&region, "concurrent_region") ==
