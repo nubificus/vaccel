@@ -119,13 +119,10 @@ static int vaccel_prof_builtin_region_init(struct vaccel_prof_region *region,
 		if (!region->name)
 			return VACCEL_ENOMEM;
 		memset((void *)region->name, 0, MAX_NAME);
-	} else if (name) {
+	} else {
 		region->name = strdup(name);
 		if (!region->name)
 			return VACCEL_ENOMEM;
-	} else {
-		vaccel_error("[prof] init region: Invalid region name");
-		return VACCEL_EINVAL;
 	}
 
 	region->name_owned = true;
@@ -257,8 +254,6 @@ static int vaccel_prof_builtin_regions_init(struct vaccel_prof_region *regions,
 					    int nregions)
 {
 	for (int i = 0; i < nregions; i++) {
-		regions[i].size = 0;
-		regions[i].samples = NULL;
 		int ret = vaccel_prof_builtin_region_init(&regions[i], NULL);
 		if (ret != VACCEL_OK) {
 			vaccel_prof_builtin_regions_release(regions, i);
