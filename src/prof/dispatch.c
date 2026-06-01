@@ -7,6 +7,8 @@
 #include "log.h"
 #include "op.h"
 #include "prof.h"
+#include <pthread.h>
+#include <stddef.h>
 
 bool vaccel_prof_enabled(void)
 {
@@ -25,10 +27,14 @@ int vaccel_prof_region_start(struct vaccel_prof_region *region)
 		return VACCEL_EINVAL;
 	}
 
-	return vaccel_prof_backend_get()->region_start(region);
+	pthread_mutex_lock(&region->lock);
+	int ret = vaccel_prof_backend_get()->region_start(region);
+	pthread_mutex_unlock(&region->lock);
+
+	return ret;
 }
 
-int vaccel_prof_region_stop(const struct vaccel_prof_region *region)
+int vaccel_prof_region_stop(struct vaccel_prof_region *region)
 {
 	if (!vaccel_prof_enabled())
 		return VACCEL_OK;
@@ -38,10 +44,14 @@ int vaccel_prof_region_stop(const struct vaccel_prof_region *region)
 		return VACCEL_EINVAL;
 	}
 
-	return vaccel_prof_backend_get()->region_stop(region);
+	pthread_mutex_lock(&region->lock);
+	int ret = vaccel_prof_backend_get()->region_stop(region);
+	pthread_mutex_unlock(&region->lock);
+
+	return ret;
 }
 
-int vaccel_prof_region_stop_with_context(const struct vaccel_prof_region *region,
+int vaccel_prof_region_stop_with_context(struct vaccel_prof_region *region,
 					 vaccel_op_type_t op_type,
 					 const char *plugin_name)
 
@@ -50,16 +60,20 @@ int vaccel_prof_region_stop_with_context(const struct vaccel_prof_region *region
 		return VACCEL_OK;
 
 	if (!region) {
-		vaccel_error("[prof] init region: Invalid profiling region");
+		vaccel_error("[prof] stop region: Invalid profiling region");
 		return VACCEL_EINVAL;
 	}
 
 	const struct vaccel_prof_backend *backend = vaccel_prof_backend_get();
 
-	if (!backend->region_stop_with_context)
-		return backend->region_stop(region);
+	pthread_mutex_lock(&region->lock);
+	int ret = backend->region_stop_with_context ?
+			  backend->region_stop_with_context(region, op_type,
+							    plugin_name) :
+			  backend->region_stop(region);
+	pthread_mutex_unlock(&region->lock);
 
-	return backend->region_stop_with_context(region, op_type, plugin_name);
+	return ret;
 }
 
 int vaccel_prof_region_init(struct vaccel_prof_region *region, const char *name)
@@ -72,7 +86,16 @@ int vaccel_prof_region_init(struct vaccel_prof_region *region, const char *name)
 		return VACCEL_EINVAL;
 	}
 
-	return vaccel_prof_backend_get()->region_init(region, name);
+	if (pthread_mutex_init(&region->lock, NULL)) {
+		vaccel_error("[prof] init region: Could not initialize lock");
+		return VACCEL_EINVAL;
+	}
+
+	int ret = vaccel_prof_backend_get()->region_init(region, name);
+	if (ret)
+		pthread_mutex_destroy(&region->lock);
+
+	return ret;
 }
 
 int vaccel_prof_region_release(struct vaccel_prof_region *region)
@@ -85,10 +108,13 @@ int vaccel_prof_region_release(struct vaccel_prof_region *region)
 		return VACCEL_EINVAL;
 	}
 
-	return vaccel_prof_backend_get()->region_release(region);
+	int ret = vaccel_prof_backend_get()->region_release(region);
+	pthread_mutex_destroy(&region->lock);
+
+	return ret;
 }
 
-int vaccel_prof_region_print(const struct vaccel_prof_region *region)
+int vaccel_prof_region_print(struct vaccel_prof_region *region)
 {
 	if (!vaccel_prof_enabled())
 		return VACCEL_OK;
@@ -98,7 +124,11 @@ int vaccel_prof_region_print(const struct vaccel_prof_region *region)
 		return VACCEL_EINVAL;
 	}
 
-	return vaccel_prof_backend_get()->region_print(region);
+	pthread_mutex_lock(&region->lock);
+	int ret = vaccel_prof_backend_get()->region_print(region);
+	pthread_mutex_unlock(&region->lock);
+
+	return ret;
 }
 
 int vaccel_prof_regions_start_by_name(struct vaccel_prof_region *regions,
@@ -144,7 +174,22 @@ int vaccel_prof_regions_init(struct vaccel_prof_region *regions, int nregions)
 		return VACCEL_EINVAL;
 	}
 
-	return vaccel_prof_backend_get()->regions_init(regions, nregions);
+	for (int i = 0; i < nregions; i++) {
+		if (pthread_mutex_init(&regions[i].lock, NULL)) {
+			vaccel_error(
+				"[prof] init regions: Could not initialize lock");
+			for (int j = 0; j < i; j++)
+				pthread_mutex_destroy(&regions[j].lock);
+			return VACCEL_EINVAL;
+		}
+	}
+
+	int ret = vaccel_prof_backend_get()->regions_init(regions, nregions);
+	if (ret)
+		for (int i = 0; i < nregions; i++)
+			pthread_mutex_destroy(&regions[i].lock);
+
+	return ret;
 }
 
 int vaccel_prof_regions_release(struct vaccel_prof_region *regions,
@@ -159,7 +204,11 @@ int vaccel_prof_regions_release(struct vaccel_prof_region *regions,
 		return VACCEL_EINVAL;
 	}
 
-	return vaccel_prof_backend_get()->regions_release(regions, nregions);
+	int ret = vaccel_prof_backend_get()->regions_release(regions, nregions);
+	for (int i = 0; i < nregions; i++)
+		pthread_mutex_destroy(&regions[i].lock);
+
+	return ret;
 }
 
 int vaccel_prof_regions_print_all(struct vaccel_prof_region *regions,

@@ -8,6 +8,8 @@
 #include <catch2/catch_test_macros.hpp>
 #include <cstdlib>
 #include <cstring>
+#include <thread>
+#include <vector>
 
 TEST_CASE("vaccel_prof_enabled", "[prof]")
 {
@@ -371,4 +373,33 @@ TEST_CASE("vaccel_prof_regions_print_all_to_buf", "[prof]")
 							   2);
 		REQUIRE(ret == -VACCEL_EINVAL);
 	}
+}
+
+enum {
+	TEST_THREADS_NUM = 8,
+	TEST_ITERATIONS_NUM = 5000,
+};
+
+TEST_CASE("prof_region_concurrent_start_stop", "[prof]")
+{
+	struct vaccel_prof_region region;
+	REQUIRE(vaccel_prof_region_init(&region, "concurrent_region") ==
+		VACCEL_OK);
+
+	std::vector<std::thread> threads;
+	for (int t = 0; t < TEST_THREADS_NUM; t++) {
+		threads.emplace_back([&region]() {
+			for (int i = 0; i < TEST_ITERATIONS_NUM; i++) {
+				vaccel_prof_region_start(&region);
+				vaccel_prof_region_stop(&region);
+			}
+		});
+	}
+	for (auto &thread : threads)
+		thread.join();
+
+	REQUIRE(region.nr_entries ==
+		(size_t)TEST_THREADS_NUM * TEST_ITERATIONS_NUM);
+
+	REQUIRE(vaccel_prof_region_release(&region) == VACCEL_OK);
 }

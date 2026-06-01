@@ -12,13 +12,13 @@ extern "C" {
 
 struct vaccel_prof_backend {
 	int (*region_start)(struct vaccel_prof_region *region);
-	int (*region_stop)(const struct vaccel_prof_region *region);
-	int (*region_stop_with_context)(const struct vaccel_prof_region *region,
+	int (*region_stop)(struct vaccel_prof_region *region);
+	int (*region_stop_with_context)(struct vaccel_prof_region *region,
 					vaccel_op_type_t op_type,
 					const char *plugin_name);
 	int (*region_init)(struct vaccel_prof_region *region, const char *name);
 	int (*region_release)(struct vaccel_prof_region *region);
-	int (*region_print)(const struct vaccel_prof_region *region);
+	int (*region_print)(struct vaccel_prof_region *region);
 
 	int (*regions_start_by_name)(struct vaccel_prof_region *regions,
 				     int nregions, const char *name);

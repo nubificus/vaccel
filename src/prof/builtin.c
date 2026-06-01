@@ -97,8 +97,7 @@ static int vaccel_prof_builtin_region_start(struct vaccel_prof_region *region)
 	return VACCEL_OK;
 }
 
-static int
-vaccel_prof_builtin_region_stop(const struct vaccel_prof_region *region)
+static int vaccel_prof_builtin_region_stop(struct vaccel_prof_region *region)
 {
 	vaccel_debug("Stop profiling region %s", region->name);
 
@@ -157,8 +156,7 @@ static int vaccel_prof_builtin_region_release(struct vaccel_prof_region *region)
 	return VACCEL_OK;
 }
 
-static int
-vaccel_prof_builtin_region_print(const struct vaccel_prof_region *region)
+static int vaccel_prof_builtin_region_print(struct vaccel_prof_region *region)
 {
 	if (!region->nr_entries)
 		return VACCEL_OK;
