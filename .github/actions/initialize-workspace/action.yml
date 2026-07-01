@@ -72,7 +72,7 @@ runs:
       shell: bash
 
     - name: Checkout code
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
       with:
         repository: ${{ inputs.repository }}
         submodules: ${{ inputs.submodules }}
@@ -115,7 +115,7 @@ runs:
 
     - name: Checkout remote actions repo
       if: inputs.remote-actions-repo != inputs.repository
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
       with:
         repository: ${{ inputs.remote-actions-repo }}
         ref: ${{ steps.get-remote-info.outputs.checkout-ref }}
